@@ -11,14 +11,14 @@ namespace uLoader
 {
     public class PanelCommon : TableLayoutPanel
     {
-        public PanelCommon(int iRowCount = 16, int iColumnCount = 16)
+        public PanelCommon(int iColumnCount = 16, int iRowCount = 16)
         {
             this.ColumnCount = iColumnCount; this.RowCount = iRowCount;
 
             InitializeComponent();
         }
 
-        public PanelCommon(IContainer container, int iRowCount = 16, int iColumnCount = 16)
+        public PanelCommon(IContainer container, int iColumnCount = 16, int iRowCount = 16)
         {
             container.Add(this);
 
@@ -46,13 +46,15 @@ namespace uLoader
             this.Dock = DockStyle.Fill;
             //this.CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;            
 
+            float val = (float)100 / this.ColumnCount;
             //Добавить стили "ширина" столлбцов
-            for (int s = 0; s < this.ColumnCount; s++)
-                this.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, (float)100 / this.ColumnCount));
+            for (int s = 0; s < this.ColumnCount - 0; s++)
+                this.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, val));
 
+            val = (float)100 / this.RowCount;
             //Добавить стили "высота" строк
-            for (int s = 0; s < this.RowCount; s++)
-                this.RowStyles.Add(new RowStyle(SizeType.Percent, (float)100 / this.RowCount));
+            for (int s = 0; s < this.RowCount - 0; s++)
+                this.RowStyles.Add(new RowStyle(SizeType.Percent, val));
 
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -60,31 +62,25 @@ namespace uLoader
         #endregion
     }
 
-    public partial class PanelListEdit: PanelCommon
+    public partial class DataGridViewListItem: DataGridView
     {
-        Label m_lblHeader;
-        DataGridView m_dgvListItem;
         TextBox m_linkTextBoxNewItem;
         Button m_linkBtnAdding;
 
-        public PanelListEdit(string name, TextBox tbxNewItem, Button btnAdd)
+        public DataGridViewListItem(TextBox tbxNewItem, Button btnAdd)
         {
             m_linkTextBoxNewItem = tbxNewItem; m_linkBtnAdding = btnAdd;
 
             InitializeComponent();
-
-            m_lblHeader.Text = name;
         }
 
-        public PanelListEdit(IContainer container, string name, TextBox tbxNewItem, Button btnAdd)
+        public DataGridViewListItem(IContainer container, TextBox tbxNewItem, Button btnAdd)
         {
             m_linkTextBoxNewItem = tbxNewItem; m_linkBtnAdding = btnAdd;
 
             container.Add(this);
 
             InitializeComponent();
-
-            m_lblHeader.Text = name;
         }
 
         private void PanelListEdit_NewItemTextChanged(object obj, EventArgs ev)
@@ -93,7 +89,7 @@ namespace uLoader
         }
     }
 
-    partial class PanelListEdit
+    partial class DataGridViewListItem
     {
         /// <summary>
         /// Требуется переменная конструктора.
@@ -123,19 +119,9 @@ namespace uLoader
         {
             components = new System.ComponentModel.Container();
 
-            m_lblHeader = new Label ();
-            m_dgvListItem = new DataGridView ();
+            this.Dock = DockStyle.Fill;
 
             this.SuspendLayout();
-
-            m_lblHeader.Dock = DockStyle.Fill;
-            m_lblHeader.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
-            this.Controls.Add (m_lblHeader, 0, 0);
-            this.SetColumnSpan (m_lblHeader, this.ColumnCount); this.SetRowSpan (m_lblHeader, 2);
-
-            m_dgvListItem.Dock = DockStyle.Fill;
-            this.Controls.Add (m_dgvListItem, 0, 2);
-            this.SetColumnSpan (m_dgvListItem, this.ColumnCount); this.SetRowSpan (m_dgvListItem, 14);
 
             this.ResumeLayout(false);
             this.PerformLayout();
