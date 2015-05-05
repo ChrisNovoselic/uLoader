@@ -5,17 +5,26 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
-using System.Windows.Forms;
+using System.Windows.Forms; //Control
+using System.Drawing; //Point
 
 namespace uLoader
 {
     public partial class PanelConfig : PanelCommon
     {
+        //Индексы панелей
+        enum INDEX_PANEL { GROUP_SOURCES, SOURCES_OF_GROUP, GROUP_SIGNALS, SIGNALS_OF_GROUP
+            , COUNT_INDEX_PANEL
+        };
+        //Индексы групп элементов управления в панелях
+        enum INDEX_PANEL_CONTROL { PANEL, TEXTBOX, BUTTON };
         //Индексы элементов управления
         enum INDEX_CONTROL {
-            PANEL_LISTEDIT_GROUP_SOURCES, PANEL_LISTEDIT_SOURCES_OF_GROUP
-            , PANEL_LISTEDIT_GROUP_SIGNALS , PANEL_LISTEDIT_SIGNALS_OF_GROUP
-            , DGV_PARAMETER_SOURCES
+            PANEL_LISTEDIT
+            , TEXTBOX = PANEL_LISTEDIT + INDEX_PANEL.COUNT_INDEX_PANEL
+            , BUTTON = TEXTBOX + INDEX_PANEL.COUNT_INDEX_PANEL
+            , DGV_PARAMETER_SOURCES = BUTTON + INDEX_PANEL.COUNT_INDEX_PANEL
+            , LABEL_DLLNAME_GROUPSOURCES, BUTTON_DLLNAME_GROUPSOURCES
             , RADIOBUTTON_SOURCE, RADIOBUTTON_DEST
             , BUTTON_UPDATE, BUTTON_SAVE
         };
@@ -36,16 +45,21 @@ namespace uLoader
         {
             @"ID", @"IP", @"PORT", @"DB_NAME", @"UID", @"PASSWORD"
         };
+        //Заголовки строк панелей
+        static string[] m_arHeaderPanelListEdit =
+        {
+            @"Группы источников", @"Источники группы", @"Группы сигналов", @"Сигналы группы"
+        };
         //Словарь элементов управления
         Dictionary<INDEX_CONTROL, Control> m_dictControl;
         
-        public PanelConfig() : base (16, 15)
+        public PanelConfig() : base (96, 90)
         {
             InitializeComponent();
         }
 
         public PanelConfig(IContainer container)
-            : base(container, 16, 15)
+            : base(container, 96, 90)
         {
             container.Add(this);
 
@@ -75,6 +89,12 @@ namespace uLoader
 
         #region Код, автоматически созданный конструктором компонентов
 
+        struct Position
+        {
+            public Point loc; public Size sz;
+            public Position(Point loc, Size sz) { this.loc = loc; this.sz = sz; }
+        };
+
         /// <summary>
         /// Обязательный метод для поддержки конструктора - не изменяйте
         /// содержимое данного метода при помощи редактора кода.
@@ -84,9 +104,46 @@ namespace uLoader
             components = new System.ComponentModel.Container();
 
             Control ctrl; //Для "безличного" обращения к элементу интерфейса
+            ////Координаты, размеры для размещения элементов управления
+            //Dictionary<INDEX_CONTROL, Position> dictPos = new Dictionary<INDEX_CONTROL,Position> ();
+            ////Панели
+            //dictPos.Add((INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.PANEL * (int)INDEX_PANEL.COUNT_INDEX_PANEL + INDEX_PANEL.GROUP_SOURCES)
+            //    , new Position (new Point (0, 0), new Size (0, 0)));
+            //dictPos.Add((INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.PANEL * (int)INDEX_PANEL.COUNT_INDEX_PANEL + INDEX_PANEL.SOURCES_OF_GROUP)
+            //    , new Position(new Point(0, 0), new Size(0, 0)));
+            //dictPos.Add((INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.PANEL * (int)INDEX_PANEL.COUNT_INDEX_PANEL + INDEX_PANEL.GROUP_SIGNALS)
+            //    , new Position(new Point(0, 0), new Size(0, 0)));
+            //dictPos.Add((INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.PANEL * (int)INDEX_PANEL.COUNT_INDEX_PANEL + INDEX_PANEL.SIGNALS_OF_GROUP)
+            //    , new Position(new Point(0, 0), new Size(0, 0)));
+            ////TextBox-ы
+            //dictPos.Add((INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.TEXTBOX * (int)INDEX_PANEL.COUNT_INDEX_PANEL + INDEX_PANEL.GROUP_SOURCES)
+            //    , new Position(new Point(0, 0), new Size(0, 0)));
+            //dictPos.Add((INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.TEXTBOX * (int)INDEX_PANEL.COUNT_INDEX_PANEL + INDEX_PANEL.SOURCES_OF_GROUP)
+            //    , new Position(new Point(0, 0), new Size(0, 0)));
+            //dictPos.Add((INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.TEXTBOX * (int)INDEX_PANEL.COUNT_INDEX_PANEL + INDEX_PANEL.GROUP_SIGNALS)
+            //    , new Position(new Point(0, 0), new Size(0, 0)));
+            //dictPos.Add((INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.TEXTBOX * (int)INDEX_PANEL.COUNT_INDEX_PANEL + INDEX_PANEL.SIGNALS_OF_GROUP)
+            //    , new Position(new Point(0, 0), new Size(0, 0)));
+            ////Кнопки
+            //dictPos.Add((INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.BUTTON * (int)INDEX_PANEL.COUNT_INDEX_PANEL + INDEX_PANEL.GROUP_SOURCES)
+            //    , new Position(new Point(0, 0), new Size(0, 0)));
+            //dictPos.Add((INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.BUTTON * (int)INDEX_PANEL.COUNT_INDEX_PANEL + INDEX_PANEL.SOURCES_OF_GROUP)
+            //    , new Position(new Point(0, 0), new Size(0, 0)));
+            //dictPos.Add((INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.BUTTON * (int)INDEX_PANEL.COUNT_INDEX_PANEL + INDEX_PANEL.GROUP_SIGNALS)
+            //    , new Position(new Point(0, 0), new Size(0, 0)));
+            //dictPos.Add((INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.BUTTON * (int)INDEX_PANEL.COUNT_INDEX_PANEL + INDEX_PANEL.SIGNALS_OF_GROUP)
+            //    , new Position(new Point(0, 0), new Size(0, 0)));
+            ////DGV_PARAMETER_SOURCES
+            //dictPos.Add(INDEX_CONTROL.DGV_PARAMETER_SOURCES, new Position(new Point(0, 0), new Size(0, 0)));
+            ////Переключатели
+            //dictPos.Add(INDEX_CONTROL.RADIOBUTTON_SOURCE, new Position(new Point(0, 0), new Size(0, 0)));
+            //dictPos.Add(INDEX_CONTROL.RADIOBUTTON_DEST, new Position(new Point(0, 0), new Size(0, 0)));
+            ////Кнопки
+            //dictPos.Add(INDEX_CONTROL.BUTTON_UPDATE, new Position(new Point(0, 0), new Size(0, 0)));
+            //dictPos.Add(INDEX_CONTROL.BUTTON_SAVE, new Position(new Point(0, 0), new Size(0, 0)));
 
             m_dictControl = new Dictionary<INDEX_CONTROL, Control>();
-            //Создание переключателей
+            //Создание объектов переключателей
             //Источник
             ctrl = new RadioButton();
             (ctrl as RadioButton).Text = @"Источник";
@@ -98,7 +155,7 @@ namespace uLoader
             (ctrl as RadioButton).Text = @"Назначение";
             (ctrl as RadioButton).Dock = DockStyle.Fill;
             m_dictControl.Add(INDEX_CONTROL.RADIOBUTTON_DEST, ctrl);
-            //Создание кнопок
+            //Создание объектов кнопок
             //Загрузить
             ctrl = new Button();
             (ctrl as Button).Text = @"Загрузить";
@@ -109,11 +166,40 @@ namespace uLoader
             (ctrl as Button).Text = @"Сохранить";
             (ctrl as Button).Dock = DockStyle.Fill;
             m_dictControl.Add(INDEX_CONTROL.BUTTON_SAVE, ctrl);
-            //Создание панелей
-            m_dictControl.Add(INDEX_CONTROL.PANEL_LISTEDIT_GROUP_SOURCES, new PanelListEdit(@"Группы источников"));
-            m_dictControl.Add(INDEX_CONTROL.PANEL_LISTEDIT_SOURCES_OF_GROUP, new PanelListEdit(@"Источники группы"));
-            m_dictControl.Add(INDEX_CONTROL.PANEL_LISTEDIT_GROUP_SIGNALS, new PanelListEdit(@"Группы сигналов"));
-            m_dictControl.Add(INDEX_CONTROL.PANEL_LISTEDIT_SIGNALS_OF_GROUP, new PanelListEdit(@"Сигналы группы"));
+            int i = -1
+                , j = -1;
+            //Создание объектов 'TextBox' для новых элементов панелей
+            i = (int)INDEX_PANEL_CONTROL.TEXTBOX;
+            for (j = 0; j < (int)INDEX_PANEL.COUNT_INDEX_PANEL; j++)
+            {
+                ctrl = new TextBox(); ctrl.Dock = DockStyle.Bottom;
+                m_dictControl.Add((INDEX_CONTROL)(i * (int)INDEX_PANEL.COUNT_INDEX_PANEL + j), ctrl);
+            }
+            //Создание объектов кнопок для новых элементов панелей
+            i = (int)INDEX_PANEL_CONTROL.BUTTON;
+            for (j = 0; j < (int)INDEX_PANEL.COUNT_INDEX_PANEL; j++)
+            {
+                ctrl = new Button(); (ctrl as Button).Text = @"+"; ctrl.Dock = DockStyle.Bottom;
+                m_dictControl.Add((INDEX_CONTROL)(i * (int)INDEX_PANEL.COUNT_INDEX_PANEL + j), ctrl);
+            }
+            //Создание объектов панелей
+            i = (int)INDEX_PANEL_CONTROL.PANEL;
+            for (j = 0; j < (int)INDEX_PANEL.COUNT_INDEX_PANEL; j++)
+                m_dictControl.Add((INDEX_CONTROL)(i * (int)INDEX_PANEL.COUNT_INDEX_PANEL + j)
+                    , new PanelListEdit(m_arHeaderPanelListEdit[j]
+                    , m_dictControl[(INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.TEXTBOX * (int)INDEX_PANEL.COUNT_INDEX_PANEL + j)] as TextBox
+                    , m_dictControl[(INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.BUTTON * (int)INDEX_PANEL.COUNT_INDEX_PANEL + j)] as Button
+                ));
+            //Создание "подписи" - наименование библиотеки для GROUP_SOURCES
+            ctrl = new Label();
+            (ctrl as Label).BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            ctrl.Dock = DockStyle.Bottom;
+            m_dictControl.Add(INDEX_CONTROL.LABEL_DLLNAME_GROUPSOURCES, ctrl);
+            //Создание кнопки - выбор файла-библиотеки для GROUP_SOURCES
+            ctrl = new Button();
+            (ctrl as Button).Text = @"...";
+            ctrl.Dock = DockStyle.Bottom;
+            m_dictControl.Add(INDEX_CONTROL.BUTTON_DLLNAME_GROUPSOURCES, ctrl);
             //Создание объекта для редактирования параметров соединения
             ctrl = new DataGridView();            
             ctrl.Dock = DockStyle.Fill;
@@ -133,47 +219,66 @@ namespace uLoader
             }
             m_dictControl.Add(INDEX_CONTROL.DGV_PARAMETER_SOURCES, ctrl);
 
+            //Размещение элементов
             this.SuspendLayout();
 
             //Переключатели
             //Источник
             ctrl = m_dictControl[INDEX_CONTROL.RADIOBUTTON_SOURCE];
             this.Controls.Add(ctrl, 0, 0);
-            this.SetColumnSpan(ctrl, 2); this.SetRowSpan(ctrl, 1);
+            this.SetColumnSpan(ctrl, 18); this.SetRowSpan(ctrl, 4);
             //Назначение
             ctrl = m_dictControl[INDEX_CONTROL.RADIOBUTTON_DEST];
-            this.Controls.Add(ctrl, 2, 0);
-            this.SetColumnSpan(ctrl, 2); this.SetRowSpan(ctrl, 1);
+            this.Controls.Add(ctrl, 0, 4);
+            this.SetColumnSpan(ctrl, 18); this.SetRowSpan(ctrl, 4);
             //Кнопки
             //Загрузить
             ctrl = m_dictControl[INDEX_CONTROL.BUTTON_UPDATE];
-            this.Controls.Add(ctrl, 0, 1);
-            this.SetColumnSpan(ctrl, 5); this.SetRowSpan(ctrl, 1);
+            this.Controls.Add(ctrl, 0, 8);
+            this.SetColumnSpan(ctrl, 18); this.SetRowSpan(ctrl, 5);
             //Сохранить
             ctrl = m_dictControl[INDEX_CONTROL.BUTTON_SAVE];
-            this.Controls.Add(ctrl, 0, 2);
-            this.SetColumnSpan(ctrl, 5); this.SetRowSpan(ctrl, 1);
+            this.Controls.Add(ctrl, 0, 13);
+            this.SetColumnSpan(ctrl, 18); this.SetRowSpan(ctrl, 5);
             //Группы источников
-            ctrl = m_dictControl[INDEX_CONTROL.PANEL_LISTEDIT_GROUP_SOURCES];
-            this.Controls.Add(ctrl, 0, 3);
-            this.SetColumnSpan(ctrl, 5); this.SetRowSpan(ctrl, 8);
+            //Панель
+            ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.PANEL_LISTEDIT + (int)INDEX_PANEL.GROUP_SOURCES)];
+            this.Controls.Add(ctrl, 18, 0);
+            this.SetColumnSpan(ctrl, 36); this.SetRowSpan(ctrl, 15);
+            //TextBox
+            ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.TEXTBOX * (int)INDEX_PANEL.COUNT_INDEX_PANEL + (int)INDEX_PANEL.GROUP_SOURCES)];
+            this.Controls.Add(ctrl, 18, 15);
+            this.SetColumnSpan(ctrl, 30); this.SetRowSpan(ctrl, 5);
+            //Кнопка
+            ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.BUTTON * (int)INDEX_PANEL.COUNT_INDEX_PANEL + (int)INDEX_PANEL.GROUP_SOURCES)];
+            this.Controls.Add(ctrl, 48, 15);
+            this.SetColumnSpan(ctrl, 6); this.SetRowSpan(ctrl, 5);
+            //Label - наименование библиотеки
+            ctrl = m_dictControl[INDEX_CONTROL.LABEL_DLLNAME_GROUPSOURCES];
+            this.Controls.Add(ctrl, 18, 20);
+            this.SetColumnSpan(ctrl, 30); this.SetRowSpan(ctrl, 5);
+            //Кнопка - наименование библиотеки
+            ctrl = m_dictControl[INDEX_CONTROL.BUTTON_DLLNAME_GROUPSOURCES];
+            this.Controls.Add(ctrl, 48, 20);
+            this.SetColumnSpan(ctrl, 6); this.SetRowSpan(ctrl, 5);
             //Источники группы
-            ctrl = m_dictControl[INDEX_CONTROL.PANEL_LISTEDIT_SOURCES_OF_GROUP];
-            this.Controls.Add(ctrl, 5, 0);
-            this.SetColumnSpan(ctrl, 5); this.SetRowSpan(ctrl, 8);
-            //Группы сигналов
-            ctrl = m_dictControl[INDEX_CONTROL.PANEL_LISTEDIT_GROUP_SIGNALS];
-            this.Controls.Add(ctrl, 10, 0);
-            this.SetColumnSpan(ctrl, 5); this.SetRowSpan(ctrl, 8);            
+            ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.PANEL_LISTEDIT + (int)INDEX_PANEL.SOURCES_OF_GROUP)];
+            this.Controls.Add(ctrl, 18, 25);
+            this.SetColumnSpan(ctrl, 36); this.SetRowSpan(ctrl, 15);
             //Параметры соединения
             ctrl = m_dictControl[INDEX_CONTROL.DGV_PARAMETER_SOURCES];
-            this.Controls.Add(ctrl, 5, 8);
-            this.SetColumnSpan(ctrl, 5); this.SetRowSpan(ctrl, 8);
-            //Сигналы группы
-            ctrl = m_dictControl[INDEX_CONTROL.PANEL_LISTEDIT_SIGNALS_OF_GROUP];
-            this.Controls.Add(ctrl, 10, 8);
-            this.SetColumnSpan(ctrl, 5); this.SetRowSpan(ctrl, 8);
+            this.Controls.Add(ctrl, 18, 40);
+            this.SetColumnSpan(ctrl, 36); this.SetRowSpan(ctrl, 15);
+            //Группы сигналов
+            ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.PANEL_LISTEDIT + (int)INDEX_PANEL.GROUP_SIGNALS)];
+            this.Controls.Add(ctrl, 54, 0);
+            this.SetColumnSpan(ctrl, 36); this.SetRowSpan(ctrl, 42);
+            ////Сигналы группы
+            //ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.PANEL_LISTEDIT + (int)INDEX_PANEL.SIGNALS_OF_GROUP)];
+            //this.Controls.Add(ctrl, 27, 18);
+            //this.SetColumnSpan(ctrl, 18); this.SetRowSpan(ctrl, 30);
 
+            //Применение размещения элементов
             this.ResumeLayout(false);
             this.PerformLayout();
         }

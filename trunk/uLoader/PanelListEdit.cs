@@ -64,23 +64,32 @@ namespace uLoader
     {
         Label m_lblHeader;
         DataGridView m_dgvListItem;
-        TextBox m_textBoxNewItem;
-        Button m_btnAdding;
-        
-        public PanelListEdit(string name)
+        TextBox m_linkTextBoxNewItem;
+        Button m_linkBtnAdding;
+
+        public PanelListEdit(string name, TextBox tbxNewItem, Button btnAdd)
         {
+            m_linkTextBoxNewItem = tbxNewItem; m_linkBtnAdding = btnAdd;
+
             InitializeComponent();
 
             m_lblHeader.Text = name;
         }
 
-        public PanelListEdit(IContainer container, string name)
+        public PanelListEdit(IContainer container, string name, TextBox tbxNewItem, Button btnAdd)
         {
+            m_linkTextBoxNewItem = tbxNewItem; m_linkBtnAdding = btnAdd;
+
             container.Add(this);
 
             InitializeComponent();
 
             m_lblHeader.Text = name;
+        }
+
+        private void PanelListEdit_NewItemTextChanged(object obj, EventArgs ev)
+        {
+            m_linkBtnAdding.Enabled = m_linkTextBoxNewItem.Text.Length > 0;
         }
     }
 
@@ -116,30 +125,23 @@ namespace uLoader
 
             m_lblHeader = new Label ();
             m_dgvListItem = new DataGridView ();
-            m_textBoxNewItem = new TextBox ();
-            m_btnAdding = new Button ();
 
             this.SuspendLayout();
 
             m_lblHeader.Dock = DockStyle.Fill;
+            m_lblHeader.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
             this.Controls.Add (m_lblHeader, 0, 0);
-            this.SetColumnSpan (m_lblHeader, this.ColumnCount); this.SetRowSpan (m_lblHeader, 1);
+            this.SetColumnSpan (m_lblHeader, this.ColumnCount); this.SetRowSpan (m_lblHeader, 2);
 
             m_dgvListItem.Dock = DockStyle.Fill;
-            this.Controls.Add (m_dgvListItem, 0, 1);
+            this.Controls.Add (m_dgvListItem, 0, 2);
             this.SetColumnSpan (m_dgvListItem, this.ColumnCount); this.SetRowSpan (m_dgvListItem, 14);
-
-            m_textBoxNewItem.Dock = DockStyle.Fill;
-            this.Controls.Add (m_textBoxNewItem, 0, 15);
-            this.SetColumnSpan (m_textBoxNewItem, 14); this.SetRowSpan (m_textBoxNewItem, 1);
-
-            m_btnAdding.Dock = DockStyle.Fill;
-            m_btnAdding.Text = @"+";
-            this.Controls.Add (m_btnAdding, 14, 15);
-            this.SetColumnSpan (m_btnAdding, 2); this.SetRowSpan (m_btnAdding, 1);
 
             this.ResumeLayout(false);
             this.PerformLayout();
+
+            m_linkTextBoxNewItem.TextChanged += new EventHandler(PanelListEdit_NewItemTextChanged);
+            m_linkBtnAdding.Enabled = false;
         }
 
         #endregion
