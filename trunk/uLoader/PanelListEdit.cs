@@ -44,7 +44,7 @@ namespace uLoader
             this.SuspendLayout();
 
             this.Dock = DockStyle.Fill;
-            this.CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;            
+            //this.CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;            
 
             float val = (float)100 / this.ColumnCount;
             //Добавить стили "ширина" столлбцов

@@ -29,6 +29,16 @@ namespace uLoader
             m_TabCtrl.OnClose += new HTabCtrlEx.DelegateOnHTabCtrlEx(onCloseTabPage);
         }
 
+        void файлКонфигурацияЗагрузитьToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        void файлКонфигурацияСохранитьToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
         private void выходToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Close();
@@ -82,6 +92,13 @@ namespace uLoader
             }
             else
                 m_TabCtrl.RemoveTabPage(strNameMenuItem);
+
+            activateMenuItemConfig(конфигурацияToolStripMenuItem.Checked);
+        }
+
+        private void activateMenuItemConfig(bool activate)
+        {
+            this.файлКонфигурацияToolStripMenuItem.Enabled = activate;
         }
 
         private void оПрограммеToolStripMenuItem_Click(object sender, EventArgs e)
