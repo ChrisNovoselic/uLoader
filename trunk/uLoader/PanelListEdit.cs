@@ -22,7 +22,7 @@ namespace uLoader
         {
             container.Add(this);
 
-            this.ColumnCount = iColumnCount; this.RowCount = iRowCount;
+            this.ColumnCount = iColumnCount + 0; this.RowCount = iRowCount + 0;
 
             InitializeComponent();
         }
@@ -44,17 +44,19 @@ namespace uLoader
             this.SuspendLayout();
 
             this.Dock = DockStyle.Fill;
-            //this.CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;            
+            this.CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;            
 
             float val = (float)100 / this.ColumnCount;
             //Добавить стили "ширина" столлбцов
             for (int s = 0; s < this.ColumnCount - 0; s++)
                 this.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, val));
+            //this.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize, val));
 
             val = (float)100 / this.RowCount;
             //Добавить стили "высота" строк
             for (int s = 0; s < this.RowCount - 0; s++)
                 this.RowStyles.Add(new RowStyle(SizeType.Percent, val));
+            //this.RowStyles.Add(new RowStyle(SizeType.AutoSize, val));
 
             this.ResumeLayout(false);
             this.PerformLayout();

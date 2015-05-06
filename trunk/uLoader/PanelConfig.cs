@@ -14,8 +14,8 @@ namespace uLoader
     {
         private class PanelSource : PanelCommon
         {
-            static int COL_DIV = 1, ROW_DIV = 2
-            ,COL_COUNT = 20 , ROW_COUNT = 100 / ROW_DIV;
+            static int COL_DIV = 1, ROW_DIV = 1
+                , COL_COUNT = 4 / COL_DIV, ROW_COUNT = 1 / ROW_DIV;
 
             //Индексы панелей
             enum INDEX_PANEL
@@ -24,12 +24,12 @@ namespace uLoader
                     , COUNT_INDEX_PANEL
             };
             //Индексы групп элементов управления в панелях
-            enum INDEX_PANEL_CONTROL { LABEL, LISTEDIT, TEXTBOX, BUTTON };
+            enum INDEX_PANEL_CONTROL { GROUPBOX, LISTEDIT, TEXTBOX, BUTTON };
             //Ключи элементов управления
             enum INDEX_CONTROL
             {
-                LABEL
-                , LISTEDIT = LABEL + INDEX_PANEL.COUNT_INDEX_PANEL
+                GROUPBOX
+                , LISTEDIT = GROUPBOX + INDEX_PANEL.COUNT_INDEX_PANEL
                 , TEXTBOX = LISTEDIT + INDEX_PANEL.COUNT_INDEX_PANEL
                 , BUTTON = TEXTBOX + INDEX_PANEL.COUNT_INDEX_PANEL
                 , DGV_PARAMETER_SOURCES = BUTTON + INDEX_PANEL.COUNT_INDEX_PANEL
@@ -45,22 +45,21 @@ namespace uLoader
             {
                 @"ID", @"IP", @"PORT", @"DB_NAME", @"UID", @"PASSWORD"
             };
-                //Заголовки строк панелей
-                static string[] m_arHeaderPanelListEdit =
+            //Заголовки строк панелей
+            static string[] m_arHeaderPanelListEdit =
             {
                 @"Группы источников", @"Источники группы", @"Группы сигналов", @"Сигналы группы"
             };
             //Словарь элементов управления
             Dictionary<INDEX_CONTROL, Control> m_dictControl;
 
-            public PanelSource()
-                : base(COL_COUNT, ROW_COUNT)
+            public PanelSource() : base (COL_COUNT, ROW_COUNT)
             {
                 InitializeComponent();
             }
 
             public PanelSource(IContainer container)
-                : base(container, COL_COUNT, ROW_COUNT)
+                : base(COL_COUNT, ROW_COUNT)
             {
                 container.Add(this);
 
@@ -87,7 +86,10 @@ namespace uLoader
             {
                 components = new System.ComponentModel.Container();
 
-                Control ctrl; //Для "безличного" обращения к элементу интерфейса
+                //Для "безличного" обращения к элементу интерфейса
+                Control ctrl
+                    , ctrlChild;
+
                 ////Координаты, размеры для размещения элементов управления
                 //Dictionary<INDEX_CONTROL, Position> dictPos = new Dictionary<INDEX_CONTROL,Position> ();
                 ////Панели
@@ -127,18 +129,7 @@ namespace uLoader
                 //dictPos.Add(INDEX_CONTROL.BUTTON_SAVE, new Position(new Point(0, 0), new Size(0, 0)));
 
                 m_dictControl = new Dictionary<INDEX_CONTROL, Control>();
-                ////Создание объектов переключателей
-                ////Источник
-                //ctrl = new RadioButton();
-                //(ctrl as RadioButton).Text = @"Источник";
-                //(ctrl as RadioButton).Dock = DockStyle.Fill;
-                //(ctrl as RadioButton).Checked = true;
-                //m_dictControl.Add(INDEX_CONTROL.RADIOBUTTON_SOURCE, ctrl);
-                ////Назначение
-                //ctrl = new RadioButton();
-                //(ctrl as RadioButton).Text = @"Назначение";
-                //(ctrl as RadioButton).Dock = DockStyle.Fill;
-                //m_dictControl.Add(INDEX_CONTROL.RADIOBUTTON_DEST, ctrl);
+
                 ////Создание объектов кнопок
                 ////Загрузить
                 //ctrl = new Button();
@@ -152,12 +143,12 @@ namespace uLoader
                 //m_dictControl.Add(INDEX_CONTROL.BUTTON_SAVE, ctrl);
                 int i = -1
                     , j = -1;
-                //Создание подписей для новых элементов панелей
-                i = (int)INDEX_PANEL_CONTROL.LABEL;
+                //Создание ГроупБоксов для новых элементов панелей
+                i = (int)INDEX_PANEL_CONTROL.GROUPBOX;
                 for (j = 0; j < (int)INDEX_PANEL.COUNT_INDEX_PANEL; j++)
                 {
-                    ctrl = new Label(); ctrl.Dock = DockStyle.Bottom;
-                    (ctrl as Label).Text = m_arHeaderPanelListEdit[j];
+                    ctrl = new GroupBox(); ctrl.Dock = DockStyle.Fill;
+                    (ctrl as GroupBox).Text = m_arHeaderPanelListEdit[j];
                     m_dictControl.Add((INDEX_CONTROL)(i * (int)INDEX_PANEL.COUNT_INDEX_PANEL + j), ctrl);
                 }
                 //Создание объектов 'TextBox' для новых элементов панелей
@@ -185,7 +176,7 @@ namespace uLoader
                 //Создание "подписи" - наименование библиотеки для GROUP_SOURCES
                 ctrl = new Label();
                 (ctrl as Label).BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-                ctrl.Dock = DockStyle.Bottom;
+                //ctrl.Dock = DockStyle.Bottom;
                 m_dictControl.Add(INDEX_CONTROL.LABEL_DLLNAME_GROUPSOURCES, ctrl);
                 //Создание кнопки - выбор файла-библиотеки для GROUP_SOURCES
                 ctrl = new Button();
@@ -233,89 +224,88 @@ namespace uLoader
                 //this.Controls.Add(ctrl, 0, 13);
                 //this.SetColumnSpan(ctrl, 18); this.SetRowSpan(ctrl, 5);
 
+                TableLayoutPanel panelGroupBox = new PanelCommon(5, 8);
                 //Группы источников
-                //Подпись
-                ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.LABEL + (int)INDEX_PANEL.GROUP_SOURCES)];
+                //ГроупБокс
+                ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.GROUPBOX + (int)INDEX_PANEL.GROUP_SOURCES)];
                 this.Controls.Add(ctrl, 0, 0);
-                this.SetColumnSpan(ctrl, 5); this.SetRowSpan(ctrl, 6 / ROW_DIV);
+
+                ctrl.Controls.Add (panelGroupBox);
                 //Панель
-                ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.LISTEDIT + (int)INDEX_PANEL.GROUP_SOURCES)];
-                this.Controls.Add(ctrl, 0, 6 / ROW_DIV);
-                this.SetColumnSpan(ctrl, 5); this.SetRowSpan(ctrl, 74 / ROW_DIV);
+                ctrlChild = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.LISTEDIT + (int)INDEX_PANEL.GROUP_SOURCES)];
+                panelGroupBox.Controls.Add(ctrlChild, 0, 0);
+                panelGroupBox.SetColumnSpan(ctrlChild, 5); panelGroupBox.SetRowSpan(ctrlChild, 6);
                 //TextBox
-                ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.TEXTBOX * (int)INDEX_PANEL.COUNT_INDEX_PANEL + (int)INDEX_PANEL.GROUP_SOURCES)];
-                this.Controls.Add(ctrl, 0, 80 / ROW_DIV);
-                this.SetColumnSpan(ctrl, 4); this.SetRowSpan(ctrl, 10 / ROW_DIV);
+                ctrlChild = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.TEXTBOX + (int)INDEX_PANEL.GROUP_SOURCES)];
+                panelGroupBox.Controls.Add(ctrlChild, 0, 6);
+                panelGroupBox.SetColumnSpan(ctrlChild, 4); panelGroupBox.SetRowSpan(ctrlChild, 1);
                 //Кнопка
-                ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.BUTTON * (int)INDEX_PANEL.COUNT_INDEX_PANEL + (int)INDEX_PANEL.GROUP_SOURCES)];
-                this.Controls.Add(ctrl, 4, 80 / ROW_DIV);
-                this.SetColumnSpan(ctrl, 1); this.SetRowSpan(ctrl, 10 / ROW_DIV);
-                //Label - наименование библиотеки
-                ctrl = m_dictControl[INDEX_CONTROL.LABEL_DLLNAME_GROUPSOURCES];
-                this.Controls.Add(ctrl, 0, 90 / ROW_DIV);
-                this.SetColumnSpan(ctrl, 4); this.SetRowSpan(ctrl, 10 / ROW_DIV);
-                //Кнопка - наименование библиотеки
-                ctrl = m_dictControl[INDEX_CONTROL.BUTTON_DLLNAME_GROUPSOURCES];
-                this.Controls.Add(ctrl, 4, 90 / ROW_DIV);
-                this.SetColumnSpan(ctrl, 1); this.SetRowSpan(ctrl, 10 / ROW_DIV);
+                ctrlChild = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.BUTTON + (int)INDEX_PANEL.GROUP_SOURCES)];
+                panelGroupBox.Controls.Add(ctrlChild, 4, 6);
+                panelGroupBox.SetColumnSpan(ctrlChild, 1); panelGroupBox.SetRowSpan(ctrlChild, 1);
+                ////Label - наименование библиотеки
+                //ctrl = m_dictControl[INDEX_CONTROL.LABEL_DLLNAME_GROUPSOURCES];
+                //this.Controls.Add(ctrl, 0, 96 / ROW_DIV);
+                //this.SetColumnSpan(ctrl, 8); this.SetRowSpan(ctrl, 4 / ROW_DIV);
+                ////Кнопка - наименование библиотеки
+                //ctrl = m_dictControl[INDEX_CONTROL.BUTTON_DLLNAME_GROUPSOURCES];
+                //this.Controls.Add(ctrl, 8, 96 / ROW_DIV);
+                //this.SetColumnSpan(ctrl, 2); this.SetRowSpan(ctrl, 4 / ROW_DIV);
 
                 //Источники группы
-                //Подпись
-                ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.LABEL + (int)INDEX_PANEL.SOURCES_OF_GROUP)];
-                this.Controls.Add(ctrl, 5, 0);
-                this.SetColumnSpan(ctrl, 5); this.SetRowSpan(ctrl, 6 / ROW_DIV);
-                //Панель
-                ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.LISTEDIT + (int)INDEX_PANEL.SOURCES_OF_GROUP)];
-                this.Controls.Add(ctrl, 5, 6 / ROW_DIV);
-                this.SetColumnSpan(ctrl, 5); this.SetRowSpan(ctrl, 30 / ROW_DIV);
-                //TextBox
-                ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.TEXTBOX * (int)INDEX_PANEL.COUNT_INDEX_PANEL + (int)INDEX_PANEL.SOURCES_OF_GROUP)];
-                this.Controls.Add(ctrl, 5, 36 / ROW_DIV);
-                this.SetColumnSpan(ctrl, 4); this.SetRowSpan(ctrl, 10 / ROW_DIV);
-                //Кнопка
-                ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.BUTTON * (int)INDEX_PANEL.COUNT_INDEX_PANEL + (int)INDEX_PANEL.SOURCES_OF_GROUP)];
-                this.Controls.Add(ctrl, 9, 36 / ROW_DIV);
-                this.SetColumnSpan(ctrl, 1); this.SetRowSpan(ctrl, 10 / ROW_DIV);
-                //Параметры соединения
-                ctrl = m_dictControl[INDEX_CONTROL.DGV_PARAMETER_SOURCES];
-                this.Controls.Add(ctrl, 5, 46 / ROW_DIV);
-                this.SetColumnSpan(ctrl, 5); this.SetRowSpan(ctrl, 50 / ROW_DIV);
+                //ГроупБокс
+                ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.GROUPBOX + (int)INDEX_PANEL.SOURCES_OF_GROUP)];
+                this.Controls.Add(ctrl, 1, 0);
+                ////Панель
+                //ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.LISTEDIT + (int)INDEX_PANEL.SOURCES_OF_GROUP)];
+                //this.Controls.Add(ctrl, 10, 4 / ROW_DIV);
+                //this.SetColumnSpan(ctrl, 10); this.SetRowSpan(ctrl, 24 / ROW_DIV);
+                ////TextBox
+                //ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.TEXTBOX * (int)INDEX_PANEL.COUNT_INDEX_PANEL + (int)INDEX_PANEL.SOURCES_OF_GROUP)];
+                //this.Controls.Add(ctrl, 10, 28 / ROW_DIV);
+                //this.SetColumnSpan(ctrl, 8); this.SetRowSpan(ctrl, 4 / ROW_DIV);
+                ////Кнопка
+                //ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.BUTTON * (int)INDEX_PANEL.COUNT_INDEX_PANEL + (int)INDEX_PANEL.SOURCES_OF_GROUP)];
+                //this.Controls.Add(ctrl, 18, 28 / ROW_DIV);
+                //this.SetColumnSpan(ctrl, 2); this.SetRowSpan(ctrl, 4 / ROW_DIV);
+                ////Параметры соединения
+                //ctrl = m_dictControl[INDEX_CONTROL.DGV_PARAMETER_SOURCES];
+                //this.Controls.Add(ctrl, 10, 32 / ROW_DIV);
+                //this.SetColumnSpan(ctrl, 10); this.SetRowSpan(ctrl, 16 / ROW_DIV);
 
                 //Группы сигналов
                 //Подпись
-                ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.LABEL + (int)INDEX_PANEL.GROUP_SIGNALS)];
-                this.Controls.Add(ctrl, 10, 0);
-                this.SetColumnSpan(ctrl, 5); this.SetRowSpan(ctrl, 6 / ROW_DIV);
-                //Панель
-                ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.LISTEDIT + (int)INDEX_PANEL.GROUP_SIGNALS)];
-                this.Controls.Add(ctrl, 10, 6 / ROW_DIV);
-                this.SetColumnSpan(ctrl, 5); this.SetRowSpan(ctrl, 66 / ROW_DIV);
-                //TextBox
-                ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.TEXTBOX * (int)INDEX_PANEL.COUNT_INDEX_PANEL + (int)INDEX_PANEL.GROUP_SIGNALS)];
-                this.Controls.Add(ctrl, 10, 72 / ROW_DIV);
-                this.SetColumnSpan(ctrl, 4); this.SetRowSpan(ctrl, 10 / ROW_DIV);
-                //Кнопка
-                ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.BUTTON * (int)INDEX_PANEL.COUNT_INDEX_PANEL + (int)INDEX_PANEL.GROUP_SIGNALS)];
-                this.Controls.Add(ctrl, 14, 72 / ROW_DIV);
-                this.SetColumnSpan(ctrl, 1); this.SetRowSpan(ctrl, 10 / ROW_DIV);
+                ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.GROUPBOX + (int)INDEX_PANEL.GROUP_SIGNALS)];
+                this.Controls.Add(ctrl, 2, 0);
+                ////Панель
+                //ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.LISTEDIT + (int)INDEX_PANEL.GROUP_SIGNALS)];
+                //this.Controls.Add(ctrl, 20, 4 / ROW_DIV);
+                //this.SetColumnSpan(ctrl, 10); this.SetRowSpan(ctrl, 52 / ROW_DIV);
+                ////TextBox
+                //ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.TEXTBOX * (int)INDEX_PANEL.COUNT_INDEX_PANEL + (int)INDEX_PANEL.GROUP_SIGNALS)];
+                //this.Controls.Add(ctrl, 20, 96 / ROW_DIV);
+                //this.SetColumnSpan(ctrl, 8); this.SetRowSpan(ctrl, 4 / ROW_DIV);
+                ////Кнопка
+                //ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.BUTTON * (int)INDEX_PANEL.COUNT_INDEX_PANEL + (int)INDEX_PANEL.GROUP_SIGNALS)];
+                //this.Controls.Add(ctrl, 20, 96 / ROW_DIV);
+                //this.SetColumnSpan(ctrl, 2); this.SetRowSpan(ctrl, 4 / ROW_DIV);
 
-                //Сигналы группы
-                //Подпись
-                ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.LABEL + (int)INDEX_PANEL.SIGNALS_OF_GROUP)];
-                this.Controls.Add(ctrl, 15, 0);
-                this.SetColumnSpan(ctrl, 5); this.SetRowSpan(ctrl, 6 / ROW_DIV);
-                //Панель
-                ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.LISTEDIT + (int)INDEX_PANEL.SIGNALS_OF_GROUP)];
-                this.Controls.Add(ctrl, 15, 6 / ROW_DIV);
-                this.SetColumnSpan(ctrl, 5); this.SetRowSpan(ctrl, 30 / ROW_DIV);
-                //TextBox
-                ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.TEXTBOX * (int)INDEX_PANEL.COUNT_INDEX_PANEL + (int)INDEX_PANEL.SIGNALS_OF_GROUP)];
-                this.Controls.Add(ctrl, 15, 66 / ROW_DIV);
-                this.SetColumnSpan(ctrl, 4); this.SetRowSpan(ctrl, 10 / ROW_DIV);
-                //Кнопка
-                ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.BUTTON * (int)INDEX_PANEL.COUNT_INDEX_PANEL + (int)INDEX_PANEL.SIGNALS_OF_GROUP)];
-                this.Controls.Add(ctrl, 19, 66 / ROW_DIV);
-                this.SetColumnSpan(ctrl, 1); this.SetRowSpan(ctrl, 10 / ROW_DIV);
+                ////Сигналы группы
+                //ГроупБокс
+                ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.GROUPBOX + (int)INDEX_PANEL.SIGNALS_OF_GROUP)];
+                this.Controls.Add(ctrl, 3, 0);
+                ////Панель
+                //ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.LISTEDIT + (int)INDEX_PANEL.SIGNALS_OF_GROUP)];
+                //this.Controls.Add(ctrl, 30, 4 / ROW_DIV);
+                //this.SetColumnSpan(ctrl, 10); this.SetRowSpan(ctrl, 92 / ROW_DIV);
+                ////TextBox
+                //ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.TEXTBOX * (int)INDEX_PANEL.COUNT_INDEX_PANEL + (int)INDEX_PANEL.SIGNALS_OF_GROUP)];
+                //this.Controls.Add(ctrl, 30, 96 / ROW_DIV);
+                //this.SetColumnSpan(ctrl, 8); this.SetRowSpan(ctrl, 4 / ROW_DIV);
+                ////Кнопка
+                //ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.BUTTON * (int)INDEX_PANEL.COUNT_INDEX_PANEL + (int)INDEX_PANEL.SIGNALS_OF_GROUP)];
+                //this.Controls.Add(ctrl, 38, 96 / ROW_DIV);
+                //this.SetColumnSpan(ctrl, 2); this.SetRowSpan(ctrl, 4 / ROW_DIV);
 
                 //Применение размещения элементов
                 this.ResumeLayout(false);
