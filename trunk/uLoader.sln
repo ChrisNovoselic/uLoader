@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "uLoader", "uLoader\uLoader.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HClassLibrary", "..\HClassLibrary\HClassLibrary.csproj", "{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "biysktmora", "biysktmora\biysktmora.csproj", "{2086F646-4759-41EA-A9E3-76662D95127D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +37,16 @@ Global
 		{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}.Release|x86.ActiveCfg = Release|Any CPU
+		{2086F646-4759-41EA-A9E3-76662D95127D}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{2086F646-4759-41EA-A9E3-76662D95127D}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{2086F646-4759-41EA-A9E3-76662D95127D}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{2086F646-4759-41EA-A9E3-76662D95127D}.Debug|x86.ActiveCfg = Debug|x86
+		{2086F646-4759-41EA-A9E3-76662D95127D}.Debug|x86.Build.0 = Debug|x86
+		{2086F646-4759-41EA-A9E3-76662D95127D}.Release|Any CPU.ActiveCfg = Release|x86
+		{2086F646-4759-41EA-A9E3-76662D95127D}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{2086F646-4759-41EA-A9E3-76662D95127D}.Release|Mixed Platforms.Build.0 = Release|x86
+		{2086F646-4759-41EA-A9E3-76662D95127D}.Release|x86.ActiveCfg = Release|x86
+		{2086F646-4759-41EA-A9E3-76662D95127D}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

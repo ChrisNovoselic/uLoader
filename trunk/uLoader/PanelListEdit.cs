@@ -64,19 +64,19 @@ namespace uLoader
         #endregion
     }
 
-    public partial class DataGridViewListItem: DataGridView
+    public partial class DataGridViewConfigItem: DataGridView
     {
         TextBox m_linkTextBoxNewItem;
         Button m_linkBtnAdding;
 
-        public DataGridViewListItem(TextBox tbxNewItem, Button btnAdd)
+        public DataGridViewConfigItem(TextBox tbxNewItem, Button btnAdd)
         {
             m_linkTextBoxNewItem = tbxNewItem; m_linkBtnAdding = btnAdd;
 
             InitializeComponent();
         }
 
-        public DataGridViewListItem(IContainer container, TextBox tbxNewItem, Button btnAdd)
+        public DataGridViewConfigItem(IContainer container, TextBox tbxNewItem, Button btnAdd)
         {
             m_linkTextBoxNewItem = tbxNewItem; m_linkBtnAdding = btnAdd;
 
@@ -91,7 +91,7 @@ namespace uLoader
         }
     }
 
-    partial class DataGridViewListItem
+    partial class DataGridViewConfigItem
     {
         /// <summary>
         /// Требуется переменная конструктора.

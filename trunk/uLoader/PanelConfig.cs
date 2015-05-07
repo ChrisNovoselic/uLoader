@@ -39,7 +39,6 @@ namespace uLoader
                 , RADIOBUTTON_DEST
                 , BUTTON_UPDATE, BUTTON_SAVE
             };
-
             //Заголовки строк параметров сединения
             static string[] m_arHeaderRowParameterSources =
             {
@@ -170,7 +169,7 @@ namespace uLoader
                 i = (int)INDEX_PANEL_CONTROL.LISTEDIT;
                 for (j = 0; j < (int)INDEX_PANEL.COUNT_INDEX_PANEL; j++)
                     m_dictControl.Add((INDEX_CONTROL)(i * (int)INDEX_PANEL.COUNT_INDEX_PANEL + j)
-                        , new DataGridViewListItem(
+                        , new DataGridViewConfigItem(
                         m_dictControl[(INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.TEXTBOX * (int)INDEX_PANEL.COUNT_INDEX_PANEL + j)] as TextBox
                         , m_dictControl[(INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.BUTTON * (int)INDEX_PANEL.COUNT_INDEX_PANEL + j)] as Button
                     ));
