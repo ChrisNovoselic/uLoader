@@ -50,6 +50,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="dgvConfigItem.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="FormAbout.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -71,9 +74,6 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="PanelLoader.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="PanelListEdit.cs">
       <SubType>Component</SubType>
     </Compile>
     <EmbeddedResource Include="FormAbout.resx">

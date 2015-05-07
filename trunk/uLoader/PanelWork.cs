@@ -59,21 +59,23 @@ namespace uLoader
 
             this.SuspendLayout();
 
-            Type typeLoader;
+            Type typeLoader = typeof (PanelLoader);
             m_arLoader = new PanelLoader[(int)INDEX_LOADER.COUNT_INDEX_LOADER];
             for (int i = (int)INDEX_LOADER.SOURCE; i < (int)INDEX_LOADER.COUNT_INDEX_LOADER; i++)
             {
                 switch (i)
                 {
                     case (int)INDEX_LOADER.SOURCE:
-                        m_arLoader[i] = new PanelLoaderSource ();
+                        typeLoader = typeof(PanelLoaderSource);
                         break;
                     case (int)INDEX_LOADER.DEST:
-                        m_arLoader[i] = new PanelLoaderDest();
+                        typeLoader = typeof(PanelLoaderDest);
                         break;
                     default:
                         break;
-                }                
+                }
+                m_arLoader[i] = Activator.CreateInstance(typeLoader) as PanelLoader;
+
                 this.Controls.Add(m_arLoader[i], 0, i * this.RowCount / 2);
                 this.SetColumnSpan(m_arLoader[i], this.ColumnCount); this.SetRowSpan(m_arLoader[i], this.RowCount / 2);
             }

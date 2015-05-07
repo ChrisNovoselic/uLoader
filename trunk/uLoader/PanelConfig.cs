@@ -8,6 +8,8 @@ using System.Text;
 using System.Windows.Forms; //Control
 using System.Drawing; //Point
 
+using HClassLibrary;
+
 namespace uLoader
 {
     public partial class PanelConfig : PanelCommon

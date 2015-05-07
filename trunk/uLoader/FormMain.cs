@@ -14,10 +14,16 @@ namespace uLoader
     public partial class FormMain : Form
     {
         enum INDEX_TAB { WORK, CONFIG, COUNT_INDEX_TAB };
-        
+
+        private PanelWork m_panelWork;
+        private PanelConfig m_panelConfig;        
+
         public FormMain()
         {
             InitializeComponent();
+
+            m_panelWork = new PanelWork ();
+            m_panelConfig = new PanelConfig ();
 
             работаToolStripMenuItem.CheckOnClick =
             конфигурацияToolStripMenuItem.CheckOnClick =
@@ -49,7 +55,7 @@ namespace uLoader
             if (работаToolStripMenuItem.Checked == true)
             {
                 m_TabCtrl.AddTabPage(работаToolStripMenuItem.Text, 1, HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
-                m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add(new PanelWork());
+                m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add(m_panelWork);
             }
             else
                 ;
@@ -88,7 +94,7 @@ namespace uLoader
             if (конфигурацияToolStripMenuItem.Checked == true)
             {
                 m_TabCtrl.AddTabPage(strNameMenuItem, 2, HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
-                m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add(new PanelConfig ());
+                m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add(m_panelConfig);
             }
             else
                 m_TabCtrl.RemoveTabPage(strNameMenuItem);
