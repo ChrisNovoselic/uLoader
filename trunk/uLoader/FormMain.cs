@@ -24,6 +24,12 @@ namespace uLoader
         {
             InitializeComponent();
 
+            m_fileINI = new FileINI ();
+            string val = m_fileINI.GetMainValueOfKey (@"Position");
+            val = m_fileINI.GetSecValueOfKey(@"GDst-GSgnls0", @"Sgnl1");
+            val = m_fileINI.GetSecValueOfKey(@"GSrc-GSgnls0", @"Sgnl1");
+            val = m_fileINI.GetSecValueOfKey(@"GDst-GD1", @"D1");
+
             m_panelWork = new PanelWork ();
             m_panelConfig = new PanelConfig ();
 

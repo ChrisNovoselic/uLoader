@@ -12,7 +12,7 @@ using HClassLibrary;
 
 namespace biysktmora
 {
-    public class HBiyskTMOra : HStates
+    public class HBiyskTMOra : HHandlerDb
     {
         protected struct SIGNAL
         {
@@ -121,23 +121,16 @@ namespace biysktmora
         {
             ClearStates ();
 
-            states.Add((int)StatesMachine.CurrentTimeSource);
-            states.Add((int)StatesMachine.SourceValues);
+            AddState((int)StatesMachine.CurrentTimeSource);
+            AddState((int)StatesMachine.SourceValues);
 
-            try
-            {
-                semaState.Release(1);
-            }
-            catch (Exception e)
-            {
-                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HBiyskTMOra::ChangeState () - semaState.Release(1)...");
-            }
+            Run(@"HBiyskTMOra::ChangeState ()");
         }
 
         public override void StartDbInterfaces ()
         {
             m_dictIdListeners.Add (0, new int [] { 0 });
-            register (0, new ConnectionSettings(@"OraSOTIASSO-ORD", host, Int32.Parse(port), dataSource, uid, pswd), @"", 0);
+            register(0, 0, new ConnectionSettings(@"OraSOTIASSO-ORD", host, Int32.Parse(port), dataSource, uid, pswd), @"");
         }
 
         public override void Start()
@@ -151,9 +144,9 @@ namespace biysktmora
         {
         }
 
-        protected override int StateCheckResponse(int state, out bool error, out DataTable table)
+        protected override int StateCheckResponse(int state, out bool error, out object table)
         {
-            return Response(out error, out table);
+            return response(out error, out table);
         }
 
         protected override int StateRequest(int state)
@@ -180,17 +173,18 @@ namespace biysktmora
             return iRes;
         }
 
-        protected override int StateResponse(int state, DataTable table)
+        protected override int StateResponse(int state, object obj)
         {
             int iRes = 0;
+            DataTable table = obj as DataTable;
 
             switch (state)
             {
                 case (int)StatesMachine.CurrentTimeSource:
-                    Console.WriteLine(((DateTime)table.Rows[0][0]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
+                    Console.WriteLine(((DateTime)(table as DataTable).Rows[0][0]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
                     break;
                 case (int)StatesMachine.SourceValues:
-                    Console.WriteLine(@"Получено строк: " + table.Rows.Count);
+                    Console.WriteLine(@"Получено строк: " + (table as DataTable).Rows.Count);
                     if (results == null)
                     {
                         results = new DataTable ();
@@ -212,15 +206,15 @@ namespace biysktmora
                     DataRow [] arSel;
                     foreach (DataRow rRes in results.Rows)
                     {
-                        arSel = table.Select(@"ID=" + rRes[@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
+                        arSel = (table as DataTable).Select(@"ID=" + rRes[@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
                         iDupl += arSel.Length;
                         foreach (DataRow rDel in arSel)
-                            table.Rows.Remove (rDel);
+                            (table as DataTable).Rows.Remove(rDel);
                         //table.AcceptChanges ();
                     }
 
                     DataTable tableIns = new DataTable ();
-                    arSel = table.Select (string.Empty, @"ID, DATETIME DESC");
+                    arSel = (table as DataTable).Select(string.Empty, @"ID, DATETIME DESC");
                     //foreach (DataRow r in arSel)
                     for (int i = 0; i < arSel.Length; i ++)
                     {
