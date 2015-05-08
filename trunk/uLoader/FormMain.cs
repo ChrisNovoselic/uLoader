@@ -13,6 +13,8 @@ namespace uLoader
 {
     public partial class FormMain : Form
     {
+        private FileINI m_fileINI;
+        
         enum INDEX_TAB { WORK, CONFIG, COUNT_INDEX_TAB };
 
         private PanelWork m_panelWork;

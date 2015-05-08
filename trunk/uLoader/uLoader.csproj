@@ -53,6 +53,9 @@
     <Compile Include="dgvConfigItem.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="FileINI.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="FormAbout.cs">
       <SubType>Form</SubType>
     </Compile>
