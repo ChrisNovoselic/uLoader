@@ -9,270 +9,373 @@ namespace uLoader
 {
     public partial class FormMain
     {
-        private class FileINI : HClassLibrary.FileINI
-        {            
-            private static char s_chDelimeter = '-';
+        public class FileINI : HClassLibrary.FileINI
+        {
             /// <summary>
-            /// Параметры сигнала в группе сигналов (источник)
+            /// Перечисление для индексирования 'SEC_SRC_TYPES' (источник, назначение)
             /// </summary>
-            private class SIGNAL_SOURCE
+            private enum INDEX_SRC { SOURCE, DEST
+                , COUNT_INDEX_SRC };
+            /// <summary>
+            /// Перечисление типов групп для панели (группы источников, группы сигналов)
+            /// </summary>
+            private enum INDEX_TYPE_GROUP
             {
-                public int id;
-                public string id_name;
+                SRC, SIGNAL
+                    , COUNT_INDEX_TYPE_GROUP
+            };
+            /// <summary>
+            /// Базовый класс для группы элементов (источников данных, сигналов)
+            /// </summary>
+            private class ITEM_SRC
+            {
+                public string m_strName;
+                public string[] m_keys;
+            }
+            /// <summary>
+            /// Параметры сигнала в группе сигналов (источник, назначение)
+            /// </summary>            
+            private class SIGNAL_SRC
+            {
+                public Dictionary<string, string> m_dictPars;
 
-                public SIGNAL_SOURCE ()
+                public SIGNAL_SRC()
                 {
-                    id = 0;
-                    id_name = string.Empty;
+                    m_dictPars = new Dictionary<string, string>();
                 }
             };
             /// <summary>
-            /// Параметры сигнала в группе сигналов (назначение)
+            /// Параметры группы сигналов (источник, назначение)
             /// </summary>
-            private class SIGNAL_DEST : SIGNAL_SOURCE
-            {
-                public int id_src;
-            };
-            /// <summary>
-            /// Параметры группы сигналов (источник)
-            /// </summary>
-            private class GROUP_SIGNALS_SOURCE
-            {
-                public List<SIGNAL_SOURCE> listSgnls;
-            };
-            /// <summary>
-            /// Параметры группы сигналов (назначение)
-            /// </summary>
-            private class GROUP_SIGNALS_DEST
-            {
-                public List<SIGNAL_DEST> listSgnls;
-            };
+            private class GROUP_SIGNALS_SRC : ITEM_SRC
+            {                
+                public List<SIGNAL_SRC> m_listSgnls;
+            };            
             /// <summary>
             /// Параметры группы источников информации
             /// </summary>
-            private class GROUP_SRC
+            private class GROUP_SRC : ITEM_SRC
             {
-                public string Name;
                 public List<ConnectionSettings> m_listConnSett;
             };
             /// <summary>
-            /// Параметры группы источников информации (источник)
+            /// Параметры панели (источник, назначение)
             /// </summary>
-            private class GROUP_SRC_SOURCE : GROUP_SRC
+            private class SRC
             {
-                public List <GROUP_SIGNALS_SOURCE> m_listGroupSgnls;
-            };
+                public List<GROUP_SRC> m_listGroupSrc;
+                public List<GROUP_SIGNALS_SRC> m_listGroupSgnlsSrc;
+            }
             /// <summary>
-            /// Параметры группы источников информации (назначение)
+            /// Индексы для ключей - источники
             /// </summary>
-            private class GROUP_SRC_DEST : GROUP_SRC
-            {
-                public List<GROUP_SIGNALS_DEST> m_listGroupSgnls;
-            };
-            
-            enum INDEX_KEY_SRC { GROUP_SRC, SRC_OF_GROUP, SRC
+            enum INDEX_KEY_SRC { GROUP_SRC, SRC_OF_GROUP
                 , COUNT_INDEX_KEY_SRC
             };
-            enum INDEX_KEY_SIGNAL { GROUP_SRC, GROUP_SIGNALS, SIGNAL_OF_GROUP
+            /// <summary>
+            /// Индексы для ключей - сигналы
+            /// </summary>
+            enum INDEX_KEY_SIGNAL { GROUP_SIGNALS, SIGNAL_OF_GROUP
                 , COUNT_INDEX_KEY_SIGNAL
             };
-
-            private static string [] SEC_KEY_SOURCE = {@"GSrc", @"GS", @"S"}
-                , SEC_KEY_DEST = {@"GDst", @"GD", @"D"}
-                , SEC_KEY_SOURCE_SIGNALS = { @"GSrc", @"GSgnls", @"Sgnl" }
-                , SEC_KEY_DEST_SIGNALS = { @"GDst", @"GSgnls", @"Sgnl" };
-
-            private List<GROUP_SRC_SOURCE> m_listGroupSrc;
-            private List<GROUP_SRC_DEST> m_listGroupDest;
+            /// <summary>
+            /// Значения из главной секции - составные части "смысловых" секций, ключи в "смысловых" секциях
+            /// </summary>
+            string[] SEC_SRC_TYPES
+                , KEY_TREE_SRC
+                , KEY_TREE_SGNLS;
+            string KEY_PARS;
+            /// <summary>
+            /// Список групп источников
+            /// </summary>
+            SRC []m_arListGroupValues;
 
             public FileINI ()
                 : base (@"setup.ini", true)
             {
-                m_listGroupSrc = new List<GROUP_SRC_SOURCE> ();
-                m_listGroupDest = new List<GROUP_SRC_DEST> ();
+                //Получить наименования частей секций
+                SEC_SRC_TYPES = GetMainValueOfKey(@"SEC_SRC_TYPES").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUES]);
+                KEY_TREE_SRC = GetMainValueOfKey(@"KEY_TREE_SRC").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUES]);
+                KEY_TREE_SGNLS = GetMainValueOfKey(@"KEY_TREE_SGNLS").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUES]);
+                KEY_PARS = GetMainValueOfKey(@"KEY_PARS");
 
-                int i =-1;
-                //Получить наименование секции для группы источников (источник)
-                string sec = getSrcSec(INDEX_KEY_SRC.GROUP_SRC)
-                    , key = string.Empty;
-                //Получить словарь параметров для группы источников (источник)
-                Dictionary<string, string> dictValues = getSecValues(sec);
-
-                //Заполнить группу источников (источник)
-                if (! (dictValues == null))
+                //Создать все объекты, списки для значений из файла конфигурации
+                m_arListGroupValues = new SRC [(int)INDEX_SRC.COUNT_INDEX_SRC];
+                for (INDEX_SRC i = INDEX_SRC.SOURCE; i < INDEX_SRC.COUNT_INDEX_SRC; i++)
+                    m_arListGroupValues[(int)i] = new SRC();
+                foreach (SRC src in m_arListGroupValues)
                 {
-                    i = 0;
-                    //Получить все источники данных
-                    while (true)
+                    src.m_listGroupSrc = new List<GROUP_SRC>();
+                    src.m_listGroupSgnlsSrc = new List<GROUP_SIGNALS_SRC>();
+                }
+
+                for (INDEX_SRC i = INDEX_SRC.SOURCE; i < INDEX_SRC.COUNT_INDEX_SRC; i++)
+                {
+                    //Получить наименование секции для группы источников (в ~ от 'i')
+                    string sec = SEC_SRC_TYPES[(int)i];
+                    //Получить словарь параметров для панели 'Источник'
+                    Dictionary<string, string> dictSecValues = getSecValues(sec);
+
+                    //Получить группы источников, сигналов (источник)
+                    if (!(dictSecValues == null))
                     {
-                        //Получить ключ из пары (ключ-значение)
-                        key = SEC_KEY_SOURCE[(int)INDEX_KEY_SRC.SRC_OF_GROUP] + i.ToString();
+                        //Получить все группы источников
+                        fillGroupValues(dictSecValues, sec, KEY_TREE_SRC[(int)INDEX_KEY_SRC.GROUP_SRC], i, typeof(GROUP_SRC));
 
-                        if (dictValues.ContainsKey(key) == true)
+                        //Получить все группы сигналов
+                        fillGroupValues(dictSecValues, sec, KEY_TREE_SGNLS[(int)INDEX_KEY_SRC.GROUP_SRC], i, typeof(GROUP_SIGNALS_SRC));
+                    }
+                    else
+                        ;
+                }
+            }
+
+            /// <summary>
+            /// Заполнить объект группы значениями из секции файла конфигурации
+            /// </summary>
+            /// <param name="dictValues">Словарь значений с перечислением всех групп панели</param>
+            /// <param name="secTarget">Наименование целевой секции панели (источник, назначение)</param>
+            /// <param name="secPart">Часть наименования секции со значенями для группы</param>
+            /// <param name="indxNewSrc">Индекс панели (источник, назначение)</param>
+            /// <param name="typeNewGroup">Тип группы</param>
+            /// <returns>Результат выполнения функции</returns>
+            private int fillGroupValues(Dictionary<string, string> dictValues, string secTarget, string secPart, INDEX_SRC indxNewSrc, Type typeNewGroup)
+            {
+                int iRes = 0 //Результат
+                    , i = -1; //Номер группы
+
+                string key = string.Empty;
+
+                i = 0;
+                //Получить все группы источников
+                while (true)
+                {
+                    //Получить часть наименования секции
+                    key = secPart + i.ToString();
+
+                    if (dictValues.ContainsKey(key) == true)
+                    {
+                        //Добавить группу...
+                        addGroupValues(indxNewSrc, typeNewGroup, secTarget + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + key);                        
+                    }
+                    else
+                        break;
+                    //Увеличить индекс группы
+                    i ++;
+                }
+
+                return iRes;
+            }
+
+            /// <summary>
+            /// Добавить группу и ее значения
+            /// </summary>
+            /// <param name="indxSrc">Индекс панели (источник, неазначение)</param>
+            /// <param name="type">Тип группы</param>
+            /// <param name="secGroup">Наименование для секции со значениями параметров группы</param>
+            /// <returns>Результат выполнения</returns>
+            private int addGroupValues (INDEX_SRC indxSrc, Type type, string secGroup)
+            {
+                int iRes = 0; //Результат выполнения
+                //Индекс типа элемента группы (источник, сигнал)
+                INDEX_TYPE_GROUP typeGroup;
+
+                ////Вариант №1
+                //switch (typeof(type))
+                //{
+                //    default:
+                //        break;
+                //}
+                //Вариант №2
+                ITEM_SRC itemSrc = null;
+                if (type == typeof(GROUP_SRC))
+                {//Источник
+                    typeGroup = INDEX_TYPE_GROUP.SRC;
+                }
+                else
+                    if (type == typeof(GROUP_SIGNALS_SRC))
+                    {//Сигнал
+                        typeGroup = INDEX_TYPE_GROUP.SIGNAL;
+                    }
+                    else
+                        throw new Exception(@"FileINI::addGroupValues () - неизвестный тип группы: " + type.FullName);
+
+                //Добавить элемент группы
+                switch (typeGroup)
+                {
+                    case INDEX_TYPE_GROUP.SRC: //Добавить источник
+                        itemSrc = new GROUP_SRC();
+                        m_arListGroupValues[(int)indxSrc].m_listGroupSrc.Add(itemSrc as GROUP_SRC);
+                        break;
+                    case INDEX_TYPE_GROUP.SIGNAL: //Добавить сигнал
+                        itemSrc = new GROUP_SIGNALS_SRC();
+                        m_arListGroupValues[(int)indxSrc].m_listGroupSgnlsSrc.Add(itemSrc as GROUP_SIGNALS_SRC);
+                        break;
+                    default:
+                        break;
+                }
+
+                //Проверить наличие секции
+                if ((isSec(secGroup) == true)
+                    && (! (itemSrc == null)))
+                {
+                    //Присвоить наименование группы элементов (источников, сигналов)
+                    itemSrc.m_strName = secGroup;
+                    
+                    int j = -1; //Индекс для ключа элемента группы (источник, сигнал) в секции
+                    string key = string.Empty; //Ключ для элемента группы (источник, сигнал) в секции
+
+                    //Получить словарь значений секции
+                    Dictionary<string, string> dictSecValues = getSecValues(secGroup);
+                    string[] values //ЗначениЕ для элемента группы
+                        , vals; //ЗначениЕ для 1-го параметра элемента группы
+                    //ЗначениЯ для элемента группы
+                    // только для источника, т.к. для сигнала ... (см. 'SIGNAL_SRC')
+                    Dictionary <string, string> dictItemValues;
+
+                    //Проверить наличие значений в секции
+                    if (!(dictSecValues == null))
+                    {
+                        //Получить значения параметров для элемента группы (источник, сигнал)
+                        itemSrc.m_keys = GetSecValueOfKey(secGroup, KEY_PARS).Split (s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]);
+
+                        j = 0; //1-ый индекс == 0
+                        while (true)
                         {
-                            //Добавить группу источников
-                            m_listGroupSrc.Add (new GROUP_SRC_SOURCE ());
-                            m_listGroupSrc[i].Name = dictValues[key];
-
-                            //Получить наименование для секции с источниками из группы источников
-                            sec = getSrcSec(INDEX_KEY_SRC.SRC_OF_GROUP) + i.ToString ();
-
-                            if (isSec (sec) == true)
+                            //Сфрмировать ключ элемента группы в секции
+                            switch (typeGroup)
                             {
-                                int j = -1;
-                                //Получить словарь параметров соединения
-                                Dictionary<string, string> dictSrcValues = getSecValues(sec);
+                                case INDEX_TYPE_GROUP.SRC: //Источник
+                                    key = KEY_TREE_SRC[(int)INDEX_KEY_SRC.SRC_OF_GROUP];
+                                    break;
+                                case INDEX_TYPE_GROUP.SIGNAL: //Сигнал
+                                    key = KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.SIGNAL_OF_GROUP];
+                                    break;
+                                default:
+                                    break;
+                            }
 
-                                if (! (dictValues == null))
-                                {
-                                    j = 0;
-                                    while (true)
+                            //Добавить к ключу индекс
+                            key += j.ToString();
+
+                            //Проверить наличие ключа в сеекции
+                            if (isSecKey(secGroup, key) == true)
+                            {
+                                //Получить значение по ключу для элмента группы (источник, сигнал)
+                                values = GetSecValueOfKey(secGroup, key).Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]);
+
+                                if (values.Length == itemSrc.m_keys.Length)
+                                    switch (typeGroup)
                                     {
-                                        break;
+                                        case INDEX_TYPE_GROUP.SRC: //Источник
+                                            //Инициализация, если элемент группы 1-ый
+                                            if ((itemSrc as GROUP_SRC).m_listConnSett == null)
+                                                (itemSrc as GROUP_SRC).m_listConnSett = new List<ConnectionSettings>();
+                                            else
+                                                ;
+
+                                            dictItemValues = new Dictionary<string, string>();
+                                            foreach (string valPar in values)
+                                            {
+                                                vals = valPar.Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUE]);
+                                                if ((vals.Length == 2)
+                                                    //&& (! (itemSrc.m_keys.IndexOf () < 0))
+                                                    )
+                                                    dictItemValues.Add(vals[0], vals[1]);
+                                                else
+                                                    throw new Exception(@"FileINI::ctor () - addGroupValues () ...");
+                                            }
+
+                                            (itemSrc as GROUP_SRC).m_listConnSett.Add(new ConnectionSettings(
+                                                dictItemValues[@"NAME_SHR"]
+                                                , dictItemValues[@"IP"]
+                                                , Int32.Parse(dictItemValues[@"PORT"])
+                                                , dictItemValues[@"DB_NAME"]
+                                                , dictItemValues[@"UID"]
+                                                , dictItemValues[@"PSWD*"]
+                                                ));
+                                            break;
+                                        case INDEX_TYPE_GROUP.SIGNAL: //Сигнал
+                                            //Инициализация, если элемент группы 1-ый
+                                            if ((itemSrc as GROUP_SIGNALS_SRC).m_listSgnls == null)
+                                                (itemSrc as GROUP_SIGNALS_SRC).m_listSgnls = new List<SIGNAL_SRC>();
+                                            else
+                                                ;
+
+                                            (itemSrc as GROUP_SIGNALS_SRC).m_listSgnls.Add (new SIGNAL_SRC ());
+                                            dictItemValues = (itemSrc as GROUP_SIGNALS_SRC).m_listSgnls[(itemSrc as GROUP_SIGNALS_SRC).m_listSgnls.Count - 1].m_dictPars;
+                                            foreach (string valPar in values)
+                                            {
+                                                vals = valPar.Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUE]);
+                                                if ((vals.Length == 2)
+                                                    //&& (! (itemSrc.m_keys.IndexOf () < 0))
+                                                    )
+                                                    dictItemValues.Add(vals[0], vals[1]);
+                                                else
+                                                    throw new Exception(@"FileINI::ctor () - addGroupValues () ...");
+                                            }
+                                            break;
+                                        default:
+                                            break;
                                     }
-                                }
                                 else
-                                    //Секция есть, но в ней не определен ни один источник...
-                                    ; //???
+                                    //Значение по ключу не соответствует формату
+                                    break;
                             }
                             else
-                                throw new Exception (@"FileINI::ctor () - источники объявлены, но не определены [" + sec + @"] ...");
+                                //Ключ в секции не  найден
+                                break;
+                            //Увеличить индекс элемента (источник, сигнал)
+                            j++;
                         }
-                        else
-                            break;
-
-                        i ++;
                     }
-
-                    i = 0;
-                    //Получить все группы сигналов
-                    while (true)
-                    {
-                        //Получить ключ из пары (ключ-значение)
-                        key = SEC_KEY_SOURCE_SIGNALS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + i.ToString();
-
-                        break;
-                    }
+                    else
+                        //Секция есть, но в ней не определен ни один источник...
+                        iRes = -1; //???
                 }
                 else
-                    ;
-
-                //Получить наименование секции для группы источников (назначение)
-                sec = getDestSec(INDEX_KEY_SRC.GROUP_SRC);
-                //Получить словарь параметров для группы источников (назначение)
-                dictValues = getSecValues(sec);
-                //Заполнить группу источников (назначение)
-                if (!(dictValues == null))
-                {
-                    //Получить все источники данных
-
-                    //Получить все группы сигналов
-                }
-                else
-                    ;
-            }
-
-            private string getSrcSec (INDEX_KEY_SRC key)
-            {
-                string strRes = string.Empty;
-
-                for (INDEX_KEY_SRC i = INDEX_KEY_SRC.GROUP_SRC; i < INDEX_KEY_SRC.COUNT_INDEX_KEY_SRC; i ++)
-                {
-                    if (!(i > key))
-                    {
-                        if (strRes.Equals(string.Empty) == false)
-                            strRes += s_chDelimeter;
-                        else
-                            ;
-
-                        strRes += SEC_KEY_SOURCE [(int)i];
-                    }
-                    else
-                        break;
-                }
-
-                return strRes;
-            }
-
-            private string getSrcSec(INDEX_KEY_SIGNAL key)
-            {
-                string strRes = string.Empty;
-
-                for (INDEX_KEY_SIGNAL i = INDEX_KEY_SIGNAL.GROUP_SRC; i < INDEX_KEY_SIGNAL.COUNT_INDEX_KEY_SIGNAL; i++)
-                {
-                    if (! (i > key))
-                    {
-                        if (strRes.Equals(string.Empty) == false)
-                            strRes += s_chDelimeter;
-                        else
-                            ;
-
-                        strRes += SEC_KEY_SOURCE_SIGNALS[(int)i];
-                    }
-                    else
-                        break;
-                }
-
-                return strRes;
-            }
-
-            private string getDestSec(INDEX_KEY_SRC key)
-            {
-                string strRes = string.Empty;
-
-                for (INDEX_KEY_SRC i = INDEX_KEY_SRC.GROUP_SRC; i < INDEX_KEY_SRC.COUNT_INDEX_KEY_SRC; i ++)
-                {
-                    if (!(i > key))
-                    {
-                        if (strRes.Equals(string.Empty) == false)
-                            strRes += s_chDelimeter;
-                        else
-                            ;
-
-                        strRes += SEC_KEY_DEST [(int)i];
-                    }
-                    else
-                        break;
-                }
-
-                return strRes;
-            }
-
-            private string getDestSec(INDEX_KEY_SIGNAL key)
-            {
-                string strRes = string.Empty;
-
-                for (INDEX_KEY_SIGNAL i = INDEX_KEY_SIGNAL.GROUP_SRC; i < INDEX_KEY_SIGNAL.COUNT_INDEX_KEY_SIGNAL; i++)
-                {
-                    if (! (i > key))
-                    {
-                        if (strRes.Equals(string.Empty) == false)
-                            strRes += s_chDelimeter;
-                        else
-                            ;
-
-                        strRes += SEC_KEY_DEST_SIGNALS [(int)i];
-                    }
-                    else
-                        break;
-                }
-
-                return strRes;
-            }
-
-            private int load ()
-            {
-                int iRes = 0;
+                    throw new Exception(@"FileINI::ctor () - addGroupValues () - группа объявлена, но значения не определены [" + secGroup + @"] ...");
 
                 return iRes;
             }
 
-            private int save()
+            private string[] GetListGroupSources(INDEX_SRC indx)
             {
-                int iRes = 0;
+                string[] arStrRes = new string[] { };
+                int i = -1;
 
-                return iRes;
+                List<GROUP_SRC> listGroupSrc = m_arListGroupValues[(int)indx].m_listGroupSrc;
+                arStrRes = new string[listGroupSrc.Count];
+
+                i = 0;
+                foreach (GROUP_SRC grpSrc in listGroupSrc)
+                    arStrRes[i++] = grpSrc.m_strName;
+
+                return arStrRes;
             }
+
+            public string[] ListSrcGroupSources { get { return GetListGroupSources(INDEX_SRC.SOURCE); } }
+
+            public string[] ListDestGroupSources { get { return GetListGroupSources(INDEX_SRC.DEST); } }
+
+            private string[] GetListGroupSignals(INDEX_SRC indx)
+            {
+                string[] arStrRes = new string[] { };
+                int i = -1;
+
+                List<GROUP_SIGNALS_SRC> listGroupSrc = m_arListGroupValues[(int)indx].m_listGroupSgnlsSrc;
+                arStrRes = new string[listGroupSrc.Count];
+
+                i = 0;
+                foreach (GROUP_SIGNALS_SRC grpSrc in listGroupSrc)
+                    arStrRes[i++] = grpSrc.m_strName;
+
+                return arStrRes;
+            }
+
+            public string[] ListSrcGroupSignals { get { return GetListGroupSignals(INDEX_SRC.SOURCE); } }
+
+            public string[] ListDestGroupSignals { get { return GetListGroupSignals(INDEX_SRC.DEST); } }
         }
     }
 }

@@ -68,6 +68,7 @@
     <Compile Include="FormMain.Designer.cs">
       <DependentUpon>FormMain.cs</DependentUpon>
     </Compile>
+    <Compile Include="HHandlerQueue.cs" />
     <Compile Include="PanelWork.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -105,6 +106,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <None Include="setup-template.ini" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\HClassLibrary\HClassLibrary.csproj">

@@ -13,8 +13,8 @@ namespace uLoader
 {
     public partial class FormMain : Form
     {
-        private FileINI m_fileINI;
-        
+        private HHandlerQueue m_handler;
+
         enum INDEX_TAB { WORK, CONFIG, COUNT_INDEX_TAB };
 
         private PanelWork m_panelWork;
@@ -24,14 +24,11 @@ namespace uLoader
         {
             InitializeComponent();
 
-            m_fileINI = new FileINI ();
-            string val = m_fileINI.GetMainValueOfKey (@"Position");
-            val = m_fileINI.GetSecValueOfKey(@"GDst-GSgnls0", @"Sgnl1");
-            val = m_fileINI.GetSecValueOfKey(@"GSrc-GSgnls0", @"Sgnl1");
-            val = m_fileINI.GetSecValueOfKey(@"GDst-GD1", @"D1");
+            m_handler = new HHandlerQueue();
+            m_handler.Start(); m_handler.Activate(true);
 
-            m_panelWork = new PanelWork ();
-            m_panelConfig = new PanelConfig ();
+            m_panelWork = new PanelWork(); m_panelWork.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelWork);
+            m_panelConfig = new PanelConfig(); m_panelConfig.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelConfig);
 
             работаToolStripMenuItem.CheckOnClick =
             конфигурацияToolStripMenuItem.CheckOnClick =
@@ -70,7 +67,8 @@ namespace uLoader
         }
 
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
-        {            
+        {
+            m_handler.Activate(false); m_handler.Stop();
         }
 
         private void onCloseTabPage(object obj, HTabCtrlExEventArgs ev)
@@ -93,6 +91,11 @@ namespace uLoader
 
         private void TabCtrl_OnSelectedIndexChanged(object obj, EventArgs ev)
         {
+            PanelCommon panelCommon = ((obj as HTabCtrlEx).SelectedTab.Controls[0] as PanelCommon);
+
+            Logging.Logg().Action(@"Смена вкладки: активная - " + (obj as HTabCtrlEx).SelectedTab.Text, Logging.INDEX_MESSAGE.NOT_SET);
+
+            panelCommon.Activate (true);
         }
 
         private void конфигурацияToolStripMenuItem_CheckStateChanged(object obj, EventArgs ev)
@@ -121,6 +124,15 @@ namespace uLoader
             {
                 fAbout.ShowDialog();
             }
+        }
+
+        private void OnEvtDataAskedFormMain_PanelWork(object obj)
+        {
+        }
+
+        private void OnEvtDataAskedFormMain_PanelConfig(object obj)
+        {
+            m_handler.Push(m_panelConfig, ((obj as EventArgsDataHost).par as object[])[0] as int []);
         }
     }
 }

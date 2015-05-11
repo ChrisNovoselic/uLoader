@@ -6,16 +6,49 @@ using System.Linq;
 using System.Text;
 
 using System.Windows.Forms;
+using System.Runtime.Remoting.Messaging; //AsyncResult...
+
+using HClassLibrary; //DelegateObjectFunc...
 
 namespace uLoader
 {
-    public class PanelCommon : TableLayoutPanel
+    public class PanelCommon : TableLayoutPanel, IDataHost
     {
+        public event DelegateObjectFunc EvtDataAskedHost;
+
+        /// <summary>
+        /// Отправить запрос главной форме
+        /// </summary>
+        /// <param name="idOwner">Идентификатор панели, отправляющей запрос</param>
+        /// <param name="par"></param>
+        public void DataAskedHost (object par)
+        {
+            EvtDataAskedHost.BeginInvoke(new EventArgsDataHost(-1, new object[] { par }), new AsyncCallback(this.dataRecievedHost), new Random());
+        }
+
+        /// <summary>
+        /// Обработчик события ответа от главной формы
+        /// </summary>
+        /// <param name="obj">объект класса 'EventArgsDataHost' с идентификатором/данными из главной формы</param>
+        public virtual void OnEvtDataRecievedHost(object res)
+        {            
+        }
+
+        private void dataRecievedHost (object res)
+        {
+            if ((res as AsyncResult).EndInvokeCalled == false)
+                ; //((DelegateObjectFunc)((AsyncResult)res).AsyncDelegate).EndInvoke(res as AsyncResult);
+            else
+                ;
+        }
+
         public PanelCommon(int iColumnCount = 16, int iRowCount = 16)
         {
             this.ColumnCount = iColumnCount; this.RowCount = iRowCount;
 
             InitializeComponent();
+
+            iActive = -1;
         }
 
         public PanelCommon(IContainer container, int iColumnCount = 16, int iRowCount = 16)
@@ -25,8 +58,39 @@ namespace uLoader
             this.ColumnCount = iColumnCount + 0; this.RowCount = iRowCount + 0;
 
             InitializeComponent();
+
+            iActive = -1;
         }
 
+        //-1 - исходное, 0 - старт, 1 - активная
+        private int iActive;
+
+        public bool Actived { get { return (iActive > 0) && (iActive % 2 == 1); } }
+
+        public bool IsFirstActivated { get { return iActive == 1; } }
+
+        public virtual bool Activate(bool active)
+        {
+            bool bRes = false;
+
+            if (!(Actived == active))
+            {
+                this.iActive++;
+                //Только при 1-ой активации
+                if (this.iActive == 0)
+                    this.iActive++;
+                else
+                    ;
+
+                bRes = true;
+            }
+            else
+                ;
+
+            return bRes;
+        }
+
+        #region Обязательный код для корректного освобождения памяти
         private System.ComponentModel.IContainer components = null;
 
         protected override void Dispose(bool disposing)
@@ -37,6 +101,7 @@ namespace uLoader
             }
             base.Dispose(disposing);
         }
+        #endregion
 
         #region Код, автоматически созданный конструктором компонентов
         private void InitializeComponent()
@@ -124,6 +189,23 @@ namespace uLoader
             this.Dock = DockStyle.Fill;
 
             this.SuspendLayout();
+
+            this.Columns.AddRange(
+                new DataGridViewColumn [] {
+                    new DataGridViewTextBoxColumn ()
+                    , new DataGridViewButtonColumn ()
+                }
+            );
+            this.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            //this.Columns[0].Frozen = true;
+            this.AllowUserToResizeColumns = false;
+            this.AllowUserToResizeRows = false;
+            this.AllowUserToAddRows = false;
+            this.AllowUserToDeleteRows = false;
+            this.MultiSelect = false;
+            this.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            //this.RowHeadersWidth = 76;
+            this.ColumnHeadersVisible = false; this.RowHeadersVisible = false;
 
             this.ResumeLayout(false);
             this.PerformLayout();

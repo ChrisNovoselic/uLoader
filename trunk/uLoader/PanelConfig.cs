@@ -20,15 +20,15 @@ namespace uLoader
                 , COL_COUNT = 4 / COL_DIV, ROW_COUNT = 1 / ROW_DIV;
 
             //Индексы панелей
-            enum INDEX_PANEL
+            public enum INDEX_PANEL
             {
                 GROUP_SOURCES, SOURCES_OF_GROUP, GROUP_SIGNALS, SIGNALS_OF_GROUP
                     , COUNT_INDEX_PANEL
             };
             //Индексы групп элементов управления в панелях
-            enum INDEX_PANEL_CONTROL { GROUPBOX, LISTEDIT, TEXTBOX, BUTTON };
+            public enum INDEX_PANEL_CONTROL { GROUPBOX, LISTEDIT, TEXTBOX, BUTTON };
             //Ключи элементов управления
-            enum INDEX_CONTROL
+            public enum INDEX_CONTROL
             {
                 GROUPBOX
                 , LISTEDIT = GROUPBOX + INDEX_PANEL.COUNT_INDEX_PANEL
@@ -52,7 +52,7 @@ namespace uLoader
                 @"Группы источников", @"Источники группы", @"Группы сигналов", @"Сигналы группы"
             };
             //Словарь элементов управления
-            Dictionary<INDEX_CONTROL, Control> m_dictControl;
+            public Dictionary<INDEX_CONTROL, Control> m_dictControl;
 
             public PanelSources() : base (COL_COUNT, ROW_COUNT)
             {
@@ -302,6 +302,8 @@ namespace uLoader
             : base(COL_COUNT, ROW_COUNT)
         {
             InitializeComponent();
+
+            initialize();
         }
 
         public PanelConfig(IContainer container)
@@ -310,9 +312,76 @@ namespace uLoader
             container.Add(this);
 
             InitializeComponent();
+
+            initialize();
+        }
+
+        private int initialize()
+        {
+            int iRes = 0;
+
+            return iRes;
+        }
+
+        private void onEvtDataRecievedHost(object obj)
+        {
+            int state = Int32.Parse((obj as object[])[0].ToString());
+            object par = (obj as object[])[1];
+
+            switch (state)
+            {
+                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCES:
+                    PanelSources panelSrc = this.Controls[(int)INDEX_CONFIG.SOURCE] as PanelSources;
+                    int indxCtrl = (int)PanelSources.INDEX_PANEL_CONTROL.LISTEDIT * (int)PanelSources.INDEX_PANEL.COUNT_INDEX_PANEL + (int)PanelSources.INDEX_PANEL.GROUP_SOURCES;
+                    DataGridViewConfigItem cfgItem = panelSrc.m_dictControl[(PanelSources.INDEX_CONTROL)indxCtrl] as DataGridViewConfigItem;
+                    string[] rows = (par as object[]) as string[];
+                    foreach (string row in rows)
+                        cfgItem.Rows.Add(new object[] { row, @"-" });
+                    break;
+                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS:
+                    break;
+                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNALS:
+                    break;
+                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS:
+                    break;
+                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES:
+                    break;
+                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS:
+                    break;
+                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNALS:
+                    break;
+                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS:
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        public override void OnEvtDataRecievedHost(object obj)
+        {
+            this.BeginInvoke(new DelegateObjectFunc(onEvtDataRecievedHost), obj);            
+
+            base.OnEvtDataRecievedHost(obj);
+        }
+
+        public override bool Activate(bool active)
+        {
+            bool bRes = base.Activate(active);
+
+            if (IsFirstActivated == true)
+                DataAskedHost(new int[] { (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCES
+                                        /*, (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES*/
+                                        });
+            else
+                ;
+
+            return bRes;
         }
     }
 
+    /// <summary>
+    /// Обязательная часть реализации класса
+    /// </summary>
     partial class PanelConfig
     {
         /// <summary>
