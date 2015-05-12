@@ -195,9 +195,7 @@ namespace uLoader
                     new DataGridViewTextBoxColumn ()
                     , new DataGridViewButtonColumn ()
                 }
-            );
-            this.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            //this.Columns[0].Frozen = true;
+            );            
             this.AllowUserToResizeColumns = false;
             this.AllowUserToResizeRows = false;
             this.AllowUserToAddRows = false;
@@ -205,6 +203,9 @@ namespace uLoader
             this.MultiSelect = false;
             this.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             //this.RowHeadersWidth = 76;
+            this.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            this.Columns[1].Width = 34;
+            //this.Columns[0].Frozen = true;
             this.ColumnHeadersVisible = false; this.RowHeadersVisible = false;
 
             this.ResumeLayout(false);

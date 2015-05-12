@@ -323,32 +323,45 @@ namespace uLoader
             return iRes;
         }
 
+        private void fillConfigItem(INDEX_CONFIG indxConfig, PanelSources.INDEX_PANEL indxPanel, string[] rows)
+        {
+            PanelSources panelSrc;
+            int indxCtrl;
+            DataGridViewConfigItem cfgItem;
+
+            panelSrc = this.Controls[(int)indxConfig] as PanelSources;
+            indxCtrl = (int)PanelSources.INDEX_PANEL_CONTROL.LISTEDIT * (int)PanelSources.INDEX_PANEL.COUNT_INDEX_PANEL + (int)indxPanel;
+            cfgItem = panelSrc.m_dictControl[(PanelSources.INDEX_CONTROL)indxCtrl] as DataGridViewConfigItem;
+            foreach (string row in rows)
+                cfgItem.Rows.Add(new object[] { row, @"-" });
+        }
+
         private void onEvtDataRecievedHost(object obj)
         {
             int state = Int32.Parse((obj as object[])[0].ToString());
             object par = (obj as object[])[1];
 
+            
+
             switch (state)
             {
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCES:
-                    PanelSources panelSrc = this.Controls[(int)INDEX_CONFIG.SOURCE] as PanelSources;
-                    int indxCtrl = (int)PanelSources.INDEX_PANEL_CONTROL.LISTEDIT * (int)PanelSources.INDEX_PANEL.COUNT_INDEX_PANEL + (int)PanelSources.INDEX_PANEL.GROUP_SOURCES;
-                    DataGridViewConfigItem cfgItem = panelSrc.m_dictControl[(PanelSources.INDEX_CONTROL)indxCtrl] as DataGridViewConfigItem;
-                    string[] rows = (par as object[]) as string[];
-                    foreach (string row in rows)
-                        cfgItem.Rows.Add(new object[] { row, @"-" });
+                    fillConfigItem(INDEX_CONFIG.SOURCE, PanelSources.INDEX_PANEL.GROUP_SOURCES, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS:
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNALS:
+                    fillConfigItem(INDEX_CONFIG.SOURCE, PanelSources.INDEX_PANEL.GROUP_SIGNALS, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS:
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES:
+                    fillConfigItem(INDEX_CONFIG.DEST, PanelSources.INDEX_PANEL.GROUP_SOURCES, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS:
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNALS:
+                    fillConfigItem(INDEX_CONFIG.DEST, PanelSources.INDEX_PANEL.GROUP_SIGNALS, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS:
                     break;
@@ -370,7 +383,9 @@ namespace uLoader
 
             if (IsFirstActivated == true)
                 DataAskedHost(new int[] { (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCES
-                                        /*, (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES*/
+                                        , (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNALS
+                                        , (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES
+                                        , (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNALS
                                         });
             else
                 ;

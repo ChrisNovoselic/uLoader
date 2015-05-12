@@ -61,6 +61,7 @@ namespace uLoader
             {
                 m_TabCtrl.AddTabPage(работаToolStripMenuItem.Text, 1, HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
                 m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add(m_panelWork);
+                m_TabCtrl.PrevSelectedIndex = 0;
             }
             else
                 ;
@@ -84,18 +85,33 @@ namespace uLoader
                     break;
             }
         }
-        
+
         private void работаToolStripMenuItem_CheckStateChanged(object obj, EventArgs ev)
         {
         }        
 
-        private void TabCtrl_OnSelectedIndexChanged(object obj, EventArgs ev)
+        private void TabCtrl_OnPrevSelectedIndexChanged(object obj, EventArgs ev)
         {
-            PanelCommon panelCommon = ((obj as HTabCtrlEx).SelectedTab.Controls[0] as PanelCommon);
-
             Logging.Logg().Action(@"Смена вкладки: активная - " + (obj as HTabCtrlEx).SelectedTab.Text, Logging.INDEX_MESSAGE.NOT_SET);
 
-            panelCommon.Activate (true);
+            HTabCtrlEx tabCtrl = obj as HTabCtrlEx;
+            PanelCommon panelCommon;
+
+            if (! (tabCtrl.PrevSelectedIndex < 0))
+            {
+                panelCommon = (tabCtrl.TabPages[tabCtrl.PrevSelectedIndex].Controls[0] as PanelCommon);
+                panelCommon.Activate (false);                
+            }
+            else
+                ;
+
+            panelCommon = (tabCtrl.TabPages[tabCtrl.SelectedIndex].Controls[0] as PanelCommon);
+            panelCommon.Activate(true);
+        }
+
+        private void TabCtrl_OnSelectedIndexChanged(object obj, EventArgs ev)
+        {
+            (obj as HTabCtrlEx).PrevSelectedIndex = (obj as HTabCtrlEx).SelectedIndex;
         }
 
         private void конфигурацияToolStripMenuItem_CheckStateChanged(object obj, EventArgs ev)
