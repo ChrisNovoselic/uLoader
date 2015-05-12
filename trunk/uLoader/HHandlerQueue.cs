@@ -156,13 +156,15 @@ namespace uLoader
                     break;
                 case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_PARS:
                     error = false;
-                    //outobj = ;
+                    dataHost = Peek;
+                    outobj = m_fileINI.GetListSrcParsOfGroupSignal (dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
                 case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_PROP:
                     error = false;
-                    //outobj = ;
+                    dataHost = Peek;
+                    outobj = m_fileINI.GetListSrcItemPropOfGroupSignal(dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
@@ -174,7 +176,8 @@ namespace uLoader
                     break;
                 case (int)StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS:
                     error = false;
-                    //outobj = m_fileINI.GetListDestGroupSourceItems();
+                    dataHost = Peek;
+                    outobj = m_fileINI.GetListDestItemsOfGroupSource(dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;

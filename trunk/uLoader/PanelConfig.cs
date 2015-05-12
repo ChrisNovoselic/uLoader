@@ -398,8 +398,13 @@ namespace uLoader
                 int i = 0;
                 foreach (string strHeader in rows)
                 {
-                    cfgItem.Rows.Add (string.Empty);
-                    cfgItem.Rows[i++].HeaderCell.Value = strHeader;
+                    if (strHeader.Equals (string.Empty) == false)
+                    {
+                        cfgItem.Rows.Add (string.Empty);
+                        cfgItem.Rows[i++].HeaderCell.Value = strHeader;
+                    }
+                    else
+                        throw new Exception(@"PanelConfig::fillConfigItemPars (" + indxConfig.ToString () + @", " + indxPanel.ToString () + @") - ...");
                 }
             }
             else

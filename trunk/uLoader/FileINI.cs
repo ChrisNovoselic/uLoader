@@ -237,8 +237,14 @@ namespace uLoader
                     //Проверить наличие значений в секции
                     if (!(dictSecValues == null))
                     {
-                        //Получить значения параметров для элемента группы (источник, сигнал)
+                        //Получить наименовния параметров для элемента группы (источник, сигнал)
                         itemSrc.m_keys = GetSecValueOfKey(secGroup, KEY_PARS).Split (s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]);
+
+                        foreach (string parName in itemSrc.m_keys)
+                            if (parName.Equals (string.Empty) == true)
+                                throw new Exception (@"FileINI::addGroupValues (" + indxSrc.ToString () + @", " + type.AssemblyQualifiedName + @", " + secGroup + @") - ...");
+                            else
+                                ;
 
                         j = 0; //1-ый индекс == 0
                         while (true)
@@ -382,21 +388,8 @@ namespace uLoader
             {
                 string[] arStrRes = new string[] { };
                 int i = -1;
-                ITEM_SRC itemSrc = null;
+                ITEM_SRC itemSrc = getItemSrc (pars);
 
-                SRC src = m_arListGroupValues[(int)pars[0]]; //0 - источник/назначение - ВСЕГДА == 0, т.к. pars[0] == 0 (из названия функции)
-                //1 - группы источников/сигналов
-                switch ((int)pars[1])
-                {
-                    case 0: //GROUP_SOURCES
-                        itemSrc = src.m_listGroupSrc[(int)pars[2]];
-                        break;
-                    case 2: //GROUP_SIGNALS - НИКОГДА не выполняется, т.к. pars[1] == 0 (из названия функции)
-                        itemSrc = src.m_listGroupSgnlsSrc [(int)pars[2]];
-                        break;
-                    default:
-                        break;
-                }
                 arStrRes = new string[(itemSrc as GROUP_SRC).m_listConnSett.Count];
 
                 i = 0;
@@ -410,21 +403,8 @@ namespace uLoader
             {
                 string[] arStrRes = new string[] { };
                 int i = -1;
-                ITEM_SRC itemSrc = null;
+                ITEM_SRC itemSrc = getItemSrc (pars);
 
-                SRC src = m_arListGroupValues[(int)pars[0]]; //0 - источник/назначение - ВСЕГДА == 0, т.к. pars[0] == 0 (из названия функции)
-                //1 - группы источников/сигналов
-                switch ((int)pars[1])
-                {
-                    case 0: //GROUP_SOURCES
-                        itemSrc = src.m_listGroupSrc[(int)pars[2]];
-                        break;
-                    case 2: //GROUP_SIGNALS - НИКОГДА не выполняется, т.к. pars[1] == 0 (из названия функции)
-                        itemSrc = src.m_listGroupSgnlsSrc[(int)pars[2]];
-                        break;
-                    default:
-                        break;
-                }
                 arStrRes = new string[(itemSrc as ITEM_SRC).m_keys.Length];
 
                 i = 0;
@@ -438,21 +418,8 @@ namespace uLoader
             {
                 string[] arStrRes = new string[] { };
                 int i = -1;
-                ITEM_SRC itemSrc = null;
+                ITEM_SRC itemSrc = getItemSrc (pars);
 
-                SRC src = m_arListGroupValues[(int)pars[0]]; //0 - источник/назначение - ВСЕГДА == 0, т.к. pars[0] == 0 (из названия функции)
-                //1 - группы источников/сигналов
-                switch ((int)pars[1])
-                {
-                    case 0: //GROUP_SOURCES
-                        itemSrc = src.m_listGroupSrc[(int)pars[2]];
-                        break;
-                    case 2: //GROUP_SIGNALS - НИКОГДА не выполняется, т.к. pars[1] == 0 (из названия функции)
-                        itemSrc = src.m_listGroupSgnlsSrc[(int)pars[2]];
-                        break;
-                    default:
-                        break;
-                }
                 arStrRes = new string[(itemSrc as GROUP_SRC).m_keys.Length];
 
                 i = 0;
@@ -471,21 +438,7 @@ namespace uLoader
             {
                 string[] arStrRes = new string[] { };
                 int i = -1;
-                ITEM_SRC itemSrc = null;
-
-                SRC src = m_arListGroupValues[(int)pars[0]]; //0 - источник/назначение - ВСЕГДА == 0, т.к. pars[0] == 0 (из названия функции)
-                //1 - группы источников/сигналов
-                switch ((int)pars[1])
-                {
-                    case 0: //GROUP_SOURCES - НИКОГДА не выполняется, т.к. pars[1] == 2 (из названия функции)
-                        itemSrc = src.m_listGroupSrc[(int)pars[2]];
-                        break;
-                    case 2: //GROUP_SIGNALS
-                        itemSrc = src.m_listGroupSgnlsSrc[(int)pars[2]];
-                        break;
-                    default:
-                        break;
-                }
+                ITEM_SRC itemSrc = getItemSrc (pars);
 
                 if (! ((itemSrc as GROUP_SIGNALS_SRC).m_listSgnls == null))
                 {
@@ -499,6 +452,73 @@ namespace uLoader
                     ;
 
                 return arStrRes;
+            }
+
+            public string[] GetListSrcParsOfGroupSignal(object[] pars)
+            {
+                string[] arStrRes = new string[] { };
+                int i = -1;
+                ITEM_SRC itemSrc = getItemSrc (pars);
+
+                arStrRes = new string[(itemSrc as ITEM_SRC).m_keys.Length];
+
+                i = 0;
+                foreach (string key in (itemSrc as ITEM_SRC).m_keys)
+                    arStrRes[i++] = key;
+
+                return arStrRes;
+            }
+
+            public string[] GetListSrcItemPropOfGroupSignal(object[] pars)
+            {
+                string[] arStrRes = new string[] { };
+                int i = -1;
+                ITEM_SRC itemSrc = getItemSrc (pars);
+
+                arStrRes = new string[(itemSrc as GROUP_SIGNALS_SRC).m_keys.Length];
+
+                i = 0;
+                SIGNAL_SRC sgnl = (itemSrc as GROUP_SIGNALS_SRC).m_listSgnls[(int)pars[3]];
+                foreach (string key in (itemSrc as GROUP_SIGNALS_SRC).m_keys)
+                    arStrRes[i++] = sgnl.m_dictPars[key];
+
+                return arStrRes;
+            }
+
+            public string[] GetListDestItemsOfGroupSource(object[] pars)
+            {
+                string[] arStrRes = new string[] { };
+                int i = -1;
+                ITEM_SRC itemSrc = getItemSrc (pars);
+
+                arStrRes = new string[(itemSrc as GROUP_SRC).m_listConnSett.Count];
+
+                i = 0;
+                foreach (ConnectionSettings connSett in (itemSrc as GROUP_SRC).m_listConnSett)
+                    arStrRes[i++] = connSett.name;
+
+                return arStrRes;
+            }
+
+            private ITEM_SRC getItemSrc(object[] pars)
+            {
+                ITEM_SRC itemSrcRes = null;
+                
+                SRC src = m_arListGroupValues[(int)pars[0]]; //0 - источник/назначение
+                //1 - группы источников/сигналов
+                switch ((int)pars[1])
+                {
+                    case 0: //GROUP_SOURCES
+                        itemSrcRes = src.m_listGroupSrc[(int)pars[2]];
+                        break;
+                    case 2: //GROUP_SIGNALS
+                        itemSrcRes = src.m_listGroupSgnlsSrc[(int)pars[2]];
+                        break;
+                    default:
+                        break;
+                }
+
+                return itemSrcRes;
             }
         }
     }
