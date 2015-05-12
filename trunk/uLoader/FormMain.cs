@@ -148,7 +148,9 @@ namespace uLoader
 
         private void OnEvtDataAskedFormMain_PanelConfig(object obj)
         {
-            m_handler.Push(m_panelConfig, ((obj as EventArgsDataHost).par as object[])[0] as int []);
+            EventArgsDataHost ev = obj as EventArgsDataHost;
+            //ev.id - здесь всегда = -1
+            m_handler.Push(m_panelConfig, ev.par as object[]);
         }
     }
 }

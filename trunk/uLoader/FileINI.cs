@@ -37,6 +37,7 @@ namespace uLoader
             /// </summary>            
             private class SIGNAL_SRC
             {
+                //Ключами для словаря являются 'ITEM_SRC.m_keys'
                 public Dictionary<string, string> m_dictPars;
 
                 public SIGNAL_SRC()
@@ -376,6 +377,129 @@ namespace uLoader
             public string[] ListSrcGroupSignals { get { return GetListGroupSignals(INDEX_SRC.SOURCE); } }
 
             public string[] ListDestGroupSignals { get { return GetListGroupSignals(INDEX_SRC.DEST); } }
+
+            public string [] GetListSrcItemsOfGroupSource (object []pars)
+            {
+                string[] arStrRes = new string[] { };
+                int i = -1;
+                ITEM_SRC itemSrc = null;
+
+                SRC src = m_arListGroupValues[(int)pars[0]]; //0 - источник/назначение - ВСЕГДА == 0, т.к. pars[0] == 0 (из названия функции)
+                //1 - группы источников/сигналов
+                switch ((int)pars[1])
+                {
+                    case 0: //GROUP_SOURCES
+                        itemSrc = src.m_listGroupSrc[(int)pars[2]];
+                        break;
+                    case 2: //GROUP_SIGNALS - НИКОГДА не выполняется, т.к. pars[1] == 0 (из названия функции)
+                        itemSrc = src.m_listGroupSgnlsSrc [(int)pars[2]];
+                        break;
+                    default:
+                        break;
+                }
+                arStrRes = new string[(itemSrc as GROUP_SRC).m_listConnSett.Count];
+
+                i = 0;
+                foreach (ConnectionSettings connSett in (itemSrc as GROUP_SRC).m_listConnSett)
+                    arStrRes[i++] = connSett.name;
+
+                return arStrRes;
+            }
+
+            public string [] GetListSrcParsOfGroupSource (object []pars)
+            {
+                string[] arStrRes = new string[] { };
+                int i = -1;
+                ITEM_SRC itemSrc = null;
+
+                SRC src = m_arListGroupValues[(int)pars[0]]; //0 - источник/назначение - ВСЕГДА == 0, т.к. pars[0] == 0 (из названия функции)
+                //1 - группы источников/сигналов
+                switch ((int)pars[1])
+                {
+                    case 0: //GROUP_SOURCES
+                        itemSrc = src.m_listGroupSrc[(int)pars[2]];
+                        break;
+                    case 2: //GROUP_SIGNALS - НИКОГДА не выполняется, т.к. pars[1] == 0 (из названия функции)
+                        itemSrc = src.m_listGroupSgnlsSrc[(int)pars[2]];
+                        break;
+                    default:
+                        break;
+                }
+                arStrRes = new string[(itemSrc as ITEM_SRC).m_keys.Length];
+
+                i = 0;
+                foreach (string key in (itemSrc as ITEM_SRC).m_keys)
+                    arStrRes[i++] = key;
+
+                return arStrRes;
+            }
+
+            public string[] GetListSrcItemPropOfGroupSource(object[] pars)
+            {
+                string[] arStrRes = new string[] { };
+                int i = -1;
+                ITEM_SRC itemSrc = null;
+
+                SRC src = m_arListGroupValues[(int)pars[0]]; //0 - источник/назначение - ВСЕГДА == 0, т.к. pars[0] == 0 (из названия функции)
+                //1 - группы источников/сигналов
+                switch ((int)pars[1])
+                {
+                    case 0: //GROUP_SOURCES
+                        itemSrc = src.m_listGroupSrc[(int)pars[2]];
+                        break;
+                    case 2: //GROUP_SIGNALS - НИКОГДА не выполняется, т.к. pars[1] == 0 (из названия функции)
+                        itemSrc = src.m_listGroupSgnlsSrc[(int)pars[2]];
+                        break;
+                    default:
+                        break;
+                }
+                arStrRes = new string[(itemSrc as GROUP_SRC).m_keys.Length];
+
+                i = 0;
+                ConnectionSettings connSett = (itemSrc as GROUP_SRC).m_listConnSett[(int)pars[3]];
+                arStrRes[i++] = connSett.name;
+                arStrRes[i++] = connSett.server;
+                arStrRes[i++] = connSett.port.ToString ();
+                arStrRes[i++] = connSett.dbName;
+                arStrRes[i++] = connSett.userName;
+                arStrRes[i++] = connSett.password;
+
+                return arStrRes;
+            }
+
+            public string[] GetListSrcItemsOfGroupSignal(object[] pars)
+            {
+                string[] arStrRes = new string[] { };
+                int i = -1;
+                ITEM_SRC itemSrc = null;
+
+                SRC src = m_arListGroupValues[(int)pars[0]]; //0 - источник/назначение - ВСЕГДА == 0, т.к. pars[0] == 0 (из названия функции)
+                //1 - группы источников/сигналов
+                switch ((int)pars[1])
+                {
+                    case 0: //GROUP_SOURCES - НИКОГДА не выполняется, т.к. pars[1] == 2 (из названия функции)
+                        itemSrc = src.m_listGroupSrc[(int)pars[2]];
+                        break;
+                    case 2: //GROUP_SIGNALS
+                        itemSrc = src.m_listGroupSgnlsSrc[(int)pars[2]];
+                        break;
+                    default:
+                        break;
+                }
+
+                if (! ((itemSrc as GROUP_SIGNALS_SRC).m_listSgnls == null))
+                {
+                    arStrRes = new string[(itemSrc as GROUP_SIGNALS_SRC).m_listSgnls.Count];
+
+                    i = 0;
+                    foreach (SIGNAL_SRC sgnl in (itemSrc as GROUP_SIGNALS_SRC).m_listSgnls)
+                        arStrRes[i++] = sgnl.m_dictPars[@"KKS_NAME"];
+                }
+                else
+                    ;
+
+                return arStrRes;
+            }
         }
     }
 }

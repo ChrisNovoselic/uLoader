@@ -34,18 +34,19 @@ namespace uLoader
                 , LISTEDIT = GROUPBOX + INDEX_PANEL.COUNT_INDEX_PANEL
                 , TEXTBOX = LISTEDIT + INDEX_PANEL.COUNT_INDEX_PANEL
                 , BUTTON = TEXTBOX + INDEX_PANEL.COUNT_INDEX_PANEL
-                , DGV_PARAMETER_SOURCES = BUTTON + INDEX_PANEL.COUNT_INDEX_PANEL
+                , DGV_PARAMETER_SOURCE = BUTTON + INDEX_PANEL.COUNT_INDEX_PANEL
+                , DGV_PARAMETER_SIGNAL
                 , LABEL_DLLNAME_GROUPSOURCES
                 , BUTTON_DLLNAME_GROUPSOURCES
                 , RADIOBUTTON_SOURCE
                 , RADIOBUTTON_DEST
                 , BUTTON_UPDATE, BUTTON_SAVE
             };
-            //Заголовки строк параметров сединения
-            static string[] m_arHeaderRowParameterSources =
-            {
-                @"ID", @"IP", @"PORT", @"DB_NAME", @"UID", @"PASSWORD"
-            };
+            ////Заголовки строк параметров сединения - будут получены из файла конфигурации (PARS)
+            //static string[] m_arHeaderRowParameterSources =
+            //{
+            //    @"ID", @"IP", @"PORT", @"DB_NAME", @"UID", @"PASSWORD"
+            //};
             //Заголовки строк панелей
             static string[] m_arHeaderPanelListEdit =
             {
@@ -170,11 +171,13 @@ namespace uLoader
                 //Создание объектов панелей
                 i = (int)INDEX_PANEL_CONTROL.LISTEDIT;
                 for (j = 0; j < (int)INDEX_PANEL.COUNT_INDEX_PANEL; j++)
-                    m_dictControl.Add((INDEX_CONTROL)(i * (int)INDEX_PANEL.COUNT_INDEX_PANEL + j)
-                        , new DataGridViewConfigItem(
+                {
+                    ctrl = new DataGridViewConfigItem(
                         m_dictControl[(INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.TEXTBOX * (int)INDEX_PANEL.COUNT_INDEX_PANEL + j)] as TextBox
                         , m_dictControl[(INDEX_CONTROL)((int)INDEX_PANEL_CONTROL.BUTTON * (int)INDEX_PANEL.COUNT_INDEX_PANEL + j)] as Button
-                    ));
+                    );
+                    m_dictControl.Add((INDEX_CONTROL)(i * (int)INDEX_PANEL.COUNT_INDEX_PANEL + j), ctrl);
+                }
                 //Создание "подписи" - наименование библиотеки для GROUP_SOURCES
                 ctrl = new Label();
                 (ctrl as Label).BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
@@ -186,24 +189,16 @@ namespace uLoader
                 ctrl.Dock = DockStyle.Bottom;
                 m_dictControl.Add(INDEX_CONTROL.BUTTON_DLLNAME_GROUPSOURCES, ctrl);
                 //Создание объекта для редактирования параметров соединения
-                ctrl = new DataGridView();
-                ctrl.Dock = DockStyle.Fill;
-                (ctrl as DataGridView).Columns.Add(@"Value", @"Значение");
-                (ctrl as DataGridView).Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                //(ctrl as DataGridView).Columns[0].Frozen = true;
-                (ctrl as DataGridView).AllowUserToResizeColumns = false;
-                (ctrl as DataGridView).AllowUserToResizeRows = false;
-                (ctrl as DataGridView).AllowUserToAddRows = false;
-                (ctrl as DataGridView).AllowUserToDeleteRows = false;
-                (ctrl as DataGridView).MultiSelect = false;
-                (ctrl as DataGridView).SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-                (ctrl as DataGridView).RowHeadersWidth = 76;
-                foreach (string headerRow in m_arHeaderRowParameterSources)
-                {
-                    (ctrl as DataGridView).Rows.Add(string.Empty);
-                    (ctrl as DataGridView).Rows[(ctrl as DataGridView).RowCount - 1].HeaderCell.Value = headerRow;
-                }
-                m_dictControl.Add(INDEX_CONTROL.DGV_PARAMETER_SOURCES, ctrl);
+                ctrl = new DataGridViewConfigItemProp();                
+                //foreach (string headerRow in m_arHeaderRowParameterSources) - будут получены из файла конфигурации (PARS)
+                //{
+                //    (ctrl as DataGridView).Rows.Add(string.Empty);
+                //    (ctrl as DataGridView).Rows[(ctrl as DataGridView).RowCount - 1].HeaderCell.Value = headerRow;
+                //}
+                m_dictControl.Add(INDEX_CONTROL.DGV_PARAMETER_SOURCE, ctrl);
+                //Создание объекта для редактирования параметров сигнала
+                ctrl = new DataGridViewConfigItemProp();
+                m_dictControl.Add(INDEX_CONTROL.DGV_PARAMETER_SIGNAL, ctrl);
 
                 //Размещение элементов
                 this.SuspendLayout();
@@ -245,7 +240,7 @@ namespace uLoader
                 ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.GROUPBOX + (int)INDEX_PANEL.SOURCES_OF_GROUP)];
                 panelGroupBox = ctrl.Controls[0] as PanelCommon;
                 //Параметры соединения
-                ctrlChild = m_dictControl[INDEX_CONTROL.DGV_PARAMETER_SOURCES];
+                ctrlChild = m_dictControl[INDEX_CONTROL.DGV_PARAMETER_SOURCE];
                 panelGroupBox.Controls.Add(ctrlChild, 0, 5);
                 panelGroupBox.SetColumnSpan(ctrlChild, 5); panelGroupBox.SetRowSpan(ctrlChild, 3);
 
@@ -253,7 +248,13 @@ namespace uLoader
                 posGroupBox(INDEX_PANEL.GROUP_SIGNALS, 2, 7);
 
                 //Сигналы группы
-                posGroupBox(INDEX_PANEL.SIGNALS_OF_GROUP, 3, 7);
+                posGroupBox(INDEX_PANEL.SIGNALS_OF_GROUP, 3, 4);
+                ctrl = m_dictControl[(INDEX_CONTROL)((int)INDEX_CONTROL.GROUPBOX + (int)INDEX_PANEL.SIGNALS_OF_GROUP)];
+                panelGroupBox = ctrl.Controls[0] as PanelCommon;
+                //Параметры соединения
+                ctrlChild = m_dictControl[INDEX_CONTROL.DGV_PARAMETER_SIGNAL];
+                panelGroupBox.Controls.Add(ctrlChild, 0, 5);
+                panelGroupBox.SetColumnSpan(ctrlChild, 5); panelGroupBox.SetRowSpan(ctrlChild, 3);
 
                 //Применение размещения элементов
                 this.ResumeLayout(false);
@@ -323,25 +324,108 @@ namespace uLoader
             return iRes;
         }
 
-        private void fillConfigItem(INDEX_CONFIG indxConfig, PanelSources.INDEX_PANEL indxPanel, string[] rows)
+        /// <summary>
+        /// Получить объект со списком групп (элементов групп)
+        /// </summary>
+        /// <param name="indxConfig">Индекс панели</param>
+        /// <param name="indxPanel">Индекс типа объекта</param>
+        /// <returns>Объект со списком групп</returns>
+        private DataGridViewConfigItem getConfigItem(INDEX_CONFIG indxConfig, PanelSources.INDEX_PANEL indxPanel)
         {
             PanelSources panelSrc;
-            int indxCtrl;
-            DataGridViewConfigItem cfgItem;
+            int indxCtrl;            
 
             panelSrc = this.Controls[(int)indxConfig] as PanelSources;
             indxCtrl = (int)PanelSources.INDEX_PANEL_CONTROL.LISTEDIT * (int)PanelSources.INDEX_PANEL.COUNT_INDEX_PANEL + (int)indxPanel;
-            cfgItem = panelSrc.m_dictControl[(PanelSources.INDEX_CONTROL)indxCtrl] as DataGridViewConfigItem;
-            foreach (string row in rows)
-                cfgItem.Rows.Add(new object[] { row, @"-" });
+            return panelSrc.m_dictControl[(PanelSources.INDEX_CONTROL)indxCtrl] as DataGridViewConfigItem;
+        }
+
+        /// <summary>
+        /// Получить объект со свойствами элемента группы
+        /// </summary>
+        /// <param name="indxConfig">Индекс панели (источник, назначение)</param>
+        /// <param name="indxPanel"></param>
+        /// <returns></returns>
+        private DataGridView getConfigItemProp(INDEX_CONFIG indxConfig, PanelSources.INDEX_PANEL indxPanel)
+        {
+            PanelSources panelSrc;
+            int indxCtrl = -1;
+
+            panelSrc = this.Controls[(int)indxConfig] as PanelSources;
+
+            switch (indxPanel)
+            {
+                case PanelSources.INDEX_PANEL.SOURCES_OF_GROUP:
+                    indxCtrl = (int)PanelSources.INDEX_CONTROL.DGV_PARAMETER_SOURCE;
+                    break;
+                case PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP:
+                    indxCtrl = (int)PanelSources.INDEX_CONTROL.DGV_PARAMETER_SIGNAL;
+                    break;
+                case PanelSources.INDEX_PANEL.GROUP_SOURCES:
+                case PanelSources.INDEX_PANEL.GROUP_SIGNALS:
+                default:
+                    throw new Exception(@"PanelConfig::getConfigItemProp (" + indxConfig.ToString () + @", " + indxPanel.ToString () + @") - ...");
+            }
+
+            if (!(indxCtrl < 0))
+                return panelSrc.m_dictControl[(PanelSources.INDEX_CONTROL)indxCtrl] as DataGridView;
+            else
+                return null;
+        }
+
+        /// <summary>
+        /// Заполнить значениями объект со списком групп (элементов групп) (истоников, сигналов)
+        /// </summary>
+        /// <param name="indxConfig"></param>
+        /// <param name="indxPanel"></param>
+        /// <param name="rows"></param>
+        private void fillConfigItem(INDEX_CONFIG indxConfig, PanelSources.INDEX_PANEL indxPanel, string[] rows)
+        {
+            DataGridViewConfigItem cfgItem = getConfigItem(indxConfig, indxPanel);
+            if (! (rows == null))
+                foreach (string row in rows)
+                    cfgItem.Rows.Add(new object[] { row, @"-" });
+            else
+                ;
+        }
+
+        private void fillConfigItemPars(INDEX_CONFIG indxConfig, PanelSources.INDEX_PANEL indxPanel, string[] rows)
+        {
+            DataGridView cfgItem = getConfigItemProp(indxConfig, indxPanel);
+
+            if (! (rows == null))
+            {
+                int i = 0;
+                foreach (string strHeader in rows)
+                {
+                    cfgItem.Rows.Add (string.Empty);
+                    cfgItem.Rows[i++].HeaderCell.Value = strHeader;
+                }
+            }
+            else
+                ;
+        }
+
+        private void fillConfigItemProp(INDEX_CONFIG indxConfig, PanelSources.INDEX_PANEL indxPanel, string[] rows)
+        {
+            DataGridView cfgItem = getConfigItemProp(indxConfig, indxPanel);
+
+            if (! (rows == null))
+            {
+                int i = 0;
+                foreach (string val in rows)
+                {
+                    cfgItem.Rows[i++].Cells[0].Value = val;
+                }
+            }
+            else
+                ;
         }
 
         private void onEvtDataRecievedHost(object obj)
         {
             int state = Int32.Parse((obj as object[])[0].ToString());
-            object par = (obj as object[])[1];
-
-            
+            object par = (obj as object[])[1];            
 
             switch (state)
             {
@@ -349,21 +433,49 @@ namespace uLoader
                     fillConfigItem(INDEX_CONFIG.SOURCE, PanelSources.INDEX_PANEL.GROUP_SOURCES, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS:
+                    fillConfigItem(INDEX_CONFIG.SOURCE, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
+                    break;
+                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_PARS:
+                    fillConfigItemPars(INDEX_CONFIG.SOURCE, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
+                    break;
+                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_PROP:
+                    fillConfigItemProp(INDEX_CONFIG.SOURCE, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNALS:
                     fillConfigItem(INDEX_CONFIG.SOURCE, PanelSources.INDEX_PANEL.GROUP_SIGNALS, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS:
+                    fillConfigItem(INDEX_CONFIG.SOURCE, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
+                    break;
+                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_PARS:
+                    fillConfigItemPars(INDEX_CONFIG.SOURCE, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
+                    break;
+                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_PROP:
+                    fillConfigItemProp(INDEX_CONFIG.SOURCE, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES:
                     fillConfigItem(INDEX_CONFIG.DEST, PanelSources.INDEX_PANEL.GROUP_SOURCES, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS:
+                    fillConfigItem(INDEX_CONFIG.DEST, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
+                    break;
+                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_PARS:
+                    fillConfigItemPars(INDEX_CONFIG.DEST, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
+                    break;
+                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_PROP:
+                    fillConfigItemProp(INDEX_CONFIG.DEST, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNALS:
                     fillConfigItem(INDEX_CONFIG.DEST, PanelSources.INDEX_PANEL.GROUP_SIGNALS, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS:
+                    fillConfigItem(INDEX_CONFIG.DEST, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
+                    break;
+                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_PARS:
+                    fillConfigItemPars(INDEX_CONFIG.DEST, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
+                    break;
+                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_PROP:
+                    fillConfigItemProp(INDEX_CONFIG.DEST, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
                     break;
                 default:
                     break;
@@ -382,15 +494,224 @@ namespace uLoader
             bool bRes = base.Activate(active);
 
             if (IsFirstActivated == true)
-                DataAskedHost(new int[] { (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCES
-                                        , (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNALS
-                                        , (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES
-                                        , (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNALS
+                DataAskedHost(new object[] { new object [] { (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCES /*, без параметров*/ }
+                                        , new object [] { (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNALS /*, без параметров*/ }
+                                        , new object [] { (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES /*, без параметров*/ }
+                                        , new object [] { (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNALS /*, без параметров*/ }
                                         });
             else
                 ;
 
             return bRes;
+        }
+
+        /// <summary>
+        /// Назначить обработчик события при изменении выбора в элементе интерфейса (DataGridViewConfigItem)
+        /// </summary>
+        /// <param name="dgvConfigItem">Элемент интерфейса</param>
+        /// <param name="indxConfig">Индекс панели</param>
+        /// <param name="indxPanel">Индекс группы элементов на панели</param>
+        private void setHandler_dgvConfigItemSelectionChanged (DataGridViewConfigItem dgvConfigItem, INDEX_CONFIG indxConfig, PanelSources.INDEX_PANEL indxPanel)
+        {
+            EventHandler delegateHandler = null;
+            
+            switch (indxConfig)
+            {
+                case INDEX_CONFIG.SOURCE:
+                    switch (indxPanel)
+                    {
+                        case PanelSources.INDEX_PANEL.GROUP_SOURCES:
+                            delegateHandler = new EventHandler (PanelConfig_dgvConfigItemSrcGroupSourcesSelectionChanged);
+                            break;
+                        case PanelSources.INDEX_PANEL.SOURCES_OF_GROUP:
+                            delegateHandler = new EventHandler(PanelConfig_dgvConfigItemSrcSourcesOfGroupSelectionChanged);
+                            break;
+                        case PanelSources.INDEX_PANEL.GROUP_SIGNALS:
+                            delegateHandler = new EventHandler(PanelConfig_dgvConfigItemSrcGroupSignalsSelectionChanged);
+                            break;
+                        case PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP:
+                            delegateHandler = new EventHandler(PanelConfig_dgvConfigItemSrcSignalsOfGroupSelectionChanged);
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case INDEX_CONFIG.DEST:
+                    switch (indxPanel)
+                    {
+                        case PanelSources.INDEX_PANEL.GROUP_SOURCES:
+                            delegateHandler = new EventHandler(PanelConfig_dgvConfigItemDestGroupSourcesSelectionChanged);
+                            break;
+                        case PanelSources.INDEX_PANEL.SOURCES_OF_GROUP:
+                            delegateHandler = new EventHandler(PanelConfig_dgvConfigItemDestSourcesOfGroupSelectionChanged);
+                            break;
+                        case PanelSources.INDEX_PANEL.GROUP_SIGNALS:
+                            delegateHandler = new EventHandler(PanelConfig_dgvConfigItemDestGroupSignalsSelectionChanged);
+                            break;
+                        case PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP:
+                            delegateHandler = new EventHandler(PanelConfig_dgvConfigItemDestSignalsOfGroupSelectionChanged);
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            if (! (delegateHandler == null))
+                dgvConfigItem.SelectionChanged += delegateHandler;
+            else
+                ;
+        }
+
+        private void PanelConfig_dgvConfigGroupSelectionChanged(object obj, EventArgs ev
+            , INDEX_CONFIG infxConfig
+            , PanelSources.INDEX_PANEL indxPanelToClear
+            , PanelSources.INDEX_PANEL indxPanelSelected
+            , HHandlerQueue.StatesMachine statePars
+            , HHandlerQueue.StatesMachine stateItems)
+        {
+            //Очистить список с источниками
+            getConfigItem(infxConfig, indxPanelToClear).Rows.Clear();
+            //Очистить список с параметрами соединения
+            getConfigItemProp(infxConfig, indxPanelToClear).Rows.Clear();
+            //Запросить
+            DataAskedHost(new object[] {
+                                    new object [] //Список параметров соединения для источника из выбранной группы (строки)
+                                        {
+                                            statePars //без параметров
+                                        }
+                                    , new object [] //Список источников для выбранной строки
+                                        {
+                                            (int)stateItems //Состояние для обработки
+                                                //с параметрами
+                                                , (int)infxConfig //Индекс панели
+                                                , (int)indxPanelSelected //Индекс группы элементов на панели
+                                                , (int)getConfigItem (infxConfig, indxPanelSelected).SelectedRows [0].Index // выбранная строка группы элементов
+                                        }
+                                }
+                            );
+        }
+
+        private void PanelConfig_dgvConfigItemSelectionChanged(object obj, EventArgs ev
+            , INDEX_CONFIG indxConfig
+            , PanelSources.INDEX_PANEL indxPanelGroup
+            , PanelSources.INDEX_PANEL indxPanelItem
+            , HHandlerQueue.StatesMachine stateProp)
+        {
+            int indxPanelGroupSel = -1
+                , indxPanelItemSel = -1;
+
+            DataGridViewConfigItem cfgItem = getConfigItem (indxConfig, indxPanelGroup);
+            if (! (cfgItem.SelectedRows.Count == 1))
+                return;
+            else
+                indxPanelGroupSel = cfgItem.SelectedRows[0].Index;
+
+            cfgItem = getConfigItem(indxConfig, indxPanelItem);
+            if (!(cfgItem.SelectedRows.Count == 1))
+                return;
+            else
+                indxPanelItemSel = cfgItem.SelectedRows[0].Index;
+            
+            //Запросить
+            DataAskedHost(new object[] {
+                                    new object [] //Список источников для выбранной строки
+                                        {
+                                            (int)stateProp //Состояние для обработки
+                                                //с параметрами
+                                                , (int)indxConfig //Индекс панели
+                                                , (int)indxPanelGroup //Индекс группы элементов на панели
+                                                , indxPanelGroupSel // выбранная строка группы элементов
+                                                , indxPanelItemSel // выбранная строка в списке элементов группы
+                                        }
+                                }
+                            );
+        }
+
+        private void PanelConfig_dgvConfigItemSrcGroupSourcesSelectionChanged (object obj, EventArgs ev)
+        {
+            PanelConfig_dgvConfigGroupSelectionChanged(obj, ev
+                , INDEX_CONFIG.SOURCE
+                , PanelSources.INDEX_PANEL.SOURCES_OF_GROUP
+                , PanelSources.INDEX_PANEL.GROUP_SOURCES
+                , HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_PARS
+                , HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS
+            );
+        }
+
+        private void PanelConfig_dgvConfigItemSrcSourcesOfGroupSelectionChanged(object obj, EventArgs ev)
+        {
+            PanelConfig_dgvConfigItemSelectionChanged (obj, ev
+                , INDEX_CONFIG.SOURCE
+                , PanelSources.INDEX_PANEL.GROUP_SOURCES
+                , PanelSources.INDEX_PANEL.SOURCES_OF_GROUP
+                , HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_PROP
+            );            
+        }
+
+        private void PanelConfig_dgvConfigItemSrcGroupSignalsSelectionChanged(object obj, EventArgs ev)
+        {
+            PanelConfig_dgvConfigGroupSelectionChanged(obj, ev
+                , INDEX_CONFIG.SOURCE
+                , PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP
+                , PanelSources.INDEX_PANEL.GROUP_SIGNALS
+                , HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_PARS
+                , HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS
+            );
+        }
+
+        private void PanelConfig_dgvConfigItemSrcSignalsOfGroupSelectionChanged(object obj, EventArgs ev)
+        {
+            PanelConfig_dgvConfigItemSelectionChanged(obj, ev
+                , INDEX_CONFIG.SOURCE
+                , PanelSources.INDEX_PANEL.GROUP_SIGNALS
+                , PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP
+                , HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_PROP
+            );
+        }
+
+        private void PanelConfig_dgvConfigItemDestGroupSourcesSelectionChanged(object obj, EventArgs ev)
+        {
+            PanelConfig_dgvConfigGroupSelectionChanged(obj, ev
+                , INDEX_CONFIG.DEST
+                , PanelSources.INDEX_PANEL.SOURCES_OF_GROUP
+                , PanelSources.INDEX_PANEL.GROUP_SOURCES
+                , HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_PARS
+                , HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS
+            );
+        }
+
+        private void PanelConfig_dgvConfigItemDestSourcesOfGroupSelectionChanged(object obj, EventArgs ev)
+        {
+            PanelConfig_dgvConfigItemSelectionChanged(obj, ev
+                , INDEX_CONFIG.DEST
+                , PanelSources.INDEX_PANEL.GROUP_SOURCES
+                , PanelSources.INDEX_PANEL.SOURCES_OF_GROUP
+                , HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_PROP
+            );
+        }
+
+        private void PanelConfig_dgvConfigItemDestGroupSignalsSelectionChanged(object obj, EventArgs ev)
+        {
+            PanelConfig_dgvConfigGroupSelectionChanged(obj, ev
+                , INDEX_CONFIG.DEST
+                , PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP
+                , PanelSources.INDEX_PANEL.GROUP_SIGNALS
+                , HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_PARS
+                , HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS
+            );
+        }
+
+        private void PanelConfig_dgvConfigItemDestSignalsOfGroupSelectionChanged(object obj, EventArgs ev)
+        {
+            PanelConfig_dgvConfigItemSelectionChanged(obj, ev
+                , INDEX_CONFIG.DEST
+                , PanelSources.INDEX_PANEL.GROUP_SIGNALS
+                , PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP
+                , HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_PROP
+            );
         }
     }
 
@@ -437,7 +758,26 @@ namespace uLoader
             this.SuspendLayout();
 
             this.Controls.Add(new PanelSources(), 0, 0);
+            //(this.Controls[(int)INDEX_CONFIG.SOURCE] as PanelCommon). ;
             this.Controls.Add(new PanelSources(), 0, 1);
+            //(this.Controls[(int)INDEX_CONFIG.DEST] as PanelCommon). ;
+
+            PanelSources panelSrc;
+            int indxCtrl;
+
+            for (INDEX_CONFIG indxConfig = INDEX_CONFIG.SOURCE; indxConfig < INDEX_CONFIG.COUNT_INDEX_CONFIG; indxConfig ++)
+            {
+                panelSrc = this.Controls[(int)indxConfig] as PanelSources;
+
+                for (PanelSources.INDEX_PANEL indxPanel  = PanelSources.INDEX_PANEL.GROUP_SOURCES; indxPanel < PanelSources.INDEX_PANEL.COUNT_INDEX_PANEL; indxPanel ++)
+                {                    
+                    indxCtrl = (int)PanelSources.INDEX_PANEL_CONTROL.LISTEDIT * (int)PanelSources.INDEX_PANEL.COUNT_INDEX_PANEL + (int)indxPanel;
+                    setHandler_dgvConfigItemSelectionChanged (panelSrc.m_dictControl[(PanelSources.INDEX_CONTROL)indxCtrl] as DataGridViewConfigItem
+                        , indxConfig
+                        , indxPanel
+                        );
+                }
+            }
 
             //Применение размещения элементов
             this.ResumeLayout(false);

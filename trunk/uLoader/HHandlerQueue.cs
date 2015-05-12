@@ -13,14 +13,23 @@ namespace uLoader
     {
         public enum StatesMachine
         {
-            LIST_SRC_GROUP_SOURCES
-            , LIST_SRC_GROUP_SOURCE_ITEMS
-            , LIST_SRC_GROUP_SIGNALS
-            , LIST_SRC_GROUP_SIGNAL_ITEMS
-            , LIST_DEST_GROUP_SOURCES
-            , LIST_DEST_GROUP_SOURCE_ITEMS
-            , LIST_DEST_GROUP_SIGNALS
-            , LIST_DEST_GROUP_SIGNAL_ITEMS
+            LIST_SRC_GROUP_SOURCES //Список групп источников (источник)
+            , LIST_SRC_GROUP_SOURCE_ITEMS //Список источников в группе источников (истиочник)
+            , LIST_SRC_GROUP_SOURCE_PARS //Список наименовний параметров соединения источников в группе источников (истиочник)
+            , LIST_SRC_GROUP_SOURCE_PROP //Список параметров соединения источников в группе источников (истиочник)
+            , LIST_SRC_GROUP_SIGNALS //Список групп сигналов (источник)
+            , LIST_SRC_GROUP_SIGNAL_ITEMS //Список сигналов в группе сигналов (истиочник)
+            , LIST_SRC_GROUP_SIGNAL_PARS //Список наименовний параметров сигналов в группе сигналов (истиочник)
+            , LIST_SRC_GROUP_SIGNAL_PROP //Список параметров сигналов в группе сигналов (истиочник)
+            , LIST_DEST_GROUP_SOURCES //Список групп источников (назначение)
+            , LIST_DEST_GROUP_SOURCE_ITEMS //Список источников в группе источников (назначение)
+            , LIST_DEST_GROUP_SOURCE_PARS //Список наименований параметров соединения источников в группе источников (назначение)
+            , LIST_DEST_GROUP_SOURCE_PROP //Список параметров соединения источников в группе источников (назначение)
+            , LIST_DEST_GROUP_SIGNALS //Список групп сигналов (назначение)
+            , LIST_DEST_GROUP_SIGNAL_ITEMS //Список сигналов в группе сигналов (назначение)
+            , LIST_DEST_GROUP_SIGNAL_PARS //Список наименований параметров сигналов в группе сигналов (назначение)
+            , LIST_DEST_GROUP_SIGNAL_PROP //Список параметров сигналов в группе сигналов (назначение)
+            ,
         }
 
         private FormMain.FileINI m_fileINI;
@@ -39,12 +48,20 @@ namespace uLoader
             {
                 case (int)StatesMachine.LIST_SRC_GROUP_SOURCES:
                 case (int)StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS:
+                case (int)StatesMachine.LIST_SRC_GROUP_SOURCE_PARS:
+                case (int)StatesMachine.LIST_SRC_GROUP_SOURCE_PROP:
                 case (int)StatesMachine.LIST_SRC_GROUP_SIGNALS:
                 case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS:
+                case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_PARS:
+                case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_PROP:
                 case (int)StatesMachine.LIST_DEST_GROUP_SOURCES:
                 case (int)StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS:
+                case (int)StatesMachine.LIST_DEST_GROUP_SOURCE_PARS:
+                case (int)StatesMachine.LIST_DEST_GROUP_SOURCE_PROP:
                 case (int)StatesMachine.LIST_DEST_GROUP_SIGNALS:
                 case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS:
+                case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_PARS:
+                case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_PROP:
                     //Не требуют запроса
                     break;
                 default:
@@ -63,12 +80,20 @@ namespace uLoader
             {
                 case (int)StatesMachine.LIST_SRC_GROUP_SOURCES:
                 case (int)StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS:
+                case (int)StatesMachine.LIST_SRC_GROUP_SOURCE_PARS:
+                case (int)StatesMachine.LIST_SRC_GROUP_SOURCE_PROP:
                 case (int)StatesMachine.LIST_SRC_GROUP_SIGNALS:
                 case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS:
+                case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_PARS:
+                case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_PROP:
                 case (int)StatesMachine.LIST_DEST_GROUP_SOURCES:
                 case (int)StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS:
+                case (int)StatesMachine.LIST_DEST_GROUP_SOURCE_PARS:
+                case (int)StatesMachine.LIST_DEST_GROUP_SOURCE_PROP:
                 case (int)StatesMachine.LIST_DEST_GROUP_SIGNALS:
                 case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS:
+                case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_PARS:
+                case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_PROP:
                     dataHost.m_objRecieved.OnEvtDataRecievedHost(new object [] { state, obj });
                     break;
                 default:
@@ -85,6 +110,8 @@ namespace uLoader
             error = true;
             outobj = null;
 
+            HDataHost dataHost = null;
+
             switch (state)
             {
                 case (int)StatesMachine.LIST_SRC_GROUP_SOURCES:
@@ -95,7 +122,22 @@ namespace uLoader
                     break;
                 case (int)StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS:
                     error = false;
-                    //outobj = m_fileINI.GetListSrcGroupSourceItems();
+                    dataHost = Peek;
+                    outobj = m_fileINI.GetListSrcItemsOfGroupSource(dataHost.m_pars.ToArray());
+
+                    iRes = 0;
+                    break;
+                case (int)StatesMachine.LIST_SRC_GROUP_SOURCE_PARS:
+                    error = false;
+                    dataHost = Peek;
+                    outobj = m_fileINI.GetListSrcParsOfGroupSource (dataHost.m_pars.ToArray());
+
+                    iRes = 0;
+                    break;
+                case (int)StatesMachine.LIST_SRC_GROUP_SOURCE_PROP:
+                    error = false;
+                    dataHost = Peek;
+                    outobj = m_fileINI.GetListSrcItemPropOfGroupSource(dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
@@ -107,7 +149,20 @@ namespace uLoader
                     break;
                 case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS:
                     error = false;
-                    //outobj = m_fileINI.GetListSrcGroupSignalItems();
+                    dataHost = Peek;
+                    outobj = m_fileINI.GetListSrcItemsOfGroupSignal(dataHost.m_pars.ToArray());
+
+                    iRes = 0;
+                    break;
+                case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_PARS:
+                    error = false;
+                    //outobj = ;
+
+                    iRes = 0;
+                    break;
+                case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_PROP:
+                    error = false;
+                    //outobj = ;
 
                     iRes = 0;
                     break;
@@ -123,15 +178,39 @@ namespace uLoader
 
                     iRes = 0;
                     break;
+                case (int)StatesMachine.LIST_DEST_GROUP_SOURCE_PARS:
+                    error = false;
+                    //outobj = ;
+
+                    iRes = 0;
+                    break;
+                case (int)StatesMachine.LIST_DEST_GROUP_SOURCE_PROP:
+                    error = false;
+                    //outobj = ;
+
+                    iRes = 0;
+                    break;
                 case (int)StatesMachine.LIST_DEST_GROUP_SIGNALS:
                     error = false;
                     outobj = m_fileINI.ListDestGroupSignals;
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS:                    
+                case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS:
                     error = false;
                     //outobj = m_fileINI.GetListDestGroupSignalItems();
+
+                    iRes = 0;
+                    break;
+                case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_PARS:
+                    error = false;
+                    //outobj = ;
+
+                    iRes = 0;
+                    break;
+                case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_PROP:
+                    error = false;
+                    //outobj = ;
 
                     iRes = 0;
                     break;
