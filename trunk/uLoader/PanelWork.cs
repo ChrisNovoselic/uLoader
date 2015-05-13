@@ -13,7 +13,6 @@ namespace uLoader
 {    
     public partial class PanelWork : PanelCommonDataHost
     {
-        enum INDEX_LOADER { SOURCE, DEST, COUNT_INDEX_LOADER };
         PanelLoader[] m_arLoader;
 
         public PanelWork() : base (1, 2)
@@ -41,6 +40,14 @@ namespace uLoader
 
             switch (state)
             {
+                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCES:
+                    break;
+                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNALS:
+                    break;
+                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES:
+                    break;
+                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNALS:
+                    break;
                 default:
                     break;
             }
@@ -74,14 +81,30 @@ namespace uLoader
 
             if (IsFirstActivated == true)
                 DataAskedHost(new object[] { new object [] { (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCES /*, без параметров*/ }
-                                        //, new object [] { (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNALS /*, без параметров*/ }
+                                        , new object [] { (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNALS /*, без параметров*/ }
                                         , new object [] { (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES /*, без параметров*/ }
-                                        //, new object [] { (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNALS /*, без параметров*/ }
+                                        , new object [] { (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNALS /*, без параметров*/ }
                                         });
             else
                 ;
 
             return bRes;
+        }
+
+        /// <summary>
+        /// Получить объект со списком групп (элементов групп)
+        /// </summary>
+        /// <param name="indxConfig">Индекс панели</param>
+        /// <param name="indxPanel">Индекс типа объекта</param>
+        /// <returns>Объект со списком групп</returns>
+        private DataGridViewConfigItem getConfigItem(INDEX_SRC indxConfig/*, PanelLoader.INDEX_PANEL indxPanel*/)
+        {
+            PanelLoader panelLdr;
+            int indxCtrl;
+
+            panelLdr = this.Controls[(int)indxConfig] as PanelLoader;
+            indxCtrl = (int)PanelLoader.INDEX_PANEL_CONTROL.LISTEDIT * (int)PanelLoader.INDEX_PANEL.COUNT_INDEX_PANEL + (int)indxPanel;
+            return panelLdr.m_dictControl[(PanelLoader.INDEX_CONTROL)indxCtrl] as DataGridViewConfigItem;
         }
     }
 
@@ -125,15 +148,15 @@ namespace uLoader
             initializeLayoutStyle ();
 
             Type typeLoader = typeof (PanelLoader);
-            m_arLoader = new PanelLoader[(int)INDEX_LOADER.COUNT_INDEX_LOADER];
-            for (int i = (int)INDEX_LOADER.SOURCE; i < (int)INDEX_LOADER.COUNT_INDEX_LOADER; i++)
+            m_arLoader = new PanelLoader[(int)INDEX_SRC.COUNT_INDEX_SRC];
+            for (int i = (int)INDEX_SRC.SOURCE; i < (int)INDEX_SRC.COUNT_INDEX_SRC; i++)
             {
                 switch (i)
                 {
-                    case (int)INDEX_LOADER.SOURCE:
+                    case (int)INDEX_SRC.SOURCE:
                         typeLoader = typeof(PanelLoaderSource);
                         break;
-                    case (int)INDEX_LOADER.DEST:
+                    case (int)INDEX_SRC.DEST:
                         typeLoader = typeof(PanelLoaderDest);
                         break;
                     default:
