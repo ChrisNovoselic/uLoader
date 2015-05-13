@@ -16,10 +16,13 @@ namespace uLoader
     {
         private class PanelSources : PanelCommon
         {
-            static int COL_DIV = 1, ROW_DIV = 1
+            /// <summary>
+            /// Вспомогательные константы для позиционирования объектов на панели
+            /// </summary>            
+            private static int COL_DIV = 1, ROW_DIV = 1
                 , COL_COUNT = 4 / COL_DIV, ROW_COUNT = 1 / ROW_DIV;
 
-            //Индексы панелей
+            //Индексы панелей (группы источников, элементы в группе источников, группы сигналов, элементы в группе сигналов)
             public enum INDEX_PANEL
             {
                 GROUP_SOURCES, SOURCES_OF_GROUP, GROUP_SIGNALS, SIGNALS_OF_GROUP
@@ -52,14 +55,21 @@ namespace uLoader
             {
                 @"Группы источников", @"Источники группы", @"Группы сигналов", @"Сигналы группы"
             };
-            //Словарь элементов управления
+            /// <summary>
+            /// Словарь элементов управления
+            /// </summary>
             public Dictionary<INDEX_CONTROL, Control> m_dictControl;
-
+            /// <summary>
+            /// Конструктор -
+            /// </summary>
             public PanelSources() : base (COL_COUNT, ROW_COUNT)
             {
                 InitializeComponent();
             }
-
+            /// <summary>
+            /// Конструктор (с параметром) -
+            /// </summary>
+            /// <param name="container">Объект-родитель по отношению к создаваемому объекту</param>
             public PanelSources(IContainer container)
                 : base(COL_COUNT, ROW_COUNT)
             {
@@ -292,13 +302,16 @@ namespace uLoader
             , ROW_COUNT = 2;
 
         //Индексы...
-        enum INDEX_CONFIG
+        private enum INDEX_CONFIG
         {
             SOURCE,
             DEST
             , COUNT_INDEX_CONFIG
         };        
 
+        /// <summary>
+        /// Конструктор -
+        /// </summary>
         public PanelConfig()
             : base(COL_COUNT, ROW_COUNT)
         {
@@ -307,6 +320,10 @@ namespace uLoader
             initialize();
         }
 
+        /// <summary>
+        /// Конструктор (с парметром) - 
+        /// </summary>
+        /// <param name="container">Объект-родитель по отношению к создаваемому объекту</param>
         public PanelConfig(IContainer container)
             : base(container, COL_COUNT, ROW_COUNT)
         {
@@ -317,6 +334,10 @@ namespace uLoader
             initialize();
         }
 
+        /// <summary>
+        /// Инициализация "пользовательских" данных 
+        /// </summary>
+        /// <returns>Результат выполнения инициализации</returns>
         private int initialize()
         {
             int iRes = 0;
@@ -344,8 +365,8 @@ namespace uLoader
         /// Получить объект со свойствами элемента группы
         /// </summary>
         /// <param name="indxConfig">Индекс панели (источник, назначение)</param>
-        /// <param name="indxPanel"></param>
-        /// <returns></returns>
+        /// <param name="indxPanel">Индекс группы элементов (элементов) на панели конфигурации</param>
+        /// <returns>Объект со списком групп (элементов)</returns>
         private DataGridView getConfigItemProp(INDEX_CONFIG indxConfig, PanelSources.INDEX_PANEL indxPanel)
         {
             PanelSources panelSrc;
@@ -376,9 +397,9 @@ namespace uLoader
         /// <summary>
         /// Заполнить значениями объект со списком групп (элементов групп) (истоников, сигналов)
         /// </summary>
-        /// <param name="indxConfig"></param>
-        /// <param name="indxPanel"></param>
-        /// <param name="rows"></param>
+        /// <param name="indxConfig">Индекс панели конфигурации</param>
+        /// <param name="indxPanel">Индекс группы элементов (элементов) на панели конфигурации</param>
+        /// <param name="rows">Массив строк для заполнения</param>
         private void fillConfigItem(INDEX_CONFIG indxConfig, PanelSources.INDEX_PANEL indxPanel, string[] rows)
         {
             DataGridViewConfigItem cfgItem = getConfigItem(indxConfig, indxPanel);
@@ -389,21 +410,31 @@ namespace uLoader
                 ;
         }
 
+        /// <summary>
+        /// Заполнить значениями объект с наименованиями параметров элементов групп (истоников, сигналов)
+        /// </summary>
+        /// <param name="indxConfig">Индекс панели конфигурации</param>
+        /// <param name="indxPanel">Индекс группы элементов (элементов) на панели конфигурации</param>
+        /// <param name="rows">Массив строк для заполнения</param>
         private void fillConfigItemPars(INDEX_CONFIG indxConfig, PanelSources.INDEX_PANEL indxPanel, string[] rows)
         {
+            //Получить объект для отображения строк
             DataGridView cfgItem = getConfigItemProp(indxConfig, indxPanel);
 
+            //Проверить наличие строк для отображения
             if (! (rows == null))
             {
                 int i = 0;
                 foreach (string strHeader in rows)
                 {
+                    //Проверить возможность отображения параметра
                     if (strHeader.Equals (string.Empty) == false)
                     {
-                        cfgItem.Rows.Add (string.Empty);
-                        cfgItem.Rows[i++].HeaderCell.Value = strHeader;
+                        cfgItem.Rows.Add (string.Empty); //Добавить строку
+                        cfgItem.Rows[i++].HeaderCell.Value = strHeader; //Отобразить наименование параметра
                     }
                     else
+                        //Исключение - пустых параметров не существует
                         throw new Exception(@"PanelConfig::fillConfigItemPars (" + indxConfig.ToString () + @", " + indxPanel.ToString () + @") - ...");
                 }
             }
@@ -411,6 +442,12 @@ namespace uLoader
                 ;
         }
 
+        /// <summary>
+        /// Заполнить значениями объект со значениями параметров элементов групп (истоников, сигналов)
+        /// </summary>
+        /// <param name="indxConfig">Индекс панели конфигурации</param>
+        /// <param name="indxPanel">Индекс группы элементов (элементов) на панели конфигурации</param>
+        /// <param name="rows">Массив строк для заполнения</param>
         private void fillConfigItemProp(INDEX_CONFIG indxConfig, PanelSources.INDEX_PANEL indxPanel, string[] rows)
         {
             DataGridView cfgItem = getConfigItemProp(indxConfig, indxPanel);
@@ -427,59 +464,65 @@ namespace uLoader
                 ;
         }
 
+        /// <summary>
+        /// Обработчик события получения данных по запросу (выполняется в текущем потоке)
+        /// </summary>
+        /// <param name="obj">Результат, полученный по запросу (массив 'object')</param>
         private void onEvtDataRecievedHost(object obj)
         {
+            //Обработанное состояние 
             int state = Int32.Parse((obj as object[])[0].ToString());
+            //Параметры (массив) в 1-ом элементе результата
             object par = (obj as object[])[1];            
 
             switch (state)
             {
-                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCES:
+                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCES: //Заполнить на панели источник - группы источников
                     fillConfigItem(INDEX_CONFIG.SOURCE, PanelSources.INDEX_PANEL.GROUP_SOURCES, (par as object[]) as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS:
+                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS: //Заполнить на панели источник - элементы в группе источников
                     fillConfigItem(INDEX_CONFIG.SOURCE, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_PARS:
+                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_PARS: //Заполнить на панели источник - наименования параметров элементов в группе источников
                     fillConfigItemPars(INDEX_CONFIG.SOURCE, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_PROP:
+                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_PROP: //Заполнить на панели источник - параметры элементов в группе источников
                     fillConfigItemProp(INDEX_CONFIG.SOURCE, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNALS:
+                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNALS: //Заполнить на панели источник - группы сигналов
                     fillConfigItem(INDEX_CONFIG.SOURCE, PanelSources.INDEX_PANEL.GROUP_SIGNALS, (par as object[]) as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS:
+                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS: //Заполнить на панели источник - элементы в группе сигналов
                     fillConfigItem(INDEX_CONFIG.SOURCE, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_PARS:
+                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_PARS: //Заполнить на панели источник - наименования параметров элементов в группе сигналов
                     fillConfigItemPars(INDEX_CONFIG.SOURCE, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_PROP:
+                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_PROP: //Заполнить на панели источник - параметры элементов в группе сигналов
                     fillConfigItemProp(INDEX_CONFIG.SOURCE, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES:
+                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES: //Заполнить на панели назначение - группы источников
                     fillConfigItem(INDEX_CONFIG.DEST, PanelSources.INDEX_PANEL.GROUP_SOURCES, (par as object[]) as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS:
+                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS: //Заполнить на панели назначение - элементы в группе источников
                     fillConfigItem(INDEX_CONFIG.DEST, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_PARS:
+                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_PARS: //Заполнить на панели назначение - наименования параметров элементов в группе источников
                     fillConfigItemPars(INDEX_CONFIG.DEST, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_PROP:
+                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_PROP: //Заполнить на панели назначение - параметры элементов в группе источников
                     fillConfigItemProp(INDEX_CONFIG.DEST, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNALS:
+                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNALS: //Заполнить на панели назначение - группы сигналов
                     fillConfigItem(INDEX_CONFIG.DEST, PanelSources.INDEX_PANEL.GROUP_SIGNALS, (par as object[]) as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS:
+                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS: //Заполнить на панели назначение - элементы в группе сигналов
                     fillConfigItem(INDEX_CONFIG.DEST, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_PARS:
+                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_PARS: //Заполнить на панели назначение - наименования параметров элементов в группе сигналов
                     fillConfigItemPars(INDEX_CONFIG.DEST, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_PROP:
+                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_PROP: //Заполнить на панели назначение - параметры элементов в группе сигналов
                     fillConfigItemProp(INDEX_CONFIG.DEST, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
                     break;
                 default:
@@ -487,13 +530,28 @@ namespace uLoader
             }
         }
 
+        /// <summary>
+        /// Обработчик события получения данных по запросу (выполняется в потоке получения результата)
+        /// </summary>
+        /// <param name="obj">Результат, полученный по запросу</param>
         public override void OnEvtDataRecievedHost(object obj)
         {
-            this.BeginInvoke(new DelegateObjectFunc(onEvtDataRecievedHost), obj);            
+            if (InvokeRequired == true)
+                if (IsHandleCreated == true)
+                    this.BeginInvoke(new DelegateObjectFunc(onEvtDataRecievedHost), obj);
+                else
+                    throw new Exception(@"PanelConfig::OnEvtDataRecievedHost () - IsHandleCreated==" + IsHandleCreated);
+            else
+                onEvtDataRecievedHost (obj);
 
             base.OnEvtDataRecievedHost(obj);
         }
 
+        /// <summary>
+        /// Активацирует/деактивирует панель
+        /// </summary>
+        /// <param name="active">Признак операции: активация/деактивация</param>
+        /// <returns>Результат выполнения: было ли изменено состояние</returns>
         public override bool Activate(bool active)
         {
             bool bRes = base.Activate(active);
@@ -518,42 +576,43 @@ namespace uLoader
         /// <param name="indxPanel">Индекс группы элементов на панели</param>
         private void setHandler_dgvConfigItemSelectionChanged (DataGridViewConfigItem dgvConfigItem, INDEX_CONFIG indxConfig, PanelSources.INDEX_PANEL indxPanel)
         {
+            //Обработчик для "безличного" обращения
             EventHandler delegateHandler = null;
-            
+
             switch (indxConfig)
             {
-                case INDEX_CONFIG.SOURCE:
+                case INDEX_CONFIG.SOURCE: //Индекс панели конфигурации - источник
                     switch (indxPanel)
                     {
-                        case PanelSources.INDEX_PANEL.GROUP_SOURCES:
+                        case PanelSources.INDEX_PANEL.GROUP_SOURCES: //Индекс панели групп источников
                             delegateHandler = new EventHandler (PanelConfig_dgvConfigItemSrcGroupSourcesSelectionChanged);
                             break;
-                        case PanelSources.INDEX_PANEL.SOURCES_OF_GROUP:
+                        case PanelSources.INDEX_PANEL.SOURCES_OF_GROUP: //Индекс панели элемента группы источников
                             delegateHandler = new EventHandler(PanelConfig_dgvConfigItemSrcSourcesOfGroupSelectionChanged);
                             break;
-                        case PanelSources.INDEX_PANEL.GROUP_SIGNALS:
+                        case PanelSources.INDEX_PANEL.GROUP_SIGNALS: //Индекс панели групп сигналов
                             delegateHandler = new EventHandler(PanelConfig_dgvConfigItemSrcGroupSignalsSelectionChanged);
                             break;
-                        case PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP:
+                        case PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP: //Индекс панели элемента группы сигналов
                             delegateHandler = new EventHandler(PanelConfig_dgvConfigItemSrcSignalsOfGroupSelectionChanged);
                             break;
                         default:
                             break;
                     }
                     break;
-                case INDEX_CONFIG.DEST:
+                case INDEX_CONFIG.DEST: //Индекс панели конфигурации - назначение
                     switch (indxPanel)
                     {
-                        case PanelSources.INDEX_PANEL.GROUP_SOURCES:
+                        case PanelSources.INDEX_PANEL.GROUP_SOURCES: //Индекс панели групп источников
                             delegateHandler = new EventHandler(PanelConfig_dgvConfigItemDestGroupSourcesSelectionChanged);
                             break;
-                        case PanelSources.INDEX_PANEL.SOURCES_OF_GROUP:
+                        case PanelSources.INDEX_PANEL.SOURCES_OF_GROUP: //Индекс панели элемента группы источников
                             delegateHandler = new EventHandler(PanelConfig_dgvConfigItemDestSourcesOfGroupSelectionChanged);
                             break;
-                        case PanelSources.INDEX_PANEL.GROUP_SIGNALS:
+                        case PanelSources.INDEX_PANEL.GROUP_SIGNALS: //Индекс панели групп сигналов
                             delegateHandler = new EventHandler(PanelConfig_dgvConfigItemDestGroupSignalsSelectionChanged);
                             break;
-                        case PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP:
+                        case PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP: //Индекс панели элемента группы сигналов
                             delegateHandler = new EventHandler(PanelConfig_dgvConfigItemDestSignalsOfGroupSelectionChanged);
                             break;
                         default:
@@ -570,7 +629,18 @@ namespace uLoader
                 ;
         }
 
-        private void PanelConfig_dgvConfigGroupSelectionChanged(object obj, EventArgs ev
+        /// <summary>
+        /// Универсальный "отправитель" запроса на получение данных (строк) для отображения
+        ///  при возникновении события 'SelectionChanged'
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие 'SelectionChanged'</param>
+        /// <param name="ev">Аргументы события</param>
+        /// <param name="infxConfig">Индекс панели конфигурации</param>
+        /// <param name="indxPanelToClear">Индекс панели, напрямую зависимой от инициировавшей событие (для удаления всех элементов)</param>
+        /// <param name="indxPanelSelected">Индекс</param>
+        /// <param name="statePars">Состояние для обработки (параметры элементов группы)</param>
+        /// <param name="stateItems">Состояние для обработки (элементы группы)</param>
+        private void panelConfig_dgvConfigGroupSelectionChanged(object obj, EventArgs ev
             , INDEX_CONFIG infxConfig
             , PanelSources.INDEX_PANEL indxPanelToClear
             , PanelSources.INDEX_PANEL indxPanelSelected
@@ -599,7 +669,17 @@ namespace uLoader
                             );
         }
 
-        private void PanelConfig_dgvConfigItemSelectionChanged(object obj, EventArgs ev
+        /// <summary>
+        /// Универсальный "отправитель" запроса на получение данных (строк) для отображения
+        ///  при возникновении события 'SelectionChanged'
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие 'SelectionChanged'</param>
+        /// <param name="ev">Аргументы события</param>
+        /// <param name="indxConfig">Индекс панели конфигурации</param>
+        /// <param name="indxPanelGroup">Индекс группы элементов</param>
+        /// <param name="indxPanelItem">Индекс элементов группы</param>
+        /// <param name="stateProp">Состояние для обработки</param>
+        private void panelConfig_dgvConfigItemSelectionChanged(object obj, EventArgs ev
             , INDEX_CONFIG indxConfig
             , PanelSources.INDEX_PANEL indxPanelGroup
             , PanelSources.INDEX_PANEL indxPanelItem
@@ -608,14 +688,20 @@ namespace uLoader
             int indxPanelGroupSel = -1
                 , indxPanelItemSel = -1;
 
+            //Получить объект с группами
             DataGridViewConfigItem cfgItem = getConfigItem (indxConfig, indxPanelGroup);
+            //Проверить наличие выбора
             if (! (cfgItem.SelectedRows.Count == 1))
+                //Не выполнять без выбранной строки
                 return;
             else
                 indxPanelGroupSel = cfgItem.SelectedRows[0].Index;
 
+            //Получить объект с элементами
             cfgItem = getConfigItem(indxConfig, indxPanelItem);
+            //Проверить наличие выбора
             if (!(cfgItem.SelectedRows.Count == 1))
+                //Не выполнять без выбранной строки
                 return;
             else
                 indxPanelItemSel = cfgItem.SelectedRows[0].Index;
@@ -635,9 +721,14 @@ namespace uLoader
                             );
         }
 
+        /// <summary>
+        /// Обработчик события 'SelectionChanged' Панель источник - группы источников
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргументы события</param>
         private void PanelConfig_dgvConfigItemSrcGroupSourcesSelectionChanged (object obj, EventArgs ev)
         {
-            PanelConfig_dgvConfigGroupSelectionChanged(obj, ev
+            panelConfig_dgvConfigGroupSelectionChanged(obj, ev
                 , INDEX_CONFIG.SOURCE
                 , PanelSources.INDEX_PANEL.SOURCES_OF_GROUP
                 , PanelSources.INDEX_PANEL.GROUP_SOURCES
@@ -646,9 +737,14 @@ namespace uLoader
             );
         }
 
+        /// <summary>
+        /// Обработчик события 'SelectionChanged' Панель источник - элемент в группе источников
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргументы события</param>
         private void PanelConfig_dgvConfigItemSrcSourcesOfGroupSelectionChanged(object obj, EventArgs ev)
         {
-            PanelConfig_dgvConfigItemSelectionChanged (obj, ev
+            panelConfig_dgvConfigItemSelectionChanged (obj, ev
                 , INDEX_CONFIG.SOURCE
                 , PanelSources.INDEX_PANEL.GROUP_SOURCES
                 , PanelSources.INDEX_PANEL.SOURCES_OF_GROUP
@@ -656,9 +752,14 @@ namespace uLoader
             );            
         }
 
+        /// <summary>
+        /// Обработчик события 'SelectionChanged' Панель источник - группы сигналов
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргументы события</param>
         private void PanelConfig_dgvConfigItemSrcGroupSignalsSelectionChanged(object obj, EventArgs ev)
         {
-            PanelConfig_dgvConfigGroupSelectionChanged(obj, ev
+            panelConfig_dgvConfigGroupSelectionChanged(obj, ev
                 , INDEX_CONFIG.SOURCE
                 , PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP
                 , PanelSources.INDEX_PANEL.GROUP_SIGNALS
@@ -667,9 +768,14 @@ namespace uLoader
             );
         }
 
+        /// <summary>
+        /// Обработчик события 'SelectionChanged' Панель источник - элемент в группе сигналов
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргументы события</param>
         private void PanelConfig_dgvConfigItemSrcSignalsOfGroupSelectionChanged(object obj, EventArgs ev)
         {
-            PanelConfig_dgvConfigItemSelectionChanged(obj, ev
+            panelConfig_dgvConfigItemSelectionChanged(obj, ev
                 , INDEX_CONFIG.SOURCE
                 , PanelSources.INDEX_PANEL.GROUP_SIGNALS
                 , PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP
@@ -677,9 +783,14 @@ namespace uLoader
             );
         }
 
+        /// <summary>
+        /// Обработчик события 'SelectionChanged' Панель назначение - группы источников
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргументы события</param>
         private void PanelConfig_dgvConfigItemDestGroupSourcesSelectionChanged(object obj, EventArgs ev)
         {
-            PanelConfig_dgvConfigGroupSelectionChanged(obj, ev
+            panelConfig_dgvConfigGroupSelectionChanged(obj, ev
                 , INDEX_CONFIG.DEST
                 , PanelSources.INDEX_PANEL.SOURCES_OF_GROUP
                 , PanelSources.INDEX_PANEL.GROUP_SOURCES
@@ -688,9 +799,14 @@ namespace uLoader
             );
         }
 
+        /// <summary>
+        /// Обработчик события 'SelectionChanged' Панель назначение - элемент в группе источников
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргументы события</param>
         private void PanelConfig_dgvConfigItemDestSourcesOfGroupSelectionChanged(object obj, EventArgs ev)
         {
-            PanelConfig_dgvConfigItemSelectionChanged(obj, ev
+            panelConfig_dgvConfigItemSelectionChanged(obj, ev
                 , INDEX_CONFIG.DEST
                 , PanelSources.INDEX_PANEL.GROUP_SOURCES
                 , PanelSources.INDEX_PANEL.SOURCES_OF_GROUP
@@ -698,9 +814,14 @@ namespace uLoader
             );
         }
 
+        /// <summary>
+        /// Обработчик события 'SelectionChanged' Панель назначение - группы сигналов
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргументы события</param>
         private void PanelConfig_dgvConfigItemDestGroupSignalsSelectionChanged(object obj, EventArgs ev)
         {
-            PanelConfig_dgvConfigGroupSelectionChanged(obj, ev
+            panelConfig_dgvConfigGroupSelectionChanged(obj, ev
                 , INDEX_CONFIG.DEST
                 , PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP
                 , PanelSources.INDEX_PANEL.GROUP_SIGNALS
@@ -709,9 +830,14 @@ namespace uLoader
             );
         }
 
+        /// <summary>
+        /// Обработчик события 'SelectionChanged' Панель назначение - элемент в группе сигналов
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргументы события</param>
         private void PanelConfig_dgvConfigItemDestSignalsOfGroupSelectionChanged(object obj, EventArgs ev)
         {
-            PanelConfig_dgvConfigItemSelectionChanged(obj, ev
+            panelConfig_dgvConfigItemSelectionChanged(obj, ev
                 , INDEX_CONFIG.DEST
                 , PanelSources.INDEX_PANEL.GROUP_SIGNALS
                 , PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP

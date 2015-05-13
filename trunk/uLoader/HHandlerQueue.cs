@@ -123,21 +123,21 @@ namespace uLoader
                 case (int)StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS:
                     error = false;
                     dataHost = Peek;
-                    outobj = m_fileINI.GetListSrcItemsOfGroupSource(dataHost.m_pars.ToArray());
+                    outobj = m_fileINI.GetListItemsOfGroupSource(dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
                 case (int)StatesMachine.LIST_SRC_GROUP_SOURCE_PARS:
                     error = false;
                     dataHost = Peek;
-                    outobj = m_fileINI.GetListSrcParsOfGroupSource (dataHost.m_pars.ToArray());
+                    outobj = m_fileINI.GetListParsOfGroupSource (dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
                 case (int)StatesMachine.LIST_SRC_GROUP_SOURCE_PROP:
                     error = false;
                     dataHost = Peek;
-                    outobj = m_fileINI.GetListSrcItemPropOfGroupSource(dataHost.m_pars.ToArray());
+                    outobj = m_fileINI.GetListItemPropOfGroupSource(dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
@@ -150,21 +150,21 @@ namespace uLoader
                 case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS:
                     error = false;
                     dataHost = Peek;
-                    outobj = m_fileINI.GetListSrcItemsOfGroupSignal(dataHost.m_pars.ToArray());
+                    outobj = m_fileINI.GetListItemsOfGroupSignal(dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
                 case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_PARS:
                     error = false;
                     dataHost = Peek;
-                    outobj = m_fileINI.GetListSrcParsOfGroupSignal (dataHost.m_pars.ToArray());
+                    outobj = m_fileINI.GetListParsOfGroupSignal (dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
                 case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_PROP:
                     error = false;
                     dataHost = Peek;
-                    outobj = m_fileINI.GetListSrcItemPropOfGroupSignal(dataHost.m_pars.ToArray());
+                    outobj = m_fileINI.GetListItemPropOfGroupSignal(dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
@@ -177,19 +177,21 @@ namespace uLoader
                 case (int)StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS:
                     error = false;
                     dataHost = Peek;
-                    outobj = m_fileINI.GetListDestItemsOfGroupSource(dataHost.m_pars.ToArray());
+                    outobj = m_fileINI.GetListItemsOfGroupSource(dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
                 case (int)StatesMachine.LIST_DEST_GROUP_SOURCE_PARS:
                     error = false;
-                    //outobj = ;
+                    dataHost = Peek;
+                    outobj = m_fileINI.GetListParsOfGroupSource (dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
                 case (int)StatesMachine.LIST_DEST_GROUP_SOURCE_PROP:
                     error = false;
-                    //outobj = ;
+                    dataHost = Peek;
+                    outobj = m_fileINI.GetListItemPropOfGroupSource(dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
@@ -201,19 +203,22 @@ namespace uLoader
                     break;
                 case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS:
                     error = false;
-                    //outobj = m_fileINI.GetListDestGroupSignalItems();
+                    dataHost = Peek;
+                    outobj = m_fileINI.GetListItemsOfGroupSignal(dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
                 case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_PARS:
                     error = false;
-                    //outobj = ;
+                    dataHost = Peek;
+                    outobj = m_fileINI.GetListParsOfGroupSignal (dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
                 case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_PROP:
                     error = false;
-                    //outobj = ;
+                    dataHost = Peek;
+                    outobj = m_fileINI.GetListItemPropOfGroupSignal(dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;

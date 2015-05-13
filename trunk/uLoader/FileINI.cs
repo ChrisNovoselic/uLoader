@@ -384,7 +384,7 @@ namespace uLoader
 
             public string[] ListDestGroupSignals { get { return GetListGroupSignals(INDEX_SRC.DEST); } }
 
-            public string [] GetListSrcItemsOfGroupSource (object []pars)
+            public string [] GetListItemsOfGroupSource (object []pars)
             {
                 string[] arStrRes = new string[] { };
                 int i = -1;
@@ -399,7 +399,7 @@ namespace uLoader
                 return arStrRes;
             }
 
-            public string [] GetListSrcParsOfGroupSource (object []pars)
+            public string [] GetListParsOfGroupSource (object []pars)
             {
                 string[] arStrRes = new string[] { };
                 int i = -1;
@@ -414,7 +414,7 @@ namespace uLoader
                 return arStrRes;
             }
 
-            public string[] GetListSrcItemPropOfGroupSource(object[] pars)
+            public string[] GetListItemPropOfGroupSource(object[] pars)
             {
                 string[] arStrRes = new string[] { };
                 int i = -1;
@@ -434,7 +434,7 @@ namespace uLoader
                 return arStrRes;
             }
 
-            public string[] GetListSrcItemsOfGroupSignal(object[] pars)
+            public string[] GetListItemsOfGroupSignal(object[] pars)
             {
                 string[] arStrRes = new string[] { };
                 int i = -1;
@@ -454,7 +454,7 @@ namespace uLoader
                 return arStrRes;
             }
 
-            public string[] GetListSrcParsOfGroupSignal(object[] pars)
+            public string[] GetListParsOfGroupSignal(object[] pars)
             {
                 string[] arStrRes = new string[] { };
                 int i = -1;
@@ -469,7 +469,7 @@ namespace uLoader
                 return arStrRes;
             }
 
-            public string[] GetListSrcItemPropOfGroupSignal(object[] pars)
+            public string[] GetListItemPropOfGroupSignal(object[] pars)
             {
                 string[] arStrRes = new string[] { };
                 int i = -1;
@@ -483,22 +483,7 @@ namespace uLoader
                     arStrRes[i++] = sgnl.m_dictPars[key];
 
                 return arStrRes;
-            }
-
-            public string[] GetListDestItemsOfGroupSource(object[] pars)
-            {
-                string[] arStrRes = new string[] { };
-                int i = -1;
-                ITEM_SRC itemSrc = getItemSrc (pars);
-
-                arStrRes = new string[(itemSrc as GROUP_SRC).m_listConnSett.Count];
-
-                i = 0;
-                foreach (ConnectionSettings connSett in (itemSrc as GROUP_SRC).m_listConnSett)
-                    arStrRes[i++] = connSett.name;
-
-                return arStrRes;
-            }
+            }            
 
             private ITEM_SRC getItemSrc(object[] pars)
             {
@@ -519,7 +504,7 @@ namespace uLoader
                 }
 
                 return itemSrcRes;
-            }
+            }            
         }
     }
 }
