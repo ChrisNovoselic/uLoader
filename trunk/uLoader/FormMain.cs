@@ -11,6 +11,16 @@ using HClassLibrary;
 
 namespace uLoader
 {
+    /// <summary>
+    /// Перечисление для индексирования 'SEC_SRC_TYPES' (источник, назначение)
+    /// </summary>
+    public enum INDEX_SRC
+    {
+        SOURCE,
+        DEST
+            , COUNT_INDEX_SRC
+    };
+
     public partial class FormMain : Form
     {
         private HHandlerQueue m_handler;
@@ -27,8 +37,8 @@ namespace uLoader
             m_handler = new HHandlerQueue();
             m_handler.Start(); m_handler.Activate(true);
 
-            m_panelWork = new PanelWork(); m_panelWork.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelWork);
-            m_panelConfig = new PanelConfig(); m_panelConfig.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelConfig);
+            m_panelWork = new PanelWork(); m_panelWork.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelWork); m_panelWork.Start();
+            m_panelConfig = new PanelConfig(); m_panelConfig.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelConfig); m_panelConfig.Start ();
 
             работаToolStripMenuItem.CheckOnClick =
             конфигурацияToolStripMenuItem.CheckOnClick =
@@ -69,6 +79,9 @@ namespace uLoader
 
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
+            m_panelWork.Stop();
+            m_panelConfig.Stop();
+            
             m_handler.Activate(false); m_handler.Stop();
         }
 
@@ -95,17 +108,17 @@ namespace uLoader
             Logging.Logg().Action(@"Смена вкладки: активная - " + (obj as HTabCtrlEx).SelectedTab.Text, Logging.INDEX_MESSAGE.NOT_SET);
 
             HTabCtrlEx tabCtrl = obj as HTabCtrlEx;
-            PanelCommon panelCommon;
+            HPanelCommon panelCommon;
 
             if (! (tabCtrl.PrevSelectedIndex < 0))
             {
-                panelCommon = (tabCtrl.TabPages[tabCtrl.PrevSelectedIndex].Controls[0] as PanelCommon);
+                panelCommon = (tabCtrl.TabPages[tabCtrl.PrevSelectedIndex].Controls[0] as HPanelCommon);
                 panelCommon.Activate (false);                
             }
             else
                 ;
 
-            panelCommon = (tabCtrl.TabPages[tabCtrl.SelectedIndex].Controls[0] as PanelCommon);
+            panelCommon = (tabCtrl.TabPages[tabCtrl.SelectedIndex].Controls[0] as HPanelCommon);
             panelCommon.Activate(true);
         }
 
@@ -144,6 +157,9 @@ namespace uLoader
 
         private void OnEvtDataAskedFormMain_PanelWork(object obj)
         {
+            EventArgsDataHost ev = obj as EventArgsDataHost;
+            //ev.id - здесь всегда = -1
+            m_handler.Push(m_panelWork, ev.par as object[]);
         }
 
         private void OnEvtDataAskedFormMain_PanelConfig(object obj)

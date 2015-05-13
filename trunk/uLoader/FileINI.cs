@@ -12,11 +12,6 @@ namespace uLoader
         public class FileINI : HClassLibrary.FileINI
         {
             /// <summary>
-            /// Перечисление для индексирования 'SEC_SRC_TYPES' (источник, назначение)
-            /// </summary>
-            private enum INDEX_SRC { SOURCE, DEST
-                , COUNT_INDEX_SRC };
-            /// <summary>
             /// Перечисление типов групп для панели (группы источников, группы сигналов)
             /// </summary>
             private enum INDEX_TYPE_GROUP

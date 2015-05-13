@@ -11,6 +11,19 @@ using HClassLibrary; //DelegateObjectFunc...
 
 namespace uLoader
 {
+    public class PanelCommonULoader : HPanelCommon
+    {
+        public PanelCommonULoader (int cols, int rows) : base (cols, rows)
+        {
+            initializeLayoutStyle ();
+        }
+
+        protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
+        {
+            initializeLayoutStyleEvenly ();
+        }
+    }
+
     public partial class DataGridViewConfigItem: DataGridView
     {
         TextBox m_linkTextBoxNewItem;

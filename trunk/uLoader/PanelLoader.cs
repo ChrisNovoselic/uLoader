@@ -7,9 +7,11 @@ using System.Text;
 
 using System.Windows.Forms;
 
+using HClassLibrary;
+
 namespace uLoader
 {
-    public partial class PanelLoader : PanelCommon
+    public partial class PanelLoader : PanelCommonDataHost
     {
         //Ключи элементов управления
         protected enum KEY_CONTROLS { DGV_GROUP_SOURCES, LABEL_DLLNAME_GROUPSOURCES, BUTTON_DLLNAME_GROUPSOURCES, CBX_SOURCE_OF_GROUP
@@ -66,12 +68,12 @@ namespace uLoader
             //this.CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;
 
             Control ctrl = null;
-            PanelCommon panelColumns;
+            HPanelCommon panelColumns;
 
             this.SuspendLayout ();
 
             //Панель источников данных
-            panelColumns = new PanelCommon(5, 8);
+            panelColumns = new PanelCommonULoader(5, 8);
             this.Controls.Add(panelColumns, 0, 0);
             this.SetColumnSpan(panelColumns, 1); this.SetRowSpan(panelColumns, 1);
             //Группы источников
@@ -103,7 +105,7 @@ namespace uLoader
             panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 1);
 
             //Панель опроса
-            panelColumns = new PanelCommon(5, 8);
+            panelColumns = new PanelCommonULoader(5, 8);
             this.Controls.Add(panelColumns, 1, 0);
             this.SetColumnSpan(panelColumns, 1); this.SetRowSpan(panelColumns, 1);
             //Группы сигналов
@@ -119,7 +121,7 @@ namespace uLoader
             panelColumns.Controls.Add(ctrl, 0, 3);
             panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 5);
             //Панель для ГроупБокса
-            PanelCommon panelGroupBox = new PanelCommon (8, 7);
+            HPanelCommon panelGroupBox = new PanelCommonULoader(8, 7);
             panelGroupBox.Dock = DockStyle.Fill;
             ctrl.Controls.Add(panelGroupBox);
             //Текущая дата/время
@@ -205,7 +207,7 @@ namespace uLoader
             panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
 
             //Панель рез-ов опроса
-            panelColumns = new PanelCommon (10, 8);
+            panelColumns = new PanelCommonULoader(10, 8);
             this.Controls.Add(panelColumns, 2, 0);
             this.SetColumnSpan(panelColumns, 2); this.SetRowSpan(panelColumns, 1);
 
