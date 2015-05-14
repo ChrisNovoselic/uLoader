@@ -592,16 +592,16 @@ namespace uLoader
                     switch (indxPanel)
                     {
                         case PanelSources.INDEX_PANEL.GROUP_SOURCES: //Индекс панели групп источников
-                            delegateHandler = new EventHandler (PanelConfig_dgvConfigItemSrcGroupSourcesSelectionChanged);
+                            delegateHandler = new EventHandler (panelConfig_dgvConfigItemSrcGroupSourcesSelectionChanged);
                             break;
                         case PanelSources.INDEX_PANEL.SOURCES_OF_GROUP: //Индекс панели элемента группы источников
-                            delegateHandler = new EventHandler(PanelConfig_dgvConfigItemSrcSourcesOfGroupSelectionChanged);
+                            delegateHandler = new EventHandler(panelConfig_dgvConfigItemSrcSourcesOfGroupSelectionChanged);
                             break;
                         case PanelSources.INDEX_PANEL.GROUP_SIGNALS: //Индекс панели групп сигналов
-                            delegateHandler = new EventHandler(PanelConfig_dgvConfigItemSrcGroupSignalsSelectionChanged);
+                            delegateHandler = new EventHandler(panelConfig_dgvConfigItemSrcGroupSignalsSelectionChanged);
                             break;
                         case PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP: //Индекс панели элемента группы сигналов
-                            delegateHandler = new EventHandler(PanelConfig_dgvConfigItemSrcSignalsOfGroupSelectionChanged);
+                            delegateHandler = new EventHandler(panelConfig_dgvConfigItemSrcSignalsOfGroupSelectionChanged);
                             break;
                         default:
                             break;
@@ -611,16 +611,16 @@ namespace uLoader
                     switch (indxPanel)
                     {
                         case PanelSources.INDEX_PANEL.GROUP_SOURCES: //Индекс панели групп источников
-                            delegateHandler = new EventHandler(PanelConfig_dgvConfigItemDestGroupSourcesSelectionChanged);
+                            delegateHandler = new EventHandler(panelConfig_dgvConfigItemDestGroupSourcesSelectionChanged);
                             break;
                         case PanelSources.INDEX_PANEL.SOURCES_OF_GROUP: //Индекс панели элемента группы источников
-                            delegateHandler = new EventHandler(PanelConfig_dgvConfigItemDestSourcesOfGroupSelectionChanged);
+                            delegateHandler = new EventHandler(panelConfig_dgvConfigItemDestSourcesOfGroupSelectionChanged);
                             break;
                         case PanelSources.INDEX_PANEL.GROUP_SIGNALS: //Индекс панели групп сигналов
-                            delegateHandler = new EventHandler(PanelConfig_dgvConfigItemDestGroupSignalsSelectionChanged);
+                            delegateHandler = new EventHandler(panelConfig_dgvConfigItemDestGroupSignalsSelectionChanged);
                             break;
                         case PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP: //Индекс панели элемента группы сигналов
-                            delegateHandler = new EventHandler(PanelConfig_dgvConfigItemDestSignalsOfGroupSelectionChanged);
+                            delegateHandler = new EventHandler(panelConfig_dgvConfigItemDestSignalsOfGroupSelectionChanged);
                             break;
                         default:
                             break;
@@ -733,7 +733,7 @@ namespace uLoader
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргументы события</param>
-        private void PanelConfig_dgvConfigItemSrcGroupSourcesSelectionChanged (object obj, EventArgs ev)
+        private void panelConfig_dgvConfigItemSrcGroupSourcesSelectionChanged (object obj, EventArgs ev)
         {
             panelConfig_dgvConfigGroupSelectionChanged(obj, ev
                 , INDEX_SRC.SOURCE
@@ -749,7 +749,7 @@ namespace uLoader
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргументы события</param>
-        private void PanelConfig_dgvConfigItemSrcSourcesOfGroupSelectionChanged(object obj, EventArgs ev)
+        private void panelConfig_dgvConfigItemSrcSourcesOfGroupSelectionChanged(object obj, EventArgs ev)
         {
             panelConfig_dgvConfigItemSelectionChanged (obj, ev
                 , INDEX_SRC.SOURCE
@@ -764,7 +764,7 @@ namespace uLoader
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргументы события</param>
-        private void PanelConfig_dgvConfigItemSrcGroupSignalsSelectionChanged(object obj, EventArgs ev)
+        private void panelConfig_dgvConfigItemSrcGroupSignalsSelectionChanged(object obj, EventArgs ev)
         {
             panelConfig_dgvConfigGroupSelectionChanged(obj, ev
                 , INDEX_SRC.SOURCE
@@ -780,7 +780,7 @@ namespace uLoader
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргументы события</param>
-        private void PanelConfig_dgvConfigItemSrcSignalsOfGroupSelectionChanged(object obj, EventArgs ev)
+        private void panelConfig_dgvConfigItemSrcSignalsOfGroupSelectionChanged(object obj, EventArgs ev)
         {
             panelConfig_dgvConfigItemSelectionChanged(obj, ev
                 , INDEX_SRC.SOURCE
@@ -795,7 +795,7 @@ namespace uLoader
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргументы события</param>
-        private void PanelConfig_dgvConfigItemDestGroupSourcesSelectionChanged(object obj, EventArgs ev)
+        private void panelConfig_dgvConfigItemDestGroupSourcesSelectionChanged(object obj, EventArgs ev)
         {
             panelConfig_dgvConfigGroupSelectionChanged(obj, ev
                 , INDEX_SRC.DEST
@@ -811,7 +811,7 @@ namespace uLoader
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргументы события</param>
-        private void PanelConfig_dgvConfigItemDestSourcesOfGroupSelectionChanged(object obj, EventArgs ev)
+        private void panelConfig_dgvConfigItemDestSourcesOfGroupSelectionChanged(object obj, EventArgs ev)
         {
             panelConfig_dgvConfigItemSelectionChanged(obj, ev
                 , INDEX_SRC.DEST
@@ -826,7 +826,7 @@ namespace uLoader
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргументы события</param>
-        private void PanelConfig_dgvConfigItemDestGroupSignalsSelectionChanged(object obj, EventArgs ev)
+        private void panelConfig_dgvConfigItemDestGroupSignalsSelectionChanged(object obj, EventArgs ev)
         {
             panelConfig_dgvConfigGroupSelectionChanged(obj, ev
                 , INDEX_SRC.DEST
@@ -842,7 +842,7 @@ namespace uLoader
         /// </summary>
         /// <param name="obj">Объект, инициировавший событие</param>
         /// <param name="ev">Аргументы события</param>
-        private void PanelConfig_dgvConfigItemDestSignalsOfGroupSelectionChanged(object obj, EventArgs ev)
+        private void panelConfig_dgvConfigItemDestSignalsOfGroupSelectionChanged(object obj, EventArgs ev)
         {
             panelConfig_dgvConfigItemSelectionChanged(obj, ev
                 , INDEX_SRC.DEST

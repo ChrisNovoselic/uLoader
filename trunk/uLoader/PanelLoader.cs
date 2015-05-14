@@ -11,51 +11,53 @@ using HClassLibrary;
 
 namespace uLoader
 {
-    public partial class PanelLoader : PanelCommonDataHost
+    public partial class PanelWork
     {
-        //Ключи элементов управления
-        protected enum KEY_CONTROLS { DGV_GROUP_SOURCES, LABEL_DLLNAME_GROUPSOURCES, BUTTON_DLLNAME_GROUPSOURCES, CBX_SOURCE_OF_GROUP
-                                    , DGV_GROUP_SIGNALS
-                                    , RBUTTON_CUR_DATETIME, NUMUD_CUR_DATETIME
-                                    , RBUTTON_COSTUMIZE, CALENDAR_COSTUMIZE, TBX_BEGIN_TIME, TBX_END_TIME, NUMUD_COSTUMIZE_STEP
-                                    , DGV_SIGNALS_OF_GROUP
-        };
+        private partial class PanelLoader : PanelCommonDataHost
+        {
+            //Ключи элементов управления
+            public enum KEY_CONTROLS { DGV_GROUP_SOURCES, LABEL_DLLNAME_GROUPSOURCES, BUTTON_DLLNAME_GROUPSOURCES, CBX_SOURCE_OF_GROUP
+                                        , DGV_GROUP_SIGNALS
+                                        , RBUTTON_CUR_DATETIME, NUMUD_CUR_DATETIME
+                                        , RBUTTON_COSTUMIZE, CALENDAR_COSTUMIZE, TBX_BEGIN_TIME, TBX_END_TIME, NUMUD_COSTUMIZE_STEP
+                                        , DGV_SIGNALS_OF_GROUP
+            };
         
-        public PanelLoader()
-            : base (4, 1)
-        {
-            InitializeComponent();
-        }
-
-        public PanelLoader(IContainer container) : base (4, 1)
-        {
-            container.Add(this);
-
-            InitializeComponent();
-        }
-    }
-
-    partial class PanelLoader
-    {
-        /// <summary>
-        /// Требуется переменная конструктора.
-        /// </summary>
-        private System.ComponentModel.IContainer components = null;
-
-        /// <summary> 
-        /// Освободить все используемые ресурсы.
-        /// </summary>
-        /// <param name="disposing">истинно, если управляемый ресурс должен быть удален; иначе ложно.</param>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing && (components != null))
+            public PanelLoader()
+                : base (4, 1)
             {
-                components.Dispose();
+                InitializeComponent();
             }
-            base.Dispose(disposing);
+
+            public PanelLoader(IContainer container) : base (4, 1)
+            {
+                container.Add(this);
+
+                InitializeComponent();
+            }
         }
 
-        #region Код, автоматически созданный конструктором компонентов
+        partial class PanelLoader
+        {
+            /// <summary>
+            /// Требуется переменная конструктора.
+            /// </summary>
+            private System.ComponentModel.IContainer components = null;
+
+            /// <summary> 
+            /// Освободить все используемые ресурсы.
+            /// </summary>
+            /// <param name="disposing">истинно, если управляемый ресурс должен быть удален; иначе ложно.</param>
+            protected override void Dispose(bool disposing)
+            {
+                if (disposing && (components != null))
+                {
+                    components.Dispose();
+                }
+                base.Dispose(disposing);
+            }
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #region Код, автоматически созданный конструктором компонентов
 
         /// <summary>
         /// Обязательный метод для поддержки конструктора - не изменяйте
@@ -80,6 +82,21 @@ namespace uLoader
             ctrl = new DataGridView ();
             ctrl.Name = KEY_CONTROLS.DGV_GROUP_SOURCES.ToString ();
             ctrl.Dock = DockStyle.Fill;
+            (ctrl as DataGridView).Columns.AddRange (
+                new DataGridViewColumn [] {
+                    new DataGridViewTextBoxColumn ()
+                    , new DataGridViewButtonColumn ()
+                }
+            );
+            (ctrl as DataGridView).Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            (ctrl as DataGridView).AllowUserToResizeColumns = false;
+            (ctrl as DataGridView).AllowUserToResizeRows = false;
+            (ctrl as DataGridView).AllowUserToAddRows = false;
+            (ctrl as DataGridView).AllowUserToDeleteRows = false;
+            (ctrl as DataGridView).MultiSelect = false;
+            (ctrl as DataGridView).SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            (ctrl as DataGridView).RowHeadersVisible = false;
+            (ctrl as DataGridView).Columns[1].Width = 37;
             panelColumns.Controls.Add(ctrl, 0, 0);
             panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 6);
             //Библиотека для загрузки
@@ -216,29 +233,30 @@ namespace uLoader
         }
 
         #endregion
-    }
-
-    public class PanelLoaderSource : PanelLoader
-    {
-        public PanelLoaderSource ()
-        {
-            InitializeComponent ();
         }
 
-        private void InitializeComponent ()
+        private class PanelLoaderSource : PanelLoader
         {
-        }
-    }
+            public PanelLoaderSource ()
+            {
+                InitializeComponent ();
+            }
 
-    public class PanelLoaderDest : PanelLoader
-    {
-        public PanelLoaderDest()
-        {
-            InitializeComponent ();
+            private void InitializeComponent ()
+            {
+            }
         }
 
-        private void InitializeComponent ()
+        private class PanelLoaderDest : PanelLoader
         {
+            public PanelLoaderDest()
+            {
+                InitializeComponent();
+            }
+
+            private void InitializeComponent()
+            {
+            }
         }
-    }
+    }    
 }

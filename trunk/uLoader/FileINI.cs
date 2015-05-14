@@ -105,25 +105,28 @@ namespace uLoader
                     src.m_listGroupSgnlsSrc = new List<GROUP_SIGNALS_SRC>();
                 }
 
-                for (INDEX_SRC i = INDEX_SRC.SOURCE; i < INDEX_SRC.COUNT_INDEX_SRC; i++)
-                {
-                    //Получить наименование секции для группы источников (в ~ от 'i')
-                    string sec = SEC_SRC_TYPES[(int)i];
-                    //Получить словарь параметров для панели 'Источник'
-                    Dictionary<string, string> dictSecValues = getSecValues(sec);
-
-                    //Получить группы источников, сигналов (источник)
-                    if (!(dictSecValues == null))
+                if (SEC_SRC_TYPES.Length == (int)INDEX_SRC.COUNT_INDEX_SRC)
+                    for (INDEX_SRC i = INDEX_SRC.SOURCE; i < INDEX_SRC.COUNT_INDEX_SRC; i++)
                     {
-                        //Получить все группы источников
-                        fillGroupValues(dictSecValues, sec, KEY_TREE_SRC[(int)INDEX_KEY_SRC.GROUP_SRC], i, typeof(GROUP_SRC));
+                        //Получить наименование секции для группы источников (в ~ от 'i')
+                        string sec = SEC_SRC_TYPES[(int)i];
+                        //Получить словарь параметров для панели 'Источник'
+                        Dictionary<string, string> dictSecValues = getSecValues(sec);
 
-                        //Получить все группы сигналов
-                        fillGroupValues(dictSecValues, sec, KEY_TREE_SGNLS[(int)INDEX_KEY_SRC.GROUP_SRC], i, typeof(GROUP_SIGNALS_SRC));
+                        //Получить группы источников, сигналов (источник)
+                        if (!(dictSecValues == null))
+                        {
+                            //Получить все группы источников
+                            fillGroupValues(dictSecValues, sec, KEY_TREE_SRC[(int)INDEX_KEY_SRC.GROUP_SRC], i, typeof(GROUP_SRC));
+
+                            //Получить все группы сигналов
+                            fillGroupValues(dictSecValues, sec, KEY_TREE_SGNLS[(int)INDEX_KEY_SRC.GROUP_SRC], i, typeof(GROUP_SIGNALS_SRC));
+                        }
+                        else
+                            ;
                     }
-                    else
-                        ;
-                }
+                else
+                    ;
             }
 
             /// <summary>

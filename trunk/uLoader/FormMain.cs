@@ -65,12 +65,20 @@ namespace uLoader
             Close();
         }
 
+        /// <summary>
+        /// Обработка события окончания загрузки главной формы приложения
+        /// </summary>
+        /// <param name="sender">Объект, инийиирововший событие (форма)</param>
+        /// <param name="e">Аргументы события</param>
         private void FormMain_Load(object sender, EventArgs e)
         {
+            //Проверить признак отображения вкладки "работа"
             if (работаToolStripMenuItem.Checked == true)
             {
+                //Добавить вкладку
                 m_TabCtrl.AddTabPage(работаToolStripMenuItem.Text, 1, HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
                 m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add(m_panelWork);
+                //Запомнить "предыдущий" выбор
                 m_TabCtrl.PrevSelectedIndex = 0;
             }
             else

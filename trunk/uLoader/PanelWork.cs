@@ -13,18 +13,44 @@ namespace uLoader
 {    
     public partial class PanelWork : PanelCommonDataHost
     {
+        /// <summary>
+        /// Массив панелей (источник, назначение)
+        /// </summary>
         PanelLoader[] m_arLoader;
 
+        /// <summary>
+        /// Конструктор - основной
+        /// </summary>
         public PanelWork() : base (1, 2)
         {
             InitializeComponent();
         }
 
+        /// <summary>
+        /// Конструктор - 
+        /// </summary>
+        /// <param name="container"></param>
         public PanelWork(IContainer container) : base (1, 2)
         {
             container.Add(this);
 
             InitializeComponent();
+        }
+
+        /// <summary>
+        /// Заполнить значениями объект со списком групп (элементов групп) (истоников, сигналов)
+        /// </summary>
+        /// <param name="indxWork">Индекс панели конфигурации</param>
+        /// <param name="indxPanel">Индекс группы элементов (элементов) на панели конфигурации</param>
+        /// <param name="rows">Массив строк для заполнения</param>
+        private void fillWorkItem(INDEX_SRC indxWork, PanelLoader.KEY_CONTROLS key, string[] rows)
+        {
+            DataGridView workItem = getWorkingItem(indxWork, key);
+            if (!(rows == null))
+                foreach (string row in rows)
+                    workItem.Rows.Add(new object[] { row, @"->" });
+            else
+                ;
         }
 
         /// <summary>
@@ -40,13 +66,15 @@ namespace uLoader
 
             switch (state)
             {
-                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCES:
+                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCES: //Группы источников (источник)
+                    fillWorkItem(INDEX_SRC.SOURCE, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[]) as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNALS:
+                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNALS: //Группы сигналов (источник)
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES:
+                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES: //Группы источников (назначение)
+                    fillWorkItem(INDEX_SRC.DEST, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[]) as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNALS:
+                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNALS: //Группы сигналов (назначение)
                     break;
                 default:
                     break;
@@ -78,8 +106,9 @@ namespace uLoader
         public override bool Activate(bool active)
         {
             bool bRes = base.Activate(active);
-
+            //Проверить признак 1-го запуска            
             if (IsFirstActivated == true)
+                //Запросить данные
                 DataAskedHost(new object[] { new object [] { (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCES /*, без параметров*/ }
                                         , new object [] { (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNALS /*, без параметров*/ }
                                         , new object [] { (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES /*, без параметров*/ }
@@ -97,14 +126,56 @@ namespace uLoader
         /// <param name="indxConfig">Индекс панели</param>
         /// <param name="indxPanel">Индекс типа объекта</param>
         /// <returns>Объект со списком групп</returns>
-        private DataGridViewConfigItem getConfigItem(INDEX_SRC indxConfig/*, PanelLoader.INDEX_PANEL indxPanel*/)
+        private DataGridView getWorkingItem(INDEX_SRC indxWork, PanelLoader.KEY_CONTROLS key)
         {
+            DataGridView dgvRes = null;
             PanelLoader panelLdr;
-            int indxCtrl;
 
-            panelLdr = this.Controls[(int)indxConfig] as PanelLoader;
-            indxCtrl = (int)PanelLoader.INDEX_PANEL_CONTROL.LISTEDIT * (int)PanelLoader.INDEX_PANEL.COUNT_INDEX_PANEL + (int)indxPanel;
-            return panelLdr.m_dictControl[(PanelLoader.INDEX_CONTROL)indxCtrl] as DataGridViewConfigItem;
+            panelLdr = this.Controls[(int)indxWork] as PanelLoader;
+            //Вариант №1
+            //int indxCtrl = (int)PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES;
+            //dgvRes = panelLdr.m_dictControl[(PanelLoader.INDEX_CONTROL)indxCtrl] as DataGridViewConfigItem;
+            //Вариант №2
+            Control []arCtrls = panelLdr.Controls.Find(key.ToString(), true);
+            if (arCtrls.Length == 1)
+                dgvRes = arCtrls[0] as DataGridView;
+            else
+                throw new Exception(@"PanelWork::getWorkingItem (" + indxWork.ToString() + @", " + key.ToString () + @") - не найден элемент управления...");
+
+            return dgvRes;
+        }
+
+        /// <summary>
+        /// Обработка события "изменение выбора" для 'DataGridView' - группы источников (источник)
+        /// </summary>
+        /// <param name="obj">Объект, иницировавший событие ('DataGridView')</param>
+        /// <param name="ev">Аргументы события</param>
+        private void panelWork_dgvConfigItemSrcGroupSourcesSelectionChanged (object obj, EventArgs ev)
+        {
+        }
+        /// <summary>
+        /// Обработка события "изменение выбора" для 'DataGridView' - группы сигналов (источник)
+        /// </summary>
+        /// <param name="obj">Объект, иницировавший событие ('DataGridView')</param>
+        /// <param name="ev">Аргументы события</param>
+        private void panelWork_dgvConfigItemSrcGroupSignalsSelectionChanged (object obj, EventArgs ev)
+        {
+        }
+        /// <summary>
+        /// Обработка события "изменение выбора" для 'DataGridView' - группы источников (назначение)
+        /// </summary>
+        /// <param name="obj">Объект, иницировавший событие ('DataGridView')</param>
+        /// <param name="ev">Аргументы события</param>
+        private void panelWork_dgvConfigItemDestGroupSourcesSelectionChanged (object obj, EventArgs ev)
+        {
+        }
+        /// <summary>
+        /// Обработка события "изменение выбора" для 'DataGridView' - группы сигналов (назначение)
+        /// </summary>
+        /// <param name="obj">Объект, иницировавший событие ('DataGridView')</param>
+        /// <param name="ev">Аргументы события</param>
+        private void panelWork_dgvConfigItemDestGroupSignalsSelectionChanged (object obj, EventArgs ev)
+        {
         }
     }
 
@@ -144,9 +215,9 @@ namespace uLoader
             components = new System.ComponentModel.Container();
 
             this.SuspendLayout();
-
+            //"Сетка" для позиционирования элементов управления
             initializeLayoutStyle ();
-
+            //Создать панели (тсточник, назначение)
             Type typeLoader = typeof (PanelLoader);
             m_arLoader = new PanelLoader[(int)INDEX_SRC.COUNT_INDEX_SRC];
             for (int i = (int)INDEX_SRC.SOURCE; i < (int)INDEX_SRC.COUNT_INDEX_SRC; i++)
@@ -170,6 +241,18 @@ namespace uLoader
 
             this.ResumeLayout(false);
             this.PerformLayout();
+
+            DataGridView dgv = getWorkingItem(INDEX_SRC.SOURCE, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES);
+            dgv.SelectionChanged += new EventHandler(panelWork_dgvConfigItemSrcGroupSourcesSelectionChanged);
+
+            dgv = getWorkingItem(INDEX_SRC.SOURCE, PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS);
+            dgv.SelectionChanged += new EventHandler(panelWork_dgvConfigItemSrcGroupSignalsSelectionChanged);
+
+            dgv = getWorkingItem(INDEX_SRC.DEST, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES);
+            dgv.SelectionChanged += new EventHandler(panelWork_dgvConfigItemDestGroupSourcesSelectionChanged);
+            
+            dgv = getWorkingItem(INDEX_SRC.DEST, PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS);
+            dgv.SelectionChanged += new EventHandler(panelWork_dgvConfigItemDestGroupSignalsSelectionChanged);
         }
 
         #endregion
