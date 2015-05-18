@@ -69,12 +69,12 @@ namespace uLoader
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCES: //Группы источников (источник)
                     fillWorkItem(INDEX_SRC.SOURCE, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[]) as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNALS: //Группы сигналов (источник)
+                case (int)HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SOURCES: //Группа (объект) источников (источник)
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES: //Группы источников (назначение)
                     fillWorkItem(INDEX_SRC.DEST, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[]) as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNALS: //Группы сигналов (назначение)
+                case (int)HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SOURCES: //Группа (объект) источников (назначение)
                     break;
                 default:
                     break;
@@ -110,9 +110,7 @@ namespace uLoader
             if (IsFirstActivated == true)
                 //Запросить данные
                 DataAskedHost(new object[] { new object [] { (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCES /*, без параметров*/ }
-                                        , new object [] { (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNALS /*, без параметров*/ }
-                                        , new object [] { (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES /*, без параметров*/ }
-                                        , new object [] { (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNALS /*, без параметров*/ }
+                                            , new object [] { (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES /*, без параметров*/ }
                                         });
             else
                 ;
@@ -152,6 +150,8 @@ namespace uLoader
         /// <param name="ev">Аргументы события</param>
         private void panelWork_dgvConfigItemSrcGroupSourcesSelectionChanged (object obj, EventArgs ev)
         {
+            int selIndex = (obj as DataGridView).SelectedRows [0].Index;
+            DataAskedHost(new object[] { new object [] { new object [] { (int)HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SOURCES, selIndex } } });
         }
         /// <summary>
         /// Обработка события "изменение выбора" для 'DataGridView' - группы сигналов (источник)
@@ -168,6 +168,8 @@ namespace uLoader
         /// <param name="ev">Аргументы события</param>
         private void panelWork_dgvConfigItemDestGroupSourcesSelectionChanged (object obj, EventArgs ev)
         {
+            int selIndex = (obj as DataGridView).SelectedRows[0].Index;
+            DataAskedHost(new object[] { new object[] { new object[] { (int)HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SOURCES, selIndex } } });
         }
         /// <summary>
         /// Обработка события "изменение выбора" для 'DataGridView' - группы сигналов (назначение)

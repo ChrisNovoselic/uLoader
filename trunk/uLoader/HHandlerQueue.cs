@@ -29,15 +29,41 @@ namespace uLoader
             , LIST_DEST_GROUP_SIGNAL_ITEMS //Список сигналов в группе сигналов (назначение)
             , LIST_DEST_GROUP_SIGNAL_PARS //Список наименований параметров сигналов в группе сигналов (назначение)
             , LIST_DEST_GROUP_SIGNAL_PROP //Список параметров сигналов в группе сигналов (назначение)
+            , OBJ_SRC_GROUP_SOURCES //Объект группы источников (источник)
+            , OBJ_DEST_GROUP_SOURCES //Объект группы источников (назначение)
             ,
         }
 
         private FormMain.FileINI m_fileINI;
+        private List <GroupSources> m_listGroupSources;
 
         public HHandlerQueue()
             : base ()
         {
-            m_fileINI = new FormMain.FileINI();
+            m_fileINI = new FormMain.FileINI(@"setup_biysktmora.ini");
+
+            GROUP_SRC []arGroupSources = m_fileINI.AllObjectsSrcGroupSources;
+            GROUP_SIGNALS_SRC[] arGroupSignals = m_fileINI.AllObjectsSrcGroupSignals;
+
+            m_listGroupSources = new List<GroupSources> ();
+
+            List <GROUP_SIGNALS_SRC>listGroupSignals = new List<GROUP_SIGNALS_SRC> ();
+            string []arIDGroupSignals;
+            foreach (GROUP_SRC itemSrc in arGroupSources)
+            {
+                arIDGroupSignals = (itemSrc as GROUP_SRC).m_arIDGroupSignals;
+                foreach (string id in arIDGroupSignals)
+                    foreach (GROUP_SIGNALS_SRC itemGrooupSignals in arGroupSignals)
+                        if (itemGrooupSignals.m_strID.Equals(id) == true)
+                        {
+                            listGroupSignals.Add(itemGrooupSignals);
+                            break;
+                        }
+                        else
+                            ;
+
+                m_listGroupSources.Add(new GroupSources(itemSrc, listGroupSignals));
+            }
         }
 
         protected override int StateRequest(int state)
@@ -62,6 +88,8 @@ namespace uLoader
                 case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS:
                 case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_PARS:
                 case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_PROP:
+                case (int)StatesMachine.OBJ_SRC_GROUP_SOURCES:
+                case (int)StatesMachine.OBJ_DEST_GROUP_SOURCES:
                     //Не требуют запроса
                     break;
                 default:
@@ -94,6 +122,8 @@ namespace uLoader
                 case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS:
                 case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_PARS:
                 case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_PROP:
+                case (int)StatesMachine.OBJ_SRC_GROUP_SOURCES:                
+                case (int)StatesMachine.OBJ_DEST_GROUP_SOURCES:
                     dataHost.m_objRecieved.OnEvtDataRecievedHost(new object [] { state, obj });
                     break;
                 default:
@@ -219,6 +249,22 @@ namespace uLoader
                     error = false;
                     dataHost = Peek;
                     outobj = m_fileINI.GetListItemPropOfGroupSignal(dataHost.m_pars.ToArray());
+
+                    iRes = 0;
+                    break;
+                case (int)StatesMachine.OBJ_SRC_GROUP_SOURCES:
+                    error = false;
+                    dataHost = Peek;
+                    //??? 0-й параметр индекс "выбранноой" группы источников
+                    outobj = m_fileINI.AllObjectsSrcGroupSources[(int)dataHost.m_pars[0]];
+
+                    iRes = 0;
+                    break;
+                case (int)StatesMachine.OBJ_DEST_GROUP_SOURCES:
+                    error = false;
+                    dataHost = Peek;
+                    //??? 0-й параметр индекс "выбранноой" группы источников
+                    outobj = m_fileINI.AllObjectsDestGroupSources[(int)dataHost.m_pars[0]];
 
                     iRes = 0;
                     break;

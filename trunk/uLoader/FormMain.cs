@@ -98,6 +98,7 @@ namespace uLoader
             switch (ev.Id)
             {
                 case 1: //Работа
+                    MessageBox.Show (this, "Вкладка \"Работа\" не может быть закрыта!", @"Внимание!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     break;
                 case 2: //Конфигурация
                     конфигурацияToolStripMenuItem.PerformClick();

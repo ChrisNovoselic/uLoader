@@ -16,6 +16,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		uLoader.vsmdi = uLoader.vsmdi
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestFunc", "TestFunc\TestFunc.csproj", "{FE9308E2-810E-4921-8F1A-55ED8CC9D460}"
+EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = uLoader.vsmdi
@@ -69,6 +71,16 @@ Global
 		{C58DCFB6-6E0C-4743-9135-655B0DDF8E10}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{C58DCFB6-6E0C-4743-9135-655B0DDF8E10}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{C58DCFB6-6E0C-4743-9135-655B0DDF8E10}.Release|x86.ActiveCfg = Release|Any CPU
+		{FE9308E2-810E-4921-8F1A-55ED8CC9D460}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{FE9308E2-810E-4921-8F1A-55ED8CC9D460}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{FE9308E2-810E-4921-8F1A-55ED8CC9D460}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{FE9308E2-810E-4921-8F1A-55ED8CC9D460}.Debug|x86.ActiveCfg = Debug|x86
+		{FE9308E2-810E-4921-8F1A-55ED8CC9D460}.Debug|x86.Build.0 = Debug|x86
+		{FE9308E2-810E-4921-8F1A-55ED8CC9D460}.Release|Any CPU.ActiveCfg = Release|x86
+		{FE9308E2-810E-4921-8F1A-55ED8CC9D460}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{FE9308E2-810E-4921-8F1A-55ED8CC9D460}.Release|Mixed Platforms.Build.0 = Release|x86
+		{FE9308E2-810E-4921-8F1A-55ED8CC9D460}.Release|x86.ActiveCfg = Release|x86
+		{FE9308E2-810E-4921-8F1A-55ED8CC9D460}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -18,50 +18,7 @@ namespace uLoader
             {
                 SRC, SIGNAL
                     , COUNT_INDEX_TYPE_GROUP
-            };
-            /// <summary>
-            /// Базовый класс для группы элементов (источников данных, сигналов)
-            /// </summary>
-            private class ITEM_SRC
-            {
-                public string m_strName;
-                public string[] m_keys;
-            }
-            /// <summary>
-            /// Параметры сигнала в группе сигналов (источник, назначение)
-            /// </summary>            
-            private class SIGNAL_SRC
-            {
-                //Ключами для словаря являются 'ITEM_SRC.m_keys'
-                public Dictionary<string, string> m_dictPars;
-
-                public SIGNAL_SRC()
-                {
-                    m_dictPars = new Dictionary<string, string>();
-                }
-            };
-            /// <summary>
-            /// Параметры группы сигналов (источник, назначение)
-            /// </summary>
-            private class GROUP_SIGNALS_SRC : ITEM_SRC
-            {                
-                public List<SIGNAL_SRC> m_listSgnls;
             };            
-            /// <summary>
-            /// Параметры группы источников информации
-            /// </summary>
-            private class GROUP_SRC : ITEM_SRC
-            {
-                public List<ConnectionSettings> m_listConnSett;
-            };
-            /// <summary>
-            /// Параметры панели (источник, назначение)
-            /// </summary>
-            private class SRC
-            {
-                public List<GROUP_SRC> m_listGroupSrc;
-                public List<GROUP_SIGNALS_SRC> m_listGroupSgnlsSrc;
-            }
             /// <summary>
             /// Индексы для ключей - источники
             /// </summary>
@@ -85,9 +42,12 @@ namespace uLoader
             /// Список групп источников
             /// </summary>
             SRC []m_arListGroupValues;
-
-            public FileINI ()
-                : base (@"setup.ini", true)
+            /// <summary>
+            /// Конструктор - основной
+            /// </summary>
+            /// <param name="nameFile">Наименование файла конфигурации</param>
+            public FileINI (string nameFile)
+                : base(nameFile, true)
             {
                 //Получить наименования частей секций
                 SEC_SRC_TYPES = GetMainValueOfKey(@"SEC_SRC_TYPES").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUES]);
@@ -166,6 +126,17 @@ namespace uLoader
                 return iRes;
             }
 
+            private int parseWorkInterval(string val, ref DATETIME_WORK dtWorkRes)
+            {
+                int iRes = 0;
+
+                dtWorkRes.m_dtBegin = DateTime.Now;
+                dtWorkRes.m_dtEnd = DateTime.Now;
+                dtWorkRes.m_iInterval = -1;
+
+                return iRes;
+            }
+
             /// <summary>
             /// Добавить группу и ее значения
             /// </summary>
@@ -204,10 +175,19 @@ namespace uLoader
                 {
                     case INDEX_TYPE_GROUP.SRC: //Добавить источник
                         itemSrc = new GROUP_SRC();
-                        m_arListGroupValues[(int)indxSrc].m_listGroupSrc.Add(itemSrc as GROUP_SRC);
+                        (itemSrc as GROUP_SRC).m_strDLLName = GetSecValueOfKey(secGroup, @"DLL_NAME");
+                        (itemSrc as GROUP_SRC).m_arIDGroupSignals = GetSecValueOfKey(secGroup, KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS]).Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]);
+                        m_arListGroupValues[(int)indxSrc].m_listGroupSrc.Add(itemSrc as GROUP_SRC);                        
                         break;
                     case INDEX_TYPE_GROUP.SIGNAL: //Добавить сигнал
                         itemSrc = new GROUP_SIGNALS_SRC();
+                        (itemSrc as GROUP_SIGNALS_SRC).m_iAutoStart = bool.Parse(GetSecValueOfKey(secGroup, @"AUTO_START")) == true ? 1 : 0;
+                        (itemSrc as GROUP_SIGNALS_SRC).m_mode = bool.Parse(GetSecValueOfKey(secGroup, @"CUR_INTERVAL_STATE")) == true ? MODE_WORK.CUR_INTERVAL : MODE_WORK.COSTUMIZE;
+                        if (Int32.TryParse(GetSecValueOfKey(secGroup, @"CUR_INTERVAL_VALUE"), out (itemSrc as GROUP_SIGNALS_SRC).m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval) == false)
+                            (itemSrc as GROUP_SIGNALS_SRC).m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval = -1;
+                        else
+                            ;
+                        parseWorkInterval(GetSecValueOfKey(secGroup, @"COSTUMIZE_VALUE"), ref (itemSrc as GROUP_SIGNALS_SRC).m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE]);
                         m_arListGroupValues[(int)indxSrc].m_listGroupSgnlsSrc.Add(itemSrc as GROUP_SIGNALS_SRC);
                         break;
                     default:
@@ -219,7 +199,7 @@ namespace uLoader
                     && (! (itemSrc == null)))
                 {
                     //Присвоить наименование группы элементов (источников, сигналов)
-                    itemSrc.m_strName = secGroup;
+                    itemSrc.m_strID = secGroup.Split (s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET])[1];
                     
                     int j = -1; //Индекс для ключа элемента группы (источник, сигнал) в секции
                     string key = string.Empty; //Ключ для элемента группы (источник, сигнал) в секции
@@ -354,11 +334,17 @@ namespace uLoader
 
                 i = 0;
                 foreach (GROUP_SRC grpSrc in listGroupSrc)
-                    arStrRes[i++] = grpSrc.m_strName;
+                    arStrRes[i++] = grpSrc.m_strID;
 
                 return arStrRes;
             }
 
+            public GROUP_SRC[] AllObjectsSrcGroupSources { get { return m_arListGroupValues[(int)INDEX_SRC.SOURCE].m_listGroupSrc.ToArray(); } }
+            public GROUP_SIGNALS_SRC[] AllObjectsSrcGroupSignals { get { return m_arListGroupValues[(int)INDEX_SRC.SOURCE].m_listGroupSgnlsSrc.ToArray(); } }
+
+            public GROUP_SRC[] AllObjectsDestGroupSources { get { return m_arListGroupValues[(int)INDEX_SRC.DEST].m_listGroupSrc.ToArray(); } }
+            public GROUP_SIGNALS_SRC[] AllObjectsDestGroupSignals { get { return m_arListGroupValues[(int)INDEX_SRC.DEST].m_listGroupSgnlsSrc.ToArray(); } }
+            
             public string[] ListSrcGroupSources { get { return GetListGroupSources(INDEX_SRC.SOURCE); } }
 
             public string[] ListDestGroupSources { get { return GetListGroupSources(INDEX_SRC.DEST); } }
@@ -373,7 +359,7 @@ namespace uLoader
 
                 i = 0;
                 foreach (GROUP_SIGNALS_SRC grpSrc in listGroupSrc)
-                    arStrRes[i++] = grpSrc.m_strName;
+                    arStrRes[i++] = grpSrc.m_strID;
 
                 return arStrRes;
             }
