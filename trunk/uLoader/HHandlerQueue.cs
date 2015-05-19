@@ -31,6 +31,7 @@ namespace uLoader
             , LIST_DEST_GROUP_SIGNAL_PROP //Список параметров сигналов в группе сигналов (назначение)
             , OBJ_SRC_GROUP_SOURCES //Объект группы источников (источник)
             , OBJ_DEST_GROUP_SOURCES //Объект группы источников (назначение)
+            , TIMER_WORK_UPDATE //Период обновления панели "Работа"
             ,
         }
 

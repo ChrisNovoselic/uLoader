@@ -17,13 +17,23 @@ namespace uLoader
         /// Массив панелей (источник, назначение)
         /// </summary>
         PanelLoader[] m_arLoader;
+        /// <summary>
+        /// Массив текущих объектов "Группа источников" (источник, назначение)
+        /// </summary>
+        ITEM_SRC[] m_arCurrentSrcItems;
+        /// <summary>
+        /// Таймер обновления состояния панели
+        /// </summary>
+        private System.Threading.Timer m_timerUpdate;
+
+        private int m_iSecondUpdate;
 
         /// <summary>
         /// Конструктор - основной
         /// </summary>
         public PanelWork() : base (1, 2)
         {
-            InitializeComponent();
+            initialize ();
         }
 
         /// <summary>
@@ -34,7 +44,20 @@ namespace uLoader
         {
             container.Add(this);
 
-            InitializeComponent();
+            initialize ();
+        }
+
+        private int initialize ()
+        {
+            int ires = 0;
+
+            InitializeComponent ();
+
+            m_arCurrentSrcItems = new ITEM_SRC[(int)INDEX_SRC.COUNT_INDEX_SRC];
+
+            m_iSecondUpdate = -1;
+
+            return ires;
         }
 
         /// <summary>
@@ -51,6 +74,35 @@ namespace uLoader
                     workItem.Rows.Add(new object[] { row, @"->" });
             else
                 ;
+        }
+
+        private void fillWorkItem(INDEX_SRC indxWork)
+        {
+            PanelLoader.KEY_CONTROLS key = PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS;            
+            DataGridView workItem = getWorkingItem(indxWork, key);
+
+            key = PanelLoader.KEY_CONTROLS.DGV_SIGNALS_OF_GROUP;
+            workItem = getWorkingItem(indxWork, key);
+        }
+
+        private void startTimerUpdate ()
+        {
+            stopTimerUpdate ();
+            
+            //Создать таймер запроса на обновление информации
+            m_timerUpdate = new System.Threading.Timer (fTimerUpdate, null, 0, System.Threading.Timeout.Infinite); 
+        }
+
+        private void stopTimerUpdate ()
+        {
+            if (m_timerUpdate == null)
+                return;
+            else
+                ;
+
+            m_timerUpdate.Change (System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+            m_timerUpdate.Dispose ();
+            m_timerUpdate = null;
         }
 
         /// <summary>
@@ -70,11 +122,19 @@ namespace uLoader
                     fillWorkItem(INDEX_SRC.SOURCE, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SOURCES: //Группа (объект) источников (источник)
+                    m_arCurrentSrcItems [(int)INDEX_SRC.SOURCE] = par as ITEM_SRC;
+                    fillWorkItem(INDEX_SRC.SOURCE);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES: //Группы источников (назначение)
                     fillWorkItem(INDEX_SRC.DEST, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SOURCES: //Группа (объект) источников (назначение)
+                    m_arCurrentSrcItems[(int)INDEX_SRC.DEST] = par as ITEM_SRC;
+                    fillWorkItem(INDEX_SRC.DEST);
+                    break;
+                case (int)HHandlerQueue.StatesMachine.TIMER_WORK_UPDATE:
+                    m_iSecondUpdate = (int)par;
+                    startTimerUpdate ();
                     break;
                 default:
                     break;
@@ -108,14 +168,81 @@ namespace uLoader
             bool bRes = base.Activate(active);
             //Проверить признак 1-го запуска            
             if (IsFirstActivated == true)
+            {
                 //Запросить данные
                 DataAskedHost(new object[] { new object [] { (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCES /*, без параметров*/ }
                                             , new object [] { (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES /*, без параметров*/ }
-                                        });
+                                            , new object [] { (int)HHandlerQueue.StatesMachine.TIMER_WORK_UPDATE /*, без параметров*/ }
+                                        });                
+            }
+            else                
+                ;
+
+            if (bRes == true)
+                if ((Actived == true)
+                    && (IsFirstActivated == false))
+                    //Активировать таймер запроса на обновление информации
+                    ;
+                else
+                    //Деактивировать таймер запроса на обновление информации
+                    ;
+
+            return bRes;
+        }
+
+        private void fTimerUpdate (object par)
+        {
+            m_timerUpdate.Change(m_iSecondUpdate, System.Threading.Timeout.Infinite);
+        }
+
+        /// <summary>
+        /// Очистить элемент управления на панели по индексу с указанным ключом
+        /// </summary>
+        /// <param name="indxWork">Индекс панели</param>
+        /// <param name="key">Ключ элемента управления</param>
+        /// <returns>Признак выполнения функции (0 - успех)</returns>
+        private int clearValues(INDEX_SRC indxWork, PanelLoader.KEY_CONTROLS key)
+        {
+            int iRes = 0;
+            //Получить элемент управления
+            Control ctrl = getWorkingItem (indxWork, key);
+            //Проверить наличие элемента
+            if (!(ctrl == null))
+                if (ctrl.GetType ().Equals (typeof(DataGridView)) == true)
+                {//Очистиить как 'DataGridView'
+                    (ctrl as DataGridView).Rows.Clear ();
+                }
+                else
+                    if (ctrl.GetType ().Equals (typeof(TextBox)) == true)
+                    {//Очистиить как 'TextBox'
+                        (ctrl as TextBox).Text = string.Empty;
+                    }
+                    else
+                        ;
+            else
+                //Элемент управления не найден
+                iRes = -1;
+
+            return iRes;
+        }
+
+        /// <summary>
+        /// Очистить все элементы управления на панели с индексом (источник, назначение)
+        /// </summary>
+        /// <param name="indxWork">Индекс панели</param>
+        /// <returns>Признак выполнения функции (0 - успех)</returns>
+        private int clearValues(INDEX_SRC indxWork)
+        {
+            int iRes = 0;
+
+            iRes = clearValues(indxWork, PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS);
+            //перед выполнением очередной операции проверить результат выполнения предыдущей
+            if (iRes == 0)
+                iRes = clearValues(indxWork, PanelLoader.KEY_CONTROLS.DGV_SIGNALS_OF_GROUP);
             else
                 ;
 
-            return bRes;
+            return iRes;
         }
 
         /// <summary>
@@ -150,8 +277,13 @@ namespace uLoader
         /// <param name="ev">Аргументы события</param>
         private void panelWork_dgvConfigItemSrcGroupSourcesSelectionChanged (object obj, EventArgs ev)
         {
+            if (IsFirstActivated == false)
+                clearValues  (INDEX_SRC.SOURCE);
+            else
+                ;
+
             int selIndex = (obj as DataGridView).SelectedRows [0].Index;
-            DataAskedHost(new object[] { new object [] { new object [] { (int)HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SOURCES, selIndex } } });
+            DataAskedHost(new object[] { new object [] { (int)HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SOURCES, selIndex } });
         }
         /// <summary>
         /// Обработка события "изменение выбора" для 'DataGridView' - группы сигналов (источник)
@@ -168,8 +300,13 @@ namespace uLoader
         /// <param name="ev">Аргументы события</param>
         private void panelWork_dgvConfigItemDestGroupSourcesSelectionChanged (object obj, EventArgs ev)
         {
+            if (IsFirstActivated == false)
+                clearValues  (INDEX_SRC.DEST);
+            else
+                ;
+            
             int selIndex = (obj as DataGridView).SelectedRows[0].Index;
-            DataAskedHost(new object[] { new object[] { new object[] { (int)HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SOURCES, selIndex } } });
+            DataAskedHost(new object[] { new object[] { (int)HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SOURCES, selIndex } });
         }
         /// <summary>
         /// Обработка события "изменение выбора" для 'DataGridView' - группы сигналов (назначение)
