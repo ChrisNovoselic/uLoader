@@ -20,7 +20,7 @@ namespace uLoader
         /// <summary>
         /// Массив текущих объектов "Группа источников" (источник, назначение)
         /// </summary>
-        ITEM_SRC[] m_arCurrentSrcItems;
+        GroupSources[] m_arCurrentGroupSources;
         /// <summary>
         /// Таймер обновления состояния панели
         /// </summary>
@@ -53,7 +53,7 @@ namespace uLoader
 
             InitializeComponent ();
 
-            m_arCurrentSrcItems = new ITEM_SRC[(int)INDEX_SRC.COUNT_INDEX_SRC];
+            m_arCurrentGroupSources = new GroupSources[(int)INDEX_SRC.COUNT_INDEX_SRC];
 
             m_iSecondUpdate = -1;
 
@@ -78,29 +78,62 @@ namespace uLoader
 
         private void fillWorkItem(INDEX_SRC indxWork)
         {
+            Control workItem;
+            
             PanelLoader.KEY_CONTROLS key = PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS;            
-            DataGridView workItem = getWorkingItem(indxWork, key);
+            workItem = getWorkingItem(indxWork, key);
+
+            key = PanelLoader.KEY_CONTROLS.LABEL_DLLNAME_GROUPSOURCES;
+            workItem = getWorkingItem(indxWork, key);
+            (workItem as TextBox).Text = m_arCurrentGroupSources[(int)indxWork].m_strDLLName;
+
             /*
             key = PanelLoader.KEY_CONTROLS.DGV_SIGNALS_OF_GROUP;
             workItem = getWorkingItem(indxWork, key);
             */
         }
+        /// <summary>
+        /// Активировать таймер
+        /// </summary>
+        /// <param name="active">ПРизнак активизации</param>
+        /// <returns></returns>
+        private int activeTimerUpdate (bool active)
+        {
+            int iRes = 0
+                , msecDueTime = System.Threading.Timeout.Infinite;
 
+            if (active == true)
+                //Вызвать функцию обновления немедленно
+                msecDueTime = 0;
+            else
+                ;
+            //Изменить состояние таймера
+            iRes = m_timerUpdate.Change(msecDueTime, System.Threading.Timeout.Infinite) == true ? 0 : -1;
+
+            return iRes;
+        }
+        /// <summary>
+        /// "Запустить" таймер
+        /// </summary>
         private void startTimerUpdate ()
         {
+            //Остановить, если уже выполняется
             stopTimerUpdate ();
             
             //Создать таймер запроса на обновление информации
             m_timerUpdate = new System.Threading.Timer (fTimerUpdate, null, 0, System.Threading.Timeout.Infinite); 
         }
-
+        /// <summary>
+        /// Остановить таймер
+        /// </summary>        
         private void stopTimerUpdate ()
         {
+            //Проверить объект таймера
             if (m_timerUpdate == null)
                 return;
             else
                 ;
-
+            //Выполнить действия для останова таймера
             m_timerUpdate.Change (System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
             m_timerUpdate.Dispose ();
             m_timerUpdate = null;
@@ -148,12 +181,16 @@ namespace uLoader
         /// <param name="obj">Результат, полученный по запросу</param>
         public override void OnEvtDataRecievedHost(object obj)
         {
+            //Проверить признак необходимости переноса действий в "свой" поток
             if (InvokeRequired == true)
+                //Проверить наличие дескриптора
                 if (IsHandleCreated == true)
+                    //Перенести выполнение в "свой" поток
                     this.BeginInvoke(new DelegateObjectFunc(onEvtDataRecievedHost), obj);
                 else
                     throw new Exception(@"PanelWork::OnEvtDataRecievedHost () - IsHandleCreated==" + IsHandleCreated);
             else
+                //Выполнить в "вызывающем" потоке
                 onEvtDataRecievedHost(obj);
 
             base.OnEvtDataRecievedHost(obj);
@@ -186,21 +223,26 @@ namespace uLoader
             else                
                 ;
 
+            //Проверить необходимость активации/деактивации
+            bool bActiveTimerUpdate = true;
             if (bRes == true)
-                if ((Actived == true)
-                    && (IsFirstActivated == false))
-                    //Активировать таймер запроса на обновление информации
-                    ;
+                if (Actived == true)
+                    bActiveTimerUpdate = ! IsFirstActivated;
                 else
-                    //Деактивировать таймер запроса на обновление информации
                     ;
+
+            if (bActiveTimerUpdate == true)
+                //Активировать/деактивировать таймер запроса на обновление информации
+                activeTimerUpdate(Actived);
+            else
+                ;
 
             return bRes;
         }
 
         private void fTimerUpdate (object par)
         {
-            m_timerUpdate.Change(m_iSecondUpdate, System.Threading.Timeout.Infinite);
+            m_timerUpdate.Change(1000 * m_iSecondUpdate, System.Threading.Timeout.Infinite);
         }
 
         /// <summary>
