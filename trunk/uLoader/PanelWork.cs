@@ -17,10 +17,10 @@ namespace uLoader
         /// Массив панелей (источник, назначение)
         /// </summary>
         PanelLoader[] m_arLoader;
-        /// <summary>
-        /// Массив текущих объектов "Группа источников" (источник, назначение)
-        /// </summary>
-        GroupSources[] m_arCurrentGroupSources;
+        ///// <summary>
+        ///// Массив текущих объектов "Группа источников" (источник, назначение)
+        ///// </summary>
+        //GroupSources[] m_arCurrentGroupSources;
         /// <summary>
         /// Таймер обновления состояния панели
         /// </summary>
@@ -53,7 +53,7 @@ namespace uLoader
 
             InitializeComponent ();
 
-            m_arCurrentGroupSources = new GroupSources[(int)INDEX_SRC.COUNT_INDEX_SRC];
+            //m_arCurrentGroupSources = new GroupSources[(int)INDEX_SRC.COUNT_INDEX_SRC];
 
             m_iSecondUpdate = -1;
 
@@ -68,7 +68,7 @@ namespace uLoader
         /// <param name="rows">Массив строк для заполнения</param>
         private void fillWorkItem(INDEX_SRC indxWork, PanelLoader.KEY_CONTROLS key, string[] rows)
         {
-            DataGridView workItem = getWorkingItem(indxWork, key);
+            DataGridView workItem = getWorkingItem(indxWork, key) as DataGridView;
             if (!(rows == null))
                 foreach (string row in rows)
                     workItem.Rows.Add(new object[] { row, @"->" });
@@ -76,16 +76,19 @@ namespace uLoader
                 ;
         }
 
-        private void fillWorkItem(INDEX_SRC indxWork)
+        private void fillWorkItem(INDEX_SRC indxWork, GROUP_SRC grpSrc)
         {
-            Control workItem;
-            
-            PanelLoader.KEY_CONTROLS key = PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS;            
-            workItem = getWorkingItem(indxWork, key);
+            Control workItem;            
+            PanelLoader.KEY_CONTROLS key;
 
             key = PanelLoader.KEY_CONTROLS.LABEL_DLLNAME_GROUPSOURCES;
             workItem = getWorkingItem(indxWork, key);
-            (workItem as TextBox).Text = m_arCurrentGroupSources[(int)indxWork].m_strDLLName;
+            (workItem as Label).Text = grpSrc.m_strDLLName;
+
+            key = PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS;            
+            workItem = getWorkingItem(indxWork, key);
+            foreach (string idGrpSgnls in grpSrc.m_arIDGroupSignals)
+                (workItem as DataGridView).Rows.Add(new object[] { idGrpSgnls, @"->" });
 
             /*
             key = PanelLoader.KEY_CONTROLS.DGV_SIGNALS_OF_GROUP;
@@ -156,15 +159,15 @@ namespace uLoader
                     fillWorkItem(INDEX_SRC.SOURCE, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SOURCES: //Группа (объект) источников (источник)
-                    m_arCurrentSrcItems [(int)INDEX_SRC.SOURCE] = par as ITEM_SRC;
-                    fillWorkItem(INDEX_SRC.SOURCE);
+                    //m_arCurrentSrcItems [(int)INDEX_SRC.SOURCE] = par as ITEM_SRC;
+                    fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SRC);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES: //Группы источников (назначение)
                     fillWorkItem(INDEX_SRC.DEST, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SOURCES: //Группа (объект) источников (назначение)
-                    m_arCurrentSrcItems[(int)INDEX_SRC.DEST] = par as ITEM_SRC;
-                    fillWorkItem(INDEX_SRC.DEST);
+                    //m_arCurrentSrcItems[(int)INDEX_SRC.DEST] = par as ITEM_SRC;
+                    fillWorkItem(INDEX_SRC.DEST, par as GROUP_SRC);
                     break;
                 case (int)HHandlerQueue.StatesMachine.TIMER_WORK_UPDATE:
                     m_iSecondUpdate = (int)par;
@@ -301,9 +304,9 @@ namespace uLoader
         /// <param name="indxConfig">Индекс панели</param>
         /// <param name="indxPanel">Индекс типа объекта</param>
         /// <returns>Объект со списком групп</returns>
-        private DataGridView getWorkingItem(INDEX_SRC indxWork, PanelLoader.KEY_CONTROLS key)
+        private Control getWorkingItem(INDEX_SRC indxWork, PanelLoader.KEY_CONTROLS key)
         {
-            DataGridView dgvRes = null;
+            Control ctrlRes = null;
             PanelLoader panelLdr;
 
             panelLdr = this.Controls[(int)indxWork] as PanelLoader;
@@ -313,11 +316,11 @@ namespace uLoader
             //Вариант №2
             Control []arCtrls = panelLdr.Controls.Find(key.ToString(), true);
             if (arCtrls.Length == 1)
-                dgvRes = arCtrls[0] as DataGridView;
+                ctrlRes = arCtrls[0];
             else
                 throw new Exception(@"PanelWork::getWorkingItem (" + indxWork.ToString() + @", " + key.ToString () + @") - не найден элемент управления...");
 
-            return dgvRes;
+            return ctrlRes;
         }
 
         /// <summary>
@@ -342,6 +345,10 @@ namespace uLoader
         /// <param name="ev">Аргументы события</param>
         private void panelWork_dgvConfigItemSrcGroupSignalsSelectionChanged (object obj, EventArgs ev)
         {
+            if (IsFirstActivated == false)
+                clearValues  (INDEX_SRC.DEST, PanelLoader.KEY_CONTROLS.DGV_SIGNALS_OF_GROUP);
+            else
+                ;
         }
         /// <summary>
         /// Обработка события "изменение выбора" для 'DataGridView' - группы источников (назначение)
@@ -365,6 +372,10 @@ namespace uLoader
         /// <param name="ev">Аргументы события</param>
         private void panelWork_dgvConfigItemDestGroupSignalsSelectionChanged (object obj, EventArgs ev)
         {
+            if (IsFirstActivated == false)
+                clearValues  (INDEX_SRC.DEST, PanelLoader.KEY_CONTROLS.DGV_SIGNALS_OF_GROUP);
+            else
+                ;
         }
     }
 
@@ -431,16 +442,16 @@ namespace uLoader
             this.ResumeLayout(false);
             this.PerformLayout();
 
-            DataGridView dgv = getWorkingItem(INDEX_SRC.SOURCE, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES);
+            DataGridView dgv = getWorkingItem(INDEX_SRC.SOURCE, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView;
             dgv.SelectionChanged += new EventHandler(panelWork_dgvConfigItemSrcGroupSourcesSelectionChanged);
 
-            dgv = getWorkingItem(INDEX_SRC.SOURCE, PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS);
+            dgv = getWorkingItem(INDEX_SRC.SOURCE, PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView;
             dgv.SelectionChanged += new EventHandler(panelWork_dgvConfigItemSrcGroupSignalsSelectionChanged);
 
-            dgv = getWorkingItem(INDEX_SRC.DEST, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES);
+            dgv = getWorkingItem(INDEX_SRC.DEST, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView;
             dgv.SelectionChanged += new EventHandler(panelWork_dgvConfigItemDestGroupSourcesSelectionChanged);
-            
-            dgv = getWorkingItem(INDEX_SRC.DEST, PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS);
+
+            dgv = getWorkingItem(INDEX_SRC.DEST, PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView;
             dgv.SelectionChanged += new EventHandler(panelWork_dgvConfigItemDestGroupSignalsSelectionChanged);
         }
 
