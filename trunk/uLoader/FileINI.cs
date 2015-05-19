@@ -43,6 +43,11 @@ namespace uLoader
             /// </summary>
             SRC []m_arListGroupValues;
             /// <summary>
+            /// Период времени (секунды) для обновления информации на панели "Работа"
+            /// </summary>
+            public int SecondWorkUpdate { get { return m_iSecPanelWorkUpdate; } }
+            private int m_iSecPanelWorkUpdate;
+            /// <summary>
             /// Конструктор - основной
             /// </summary>
             /// <param name="nameFile">Наименование файла конфигурации</param>
@@ -53,7 +58,13 @@ namespace uLoader
                 SEC_SRC_TYPES = GetMainValueOfKey(@"SEC_SRC_TYPES").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUES]);
                 KEY_TREE_SRC = GetMainValueOfKey(@"KEY_TREE_SRC").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUES]);
                 KEY_TREE_SGNLS = GetMainValueOfKey(@"KEY_TREE_SGNLS").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUES]);
+                //Получить ключ для чтения параметров в секции
                 KEY_PARS = GetMainValueOfKey(@"KEY_PARS");
+                //Получить период для обновления информации на панели "Работа"
+                if (Int32.TryParse (GetMainValueOfKey(@"PANEL_WORK_UPDATE"), out m_iSecPanelWorkUpdate) == false)
+                    throw new Exception(@"FileINI::FileINI () - Параметр PANEL_WORK_UPDATE не удалось инициализировать ...");
+                else
+                    ;
 
                 //Создать все объекты, списки для значений из файла конфигурации
                 m_arListGroupValues = new SRC [(int)INDEX_SRC.COUNT_INDEX_SRC];

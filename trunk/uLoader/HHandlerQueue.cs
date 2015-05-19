@@ -91,6 +91,7 @@ namespace uLoader
                 case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_PROP:
                 case (int)StatesMachine.OBJ_SRC_GROUP_SOURCES:
                 case (int)StatesMachine.OBJ_DEST_GROUP_SOURCES:
+                case (int)StatesMachine.TIMER_WORK_UPDATE:
                     //Не требуют запроса
                     break;
                 default:
@@ -125,6 +126,7 @@ namespace uLoader
                 case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_PROP:
                 case (int)StatesMachine.OBJ_SRC_GROUP_SOURCES:                
                 case (int)StatesMachine.OBJ_DEST_GROUP_SOURCES:
+                case (int)StatesMachine.TIMER_WORK_UPDATE:
                     dataHost.m_objRecieved.OnEvtDataRecievedHost(new object [] { state, obj });
                     break;
                 default:
@@ -266,6 +268,12 @@ namespace uLoader
                     dataHost = Peek;
                     //??? 0-й параметр индекс "выбранноой" группы источников
                     outobj = m_fileINI.AllObjectsDestGroupSources[(int)dataHost.m_pars[0]];
+
+                    iRes = 0;
+                    break;
+                case (int)StatesMachine.TIMER_WORK_UPDATE:
+                    error = false;
+                    outobj = m_fileINI.SecondWorkUpdate;
 
                     iRes = 0;
                     break;

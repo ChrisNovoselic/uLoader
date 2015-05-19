@@ -80,9 +80,10 @@ namespace uLoader
         {
             PanelLoader.KEY_CONTROLS key = PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS;            
             DataGridView workItem = getWorkingItem(indxWork, key);
-
+            /*
             key = PanelLoader.KEY_CONTROLS.DGV_SIGNALS_OF_GROUP;
             workItem = getWorkingItem(indxWork, key);
+            */
         }
 
         private void startTimerUpdate ()
@@ -156,6 +157,13 @@ namespace uLoader
                 onEvtDataRecievedHost(obj);
 
             base.OnEvtDataRecievedHost(obj);
+        }
+
+        public override void Stop()
+        {
+            stopTimerUpdate ();
+
+            base.Stop();
         }
 
         /// <summary>
