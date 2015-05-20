@@ -11,46 +11,35 @@ using HClassLibrary;
 //using StatisticCommon;
 
 namespace biysktmora
-{
-    public class HBiyskTMOraPlugIn
-    {
-        protected IPlugIn _iPlugin;
-        protected HBiyskTMOra m_data;
-
-        public HBiyskTMOraPlugIn(IPlugIn iPlugIn)
-        {
-            this._iPlugin = iPlugIn;
-        }
-    }
-    
+{    
     public class HBiyskTMOra : HHandlerDb
     {
+        protected IPlugIn _iPlugin;
+        
         protected struct SIGNAL
         {
-            public int id;
-            public string table;
+            public int m_id;
+            public string m_NameTable;
             public SIGNAL (int id, string table)
             {
-                this.id = id;
-                this.table = table;
+                this.m_id = id;
+                this.m_NameTable = table;
             }
         }
         protected SIGNAL [] arSignals;
 
         enum StatesMachine {
-            CurrentTimeSource
-            , CurrentTimeDest
-            , SourceValues
-            , DestValues
+            CurrentTime
+            , Values
         }
 
-        private DateTime dtStart;
-        public DataTable results;
-        public string host = @"10.220.2.5", port = @"1521"
-            , dataSource = @"ORCL"
-            , uid = @"arch_viewer"
-            , pswd = @"1"
-            , query = string.Empty;
+        private DateTime m_dtStart
+            , m_dtServer;
+        private TimeSpan m_tmSpanPeriod;
+        private long m_secInterval;
+        public DataTable m_tableResults;
+        public ConnectionSettings m_connSett;
+        public string m_strQuery = string.Empty;
 
         public HBiyskTMOra()
         {
@@ -70,6 +59,18 @@ namespace biysktmora
             setQuery(DateTime.Now.AddMinutes(-1));
         }
 
+        public HBiyskTMOra(IPlugIn iPlugIn) : this ()
+        {
+            this._iPlugin = iPlugIn;
+        }
+
+        private int initialize()
+        {
+            int iRes = 0;
+
+            return iRes;
+        }
+
         public void UpdateQuery ()
         {
             UpdateQuery(DateTime.Now.AddSeconds(-66));
@@ -82,7 +83,7 @@ namespace biysktmora
 
         private void setQuery(DateTime dtStart, int secInterval = 66)
         {
-            query = string.Empty;
+            m_strQuery = string.Empty;
             int iPrev = 0, iDel = 0, iCur = 0;
 
             if (! (results == null))
@@ -115,7 +116,7 @@ namespace biysktmora
             //Формировать зпрос
             foreach (SIGNAL s in arSignals)
             {
-                query += @"SELECT " + s.id + @" as ID, VALUE, QUALITY, DATETIME FROM ARCH_SIGNALS." + s.table + @" WHERE DATETIME BETWEEN"
+                query += @"SELECT " + s.m_id + @" as ID, VALUE, QUALITY, DATETIME FROM ARCH_SIGNALS." + s.m_NameTable + @" WHERE DATETIME BETWEEN"
                 + @" to_timestamp('" + strStart + @"', 'yyyymmdd hh24miss')" + @" AND"
                 + @" to_timestamp('" + strEnd + @"', 'yyyymmdd hh24miss')"
                 + strUnion
@@ -132,8 +133,8 @@ namespace biysktmora
         {
             ClearStates ();
 
-            AddState((int)StatesMachine.CurrentTimeSource);
-            AddState((int)StatesMachine.SourceValues);
+            AddState((int)StatesMachine.CurrentTime);
+            AddState((int)StatesMachine.Values);
 
             Run(@"HBiyskTMOra::ChangeState ()");
         }
@@ -141,7 +142,7 @@ namespace biysktmora
         public override void StartDbInterfaces ()
         {
             m_dictIdListeners.Add (0, new int [] { 0 });
-            register(0, 0, new ConnectionSettings(@"OraSOTIASSO-ORD", host, Int32.Parse(port), dataSource, uid, pswd), @"");
+            register(0, 0, m_connSett, string.Empty);
         }
 
         public override void Start()
@@ -166,16 +167,12 @@ namespace biysktmora
 
             switch (state)
             {
-                case (int)StatesMachine.CurrentTimeSource:
+                case (int)StatesMachine.CurrentTime:
                     GetCurrentTimeRequest (DbInterface.DB_TSQL_INTERFACE_TYPE.Oracle, m_dictIdListeners[0][0]);
                     break;
-                case (int)StatesMachine.CurrentTimeDest:                    
-                    break;
-                case (int)StatesMachine.SourceValues:
+                case (int)StatesMachine.Values:
                     UpdateQuery ();
-                    Request (m_dictIdListeners[0][0], query);
-                    break;
-                case (int)StatesMachine.DestValues:
+                    Request (m_dictIdListeners[0][0], m_strQuery);
                     break;
                 default:
                     break;
@@ -191,21 +188,21 @@ namespace biysktmora
 
             switch (state)
             {
-                case (int)StatesMachine.CurrentTimeSource:
+                case (int)StatesMachine.CurrentTime:
                     Console.WriteLine(((DateTime)(table as DataTable).Rows[0][0]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
                     break;
-                case (int)StatesMachine.SourceValues:
+                case (int)StatesMachine.Values:
                     Console.WriteLine(@"Получено строк: " + (table as DataTable).Rows.Count);
-                    if (results == null)
+                    if (m_tableResults == null)
                     {
-                        results = new DataTable ();
+                        m_tableResults = new DataTable();
                     }
                     else
                         ;
 
                     int iPrev = -1, iDupl = -1, iAdd = -1, iCur = -1;
                     iPrev = 0; iDupl = 0; iAdd = 0; iCur = 0;
-                    iPrev = results.Rows.Count;
+                    iPrev = m_tableResults.Rows.Count;
 
                     //if (results.Rows.Count == 0)
                     //{
@@ -215,7 +212,7 @@ namespace biysktmora
                     //    ;
 
                     DataRow [] arSel;
-                    foreach (DataRow rRes in results.Rows)
+                    foreach (DataRow rRes in m_tableResults.Rows)
                     {
                         arSel = (table as DataTable).Select(@"ID=" + rRes[@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
                         iDupl += arSel.Length;
@@ -247,8 +244,8 @@ namespace biysktmora
                     //table.Columns.Add(@"tmdelta", Type.GetType("Int32"));
 
                     iAdd = table.Rows.Count;
-                    results.Merge(table);
-                    iCur = results.Rows.Count;
+                    m_tableResults.Merge(table);
+                    iCur = m_tableResults.Rows.Count;
                     Console.WriteLine(@"Объединение таблицы-рез-та: [было=" + iPrev + @", дублирущих= " + iDupl + @", добавлено=" + iAdd + @", стало=" + iCur + @"]");
                     //DataTable tableChanged = results.GetChanges();
                     //if (! (tableChanged == null))
@@ -321,7 +318,41 @@ namespace biysktmora
         {
             _Id = 1001;
 
-            createObject(typeof(HBiyskTMOraPlugIn));
+            createObject(typeof(HBiyskTMOra));
+        }
+
+        public override void OnEvtDataRecievedHost(object obj)
+        {
+            EventArgsDataHost ev = obj as EventArgsDataHost;
+            HBiyskTMOra target = _object as HBiyskTMOra;
+
+            switch (ev.id)
+            {
+                case 0:
+                    ConnectionSettings connSett = ev.par [0] as ConnectionSettings;
+                    target.m_connSett = new ConnectionSettings (
+                        connSett.name
+                        , connSett.server
+                        , connSett.port
+                        , connSett.dbName
+                        , connSett.userName
+                        , connSett.password
+                        );
+                    break;
+                case 1:
+                    if (m_markDataHost.IsMarked(0) == true)
+                        target.Start();
+                    else
+                        DataAskedHost (0);
+                    break;
+                case 2:
+                    target.Stop();
+                    break;
+                default:
+                    break;
+            }
+            
+            base.OnEvtDataRecievedHost(obj);
         }
     }
 }

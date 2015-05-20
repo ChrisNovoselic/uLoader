@@ -171,13 +171,15 @@ namespace uLoader
     /// </summary>
     public class GroupSources : GROUP_SRC, IPlugInHost
     {
+        # region ??? Обязательный метод для интерфейса 'IPlugInHost'
         public bool Register (IPlugIn plugIn)
         {
             bool bRes = true;
 
             return true;
         }
-        
+        # endregion
+
         /// <summary>
         /// Группа сигналов (для получения данных)
         /// </summary>
@@ -226,12 +228,18 @@ namespace uLoader
                 //??? Значения списка независимы
                 this.m_listConnSett.Add (connSett);
 
-            this.m_strDLLName = srcItem.m_strDLLName;
-            
-            int iErr = 0;
-            loadPlugIn (out iErr);
-
             this.m_strID = srcItem.m_strID;
+
+            this.m_strDLLName = srcItem.m_strDLLName;
+
+            int iErr = 0;
+            m_plugIn = loadPlugIn(out iErr);
+            if (!(iErr == 0))
+                throw new Exception(@"GroupSources::GroupSources () - ...");
+            else
+                ;
+
+            EvtDataAskedHost(new EventArgsDataHost (0, new object [] { this.m_listConnSett[0] } ));            
         }
 
         //private IPlugIn loadPlugIn(string name, out int iRes)
@@ -248,8 +256,12 @@ namespace uLoader
             try
             {
                 Assembly ass = null;
+                //Вариант №1
                 ass = Assembly.LoadFrom(Environment.CurrentDirectory + @"\" + name + @".dll");
                 //ass = Assembly.LoadFrom(Environment.CurrentDirectory + @"\" + name);
+                //Вариант №2
+                //m_appDomain = AppDomain.CreateDomain(@"appDomain_" + m_strID);
+                //ass = m_appDomain.Load(Environment.CurrentDirectory + @"\" + name + @".dll");
                 if (!(ass == null))
                 {
                     objType = ass.GetType(name + ".PlugIn");
@@ -268,7 +280,8 @@ namespace uLoader
                     plugInRes = ((IPlugIn)Activator.CreateInstance(objType));
                     plugInRes.Host = (IPlugInHost)this;
 
-                    (plugInRes as HPlugIn).EvtDataAskedHost += new DelegateObjectFunc(GroupSources_EvtDataAskedHost);
+                    (plugInRes as HHPlugIn).EvtDataAskedHost += new DelegateObjectFunc(GroupSources_EvtDataAskedHost);
+                    EvtDataAskedHost += (plugInRes as HHPlugIn).OnEvtDataRecievedHost;
 
                     iRes = 0;
                 }
@@ -281,9 +294,19 @@ namespace uLoader
 
             return plugInRes;
         }
+
+        private IPlugIn m_plugIn;
+        private event DelegateObjectFunc EvtDataAskedHost;
         
         private void GroupSources_EvtDataAskedHost  (object obj)
         {
+            EventArgsDataHost ev = obj as EventArgsDataHost;
+
+            switch (ev.id)
+            {
+                default:
+                    break;
+            }
         }
     }
 }
