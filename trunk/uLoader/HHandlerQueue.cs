@@ -31,6 +31,8 @@ namespace uLoader
             , LIST_DEST_GROUP_SIGNAL_PROP //Список параметров сигналов в группе сигналов (назначение)
             , OBJ_SRC_GROUP_SOURCES //Объект группы источников (источник)
             , OBJ_DEST_GROUP_SOURCES //Объект группы источников (назначение)
+            , OBJ_SRC_GROUP_SIGNALS //Объект группы сигналов (источник)
+            , OBJ_DEST_GROUP_SIGNALS //Объект группы сигналов (назначение)
             , TIMER_WORK_UPDATE //Период обновления панели "Работа"
             ,
         }
@@ -127,6 +129,7 @@ namespace uLoader
                 case (int)StatesMachine.OBJ_SRC_GROUP_SOURCES:                
                 case (int)StatesMachine.OBJ_DEST_GROUP_SOURCES:
                 case (int)StatesMachine.TIMER_WORK_UPDATE:
+                case (int)StatesMachine.OBJ_SRC_GROUP_SIGNALS:
                     dataHost.m_objRecieved.OnEvtDataRecievedHost(new object [] { state, obj });
                     break;
                 default:
@@ -274,6 +277,14 @@ namespace uLoader
                 case (int)StatesMachine.TIMER_WORK_UPDATE:
                     error = false;
                     outobj = m_fileINI.SecondWorkUpdate;
+
+                    iRes = 0;
+                    break;
+                case (int)StatesMachine.OBJ_SRC_GROUP_SIGNALS:
+                    error = false;
+                    dataHost = Peek;
+                    //??? 0-й параметр идентификатор "выбранноой" группы сигналов
+                    outobj = m_fileINI.GetObjectGroupSignals(dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;

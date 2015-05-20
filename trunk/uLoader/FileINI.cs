@@ -383,7 +383,7 @@ namespace uLoader
             {
                 string[] arStrRes = new string[] { };
                 int i = -1;
-                ITEM_SRC itemSrc = getItemSrc (pars);
+                ITEM_SRC itemSrc = getItemSrc(pars);
 
                 arStrRes = new string[(itemSrc as GROUP_SRC).m_listConnSett.Count];
 
@@ -398,7 +398,7 @@ namespace uLoader
             {
                 string[] arStrRes = new string[] { };
                 int i = -1;
-                ITEM_SRC itemSrc = getItemSrc (pars);
+                ITEM_SRC itemSrc = getItemSrc(pars);
 
                 arStrRes = new string[(itemSrc as ITEM_SRC).m_keys.Length];
 
@@ -413,7 +413,8 @@ namespace uLoader
             {
                 string[] arStrRes = new string[] { };
                 int i = -1;
-                ITEM_SRC itemSrc = getItemSrc (pars);
+                //4-ый параметр не используется...
+                ITEM_SRC itemSrc = getItemSrc(pars);
 
                 arStrRes = new string[(itemSrc as GROUP_SRC).m_keys.Length];
 
@@ -433,7 +434,7 @@ namespace uLoader
             {
                 string[] arStrRes = new string[] { };
                 int i = -1;
-                ITEM_SRC itemSrc = getItemSrc (pars);
+                ITEM_SRC itemSrc = getItemSrc (pars);                
 
                 if (! ((itemSrc as GROUP_SIGNALS_SRC).m_listSgnls == null))
                 {
@@ -453,7 +454,7 @@ namespace uLoader
             {
                 string[] arStrRes = new string[] { };
                 int i = -1;
-                ITEM_SRC itemSrc = getItemSrc (pars);
+                ITEM_SRC itemSrc = getItemSrc(pars);
 
                 arStrRes = new string[(itemSrc as ITEM_SRC).m_keys.Length];
 
@@ -468,7 +469,7 @@ namespace uLoader
             {
                 string[] arStrRes = new string[] { };
                 int i = -1;
-                ITEM_SRC itemSrc = getItemSrc (pars);
+                ITEM_SRC itemSrc = getItemSrc(pars);
 
                 arStrRes = new string[(itemSrc as GROUP_SIGNALS_SRC).m_keys.Length];
 
@@ -478,28 +479,106 @@ namespace uLoader
                     arStrRes[i++] = sgnl.m_dictPars[key];
 
                 return arStrRes;
-            }            
+            }
+
+            public GROUP_SIGNALS_SRC GetObjectGroupSignals(object[] pars)
+            {
+                return getItemSrc(pars) as GROUP_SIGNALS_SRC;
+            }
 
             private ITEM_SRC getItemSrc(object[] pars)
             {
+                switch (pars.Length)
+                {
+                    case 2:
+                        return getItemSrc((INDEX_SRC)pars[0], pars[1] as string);
+                        //break;
+                    case 3:
+                    case 4: //'GetListItemPropOfGroupSource', 4-ый параметр не используется...
+                        return getItemSrc((INDEX_SRC)pars[0], (int)pars[1], (int)pars[2]);
+                        //break;
+                    default:
+                        throw new Exception(@"FileINI::getItemSrc () - неизвестное количество параметров ...");
+                    //break;
+                }
+            }
+
+            private ITEM_SRC getItemSrc(INDEX_SRC indxSrc, int groupType, int indxSel)
+            {
                 ITEM_SRC itemSrcRes = null;
-                
-                SRC src = m_arListGroupValues[(int)pars[0]]; //0 - источник/назначение
-                //1 - группы источников/сигналов
-                switch ((int)pars[1])
+
+                SRC src = m_arListGroupValues[(int)indxSrc]; //источник/назначение
+                //группы источников/сигналов
+                switch (groupType)
                 {
                     case 0: //GROUP_SOURCES
-                        itemSrcRes = src.m_listGroupSrc[(int)pars[2]];
+                        itemSrcRes = src.m_listGroupSrc[indxSel];
                         break;
                     case 2: //GROUP_SIGNALS
-                        itemSrcRes = src.m_listGroupSgnlsSrc[(int)pars[2]];
+                        itemSrcRes = src.m_listGroupSgnlsSrc[indxSel];
                         break;
                     default:
                         break;
                 }
 
                 return itemSrcRes;
-            }            
+            }
+
+            private ITEM_SRC getItemSrc(INDEX_SRC indxSrc, string id)
+            {
+                ITEM_SRC itemSrcRes = null; //Результат
+                //Получить объект с 
+                SRC src = m_arListGroupValues[(int)indxSrc]; //источник/назначение
+                int groupType = -1
+                    , lengthMaskId = id.Length;
+                string idType = string.Empty;
+                //Получить длину "маски" идентификатора
+                while (char.IsNumber(id[lengthMaskId - 1]) == true)
+                    lengthMaskId--;
+                //Получить "маску" идентификатора
+                idType = id.Substring(0, lengthMaskId);
+                //Определить тип группы по "маске" идентификатора
+                //Сравнить с "маской" групп источников
+                if (idType.Equals(KEY_TREE_SRC[(int)INDEX_KEY_SRC.GROUP_SRC]) == true)
+                    groupType = 0;
+                else
+                    //Сравнить с "маской" групп сигналов
+                    if (idType.Equals(KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS]) == true)
+                        groupType = 2;
+                    else
+                        throw new Exception(@"FileINI::getItemSrc () - ...");
+
+                //группы источников/сигналов
+                switch (groupType)
+                {
+                    case 0: //GROUP_SOURCES
+                        foreach (ITEM_SRC itemSrc in src.m_listGroupSrc)
+                            if (itemSrc.m_strID.Equals (id) == true)
+                            {//Получить результат
+                                itemSrcRes = itemSrc;
+                                //Прекратить выполнение цикла
+                                break;
+                            }
+                            else
+                                ;
+                        break;
+                    case 2: //GROUP_SIGNALS
+                        foreach (ITEM_SRC itemSrc in src.m_listGroupSgnlsSrc)
+                            if (itemSrc.m_strID.Equals (id) == true)
+                            {//Получить результат
+                                itemSrcRes = itemSrc;
+                                //Прекратить выполнение цикла
+                                break;
+                            }
+                            else
+                                ;
+                        break;
+                    default:
+                        break;
+                }
+
+                return itemSrcRes;
+            }         
         }
     }
 }

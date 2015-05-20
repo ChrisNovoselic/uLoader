@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+using System.Reflection; //Assembly
+using System.IO;
+
 using HClassLibrary;
 
 namespace uLoader
@@ -166,8 +169,15 @@ namespace uLoader
     /// <summary>
     /// Группа источников с "прикрепленными" группами сигналов
     /// </summary>
-    public class GroupSources : GROUP_SRC
+    public class GroupSources : GROUP_SRC, IPlugInHost
     {
+        public bool Register (IPlugIn plugIn)
+        {
+            bool bRes = true;
+
+            return true;
+        }
+        
         /// <summary>
         /// Группа сигналов (для получения данных)
         /// </summary>
@@ -217,8 +227,63 @@ namespace uLoader
                 this.m_listConnSett.Add (connSett);
 
             this.m_strDLLName = srcItem.m_strDLLName;
+            
+            int iErr = 0;
+            loadPlugIn (out iErr);
 
             this.m_strID = srcItem.m_strID;
-        } 
+        }
+
+        //private IPlugIn loadPlugIn(string name, out int iRes)
+        private IPlugIn loadPlugIn(out int iRes)
+        {
+            IPlugIn plugInRes = null;
+            iRes = -1;
+
+            string name =
+                Path.GetFileNameWithoutExtension (this.m_strDLLName)
+                //"biysktmora"
+                ;
+            Type objType = null;
+            try
+            {
+                Assembly ass = null;
+                ass = Assembly.LoadFrom(Environment.CurrentDirectory + @"\" + name + @".dll");
+                //ass = Assembly.LoadFrom(Environment.CurrentDirectory + @"\" + name);
+                if (!(ass == null))
+                {
+                    objType = ass.GetType(name + ".PlugIn");
+                }
+                else
+                    ;
+            }
+            catch (Exception e)
+            {
+                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"GroupSources::loadPlugin () ... LoadFrom () ... plugIn.Name = " + name);
+            }
+
+            if (!(objType == null))
+                try
+                {
+                    plugInRes = ((IPlugIn)Activator.CreateInstance(objType));
+                    plugInRes.Host = (IPlugInHost)this;
+
+                    (plugInRes as HPlugIn).EvtDataAskedHost += new DelegateObjectFunc(GroupSources_EvtDataAskedHost);
+
+                    iRes = 0;
+                }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"GroupSources::loadPlugin () ... CreateInstance ... plugIn.Name = " + name);
+                }
+            else
+                Logging.Logg().Error(@"GroupSources::loadPlugin () ... Assembly.GetType()=null ... plugIn.Name = " + name, Logging.INDEX_MESSAGE.NOT_SET);
+
+            return plugInRes;
+        }
+        
+        private void GroupSources_EvtDataAskedHost  (object obj)
+        {
+        }
     }
 }

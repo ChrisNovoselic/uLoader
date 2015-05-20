@@ -87,8 +87,7 @@ namespace uLoader
                         new DataGridViewTextBoxColumn ()
                         , new DataGridViewButtonColumn ()
                     }
-                );
-                (ctrl as DataGridView).Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                );                
                 (ctrl as DataGridView).AllowUserToResizeColumns = false;
                 (ctrl as DataGridView).AllowUserToResizeRows = false;
                 (ctrl as DataGridView).AllowUserToAddRows = false;
@@ -96,7 +95,9 @@ namespace uLoader
                 (ctrl as DataGridView).MultiSelect = false;
                 (ctrl as DataGridView).SelectionMode = DataGridViewSelectionMode.FullRowSelect;
                 (ctrl as DataGridView).RowHeadersVisible = false;
+                (ctrl as DataGridView).Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 (ctrl as DataGridView).Columns[1].Width = 37;
+                (ctrl as DataGridView).RowsAdded += new DataGridViewRowsAddedEventHandler(panelLoader_RowsAdded);
                 panelColumns.Controls.Add(ctrl, 0, 0);
                 panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 6);
                 //Библиотека для загрузки
@@ -134,8 +135,7 @@ namespace uLoader
                         new DataGridViewTextBoxColumn ()
                         , new DataGridViewButtonColumn ()
                     }
-                );
-                (ctrl as DataGridView).Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                );                
                 (ctrl as DataGridView).AllowUserToResizeColumns = false;
                 (ctrl as DataGridView).AllowUserToResizeRows = false;
                 (ctrl as DataGridView).AllowUserToAddRows = false;
@@ -143,7 +143,9 @@ namespace uLoader
                 (ctrl as DataGridView).MultiSelect = false;
                 (ctrl as DataGridView).SelectionMode = DataGridViewSelectionMode.FullRowSelect;
                 (ctrl as DataGridView).RowHeadersVisible = false;
+                (ctrl as DataGridView).Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 (ctrl as DataGridView).Columns[1].Width = 37;
+                (ctrl as DataGridView).RowsAdded += new DataGridViewRowsAddedEventHandler(panelLoader_RowsAdded);
                 panelColumns.Controls.Add(ctrl, 0, 0);
                 panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 3);
                 //ГроупБокс режима опроса
@@ -162,6 +164,7 @@ namespace uLoader
                 ctrl.Name = KEY_CONTROLS.RBUTTON_CUR_DATETIME.ToString ();
                 (ctrl as RadioButton).Text = @"Текущие дата/время";
                 ctrl.Dock = DockStyle.Fill;
+                (ctrl as RadioButton).CheckedChanged += new EventHandler(panelLoader_CheckedChanged);
                 panelGroupBox.Controls.Add(ctrl, 0, 0);
                 panelGroupBox.SetColumnSpan(ctrl, 8); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Описание для интервала
@@ -185,6 +188,7 @@ namespace uLoader
                 ctrl.Name = KEY_CONTROLS.RBUTTON_COSTUMIZE.ToString();
                 (ctrl as RadioButton).Text = @"Выборочно";
                 ctrl.Dock = DockStyle.Fill;
+                (ctrl as RadioButton).CheckedChanged += new EventHandler(panelLoader_CheckedChanged);
                 panelGroupBox.Controls.Add(ctrl, 0, 3);
                 panelGroupBox.SetColumnSpan(ctrl, 8); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Календарь
@@ -232,7 +236,7 @@ namespace uLoader
                 //Шаг(мин)
                 //NumericUpDown изменения шага
                 ctrl = new NumericUpDown();
-                ctrl.Name = KEY_CONTROLS.RBUTTON_COSTUMIZE.ToString();
+                ctrl.Name = KEY_CONTROLS.NUMUD_COSTUMIZE_STEP.ToString();
                 (ctrl as NumericUpDown).Minimum = 1; (ctrl as NumericUpDown).Maximum = 60;
                 ctrl.Dock = DockStyle.Fill;
                 panelGroupBox.Controls.Add(ctrl, 6, 6);
@@ -248,6 +252,51 @@ namespace uLoader
             }
 
             #endregion
+
+            private void panelLoader_RowsAdded (object obj, EventArgs ev)
+            {
+                int cnt = (obj as DataGridView).Rows.Count;
+                (obj as DataGridView).Rows[cnt - 1].Cells [1].Value = @"->";
+            }
+
+            private void panelLoader_CheckedChanged(object obj, EventArgs ev)
+            {
+                RadioButton rBtn = obj as RadioButton;
+                KEY_CONTROLS key;
+
+                if (rBtn.Checked == true)
+                {
+                    bool bCostumizeEnabled =
+                        rBtn.Name.Equals(KEY_CONTROLS.RBUTTON_COSTUMIZE.ToString())
+                        //false
+                        ;
+                    
+                    //if (rBtn.Name.Equals (KEY_CONTROLS.RBUTTON_CUR_DATETIME.ToString ()) == true)
+                    //{
+                    //}
+                    //else
+                    //    if (rBtn.Name.Equals (KEY_CONTROLS.RBUTTON_COSTUMIZE.ToString ()) == true)
+                    //    {
+                    //         bCostumizeEnabled = true;
+                    //    }
+                    //    else
+                    //        ;
+
+                    key = KEY_CONTROLS.NUMUD_CUR_DATETIME;
+                    Controls.Find(key.ToString(), true)[0].Enabled = ! bCostumizeEnabled;
+
+                    key = KEY_CONTROLS.CALENDAR_COSTUMIZE;
+                    Controls.Find(key.ToString(), true)[0].Enabled = bCostumizeEnabled;
+                    key = KEY_CONTROLS.TBX_BEGIN_TIME;
+                    Controls.Find(key.ToString(), true)[0].Enabled = bCostumizeEnabled;
+                    key = KEY_CONTROLS.TBX_END_TIME;
+                    Controls.Find(key.ToString(), true)[0].Enabled = bCostumizeEnabled;
+                    key = KEY_CONTROLS.NUMUD_COSTUMIZE_STEP;
+                    Controls.Find(key.ToString(), true)[0].Enabled = bCostumizeEnabled;
+                }
+                else
+                    ; //Не "отмеченные" - игнорировать
+            }
         }
 
         private class PanelLoaderSource : PanelLoader
@@ -259,6 +308,43 @@ namespace uLoader
 
             private void InitializeComponent ()
             {
+                HPanelCommon panelColumns;
+
+                this.SuspendLayout();
+
+                //Панель сигналов группы
+                //panelColumns = new PanelCommonULoader(1, 8);
+                //this.Controls.Add(panelColumns, 2, 0);
+                //this.SetColumnSpan(panelColumns, 2); this.SetRowSpan(panelColumns, 1);
+                panelColumns = this.Controls[2] as HPanelCommon;                
+
+                DataGridView ctrl = new DataGridView ();
+                ctrl.Name = KEY_CONTROLS.DGV_SIGNALS_OF_GROUP.ToString ();
+                ctrl.Dock = DockStyle.Fill;
+                (ctrl as DataGridView).Columns.AddRange(
+                    new DataGridViewColumn[] {
+                        new DataGridViewTextBoxColumn ()
+                        , new DataGridViewTextBoxColumn ()
+                        , new DataGridViewTextBoxColumn ()
+                    }
+                );                 
+                (ctrl as DataGridView).AllowUserToResizeColumns = false;
+                (ctrl as DataGridView).AllowUserToResizeRows = false;
+                (ctrl as DataGridView).AllowUserToAddRows = false;
+                (ctrl as DataGridView).AllowUserToDeleteRows = false;
+                (ctrl as DataGridView).MultiSelect = false;
+                (ctrl as DataGridView).SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+                (ctrl as DataGridView).RowHeadersVisible = false;
+                foreach (DataGridViewColumn col in (ctrl as DataGridView).Columns)
+                    if ((ctrl as DataGridView).Columns.IndexOf(col) < (ctrl as DataGridView).Columns.Count - 1)
+                        col.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+                    else
+                        col.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                panelColumns.Controls.Add(ctrl, 0, 0);
+                panelColumns.SetColumnSpan(ctrl, 10); panelColumns.SetRowSpan(ctrl, 5);
+
+                this.ResumeLayout (false);
+                this.PerformLayout ();
             }
         }
 

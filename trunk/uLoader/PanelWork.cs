@@ -71,7 +71,7 @@ namespace uLoader
             DataGridView workItem = getWorkingItem(indxWork, key) as DataGridView;
             if (!(rows == null))
                 foreach (string row in rows)
-                    workItem.Rows.Add(new object[] { row, @"->" });
+                    workItem.Rows.Add(new object[] { row });
             else
                 ;
         }
@@ -80,20 +80,58 @@ namespace uLoader
         {
             Control workItem;            
             PanelLoader.KEY_CONTROLS key;
-
+            //Наименование библиотеки для загрузки данных
             key = PanelLoader.KEY_CONTROLS.LABEL_DLLNAME_GROUPSOURCES;
             workItem = getWorkingItem(indxWork, key);
             (workItem as Label).Text = grpSrc.m_strDLLName;
-
+            //Список групп сигналов - инициирует заполнение списка сигналов группы
             key = PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS;            
             workItem = getWorkingItem(indxWork, key);
             foreach (string idGrpSgnls in grpSrc.m_arIDGroupSignals)
-                (workItem as DataGridView).Rows.Add(new object[] { idGrpSgnls, @"->" });
-
-            /*
+                (workItem as DataGridView).Rows.Add(new object[] { idGrpSgnls });
+            //Список источников группы источников
+            key = PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS;
+            workItem = getWorkingItem(indxWork, key);
+        }
+        /// <summary>
+        /// Заполнить рабочий элемент - список групп 
+        /// </summary>
+        /// <param name="indxWork"></param>
+        /// <param name="grpSrc"></param>
+        private void fillWorkItem(INDEX_SRC indxWork, GROUP_SIGNALS_SRC grpSrc)
+        {
+            Control workItem;
+            PanelLoader.KEY_CONTROLS key;
+            //Отобразить активный режим
+            switch (grpSrc.m_mode)
+            {
+                case MODE_WORK.CUR_INTERVAL:
+                    key = PanelLoader.KEY_CONTROLS.RBUTTON_CUR_DATETIME;
+                    break;
+                case MODE_WORK.COSTUMIZE:
+                    key = PanelLoader.KEY_CONTROLS.RBUTTON_COSTUMIZE;
+                    break;
+                default:
+                    throw new Exception(@"PanelWork::fillWorkItem () - ...");
+            }
+            workItem = getWorkingItem(indxWork, key);
+            (workItem as RadioButton).Checked = true;
+            //Список сигналов группы
             key = PanelLoader.KEY_CONTROLS.DGV_SIGNALS_OF_GROUP;
             workItem = getWorkingItem(indxWork, key);
-            */
+            foreach (SIGNAL_SRC sgnl in grpSrc.m_listSgnls)
+                (workItem as DataGridView).Rows.Add(new object[] { sgnl.m_dictPars[@"KKS_NAME"] });
+            //??? Отобразить интервал опроса для режима 'CUR_INTERVAL'
+
+            //Отобразить шаг опроса для режима 'CUR_INTERVAL'
+
+            //Отобразить дата опроса для режима 'COSTUMIZE'
+
+            //Отобразить нач./время опроса для режима 'COSTUMIZE'
+
+            //Отобразить кон./время опроса для режима 'COSTUMIZE'
+
+            //Отобразить шаг опроса для режима 'COSTUMIZE'
         }
         /// <summary>
         /// Активировать таймер
@@ -172,6 +210,12 @@ namespace uLoader
                 case (int)HHandlerQueue.StatesMachine.TIMER_WORK_UPDATE:
                     m_iSecondUpdate = (int)par;
                     startTimerUpdate ();
+                    break;
+                case (int)HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS: //Объект группы сигналов (источник)
+                    fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SIGNALS_SRC);
+                    break;
+                case (int)HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SIGNALS: //Объект группы сигналов  (назначение)
+                    fillWorkItem(INDEX_SRC.SOURCE, PanelLoader.KEY_CONTROLS.DGV_SIGNALS_OF_GROUP, (par as object[]) as string[]);
                     break;
                 default:
                     break;
@@ -346,9 +390,12 @@ namespace uLoader
         private void panelWork_dgvConfigItemSrcGroupSignalsSelectionChanged (object obj, EventArgs ev)
         {
             if (IsFirstActivated == false)
-                clearValues  (INDEX_SRC.DEST, PanelLoader.KEY_CONTROLS.DGV_SIGNALS_OF_GROUP);
+                clearValues  (INDEX_SRC.SOURCE, PanelLoader.KEY_CONTROLS.DGV_SIGNALS_OF_GROUP);
             else
                 ;
+
+            string idGroupSignals = (obj as DataGridView).SelectedRows[0].Cells[0].Value.ToString ().Trim ();
+            DataAskedHost(new object[] { new object[] { (int)HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS, INDEX_SRC.SOURCE, idGroupSignals } });
         }
         /// <summary>
         /// Обработка события "изменение выбора" для 'DataGridView' - группы источников (назначение)
@@ -396,6 +443,9 @@ namespace uLoader
             {
                 components.Dispose();
             }
+
+            stopTimerUpdate ();
+
             base.Dispose(disposing);
         }
 

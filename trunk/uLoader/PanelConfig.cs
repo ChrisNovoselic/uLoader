@@ -276,6 +276,8 @@ namespace uLoader
                 //Применение размещения элементов
                 this.ResumeLayout(false);
                 this.PerformLayout();
+
+                //ctrl.Dispose ();
             }
             #endregion
 
@@ -429,7 +431,8 @@ namespace uLoader
             DataGridView cfgItem = getConfigItemProp(indxConfig, indxPanel);
 
             //Проверить наличие строк для отображения
-            if (! (rows == null))
+            if ((! (rows == null))
+                && (cfgItem.Columns.Count > 0))
             {
                 int i = 0;
                 foreach (string strHeader in rows)
@@ -769,7 +772,7 @@ namespace uLoader
             panelConfig_dgvConfigGroupSelectionChanged(obj, ev
                 , INDEX_SRC.SOURCE
                 , PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP
-                , PanelSources.INDEX_PANEL.GROUP_SIGNALS
+                , PanelSources.INDEX_PANEL.GROUP_SIGNALS //??? Передать во-вне НЕИЗВЕСТНый идентификатор
                 , HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_PARS
                 , HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS
             );
@@ -784,7 +787,7 @@ namespace uLoader
         {
             panelConfig_dgvConfigItemSelectionChanged(obj, ev
                 , INDEX_SRC.SOURCE
-                , PanelSources.INDEX_PANEL.GROUP_SIGNALS
+                , PanelSources.INDEX_PANEL.GROUP_SIGNALS //??? Передать во-вне НЕИЗВЕСТНый идентификатор
                 , PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP
                 , HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_PROP
             );
@@ -831,7 +834,7 @@ namespace uLoader
             panelConfig_dgvConfigGroupSelectionChanged(obj, ev
                 , INDEX_SRC.DEST
                 , PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP
-                , PanelSources.INDEX_PANEL.GROUP_SIGNALS
+                , PanelSources.INDEX_PANEL.GROUP_SIGNALS //??? Передать во-вне НЕИЗВЕСТНый идентификатор
                 , HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_PARS
                 , HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS
             );
@@ -846,7 +849,7 @@ namespace uLoader
         {
             panelConfig_dgvConfigItemSelectionChanged(obj, ev
                 , INDEX_SRC.DEST
-                , PanelSources.INDEX_PANEL.GROUP_SIGNALS
+                , PanelSources.INDEX_PANEL.GROUP_SIGNALS //??? Передать во-вне НЕИЗВЕСТНый идентификатор
                 , PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP
                 , HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_PROP
             );

@@ -12,6 +12,17 @@ using HClassLibrary;
 
 namespace biysktmora
 {
+    public class HBiyskTMOraPlugIn
+    {
+        protected IPlugIn _iPlugin;
+        protected HBiyskTMOra m_data;
+
+        public HBiyskTMOraPlugIn(IPlugIn iPlugIn)
+        {
+            this._iPlugin = iPlugIn;
+        }
+    }
+    
     public class HBiyskTMOra : HHandlerDb
     {
         protected struct SIGNAL
@@ -300,6 +311,17 @@ namespace biysktmora
                 ;
 
             Console.WriteLine(msgErr);
+        }
+    }
+
+    public class PlugIn : HHPlugIn
+    {
+        public PlugIn()
+            : base()
+        {
+            _Id = 1001;
+
+            createObject(typeof(HBiyskTMOraPlugIn));
         }
     }
 }
