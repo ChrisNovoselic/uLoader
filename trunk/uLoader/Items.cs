@@ -239,7 +239,7 @@ namespace uLoader
             else
                 ;
 
-            EvtDataAskedHost(new EventArgsDataHost (0, new object [] { this.m_listConnSett[0] } ));            
+            EvtDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT, new object[] { this.m_listConnSett[0] }));            
         }
 
         //private IPlugIn loadPlugIn(string name, out int iRes)
@@ -297,13 +297,17 @@ namespace uLoader
 
         private IPlugIn m_plugIn;
         private event DelegateObjectFunc EvtDataAskedHost;
-        
+
         private void GroupSources_EvtDataAskedHost  (object obj)
         {
             EventArgsDataHost ev = obj as EventArgsDataHost;
 
             switch (ev.id)
             {
+                case (int)ID_DATA_ASKED_HOST.INIT: //Получен запрос на парметры инициализации
+                    //Отправить данные для инициализации
+                    EvtDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT, new object[] { this.m_listConnSett[0] }));
+                    break;
                 default:
                     break;
             }

@@ -15,6 +15,8 @@ namespace biysktmora
     public class HBiyskTMOra : HHandlerDb
     {
         protected IPlugIn _iPlugin;
+
+        private static int SEC_INTERVAL_DEFAULT = 60;
         
         protected struct SIGNAL
         {
@@ -26,7 +28,7 @@ namespace biysktmora
                 this.m_NameTable = table;
             }
         }
-        protected SIGNAL [] arSignals;
+        protected SIGNAL [] m_arSignals;
 
         enum StatesMachine {
             CurrentTime
@@ -43,20 +45,20 @@ namespace biysktmora
 
         public HBiyskTMOra()
         {
-            dtStart = DateTime.Now;
+            m_dtStart =
+            m_dtServer =
+                DateTime.MinValue;
 
             //Инициализировать массив сигналов
-            arSignals = new SIGNAL[] { new SIGNAL(20001, @"TAG_000046")
-                                        , new SIGNAL(20002, @"TAG_000047")
+            m_arSignals = new SIGNAL[] { new SIGNAL(20001, @"TAG_000046")
+                                        /*, new SIGNAL(20002, @"TAG_000047")
                                         , new SIGNAL(20003, @"TAG_000048")
                                         , new SIGNAL(20004, @"TAG_000049")
                                         , new SIGNAL(20005, @"TAG_000050")
                                         , new SIGNAL(20006, @"TAG_000051")
                                         , new SIGNAL(20007, @"TAG_000052")
-                                        , new SIGNAL(20008, @"TAG_000053")
+                                        , new SIGNAL(20008, @"TAG_000053")*/
                                     };
-
-            setQuery(DateTime.Now.AddMinutes(-1));
         }
 
         public HBiyskTMOra(IPlugIn iPlugIn) : this ()
@@ -64,47 +66,25 @@ namespace biysktmora
             this._iPlugin = iPlugIn;
         }
 
-        private int initialize()
+        public int Initialize(ConnectionSettings connSett)
         {
             int iRes = 0;
+
+            m_connSett = new ConnectionSettings (connSett);
 
             return iRes;
         }
 
-        public void UpdateQuery ()
+        private void setQuery(DateTime dtStart, int secInterval = -1)
         {
-            UpdateQuery(DateTime.Now.AddSeconds(-66));
-        }
+            m_strQuery = string.Empty;            
 
-        public void UpdateQuery(DateTime dtStart, int secInterval = 66)
-        {            
-            setQuery (dtStart, secInterval);
-        }
-
-        private void setQuery(DateTime dtStart, int secInterval = 66)
-        {
-            m_strQuery = string.Empty;
-            int iPrev = 0, iDel = 0, iCur = 0;
-
-            if (! (results == null))
+            if (secInterval  < 0)
             {
-                iPrev = results.Rows.Count;
-                DataRow[] rowsDel = results.Select(@"DATETIME<'" + dtStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"'");
-
-                iDel = rowsDel.Length;
-                if (rowsDel.Length > 0)
-                {
-                    foreach (DataRow r in rowsDel)
-                        results.Rows.Remove (r);
-
-                    results.AcceptChanges ();
-                }
-                else
+                secInterval =
+                    //SEC_INTERVAL_DEFAULT
+                    m_tmSpanPeriod.Seconds
                     ;
-
-                iCur = results.Rows.Count;
-
-                Console.WriteLine(@"Обновление рез-та: [было=" + iPrev + @", удалено=" + iDel + @", осталось=" + iCur + @"]");
             }
             else
                 ;
@@ -114,9 +94,9 @@ namespace biysktmora
                 , strStart = dtStart.ToString(@"yyyyMMdd HHmmss")
                 , strEnd = dtStart.AddSeconds(secInterval).ToString(@"yyyyMMdd HHmmss");
             //Формировать зпрос
-            foreach (SIGNAL s in arSignals)
+            foreach (SIGNAL s in m_arSignals)
             {
-                query += @"SELECT " + s.m_id + @" as ID, VALUE, QUALITY, DATETIME FROM ARCH_SIGNALS." + s.m_NameTable + @" WHERE DATETIME BETWEEN"
+                m_strQuery += @"SELECT " + s.m_id + @" as ID, VALUE, QUALITY, DATETIME FROM ARCH_SIGNALS." + s.m_NameTable + @" WHERE DATETIME BETWEEN"
                 + @" to_timestamp('" + strStart + @"', 'yyyymmdd hh24miss')" + @" AND"
                 + @" to_timestamp('" + strEnd + @"', 'yyyymmdd hh24miss')"
                 + strUnion
@@ -124,9 +104,9 @@ namespace biysktmora
             }
 
             //Удалить "лишний" UNION
-            query = query.Substring(0, query.Length - strUnion.Length);
+            m_strQuery = m_strQuery.Substring(0, m_strQuery.Length - strUnion.Length);
             ////Установить сортировку
-            //query += @" ORDER BY DATETIME DESC";
+            //m_strQuery += @" ORDER BY DATETIME DESC";
         }
 
         public void ChangeState ()
@@ -154,6 +134,81 @@ namespace biysktmora
 
         public override void ClearValues()
         {
+            int iPrev = 0, iDel = 0, iCur = 0;
+            if (! (m_tableResults == null))
+            {
+                iPrev = m_tableResults.Rows.Count;
+                DataRow[] rowsDel = m_tableResults.Select(
+                    //@"DATETIME<'" + m_dtStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"' AND DATETIME>='" + m_dtStart.AddSeconds().ToString(@"yyyy/MM/dd HH:mm:ss") + @"'"
+                    @"DATETIME BETWEEN '" + m_dtStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"' AND '" + m_dtStart.AddSeconds(m_tmSpanPeriod.Seconds).ToString(@"yyyy/MM/dd HH:mm:ss") + @"'"
+                );
+
+                iDel = rowsDel.Length;
+                if (rowsDel.Length > 0)
+                {
+                    foreach (DataRow r in rowsDel)
+                        m_tableResults.Rows.Remove(r);
+
+                    m_tableResults.AcceptChanges();
+                }
+                else
+                    ;
+
+                iCur = m_tableResults.Rows.Count;
+
+                Console.WriteLine(@"Обновление рез-та: [было=" + iPrev + @", удалено=" + iDel + @", осталось=" + iCur + @"]");
+            }
+            else
+                ;
+        }
+
+        private int clearDupValues (ref DataTable table)
+        {
+            int iRes = 0;
+
+            DataRow[] arSel;
+            foreach (DataRow rRes in m_tableResults.Rows)
+            {
+                arSel = (table as DataTable).Select(@"ID=" + rRes[@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
+                iRes += arSel.Length;
+                foreach (DataRow rDel in arSel)
+                    (table as DataTable).Rows.Remove(rDel);
+                //table.AcceptChanges ();
+            }
+
+            return iRes;
+        }
+
+        private DataTable getTableIns(ref DataTable table)
+        {
+            DataTable tableRes = new DataTable();
+            DataRow []arSel = (table as DataTable).Select(string.Empty, @"ID, DATETIME DESC");
+            //foreach (DataRow r in arSel)
+            for (int i = 0; i < arSel.Length; i++)
+            {
+                tableRes.ImportRow(arSel[i]);
+                //Console.WriteLine(@"ID=" + r[@"ID"] + @", DATETIME=" + ((DateTime)r[@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
+                Console.Write(@"ID=" + arSel[i][@"ID"] + @", DATETIME=" + ((DateTime)arSel[i][@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
+                if (i > 0)
+                    Console.WriteLine(@", tmdelta=" + ((DateTime)arSel[i][@"DATETIME"] - (DateTime)arSel[i - 1][@"DATETIME"]).Milliseconds);
+                else
+                    Console.WriteLine();
+            }
+            tableRes.AcceptChanges();
+
+            return tableRes;
+        }
+
+        private int actualizeDatetimeStart ()
+        {
+            int iRes = 0;
+
+            if ((m_dtServer - m_dtStart.AddSeconds (m_tmSpanPeriod.Seconds)).TotalSeconds > 6)
+                m_dtStart = m_dtStart.AddSeconds(m_tmSpanPeriod.Seconds);
+            else
+                ;
+
+            return iRes;
         }
 
         protected override int StateCheckResponse(int state, out bool error, out object table)
@@ -171,7 +226,9 @@ namespace biysktmora
                     GetCurrentTimeRequest (DbInterface.DB_TSQL_INTERFACE_TYPE.Oracle, m_dictIdListeners[0][0]);
                     break;
                 case (int)StatesMachine.Values:
-                    UpdateQuery ();
+                    ClearValues();
+                    actualizeDatetimeStart ();
+                    setQuery (m_dtStart);
                     Request (m_dictIdListeners[0][0], m_strQuery);
                     break;
                 default:
@@ -189,7 +246,8 @@ namespace biysktmora
             switch (state)
             {
                 case (int)StatesMachine.CurrentTime:
-                    Console.WriteLine(((DateTime)(table as DataTable).Rows[0][0]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
+                    m_dtServer = (DateTime)(table as DataTable).Rows[0][0];
+                    Console.WriteLine(m_dtServer.ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
                     break;
                 case (int)StatesMachine.Values:
                     Console.WriteLine(@"Получено строк: " + (table as DataTable).Rows.Count);
@@ -211,30 +269,11 @@ namespace biysktmora
                     //else
                     //    ;
 
-                    DataRow [] arSel;
-                    foreach (DataRow rRes in m_tableResults.Rows)
-                    {
-                        arSel = (table as DataTable).Select(@"ID=" + rRes[@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
-                        iDupl += arSel.Length;
-                        foreach (DataRow rDel in arSel)
-                            (table as DataTable).Rows.Remove(rDel);
-                        //table.AcceptChanges ();
-                    }
+                    //Удалить из таблицы записи, метки времени в которых, совпадают с метками времени в таблице-рез-те предыдущего опроса
+                    iDupl = clearDupValues (ref table);
 
-                    DataTable tableIns = new DataTable ();
-                    arSel = (table as DataTable).Select(string.Empty, @"ID, DATETIME DESC");
-                    //foreach (DataRow r in arSel)
-                    for (int i = 0; i < arSel.Length; i ++)
-                    {
-                        tableIns.ImportRow (arSel[i]);
-                        //Console.WriteLine(@"ID=" + r[@"ID"] + @", DATETIME=" + ((DateTime)r[@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
-                        Console.Write(@"ID=" + arSel[i][@"ID"] + @", DATETIME=" + ((DateTime)arSel[i][@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
-                        if (i > 0)
-                            Console.WriteLine(@", tmdelta=" + ((DateTime)arSel[i][@"DATETIME"] - (DateTime)arSel[i - 1][@"DATETIME"]).Milliseconds);
-                        else
-                            Console.WriteLine();                            
-                    }
-                    tableIns.AcceptChanges ();
+                    ////Сформировать таблицу с "новыми" данными
+                    //DataTable tableIns = getTableIns (ref table);
 
                     //foreach (DataRow r in tableIns.Rows)
                     //{
@@ -267,10 +306,10 @@ namespace biysktmora
 
             switch (state)
             {
-                case (int)StatesMachine.CurrentTimeSource: //Ошибка получения даты/времени сервера-источника
+                case (int)StatesMachine.CurrentTime: //Ошибка получения даты/времени сервера-источника
                     msgErr = @"получения даты/времени сервера-источника";
                     break;
-                case (int)StatesMachine.SourceValues: //Ошибка получения значений источника
+                case (int)StatesMachine.Values: //Ошибка получения значений источника
                     msgErr = @"получения значений источника";
                     break;
                 default:
@@ -292,10 +331,10 @@ namespace biysktmora
 
             switch (state)
             {
-                case (int)StatesMachine.CurrentTimeSource: //Ошибка получения даты/времени сервера-источника
+                case (int)StatesMachine.CurrentTime: //Ошибка получения даты/времени сервера-источника
                     msgErr = @"получении даты/времени сервера-источника";
                     break;
-                case (int)StatesMachine.SourceValues: //Ошибка получения значений источника
+                case (int)StatesMachine.Values: //Ошибка получения значений источника
                     msgErr = @"получении значений источника";
                     break;
                 default:
@@ -303,7 +342,7 @@ namespace biysktmora
             }
 
             if (msgErr.Equals(unknownErr) == false)
-                msgErr = @"ПРедупреждение при " + msgErr;
+                msgErr = @"Предупреждение при " + msgErr;
             else
                 ;
 
@@ -328,24 +367,24 @@ namespace biysktmora
 
             switch (ev.id)
             {
-                case 0:
+                case (int)ID_DATA_ASKED_HOST.INIT:
                     ConnectionSettings connSett = ev.par [0] as ConnectionSettings;
-                    target.m_connSett = new ConnectionSettings (
+                    target.Initialize(new ConnectionSettings (
                         connSett.name
                         , connSett.server
                         , connSett.port
                         , connSett.dbName
                         , connSett.userName
                         , connSett.password
-                        );
+                    ));
                     break;
-                case 1:
-                    if (m_markDataHost.IsMarked(0) == true)
+                case (int)ID_DATA_ASKED_HOST.START:
+                    if (m_markDataHost.IsMarked((int)ID_DATA_ASKED_HOST.INIT) == true)
                         target.Start();
                     else
-                        DataAskedHost (0);
+                        DataAskedHost((int)ID_DATA_ASKED_HOST.INIT);
                     break;
-                case 2:
+                case (int)ID_DATA_ASKED_HOST.STOP:
                     target.Stop();
                     break;
                 default:

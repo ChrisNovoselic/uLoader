@@ -97,7 +97,7 @@ namespace uLoader
                 (ctrl as DataGridView).RowHeadersVisible = false;
                 (ctrl as DataGridView).Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 (ctrl as DataGridView).Columns[1].Width = 37;
-                (ctrl as DataGridView).RowsAdded += new DataGridViewRowsAddedEventHandler(panelLoader_RowsAdded);
+                (ctrl as DataGridView).RowsAdded += new DataGridViewRowsAddedEventHandler(panelLoader_WorkItemRowsAdded);
                 panelColumns.Controls.Add(ctrl, 0, 0);
                 panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 6);
                 //Библиотека для загрузки
@@ -145,7 +145,8 @@ namespace uLoader
                 (ctrl as DataGridView).RowHeadersVisible = false;
                 (ctrl as DataGridView).Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 (ctrl as DataGridView).Columns[1].Width = 37;
-                (ctrl as DataGridView).RowsAdded += new DataGridViewRowsAddedEventHandler(panelLoader_RowsAdded);
+                (ctrl as DataGridView).RowsAdded += new DataGridViewRowsAddedEventHandler(panelLoader_WorkItemRowsAdded);
+                (ctrl as DataGridView).Click += new EventHandler(panelLoader_WorkItemClick);
                 panelColumns.Controls.Add(ctrl, 0, 0);
                 panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 3);
                 //ГроупБокс режима опроса
@@ -164,7 +165,7 @@ namespace uLoader
                 ctrl.Name = KEY_CONTROLS.RBUTTON_CUR_DATETIME.ToString ();
                 (ctrl as RadioButton).Text = @"Текущие дата/время";
                 ctrl.Dock = DockStyle.Fill;
-                (ctrl as RadioButton).CheckedChanged += new EventHandler(panelLoader_CheckedChanged);
+                (ctrl as RadioButton).CheckedChanged += new EventHandler(panelLoader_ModeCheckedChanged);
                 panelGroupBox.Controls.Add(ctrl, 0, 0);
                 panelGroupBox.SetColumnSpan(ctrl, 8); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Описание для интервала
@@ -188,7 +189,7 @@ namespace uLoader
                 ctrl.Name = KEY_CONTROLS.RBUTTON_COSTUMIZE.ToString();
                 (ctrl as RadioButton).Text = @"Выборочно";
                 ctrl.Dock = DockStyle.Fill;
-                (ctrl as RadioButton).CheckedChanged += new EventHandler(panelLoader_CheckedChanged);
+                (ctrl as RadioButton).CheckedChanged += new EventHandler(panelLoader_ModeCheckedChanged);
                 panelGroupBox.Controls.Add(ctrl, 0, 3);
                 panelGroupBox.SetColumnSpan(ctrl, 8); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Календарь
@@ -253,13 +254,13 @@ namespace uLoader
 
             #endregion
 
-            private void panelLoader_RowsAdded (object obj, EventArgs ev)
+            private void panelLoader_WorkItemRowsAdded (object obj, EventArgs ev)
             {
                 int cnt = (obj as DataGridView).Rows.Count;
                 (obj as DataGridView).Rows[cnt - 1].Cells [1].Value = @"->";
             }
 
-            private void panelLoader_CheckedChanged(object obj, EventArgs ev)
+            private void panelLoader_ModeCheckedChanged(object obj, EventArgs ev)
             {
                 RadioButton rBtn = obj as RadioButton;
                 KEY_CONTROLS key;
@@ -296,6 +297,142 @@ namespace uLoader
                 }
                 else
                     ; //Не "отмеченные" - игнорировать
+            }
+
+            private void panelLoader_WorkItemClick(object obj, EventArgs ev)
+            {
+                DataAskedHost (new object [] {});
+            }
+            /// <summary>
+            /// Заполнить рабочий элемент - список источников 
+            /// </summary>
+            /// <param name="grpSrc">Объект с данными для заполнения</param>
+            public void FillWorkItem(GROUP_SRC grpSrc)
+            {
+                Control workItem;
+                PanelLoader.KEY_CONTROLS key;
+                //Наименование библиотеки для загрузки данных
+                key = PanelLoader.KEY_CONTROLS.LABEL_DLLNAME_GROUPSOURCES;
+                workItem = GetWorkingItem(key);
+                (workItem as Label).Text = grpSrc.m_strDLLName;
+                //Список групп сигналов - инициирует заполнение списка сигналов группы
+                key = PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS;
+                workItem = GetWorkingItem(key);
+                foreach (string idGrpSgnls in grpSrc.m_arIDGroupSignals)
+                    (workItem as DataGridView).Rows.Add(new object[] { idGrpSgnls });
+                //Список источников группы источников
+                key = PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS;
+                workItem = GetWorkingItem(key);
+            }
+            /// <summary>
+            /// Заполнить рабочий элемент - список групп 
+            /// </summary>
+            /// <param name="grpSrc">Объект с данными для заполнения</param>
+            public void FillWorkItem(GROUP_SIGNALS_SRC grpSrc)
+            {
+                Control workItem;
+                PanelLoader.KEY_CONTROLS key;
+                //Отобразить активный режим
+                switch (grpSrc.m_mode)
+                {
+                    case MODE_WORK.CUR_INTERVAL:
+                        key = PanelLoader.KEY_CONTROLS.RBUTTON_CUR_DATETIME;
+                        break;
+                    case MODE_WORK.COSTUMIZE:
+                        key = PanelLoader.KEY_CONTROLS.RBUTTON_COSTUMIZE;
+                        break;
+                    default:
+                        throw new Exception(@"PanelWork::fillWorkItem () - ...");
+                }
+                workItem = GetWorkingItem(key);
+                (workItem as RadioButton).Checked = true;
+                //Список сигналов группы
+                key = PanelLoader.KEY_CONTROLS.DGV_SIGNALS_OF_GROUP;
+                workItem = GetWorkingItem(key);
+                foreach (SIGNAL_SRC sgnl in grpSrc.m_listSgnls)
+                    (workItem as DataGridView).Rows.Add(new object[] { sgnl.m_dictPars[@"KKS_NAME"] });
+                //??? Отобразить интервал опроса для режима 'CUR_INTERVAL'
+
+                //Отобразить шаг опроса для режима 'CUR_INTERVAL'
+
+                //Отобразить дата опроса для режима 'COSTUMIZE'
+
+                //Отобразить нач./время опроса для режима 'COSTUMIZE'
+
+                //Отобразить кон./время опроса для режима 'COSTUMIZE'
+
+                //Отобразить шаг опроса для режима 'COSTUMIZE'
+            }
+            /// <summary>
+            /// Получить объект со списком групп (элементов групп)
+            /// </summary>
+            /// <param name="indxConfig">Индекс панели</param>
+            /// <param name="indxPanel">Индекс типа объекта</param>
+            /// <returns>Объект со списком групп</returns>
+            public Control GetWorkingItem(KEY_CONTROLS key)
+            {
+                Control ctrlRes = null;
+                PanelLoader panelLdr;
+
+                panelLdr = this; //this.Controls[(int)indxWork] as PanelLoader;
+                //Вариант №1
+                //int indxCtrl = (int)PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES;
+                //dgvRes = panelLdr.m_dictControl[(PanelLoader.INDEX_CONTROL)indxCtrl] as DataGridViewConfigItem;
+                //Вариант №2
+                Control[] arCtrls = panelLdr.Controls.Find(key.ToString(), true);
+                if (arCtrls.Length == 1)
+                    ctrlRes = arCtrls[0];
+                else
+                    throw new Exception(@"PanelLoader::getWorkingItem (" + (Parent as PanelWork).Controls.IndexOf (this).ToString() + @", " + key.ToString() + @") - не найден элемент управления...");
+
+                return ctrlRes;
+            }
+
+            /// <summary>
+            /// Очистить все элементы управления на панели
+            /// </summary>
+            /// <returns>Признак выполнения функции (0 - успех)</returns>
+            public int ClearValues ()
+            {
+                int iRes = 0;
+
+                iRes = ClearValues(KEY_CONTROLS.DGV_GROUP_SIGNALS);
+                //перед выполнением очередной операции проверить результат выполнения предыдущей
+                if (iRes == 0)
+                    iRes = ClearValues(KEY_CONTROLS.DGV_SIGNALS_OF_GROUP);
+                else
+                    ;
+
+                return iRes;
+            }
+            /// <summary>
+            /// Очистить элемент управления на панели с указанным ключом
+            /// </summary
+            /// <param name="key">Ключ элемента управления</param>
+            /// <returns>Признак выполнения функции (0 - успех)</returns>
+            public int ClearValues(KEY_CONTROLS key)
+            {
+                int iRes = 0;
+                //Получить элемент управления
+                Control ctrl = GetWorkingItem(key);
+                //Проверить наличие элемента
+                if (!(ctrl == null))
+                    if (ctrl.GetType().Equals(typeof(DataGridView)) == true)
+                    {//Очистиить как 'DataGridView'
+                        (ctrl as DataGridView).Rows.Clear();
+                    }
+                    else
+                        if (ctrl.GetType().Equals(typeof(TextBox)) == true)
+                        {//Очистиить как 'TextBox'
+                            (ctrl as TextBox).Text = string.Empty;
+                        }
+                        else
+                            ;
+                else
+                    //Элемент управления не найден
+                    iRes = -1;
+
+                return iRes;
             }
         }
 
