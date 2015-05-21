@@ -14,7 +14,7 @@ namespace TestFunc
     class biysktmora_test
     {
         static Semaphore semaUserCancel;
-        static int msecInreval = 16666;
+        static int msecInreval = 6666;
         static Timer timer;
         static object lockTimer;
 

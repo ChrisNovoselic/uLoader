@@ -49,8 +49,10 @@ namespace biysktmora
             m_dtServer =
                 DateTime.MinValue;
 
+            m_tmSpanPeriod = new TimeSpan ((long)(SEC_INTERVAL_DEFAULT * Math.Pow (10, 7)));
+
             //Инициализировать массив сигналов
-            m_arSignals = new SIGNAL[] { new SIGNAL(20001, @"TAG_000046")
+            m_arSignals = new SIGNAL[] { new SIGNAL(20049, @"TAG_000049")
                                         /*, new SIGNAL(20002, @"TAG_000047")
                                         , new SIGNAL(20003, @"TAG_000048")
                                         , new SIGNAL(20004, @"TAG_000049")
@@ -139,7 +141,7 @@ namespace biysktmora
             {
                 iPrev = m_tableResults.Rows.Count;
                 string strSel =
-                    @"DATETIME<'" + m_dtStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"' AND DATETIME>='" + m_dtStart.AddSeconds(m_tmSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss") + @"'"
+                    @"DATETIME<'" + m_dtStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"' OR DATETIME>='" + m_dtStart.AddSeconds(m_tmSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss") + @"'"
                     //@"DATETIME BETWEEN '" + m_dtStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"' AND '" + m_dtStart.AddSeconds(m_tmSpanPeriod.Seconds).ToString(@"yyyy/MM/dd HH:mm:ss") + @"'"
                     ;
 
@@ -194,19 +196,56 @@ namespace biysktmora
         private DataTable getTableIns(ref DataTable table)
         {
             DataTable tableRes = new DataTable();
-            DataRow []arSel = (table as DataTable).Select(string.Empty, @"ID, DATETIME DESC");
-            //foreach (DataRow r in arSel)
-            for (int i = 0; i < arSel.Length; i++)
+            DataRow []arSelIns = null
+                , arSelWas = null;
+
+            try
             {
-                tableRes.ImportRow(arSel[i]);
-                //Console.WriteLine(@"ID=" + r[@"ID"] + @", DATETIME=" + ((DateTime)r[@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
-                Console.Write(@"ID=" + arSel[i][@"ID"] + @", DATETIME=" + ((DateTime)arSel[i][@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
-                if (i > 0)
-                    Console.WriteLine(@", tmdelta=" + ((DateTime)arSel[i][@"DATETIME"] - (DateTime)arSel[i - 1][@"DATETIME"]).Milliseconds);
-                else
-                    Console.WriteLine();
+                arSelIns = (table as DataTable).Select(string.Empty, @"ID, DATETIME");
             }
-            tableRes.AcceptChanges();
+            catch (Exception e)
+            {
+                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HBiyskTMOra::getTableIns () - ...");
+            }
+
+            if (! (arSelIns == null))
+            {
+                int iDelta = -1;
+                string strTMDelta = string.Empty;
+                
+                for (int i = 0; i < arSelIns.Length; i++)
+                {
+                    tableRes.ImportRow(arSelIns[i]);
+
+                    iDelta = -1;
+
+                    if (i > 0)
+                        iDelta = (int)((DateTime)arSelIns[i][@"DATETIME"] - (DateTime)arSelIns[i - 1][@"DATETIME"]).TotalMilliseconds;
+                    else
+                        if (m_tableResults.Columns.Count > 0)
+                        {
+                            arSelWas = m_tableResults.Select(string.Empty, @"ID, DATETIME DESC");
+
+                            if ((!(arSelWas == null)) && (arSelWas.Length > 0))
+                                iDelta = (int)((DateTime)arSelIns[i][@"DATETIME"] - (DateTime)arSelWas[0][@"DATETIME"]).TotalMilliseconds;
+                            else
+                                ;
+                        }
+                        else
+                            ;
+
+                    if (iDelta < 0)
+                        strTMDelta = string.Empty;
+                    else
+                        strTMDelta = @", tmdelta=" + iDelta;
+
+                    Console.WriteLine(@"ID=" + arSelIns[i][@"ID"] + @", DATETIME=" + ((DateTime)arSelIns[i][@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff") + strTMDelta);
+                }
+
+                tableRes.AcceptChanges();
+            }
+            else
+                ;
 
             return tableRes;
         }
@@ -216,7 +255,10 @@ namespace biysktmora
             int iRes = 0;
 
             if (m_dtStart == DateTime.MinValue)
+            {
                 m_dtStart = m_dtServer;
+                m_dtStart = m_dtStart.AddSeconds(-1 * m_dtStart.Second);
+            }
             else
                 ;
 
@@ -242,9 +284,9 @@ namespace biysktmora
                 case (int)StatesMachine.CurrentTime:
                     GetCurrentTimeRequest (DbInterface.DB_TSQL_INTERFACE_TYPE.Oracle, m_dictIdListeners[0][0]);
                     break;
-                case (int)StatesMachine.Values:
-                    ClearValues();
+                case (int)StatesMachine.Values:                    
                     actualizeDatetimeStart ();
+                    ClearValues();
                     setQuery (m_dtStart);
                     Request (m_dictIdListeners[0][0], m_strQuery);
                     break;
@@ -289,8 +331,8 @@ namespace biysktmora
                     //Удалить из таблицы записи, метки времени в которых, совпадают с метками времени в таблице-рез-те предыдущего опроса
                     iDupl = clearDupValues (ref table);
 
-                    ////Сформировать таблицу с "новыми" данными
-                    //DataTable tableIns = getTableIns (ref table);
+                    //Сформировать таблицу с "новыми" данными
+                    DataTable tableIns = getTableIns (ref table);
 
                     //foreach (DataRow r in tableIns.Rows)
                     //{
