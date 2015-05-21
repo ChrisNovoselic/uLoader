@@ -27,7 +27,7 @@ namespace TestFunc
                         @"OraSOTIASSO-ORD"
                         , @"10.220.2.5"
                         , 1521
-                        , @"ORD"
+                        , @"ORCL"
                         , @"arch_viewer"
                         , @"1"
                     ));

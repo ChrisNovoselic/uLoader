@@ -83,7 +83,7 @@ namespace biysktmora
             {
                 secInterval =
                     //SEC_INTERVAL_DEFAULT
-                    m_tmSpanPeriod.Seconds
+                    (int)m_tmSpanPeriod.TotalSeconds
                     ;
             }
             else
@@ -138,18 +138,30 @@ namespace biysktmora
             if (! (m_tableResults == null))
             {
                 iPrev = m_tableResults.Rows.Count;
-                DataRow[] rowsDel = m_tableResults.Select(
-                    //@"DATETIME<'" + m_dtStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"' AND DATETIME>='" + m_dtStart.AddSeconds().ToString(@"yyyy/MM/dd HH:mm:ss") + @"'"
-                    @"DATETIME BETWEEN '" + m_dtStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"' AND '" + m_dtStart.AddSeconds(m_tmSpanPeriod.Seconds).ToString(@"yyyy/MM/dd HH:mm:ss") + @"'"
-                );
+                string strSel =
+                    @"DATETIME<'" + m_dtStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"' AND DATETIME>='" + m_dtStart.AddSeconds(m_tmSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss") + @"'"
+                    //@"DATETIME BETWEEN '" + m_dtStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"' AND '" + m_dtStart.AddSeconds(m_tmSpanPeriod.Seconds).ToString(@"yyyy/MM/dd HH:mm:ss") + @"'"
+                    ;
 
-                iDel = rowsDel.Length;
-                if (rowsDel.Length > 0)
+                DataRow[] rowsDel = null;
+                try { rowsDel = m_tableResults.Select(strSel); }
+                catch (Exception e)
                 {
-                    foreach (DataRow r in rowsDel)
-                        m_tableResults.Rows.Remove(r);
+                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HBiyskTMOra::ClearValues () - ...");
+                }
 
-                    m_tableResults.AcceptChanges();
+                if (! (rowsDel == null))
+                {
+                    iDel = rowsDel.Length;
+                    if (rowsDel.Length > 0)
+                    {
+                        foreach (DataRow r in rowsDel)
+                            m_tableResults.Rows.Remove(r);
+
+                        m_tableResults.AcceptChanges();
+                    }
+                    else
+                        ;
                 }
                 else
                     ;
@@ -203,8 +215,13 @@ namespace biysktmora
         {
             int iRes = 0;
 
-            if ((m_dtServer - m_dtStart.AddSeconds (m_tmSpanPeriod.Seconds)).TotalSeconds > 6)
-                m_dtStart = m_dtStart.AddSeconds(m_tmSpanPeriod.Seconds);
+            if (m_dtStart == DateTime.MinValue)
+                m_dtStart = m_dtServer;
+            else
+                ;
+
+            if ((m_dtServer - m_dtStart.AddSeconds (m_tmSpanPeriod.TotalSeconds)).TotalSeconds > 6)
+                m_dtStart = m_dtStart.AddSeconds(m_tmSpanPeriod.TotalSeconds);
             else
                 ;
 
