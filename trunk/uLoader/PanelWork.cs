@@ -174,8 +174,9 @@ namespace uLoader
                 case (int)HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS: //Объект группы сигналов (источник)
                     fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SIGNALS_SRC);
                     break;
-                case (int)HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SIGNALS: //Объект группы сигналов  (назначение)
-                    fillWorkItem(INDEX_SRC.SOURCE, PanelLoader.KEY_CONTROLS.DGV_SIGNALS_OF_GROUP, (par as object[]) as string[]);
+                case (int)HHandlerQueue.StatesMachine.STATE_SRC_GROUP_SOURCES: //Состояние группы источников  (источник)
+                    break;
+                case (int)HHandlerQueue.StatesMachine.STATE_DEST_GROUP_SOURCES: //Состояние группы источников  (назначение)
                     break;
                 default:
                     break;
@@ -250,6 +251,12 @@ namespace uLoader
         private void fTimerUpdate (object par)
         {
             m_timerUpdate.Change(1000 * m_iSecondUpdate, System.Threading.Timeout.Infinite);
+
+            //Запросить данные
+            DataAskedHost(new object[] {
+                new object [] { (int)HHandlerQueue.StatesMachine.STATE_SRC_GROUP_SOURCES /*, без параметров*/ }
+                , new object [] { (int)HHandlerQueue.StatesMachine.STATE_DEST_GROUP_SOURCES /*, без параметров*/ }
+            });
         }
 
         ///// <summary>
@@ -327,7 +334,7 @@ namespace uLoader
         private void OnEvtDataAskedPanelWork_PanelLoader (object obj)
         {
             //Ретрансляция для постановки в очередь
-            DataAskedHost (obj);
+            //DataAskedHost (obj);
         }
     }
 

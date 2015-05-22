@@ -7,6 +7,7 @@ using System.Text;
 
 using System.Windows.Forms;
 
+
 using HClassLibrary;
 
 namespace uLoader
@@ -21,7 +22,8 @@ namespace uLoader
                                         , RBUTTON_CUR_DATETIME, NUMUD_CUR_DATETIME
                                         , RBUTTON_COSTUMIZE, CALENDAR_COSTUMIZE, TBX_BEGIN_TIME, TBX_END_TIME, NUMUD_COSTUMIZE_STEP
                                         , DGV_SIGNALS_OF_GROUP
-            };
+                                        , COUNT_KEY_CONTROLS
+                                        ,};
         
             public PanelLoader()
                 : base (4, 1)
@@ -85,7 +87,7 @@ namespace uLoader
                 (ctrl as DataGridView).Columns.AddRange (
                     new DataGridViewColumn [] {
                         new DataGridViewTextBoxColumn ()
-                        , new DataGridViewButtonColumn ()
+                        , new DataGridViewDisableButtonColumn ()
                     }
                 );                
                 (ctrl as DataGridView).AllowUserToResizeColumns = false;
@@ -97,7 +99,10 @@ namespace uLoader
                 (ctrl as DataGridView).RowHeadersVisible = false;
                 (ctrl as DataGridView).Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 (ctrl as DataGridView).Columns[1].Width = 37;
+                //(ctrl as DataGridView).Columns[1].ReadOnly = true;
+                //(ctrl as DataGridView).ReadOnly = true;
                 (ctrl as DataGridView).RowsAdded += new DataGridViewRowsAddedEventHandler(panelLoader_WorkItemRowsAdded);
+                (ctrl as DataGridView).CellClick += new DataGridViewCellEventHandler(panelLoader_WorkItemCellClick);
                 panelColumns.Controls.Add(ctrl, 0, 0);
                 panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 6);
                 //Библиотека для загрузки
@@ -133,7 +138,7 @@ namespace uLoader
                 (ctrl as DataGridView).Columns.AddRange(
                     new DataGridViewColumn[] {
                         new DataGridViewTextBoxColumn ()
-                        , new DataGridViewButtonColumn ()
+                        , new DataGridViewDisableButtonColumn ()
                     }
                 );                
                 (ctrl as DataGridView).AllowUserToResizeColumns = false;
@@ -145,8 +150,10 @@ namespace uLoader
                 (ctrl as DataGridView).RowHeadersVisible = false;
                 (ctrl as DataGridView).Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 (ctrl as DataGridView).Columns[1].Width = 37;
+                //(ctrl as DataGridView).Columns[1].ReadOnly = true;
+                //(ctrl as DataGridView).ReadOnly = true;
                 (ctrl as DataGridView).RowsAdded += new DataGridViewRowsAddedEventHandler(panelLoader_WorkItemRowsAdded);
-                (ctrl as DataGridView).Click += new EventHandler(panelLoader_WorkItemClick);
+                (ctrl as DataGridView).CellClick += new DataGridViewCellEventHandler(panelLoader_WorkItemCellClick);
                 panelColumns.Controls.Add(ctrl, 0, 0);
                 panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 3);
                 //ГроупБокс режима опроса
@@ -258,15 +265,25 @@ namespace uLoader
             {
                 int cnt = (obj as DataGridView).Rows.Count;
                 (obj as DataGridView).Rows[cnt - 1].Cells [1].Value = @"->";
+                if ((obj as DataGridView).Rows[cnt - 1].Cells [1].GetType () == typeof (DataGridViewDisableButtonCell))
+                    ((DataGridViewDisableButtonCell)(obj as DataGridView).Rows[cnt - 1].Cells [1]).Enabled = false;
+                else
+                    ;
             }
-
+            /// <summary>
+            /// Включение/отключение элементов управлении на панели параметров опроса
+            ///  при изменении режима опроса
+            /// </summary>
+            /// <param name="obj">Объект, инициировавший событие</param>
+            /// <param name="ev">Аргумент для сопровождения события</param>
             private void panelLoader_ModeCheckedChanged(object obj, EventArgs ev)
             {
                 RadioButton rBtn = obj as RadioButton;
                 KEY_CONTROLS key;
-
+                //Реагировать только на 'RadioButton' в состоянии 'Checked'
                 if (rBtn.Checked == true)
                 {
+                    //Определить состояние группы элементов (COSTUMIZE)
                     bool bCostumizeEnabled =
                         rBtn.Name.Equals(KEY_CONTROLS.RBUTTON_COSTUMIZE.ToString())
                         //false
@@ -299,9 +316,46 @@ namespace uLoader
                     ; //Не "отмеченные" - игнорировать
             }
 
-            private void panelLoader_WorkItemClick(object obj, EventArgs ev)
+            private void panelLoader_WorkItemCellClick(object obj, DataGridViewCellEventArgs ev)
             {
-                DataAskedHost (new object [] {});
+                KEY_CONTROLS keyObj = KEY_CONTROLS.COUNT_KEY_CONTROLS;
+                //int indx...
+                //Проверить индекс ячейки (кнопки только в 1-ом столбце)
+                if (ev.ColumnIndex == 1)
+                {
+                    //Проверить способность ячейки изменять свое состояние
+                    if (((obj as DataGridView).Rows[ev.RowIndex].Cells[ev.ColumnIndex].GetType () == typeof (DataGridViewDisableButtonCell))
+                        // , если - да, то проверить "включенное" состояние
+                        && (((obj as DataGridView).Rows[ev.RowIndex].Cells[ev.ColumnIndex] as DataGridViewDisableButtonCell).Enabled == true))
+                    {
+                        //Найти целочисленный идентфикатор элемента управления
+                        //Цикл по всем известным целочисленным идентификаторам
+                        for (KEY_CONTROLS key = 0; key < KEY_CONTROLS.COUNT_KEY_CONTROLS; key ++)
+                        {
+                            //Проверить совпадение переменной цикла и идентификатора элемента управления
+                            if (key.ToString().Trim ().Equals ((obj as Control).Name) == true)
+                            {
+                                //Запомнить идентификатор
+                                keyObj = key;
+                                //Прервать цикл
+                                break;
+                            }
+                            else
+                                ;
+                        }
+                        //Проверить рез-т поиска целочисленного идентфикатора
+                        if (keyObj == KEY_CONTROLS.COUNT_KEY_CONTROLS)
+                            throw new Exception(@"PanelLoader::panelLoader_WorkItemClick () - не найден ключ [" + (obj as Control).Name + @"] для элемента управления...");
+                        else
+                            ;
+                        //Отправить сообщение "родительской" панели (для дальнейшей ретрансляции)
+                        DataAskedHost (new object [] { this, obj, keyObj });
+                    }
+                    else
+                        ;
+                }
+                else
+                    ;
             }
             /// <summary>
             /// Заполнить рабочий элемент - список источников 
@@ -321,8 +375,15 @@ namespace uLoader
                 foreach (string idGrpSgnls in grpSrc.m_arIDGroupSignals)
                     (workItem as DataGridView).Rows.Add(new object[] { idGrpSgnls });
                 //Список источников группы источников
-                key = PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS;
+                key = PanelLoader.KEY_CONTROLS.CBX_SOURCE_OF_GROUP;
                 workItem = GetWorkingItem(key);
+                foreach (ConnectionSettings connSett in grpSrc.m_listConnSett)
+                    (workItem as ComboBox).Items.Add(connSett.server);
+                //Выбрать текущий источник
+                if ((workItem as ComboBox).Items.Count > 0)
+                    (workItem as ComboBox).SelectedIndex = 0;
+                else
+                    ;
             }
             /// <summary>
             /// Заполнить рабочий элемент - список групп 

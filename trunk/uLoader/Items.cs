@@ -209,6 +209,9 @@ namespace uLoader
         /// Вспомогательный домен приложения для загрузки/выгрузки библиотеки
         /// </summary>
         AppDomain m_appDomain;
+        /// <summary>
+        /// Список групп сигналов, принадлежащих группе источников
+        /// </summary>
         List <GroupSignals> m_listGroupSignals;
 
         public GroupSources (GROUP_SRC srcItem, List <GROUP_SIGNALS_SRC>listGroupSignals) : base ()
