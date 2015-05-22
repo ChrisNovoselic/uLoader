@@ -239,7 +239,8 @@ namespace uLoader
             else
                 ;
 
-            EvtDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT, new object[] { this.m_listConnSett[0] }));            
+            EvtDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_CONN_SETT, new object[] { this.m_listConnSett[0] }));
+            //EvtDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_GROUP_SIGNALS, new object[] { }));            
         }
 
         //private IPlugIn loadPlugIn(string name, out int iRes)
@@ -304,9 +305,11 @@ namespace uLoader
 
             switch (ev.id)
             {
-                case (int)ID_DATA_ASKED_HOST.INIT: //Получен запрос на парметры инициализации
+                case (int)ID_DATA_ASKED_HOST.INIT_CONN_SETT: //Получен запрос на парметры инициализации
                     //Отправить данные для инициализации
-                    EvtDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT, new object[] { this.m_listConnSett[0] }));
+                    EvtDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_CONN_SETT, new object[] { this.m_listConnSett[0] }));
+                    break;
+                case (int)ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP: //Получен запрос на обрабатываемую группу сигналов
                     break;
                 default:
                     break;

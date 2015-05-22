@@ -25,7 +25,9 @@ namespace TestFunc
 
             msg = @"Выход из приложения [" + DateTime.Now.ToString(@"dd.MM.yyyy HH:mm:ss.fff" + @"]");
             Console.WriteLine(msg);
-            
+
+            Console.Write("\t\nPress any key to exit program..."); Console.ReadKey (true);
+
             ProgramBase.Exit();
         }
     }
