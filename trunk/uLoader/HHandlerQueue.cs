@@ -33,6 +33,8 @@ namespace uLoader
             , OBJ_DEST_GROUP_SIGNALS //Объект группы сигналов (назначение)
             , TIMER_WORK_UPDATE //Период обновления панели "Работа"
             , STATE_GROUP_SOURCES //Состояние группы источников (источник, назначение)
+            , STATE_SRC_GROUP_SIGNALS //Состояние группы сигналов (источник)
+            , STATE_GROUP_SIGNALS //Состояние группы сигналов (источник, назначение)
             ,
         }
 
@@ -144,6 +146,7 @@ namespace uLoader
                 case (int)StatesMachine.TIMER_WORK_UPDATE:
                 case (int)StatesMachine.OBJ_SRC_GROUP_SIGNALS:
                 case (int)StatesMachine.STATE_GROUP_SOURCES:
+                case (int)StatesMachine.STATE_GROUP_SIGNALS:
                     dataHost.m_objRecieved.OnEvtDataRecievedHost(new object [] { state, obj });
                     break;
                 default:
@@ -306,6 +309,19 @@ namespace uLoader
                         foreach (GroupSources grpSrc in m_listGroupSources[(int)indxSrc])
                             ((outobj as object[])[(int)indxSrc] as GroupSources.STATE[])[m_listGroupSources[(int)indxSrc].IndexOf(grpSrc)] = grpSrc.State;
                     }
+
+                    iRes = 0;
+                    break;
+                case (int)StatesMachine.STATE_GROUP_SIGNALS:
+                    error = false;
+                    dataHost = Peek;
+                    //??? 0-й параметр индекс "выбранноой" группы сигналов
+                    outobj = new object[(int)INDEX_SRC.COUNT_INDEX_SRC];
+                    for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
+                        if (!((int)dataHost.m_pars[(int)indxSrc] < 0))
+                            (outobj as object[])[(int)indxSrc] = m_listGroupSources[(int)indxSrc][(int)dataHost.m_pars[(int)indxSrc]].GetStateGroupSignals();
+                        else
+                            (outobj as object[])[(int)indxSrc] = new GroupSources.STATE[] { };
 
                     iRes = 0;
                     break;

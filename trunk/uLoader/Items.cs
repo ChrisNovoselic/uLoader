@@ -256,7 +256,7 @@ namespace uLoader
 
                     foreach (GroupSignals grpSgnls in m_listGroupSignals)
                     {
-                        if (grpSgnls.State == GroupSignals.STATE.STARTED)
+                        if (grpSgnls.m_State == STATE.STARTED)
                         {
                             stateRes = STATE.STARTED;
                             break;
@@ -295,19 +295,15 @@ namespace uLoader
         /// </summary>
         private class GroupSignals : GROUP_SIGNALS_SRC
         {
-            /// <summary>
-            /// Перечисление состояний группы сигналов
-            /// </summary>
-            public enum STATE { STOPPED, STARTED }
+            ///// <summary>
+            ///// Перечисление состояний группы сигналов
+            ///// </summary>
+            //public enum STATE { STOPPED, STARTED }
 
-            private STATE _iState;
             /// <summary>
             /// Состояние группы сигналов
             /// </summary>
-            public STATE State
-            {
-                get { return _iState; }
-            }
+            public STATE m_State;           
 
             public GroupSignals(GROUP_SIGNALS_SRC srcItem)
                 : base()
@@ -328,7 +324,7 @@ namespace uLoader
 
                 this.m_strID = srcItem.m_strID;
 
-                _iState = STATE.STOPPED;
+                m_State = STATE.UNAVAILABLE;
             }
         }
         /// <summary>
@@ -340,6 +336,18 @@ namespace uLoader
         /// Список групп сигналов, принадлежащих группе источников
         /// </summary>
         List <GroupSignals> m_listGroupSignals;
+        /// <summary>
+        /// Количество групп сигналов для группы источников
+        /// </summary>
+        public STATE[] GetStateGroupSignals ()
+        {
+            STATE []arRes = new STATE [m_listGroupSignals.Count];
+
+            foreach (GroupSignals grpSgnls in m_listGroupSignals)
+                arRes[(int)m_listGroupSignals.IndexOf(grpSgnls)] = grpSgnls.m_State;
+
+            return arRes;
+        }
         /// <summary>
         /// Объект с загруженной библиотекой
         /// </summary>
@@ -381,6 +389,9 @@ namespace uLoader
                 throw new Exception(@"GroupSources::GroupSources () - ...");
             else
                 ;
+
+            foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
+                itemGroupSignals.m_State = STATE.STOPPED;
 
             EvtDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_CONN_SETT, new object[] { this.m_listConnSett[0] }));
             //EvtDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_GROUP_SIGNALS, new object[] { }));            

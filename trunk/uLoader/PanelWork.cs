@@ -93,6 +93,11 @@ namespace uLoader
         {
             m_arLoader[(int)indxWork].FillWorkItem(grpSrc);
         }
+
+        private void enabledWorkItem(INDEX_SRC indxWork, PanelLoader.KEY_CONTROLS key, GroupSources.STATE[] states)
+        {
+            m_arLoader[(int)indxWork].EnabledWorkItem(key, states);
+        }
         /// <summary>
         /// Активировать таймер
         /// </summary>
@@ -173,6 +178,12 @@ namespace uLoader
                     fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SIGNALS_SRC);
                     break;
                 case (int)HHandlerQueue.StatesMachine.STATE_GROUP_SOURCES: //Состояние группы источников  (источник, назначение)
+                    for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
+                        enabledWorkItem(indxSrc, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)indxSrc] as GroupSources.STATE[]);
+                    break;
+                case (int)HHandlerQueue.StatesMachine.STATE_GROUP_SIGNALS: //Состояние группы источников  (источник, назначение)
+                    for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc ++ )
+                        enabledWorkItem(indxSrc, PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS, (par as object[])[(int)indxSrc] as GroupSources.STATE[]);
                     break;
                 default:
                     break;
@@ -247,9 +258,19 @@ namespace uLoader
         {
             m_timerUpdate.Change(1000 * m_iSecondUpdate, System.Threading.Timeout.Infinite);
 
+            DataGridView ctrl = null;
+            int indxSrcSel = -1
+                , indxDestSel = -1;
+
+            ctrl = m_arLoader[(int)INDEX_SRC.SOURCE].GetWorkingItem (PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView;
+            indxSrcSel = ctrl.SelectedRows.Count > 0 ? ctrl.SelectedRows[0].Index : -1;
+            ctrl = m_arLoader[(int)INDEX_SRC.DEST].GetWorkingItem(PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView;
+            indxDestSel = ctrl.SelectedRows.Count > 0 ? ctrl.SelectedRows[0].Index : -1;
+
             //Запросить данные
             DataAskedHost(new object[] {
                 new object [] { (int)HHandlerQueue.StatesMachine.STATE_GROUP_SOURCES /*, без параметров*/ }
+                , new object [] { (int)HHandlerQueue.StatesMachine.STATE_GROUP_SIGNALS, indxSrcSel, indxDestSel }
             });
         }
 

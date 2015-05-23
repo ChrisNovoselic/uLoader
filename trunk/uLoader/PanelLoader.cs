@@ -19,6 +19,7 @@ namespace uLoader
             //Ключи элементов управления
             public enum KEY_CONTROLS { DGV_GROUP_SOURCES, LABEL_DLLNAME_GROUPSOURCES, BUTTON_DLLNAME_GROUPSOURCES, CBX_SOURCE_OF_GROUP
                                         , DGV_GROUP_SIGNALS
+                                        , GROUP_BOX_GROUP_SIGNALS
                                         , RBUTTON_CUR_DATETIME, NUMUD_CUR_DATETIME
                                         , RBUTTON_COSTUMIZE, CALENDAR_COSTUMIZE, TBX_BEGIN_TIME, TBX_END_TIME, NUMUD_COSTUMIZE_STEP
                                         , DGV_SIGNALS_OF_GROUP
@@ -82,8 +83,7 @@ namespace uLoader
                 this.SetColumnSpan(panelColumns, 1); this.SetRowSpan(panelColumns, 1);
                 //Группы источников
                 ctrl = new DataGridView ();
-                ctrl.Name = KEY_CONTROLS.DGV_GROUP_SOURCES.ToString ();
-                ctrl.Dock = DockStyle.Fill;
+                ctrl.Name = KEY_CONTROLS.DGV_GROUP_SOURCES.ToString ();                
                 (ctrl as DataGridView).Columns.AddRange (
                     new DataGridViewColumn [] {
                         new DataGridViewTextBoxColumn ()
@@ -103,6 +103,7 @@ namespace uLoader
                 //(ctrl as DataGridView).ReadOnly = true;
                 (ctrl as DataGridView).RowsAdded += new DataGridViewRowsAddedEventHandler(panelLoader_WorkItemRowsAdded);
                 (ctrl as DataGridView).CellClick += new DataGridViewCellEventHandler(panelLoader_WorkItemCellClick);
+                ctrl.Dock = DockStyle.Fill;
                 panelColumns.Controls.Add(ctrl, 0, 0);
                 panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 6);
                 //Библиотека для загрузки
@@ -115,16 +116,17 @@ namespace uLoader
                 panelColumns.SetColumnSpan(ctrl, 4); panelColumns.SetRowSpan(ctrl, 1);
                 //Кнопка для выгрузки/загрузки библиотеки
                 ctrl = new Button();
-                ctrl.Name = KEY_CONTROLS.BUTTON_DLLNAME_GROUPSOURCES.ToString();
-                ctrl.Dock = DockStyle.Fill;
+                ctrl.Name = KEY_CONTROLS.BUTTON_DLLNAME_GROUPSOURCES.ToString();                
                 (ctrl as Button).Text = @"<->";
-                (ctrl as Button).Enabled = false;
+                ctrl.Enabled = false;
+                ctrl.Dock = DockStyle.Fill;
                 panelColumns.Controls.Add(ctrl, 4, 6);
                 panelColumns.SetColumnSpan(ctrl, 1); panelColumns.SetRowSpan(ctrl, 1);
                 //Выбор текущего источника
                 ctrl = new ComboBox();
                 ctrl.Name = KEY_CONTROLS.CBX_SOURCE_OF_GROUP.ToString();
                 (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
+                ctrl.Enabled = false;
                 ctrl.Dock = DockStyle.Bottom;
                 panelColumns.Controls.Add(ctrl, 0, 7);
                 panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 1);
@@ -135,8 +137,7 @@ namespace uLoader
                 this.SetColumnSpan(panelColumns, 1); this.SetRowSpan(panelColumns, 1);
                 //Группы сигналов
                 ctrl = new DataGridView();
-                ctrl.Name = KEY_CONTROLS.DGV_GROUP_SIGNALS.ToString ();
-                ctrl.Dock = DockStyle.Fill;
+                ctrl.Name = KEY_CONTROLS.DGV_GROUP_SIGNALS.ToString ();                
                 (ctrl as DataGridView).Columns.AddRange(
                     new DataGridViewColumn[] {
                         new DataGridViewTextBoxColumn ()
@@ -156,12 +157,15 @@ namespace uLoader
                 //(ctrl as DataGridView).ReadOnly = true;
                 (ctrl as DataGridView).RowsAdded += new DataGridViewRowsAddedEventHandler(panelLoader_WorkItemRowsAdded);
                 (ctrl as DataGridView).CellClick += new DataGridViewCellEventHandler(panelLoader_WorkItemCellClick);
+                ctrl.Dock = DockStyle.Fill;
                 panelColumns.Controls.Add(ctrl, 0, 0);
                 panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 3);
                 //ГроупБокс режима опроса
                 ctrl = new GroupBox();
+                ctrl.Name = KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS.ToString();
                 (ctrl as GroupBox).Text = @"Режим опроса";
-                ctrl.Dock = DockStyle.Fill;
+                ctrl.Enabled = false;
+                ctrl.Dock = DockStyle.Fill;                
                 panelColumns.Controls.Add(ctrl, 0, 3);
                 panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 5);
                 //Панель для ГроупБокса
@@ -172,9 +176,9 @@ namespace uLoader
                 //РадиоБуттон (тек. дата/время)
                 ctrl = new RadioButton ();
                 ctrl.Name = KEY_CONTROLS.RBUTTON_CUR_DATETIME.ToString ();
-                (ctrl as RadioButton).Text = @"Текущие дата/время";
-                ctrl.Dock = DockStyle.Fill;
+                (ctrl as RadioButton).Text = @"Текущие дата/время";                
                 (ctrl as RadioButton).CheckedChanged += new EventHandler(panelLoader_ModeCheckedChanged);
+                ctrl.Dock = DockStyle.Fill;
                 panelGroupBox.Controls.Add(ctrl, 0, 0);
                 panelGroupBox.SetColumnSpan(ctrl, 8); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Описание для интервала
@@ -196,9 +200,9 @@ namespace uLoader
                 //РадиоБуттон (выборочно)
                 ctrl = new RadioButton();
                 ctrl.Name = KEY_CONTROLS.RBUTTON_COSTUMIZE.ToString();
-                (ctrl as RadioButton).Text = @"Выборочно";
-                ctrl.Dock = DockStyle.Fill;
+                (ctrl as RadioButton).Text = @"Выборочно";                
                 (ctrl as RadioButton).CheckedChanged += new EventHandler(panelLoader_ModeCheckedChanged);
+                ctrl.Dock = DockStyle.Fill;
                 panelGroupBox.Controls.Add(ctrl, 0, 3);
                 panelGroupBox.SetColumnSpan(ctrl, 8); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Календарь
@@ -266,7 +270,7 @@ namespace uLoader
             private void panelLoader_WorkItemRowsAdded (object obj, EventArgs ev)
             {
                 int cnt = (obj as DataGridView).Rows.Count;
-                (obj as DataGridView).Rows[cnt - 1].Cells [1].Value = @"->";
+                (obj as DataGridView).Rows[cnt - 1].Cells [1].Value = @"?";
                 if ((obj as DataGridView).Rows[cnt - 1].Cells [1].GetType () == typeof (DataGridViewDisableButtonCell))
                     ((DataGridViewDisableButtonCell)(obj as DataGridView).Rows[cnt - 1].Cells [1]).Enabled = false;
                 else
@@ -427,7 +431,73 @@ namespace uLoader
                 //Отобразить шаг опроса для режима 'COSTUMIZE'
             }
             /// <summary>
-            /// Получить объект со списком групп (элементов групп)
+            /// Включить элементы управления в соответствии с состоянием объектов
+            ///  , которые они обозначают
+            /// </summary>
+            /// <param name="key">Ключ элемента управления</param>
+            /// <param name="states">Состояния объектов</param>
+            /// <returns>Признак выполнения функции</returns>
+            public int EnabledWorkItem(KEY_CONTROLS key, GroupSources.STATE []states)
+            {
+                int iRes = 0; //Результат выполнения функции
+
+                Control ctrl = GetWorkingItem(key); //Элемент управления, содержащий записи об объектах
+                DataGridViewDisableButtonCell btnCell = null; //Ячейка (кнопка) - состояние объекта
+                string btnCellText = string.Empty; //Текст для кнопки
+                //Индекс выбранной на текущий момент строки (объекта)
+                int indxSel = (ctrl as DataGridView).SelectedRows.Count > 0 ? (ctrl as DataGridView).SelectedRows[0].Index : -1;
+
+                for (int i = 0; i < states.Length; i ++)
+                {
+                    //Получить объект "кнопка"
+                    btnCell = ((ctrl as DataGridView).Rows[i].Cells[1] as DataGridViewDisableButtonCell);
+                    //Изменить доступность кнопки
+                    btnCell.Enabled = ! (states[i] == GroupSources.STATE.UNAVAILABLE);
+                    //Определить текстт на кнопке в соответствии с состоянием
+                    if (btnCell.Enabled == true)
+                    {//При "доступной" (для нажатия) кнопке
+                        switch (states[i])
+                        {
+                            case GroupSources.STATE.STARTED: //При "стартованной" кнопке (хотя бы одна из групп "старт")
+                                btnCellText = @"<-"; // для возможности "остановить" такие группы
+                                break;
+                            case GroupSources.STATE.STOPPED: //Прии 
+                                btnCellText = @"->";
+                                break;
+                            default:
+                                break;
+                        }                        
+                    }
+                    else
+                        btnCellText = @"?";
+                    //Установить текст на кнопке в соответствии состоянием
+                    btnCell.Value = btnCellText;
+                    //Изменить состояние "зависимых" элементов интерфейса
+                    if (i == indxSel)
+                    {//Только для выбранной строки
+                        switch (key)
+                        {
+                            case KEY_CONTROLS.DGV_GROUP_SOURCES:
+                                //??? GetWorkingItem(KEY_CONTROLS.BUTTON_DLLNAME_GROUPSOURCES).Enabled =
+                                //??? GetWorkingItem(KEY_CONTROLS.CBX_SOURCE_OF_GROUP).Enabled =
+                                //???    btnCell.Enabled;
+                                break;
+                            case KEY_CONTROLS.DGV_GROUP_SIGNALS:                                
+                                //??? GetWorkingItem(KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS).Enabled =
+                                //???    btnCell.Enabled;
+                                break;
+                            default:
+                                throw new Exception(@"PanelLoader::EnabledWorkItem () - ...");
+                        }
+                    }
+                    else
+                        ;
+                }
+
+                return iRes;
+            }
+            /// <summary>
+            /// Получить объект - дочерний элемент интерфейса
             /// </summary>
             /// <param name="indxConfig">Индекс панели</param>
             /// <param name="indxPanel">Индекс типа объекта</param>
@@ -446,7 +516,7 @@ namespace uLoader
                 if (arCtrls.Length == 1)
                     ctrlRes = arCtrls[0];
                 else
-                    throw new Exception(@"PanelLoader::getWorkingItem (" + (Parent as PanelWork).Controls.IndexOf (this).ToString() + @", " + key.ToString() + @") - не найден элемент управления...");
+                    throw new Exception(@"PanelLoader::GetWorkingItem (" + (Parent as PanelWork).Controls.IndexOf (this).ToString() + @", " + key.ToString() + @") - не найден элемент управления...");
 
                 return ctrlRes;
             }
@@ -519,8 +589,7 @@ namespace uLoader
                 panelColumns = this.Controls[2] as HPanelCommon;                
 
                 DataGridView ctrl = new DataGridView ();
-                ctrl.Name = KEY_CONTROLS.DGV_SIGNALS_OF_GROUP.ToString ();
-                ctrl.Dock = DockStyle.Fill;
+                ctrl.Name = KEY_CONTROLS.DGV_SIGNALS_OF_GROUP.ToString ();                
                 (ctrl as DataGridView).Columns.AddRange(
                     new DataGridViewColumn[] {
                         new DataGridViewTextBoxColumn ()
@@ -540,6 +609,7 @@ namespace uLoader
                         col.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
                     else
                         col.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                ctrl.Dock = DockStyle.Fill;
                 panelColumns.Controls.Add(ctrl, 0, 0);
                 panelColumns.SetColumnSpan(ctrl, 10); panelColumns.SetRowSpan(ctrl, 5);
 
