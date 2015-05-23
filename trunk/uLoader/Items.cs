@@ -137,6 +137,11 @@ namespace uLoader
     public class GROUP_SRC : ITEM_SRC
     {
         /// <summary>
+        /// Индекс текущего источника данных
+        ///  цифровое обозначение (окончание) строкового идентифиатора
+        /// </summary>
+        public string m_IDCurrentConnSett;
+        /// <summary>
         /// Список объектов с параметрами соединения
         /// </summary>
         public List<ConnectionSettings> m_listConnSett;
@@ -153,6 +158,7 @@ namespace uLoader
         /// </summary>
         public GROUP_SRC ()
         {
+            m_IDCurrentConnSett = string.Empty;
             m_listConnSett = new List<ConnectionSettings> ();
             m_strDLLName = string.Empty;
             m_arIDGroupSignals = new string [] { };
@@ -166,11 +172,115 @@ namespace uLoader
         public List<GROUP_SRC> m_listGroupSrc;
         public List<GROUP_SIGNALS_SRC> m_listGroupSgnlsSrc;
     }
+    ///// <summary>
+    ///// Состояние объекта 'GroupSignals'
+    ///// </summary>
+    //public class StateGroupSignals
+    //{
+    //    /// <summary>
+    //    /// Признак запуска/останова
+    //    /// </summary>
+    //    public bool m_bStarted;
+    //    /// <summary>
+    //    /// Признак ативности
+    //    /// </summary>
+    //    public bool m_bActived;
+    //    /// <summary>
+    //    /// Конструктор - основной (без параметров)
+    //    /// </summary>
+    //    public StateGroupSignals()
+    //    {
+    //        m_bStarted =
+    //        m_bActived =
+    //            false;
+    //    }
+    //}
+    ///// <summary>
+    ///// Состояние объекта 'GroupSources'
+    ///// </summary>
+    //public class StateGroupSources
+    //{
+    //    /// <summary>
+    //    /// Перечисление - состояния библиотеки
+    //    /// </summary>
+    //    public enum STATE_DLL { NOT_FOUND = -2, NOT_LOAD, LOADED, UNKNOWN }
+    //    /// <summary>
+    //    /// Состояние библиотеки
+    //    /// </summary>
+    //    public STATE_DLL m_StateDLL;
+    //    /// <summary>
+    //    /// Текущий идентификатор источника
+    //    /// </summary>
+    //    public string m_strCurrentIDSource;
+    //    /// <summary>
+    //    /// Список объектов состояния групп сигналов
+    //    /// </summary>
+    //    public List<StateGroupSignals> m_listStateGroupSignals;
+    //    /// <summary>
+    //    /// Конструктор - основной (без параметров)
+    //    /// </summary>
+    //    public StateGroupSources()
+    //    {
+    //        m_StateDLL = STATE_DLL.UNKNOWN;
+    //        m_strCurrentIDSource = string.Empty;
+
+    //        m_listStateGroupSignals = new List<StateGroupSignals>();
+    //    }
+    //}
     /// <summary>
     /// Группа источников с "прикрепленными" группами сигналов
     /// </summary>
     public class GroupSources : GROUP_SRC, IPlugInHost
     {
+        /// <summary>
+        /// Перечисление состояний группы источников
+        /// </summary>
+        public enum STATE { UNAVAILABLE, STOPPED, STARTED }
+        /// <summary>
+        /// Перечисление состояний библиотеки
+        /// </summary>
+        public enum STATE_DLL { UNKNOWN = -3, NOT_LOAD, TYPE_MISMATCH, LOADED, }
+
+        /// <summary>
+        /// Состояние группы источников
+        /// </summary>
+        public STATE State
+        {
+            get
+            {
+                STATE stateRes = STATE.UNAVAILABLE;
+
+                if (_iStateDLL == STATE_DLL.LOADED)
+                {
+                    stateRes = STATE.STOPPED;
+
+                    foreach (GroupSignals grpSgnls in m_listGroupSignals)
+                    {
+                        if (grpSgnls.State == GroupSignals.STATE.STARTED)
+                        {
+                            stateRes = STATE.STARTED;
+                            break;
+                        }
+                        else
+                            ;
+                    }
+                }
+                else
+                    ;
+
+                return stateRes;
+            }
+        }
+
+        private STATE_DLL _iStateDLL;
+        /// <summary>
+        /// Состояние группы источников
+        /// </summary>
+        public STATE_DLL StateDLL
+        {
+            get { return _iStateDLL; }
+        }
+
         # region ??? Обязательный метод для интерфейса 'IPlugInHost'
         public bool Register (IPlugIn plugIn)
         {
@@ -185,6 +295,20 @@ namespace uLoader
         /// </summary>
         private class GroupSignals : GROUP_SIGNALS_SRC
         {
+            /// <summary>
+            /// Перечисление состояний группы сигналов
+            /// </summary>
+            public enum STATE { STOPPED, STARTED }
+
+            private STATE _iState;
+            /// <summary>
+            /// Состояние группы сигналов
+            /// </summary>
+            public STATE State
+            {
+                get { return _iState; }
+            }
+
             public GroupSignals(GROUP_SIGNALS_SRC srcItem)
                 : base()
             {
@@ -203,17 +327,32 @@ namespace uLoader
                 this.m_mode = srcItem.m_mode;
 
                 this.m_strID = srcItem.m_strID;
+
+                _iState = STATE.STOPPED;
             }
         }
         /// <summary>
         /// Вспомогательный домен приложения для загрузки/выгрузки библиотеки
+        ///  в режиме реального времени
         /// </summary>
         AppDomain m_appDomain;
         /// <summary>
         /// Список групп сигналов, принадлежащих группе источников
         /// </summary>
         List <GroupSignals> m_listGroupSignals;
-
+        /// <summary>
+        /// Объект с загруженной библиотекой
+        /// </summary>
+        private IPlugIn m_plugIn;
+        /// <summary>
+        /// Событие для обмена данными с библиотекой
+        /// </summary>
+        private event DelegateObjectFunc EvtDataAskedHost;
+        /// <summary>
+        /// Коструктор (с параметрами)
+        /// </summary>
+        /// <param name="srcItem">Объект с информациеий о группе источников</param>
+        /// <param name="listGroupSignals">Список объектов с информацией о группах сигналов</param>
         public GroupSources (GROUP_SRC srcItem, List <GROUP_SIGNALS_SRC>listGroupSignals) : base ()
         {
             this.m_arIDGroupSignals = new string [srcItem.m_arIDGroupSignals.Length];
@@ -233,11 +372,12 @@ namespace uLoader
 
             this.m_strID = srcItem.m_strID;
 
+            this.m_IDCurrentConnSett = srcItem.m_IDCurrentConnSett;
+
             this.m_strDLLName = srcItem.m_strDLLName;
 
-            int iErr = 0;
-            m_plugIn = loadPlugIn(out iErr);
-            if (!(iErr == 0))
+            m_plugIn = loadPlugIn(out _iStateDLL);
+            if (!(_iStateDLL == STATE_DLL.LOADED))
                 throw new Exception(@"GroupSources::GroupSources () - ...");
             else
                 ;
@@ -245,12 +385,16 @@ namespace uLoader
             EvtDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_CONN_SETT, new object[] { this.m_listConnSett[0] }));
             //EvtDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_GROUP_SIGNALS, new object[] { }));            
         }
-
+        /// <summary>
+        /// Загрузить библиотеку с именем 'm_strDLLName'
+        /// </summary>
+        /// <param name="iRes">Признак выполнения загрузки библиотеки</param>
+        /// <returns>Объект с загруженной библиотекой</returns>
+        private IPlugIn loadPlugIn(out STATE_DLL iRes)
         //private IPlugIn loadPlugIn(string name, out int iRes)
-        private IPlugIn loadPlugIn(out int iRes)
         {
             IPlugIn plugInRes = null;
-            iRes = -1;
+            iRes = STATE_DLL.UNKNOWN;
 
             string name =
                 Path.GetFileNameWithoutExtension (this.m_strDLLName)
@@ -275,6 +419,7 @@ namespace uLoader
             }
             catch (Exception e)
             {
+                iRes = STATE_DLL.NOT_LOAD;                
                 Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"GroupSources::loadPlugin () ... LoadFrom () ... plugIn.Name = " + name);
             }
 
@@ -287,21 +432,25 @@ namespace uLoader
                     (plugInRes as HHPlugIn).EvtDataAskedHost += new DelegateObjectFunc(GroupSources_EvtDataAskedHost);
                     EvtDataAskedHost += (plugInRes as HHPlugIn).OnEvtDataRecievedHost;
 
-                    iRes = 0;
+                    iRes = STATE_DLL.LOADED;
                 }
                 catch (Exception e)
                 {
+
                     Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"GroupSources::loadPlugin () ... CreateInstance ... plugIn.Name = " + name);
                 }
             else
+            {
+                iRes = STATE_DLL.TYPE_MISMATCH;
                 Logging.Logg().Error(@"GroupSources::loadPlugin () ... Assembly.GetType()=null ... plugIn.Name = " + name, Logging.INDEX_MESSAGE.NOT_SET);
+            }
 
             return plugInRes;
         }
-
-        private IPlugIn m_plugIn;
-        private event DelegateObjectFunc EvtDataAskedHost;
-
+        /// <summary>
+        /// Обработка сообщений "от" библиотеки
+        /// </summary>
+        /// <param name="obj"></param>
         private void GroupSources_EvtDataAskedHost  (object obj)
         {
             EventArgsDataHost ev = obj as EventArgsDataHost;

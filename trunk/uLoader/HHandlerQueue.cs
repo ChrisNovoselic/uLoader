@@ -13,19 +13,17 @@ namespace uLoader
     {
         public enum StatesMachine
         {
-            LIST_SRC_GROUP_SOURCES //Список групп источников (источник)
-            , LIST_SRC_GROUP_SOURCE_ITEMS //Список источников в группе источников (истиочник)
-            , LIST_SRC_GROUP_SOURCE_PARS //Список наименовний параметров соединения источников в группе источников (истиочник)
-            , LIST_SRC_GROUP_SOURCE_PROP //Список параметров соединения источников в группе источников (истиочник)
-            , LIST_SRC_GROUP_SIGNALS //Список групп сигналов (источник)
-            , LIST_SRC_GROUP_SIGNAL_ITEMS //Список сигналов в группе сигналов (истиочник)
-            , LIST_SRC_GROUP_SIGNAL_PARS //Список наименовний параметров сигналов в группе сигналов (истиочник)
-            , LIST_SRC_GROUP_SIGNAL_PROP //Список параметров сигналов в группе сигналов (истиочник)
-            , LIST_DEST_GROUP_SOURCES //Список групп источников (назначение)
+            LIST_GROUP_SOURCES //Список групп источников (источник, назначение)
+            , LIST_SRC_GROUP_SOURCE_ITEMS //Список источников в группе источников (источник)
+            , LIST_SRC_GROUP_SOURCE_PARS //Список наименовний параметров соединения источников в группе источников (источник)
+            , LIST_SRC_GROUP_SOURCE_PROP //Список параметров соединения источников в группе источников (источник)
+            , LIST_GROUP_SIGNALS //Список групп сигналов (источник, назначение)
+            , LIST_SRC_GROUP_SIGNAL_ITEMS //Список сигналов в группе сигналов (источник)
+            , LIST_SRC_GROUP_SIGNAL_PARS //Список наименовний параметров сигналов в группе сигналов (источник)
+            , LIST_SRC_GROUP_SIGNAL_PROP //Список параметров сигналов в группе сигналов (источник)
             , LIST_DEST_GROUP_SOURCE_ITEMS //Список источников в группе источников (назначение)
             , LIST_DEST_GROUP_SOURCE_PARS //Список наименований параметров соединения источников в группе источников (назначение)
-            , LIST_DEST_GROUP_SOURCE_PROP //Список параметров соединения источников в группе источников (назначение)
-            , LIST_DEST_GROUP_SIGNALS //Список групп сигналов (назначение)
+            , LIST_DEST_GROUP_SOURCE_PROP //Список параметров соединения источников в группе источников (назначение)            
             , LIST_DEST_GROUP_SIGNAL_ITEMS //Список сигналов в группе сигналов (назначение)
             , LIST_DEST_GROUP_SIGNAL_PARS //Список наименований параметров сигналов в группе сигналов (назначение)
             , LIST_DEST_GROUP_SIGNAL_PROP //Список параметров сигналов в группе сигналов (назначение)
@@ -34,26 +32,41 @@ namespace uLoader
             , OBJ_SRC_GROUP_SIGNALS //Объект группы сигналов (источник)
             , OBJ_DEST_GROUP_SIGNALS //Объект группы сигналов (назначение)
             , TIMER_WORK_UPDATE //Период обновления панели "Работа"
-            , STATE_SRC_GROUP_SOURCES //Состояние группы источников (источник)
-            , STATE_DEST_GROUP_SOURCES //Состояние группы источников (назначение)
+            , STATE_GROUP_SOURCES //Состояние группы источников (источник, назначение)
             ,
         }
 
         private FormMain.FileINI m_fileINI;
-        private List <GroupSources> m_listGroupSources;
+        private List <GroupSources> [] m_listGroupSources;
 
         public HHandlerQueue()
             : base ()
         {
-            m_fileINI = new FormMain.FileINI(@"setup_biysktmora.ini");
+            m_fileINI = new FormMain.FileINI(@"setup_ktstusql.ini");
 
-            GROUP_SRC []arGroupSources = m_fileINI.AllObjectsSrcGroupSources;
-            GROUP_SIGNALS_SRC[] arGroupSignals = m_fileINI.AllObjectsSrcGroupSignals;
+            m_listGroupSources = new List<GroupSources> [(int)INDEX_SRC.COUNT_INDEX_SRC];
 
-            m_listGroupSources = new List<GroupSources> ();
+            setListGroupSources(INDEX_SRC.SOURCE, m_fileINI.AllObjectsSrcGroupSources, m_fileINI.AllObjectsSrcGroupSignals);
+            setListGroupSources(INDEX_SRC.DEST, m_fileINI.AllObjectsDestGroupSources, m_fileINI.AllObjectsDestGroupSignals);
+        }
+        /// <summary>
+        /// Заполнить список с информацией о группах источников
+        /// </summary>
+        /// <param name="indxSrc">Индекс панели</param>
+        /// <param name="arGroupSources">Массив с информацией о группах с источниками</param>
+        /// <param name="arGroupSignals">Массив с информацией о группах с сигналами</param>
+        /// <returns>Признак выполнения функции</returns>
+        private int setListGroupSources(INDEX_SRC indxSrc, GROUP_SRC[] arGroupSources, GROUP_SIGNALS_SRC[] arGroupSignals)
+        {
+            int iRes = 0;
 
-            List <GROUP_SIGNALS_SRC>listGroupSignals = new List<GROUP_SIGNALS_SRC> ();
-            string []arIDGroupSignals;
+            if (m_listGroupSources[(int)indxSrc] == null)
+                m_listGroupSources[(int)indxSrc] = new List<GroupSources>();
+            else
+                ;
+
+            List<GROUP_SIGNALS_SRC> listGroupSignals = new List<GROUP_SIGNALS_SRC>();
+            string[] arIDGroupSignals;
             foreach (GROUP_SRC itemSrc in arGroupSources)
             {
                 arIDGroupSignals = (itemSrc as GROUP_SRC).m_arIDGroupSignals;
@@ -67,8 +80,10 @@ namespace uLoader
                         else
                             ;
 
-                m_listGroupSources.Add(new GroupSources(itemSrc, listGroupSignals));
+                m_listGroupSources[(int)indxSrc].Add(new GroupSources(itemSrc, listGroupSignals));
             }
+
+            return iRes;
         }
 
         protected override int StateRequest(int state)
@@ -77,19 +92,17 @@ namespace uLoader
 
             switch (state)
             {
-                case (int)StatesMachine.LIST_SRC_GROUP_SOURCES:
+                case (int)StatesMachine.LIST_GROUP_SOURCES:
                 case (int)StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS:
                 case (int)StatesMachine.LIST_SRC_GROUP_SOURCE_PARS:
                 case (int)StatesMachine.LIST_SRC_GROUP_SOURCE_PROP:
-                case (int)StatesMachine.LIST_SRC_GROUP_SIGNALS:
+                case (int)StatesMachine.LIST_GROUP_SIGNALS:
                 case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS:
                 case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_PARS:
                 case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_PROP:
-                case (int)StatesMachine.LIST_DEST_GROUP_SOURCES:
                 case (int)StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS:
                 case (int)StatesMachine.LIST_DEST_GROUP_SOURCE_PARS:
                 case (int)StatesMachine.LIST_DEST_GROUP_SOURCE_PROP:
-                case (int)StatesMachine.LIST_DEST_GROUP_SIGNALS:
                 case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS:
                 case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_PARS:
                 case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_PROP:
@@ -112,19 +125,17 @@ namespace uLoader
 
             switch (state)
             {
-                case (int)StatesMachine.LIST_SRC_GROUP_SOURCES:
+                case (int)StatesMachine.LIST_GROUP_SOURCES:
                 case (int)StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS:
                 case (int)StatesMachine.LIST_SRC_GROUP_SOURCE_PARS:
                 case (int)StatesMachine.LIST_SRC_GROUP_SOURCE_PROP:
-                case (int)StatesMachine.LIST_SRC_GROUP_SIGNALS:
+                case (int)StatesMachine.LIST_GROUP_SIGNALS:
                 case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS:
                 case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_PARS:
                 case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_PROP:
-                case (int)StatesMachine.LIST_DEST_GROUP_SOURCES:
                 case (int)StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS:
                 case (int)StatesMachine.LIST_DEST_GROUP_SOURCE_PARS:
                 case (int)StatesMachine.LIST_DEST_GROUP_SOURCE_PROP:
-                case (int)StatesMachine.LIST_DEST_GROUP_SIGNALS:
                 case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS:
                 case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_PARS:
                 case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_PROP:
@@ -132,6 +143,7 @@ namespace uLoader
                 case (int)StatesMachine.OBJ_DEST_GROUP_SOURCES:
                 case (int)StatesMachine.TIMER_WORK_UPDATE:
                 case (int)StatesMachine.OBJ_SRC_GROUP_SIGNALS:
+                case (int)StatesMachine.STATE_GROUP_SOURCES:
                     dataHost.m_objRecieved.OnEvtDataRecievedHost(new object [] { state, obj });
                     break;
                 default:
@@ -152,9 +164,12 @@ namespace uLoader
 
             switch (state)
             {
-                case (int)StatesMachine.LIST_SRC_GROUP_SOURCES:
+                case (int)StatesMachine.LIST_GROUP_SOURCES:
                     error = false;
-                    outobj = m_fileINI.ListSrcGroupSources;
+                    outobj = new object [] {
+                        m_fileINI.ListSrcGroupSources
+                        , m_fileINI.ListDestGroupSources
+                    };
 
                     iRes = 0;
                     break;
@@ -179,9 +194,12 @@ namespace uLoader
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.LIST_SRC_GROUP_SIGNALS:
+                case (int)StatesMachine.LIST_GROUP_SIGNALS:
                     error = false;
-                    outobj = m_fileINI.ListSrcGroupSignals;
+                    outobj = new object[] {
+                        m_fileINI.ListSrcGroupSignals
+                        , m_fileINI.ListDestGroupSignals
+                    };
 
                     iRes = 0;
                     break;
@@ -206,12 +224,6 @@ namespace uLoader
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.LIST_DEST_GROUP_SOURCES:
-                    error = false;
-                    outobj = m_fileINI.ListDestGroupSources;
-
-                    iRes = 0;
-                    break;
                 case (int)StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS:
                     error = false;
                     dataHost = Peek;
@@ -230,12 +242,6 @@ namespace uLoader
                     error = false;
                     dataHost = Peek;
                     outobj = m_fileINI.GetListItemPropOfGroupSource(dataHost.m_pars.ToArray());
-
-                    iRes = 0;
-                    break;
-                case (int)StatesMachine.LIST_DEST_GROUP_SIGNALS:
-                    error = false;
-                    outobj = m_fileINI.ListDestGroupSignals;
 
                     iRes = 0;
                     break;
@@ -290,19 +296,16 @@ namespace uLoader
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.STATE_SRC_GROUP_SOURCES:
+                case (int)StatesMachine.STATE_GROUP_SOURCES:
                     error = false;
-                    dataHost = Peek;
-                    //??? 0-й параметр
-                    //outobj = m_listGroupSources[0].
+                    outobj = new object[(int)INDEX_SRC.COUNT_INDEX_SRC];
+                    for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
+                    {
+                        (outobj as object[])[(int)indxSrc] = new GroupSources.STATE[m_listGroupSources[(int)indxSrc].Count];
 
-                    iRes = 0;
-                    break;
-                case (int)StatesMachine.STATE_DEST_GROUP_SOURCES:
-                    error = false;
-                    dataHost = Peek;
-                    //??? 0-й параметр
-                    //outobj =
+                        foreach (GroupSources grpSrc in m_listGroupSources[(int)indxSrc])
+                            ((outobj as object[])[(int)indxSrc] as GroupSources.STATE[])[m_listGroupSources[(int)indxSrc].IndexOf(grpSrc)] = grpSrc.State;
+                    }
 
                     iRes = 0;
                     break;

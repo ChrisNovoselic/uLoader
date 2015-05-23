@@ -118,11 +118,13 @@ namespace uLoader
                 ctrl.Name = KEY_CONTROLS.BUTTON_DLLNAME_GROUPSOURCES.ToString();
                 ctrl.Dock = DockStyle.Fill;
                 (ctrl as Button).Text = @"<->";
+                (ctrl as Button).Enabled = false;
                 panelColumns.Controls.Add(ctrl, 4, 6);
                 panelColumns.SetColumnSpan(ctrl, 1); panelColumns.SetRowSpan(ctrl, 1);
                 //Выбор текущего источника
                 ctrl = new ComboBox();
                 ctrl.Name = KEY_CONTROLS.CBX_SOURCE_OF_GROUP.ToString();
+                (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
                 ctrl.Dock = DockStyle.Bottom;
                 panelColumns.Controls.Add(ctrl, 0, 7);
                 panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 1);
@@ -381,7 +383,7 @@ namespace uLoader
                     (workItem as ComboBox).Items.Add(connSett.server);
                 //Выбрать текущий источник
                 if ((workItem as ComboBox).Items.Count > 0)
-                    (workItem as ComboBox).SelectedIndex = 0;
+                    (workItem as ComboBox).SelectedIndex = uLoader.FormMain.FileINI.GetIDIndex(grpSrc.m_IDCurrentConnSett);
                 else
                     ;
             }
@@ -411,7 +413,7 @@ namespace uLoader
                 key = PanelLoader.KEY_CONTROLS.DGV_SIGNALS_OF_GROUP;
                 workItem = GetWorkingItem(key);
                 foreach (SIGNAL_SRC sgnl in grpSrc.m_listSgnls)
-                    (workItem as DataGridView).Rows.Add(new object[] { sgnl.m_dictPars[@"KKS_NAME"] });
+                    (workItem as DataGridView).Rows.Add(new object[] { sgnl.m_dictPars[@"NAME_SHR"] });
                 //??? Отобразить интервал опроса для режима 'CUR_INTERVAL'
 
                 //Отобразить шаг опроса для режима 'CUR_INTERVAL'

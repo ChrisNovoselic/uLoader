@@ -153,15 +153,13 @@ namespace uLoader
 
             switch (state)
             {
-                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCES: //Группы источников (источник)
-                    fillWorkItem(INDEX_SRC.SOURCE, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[]) as string[]);
+                case (int)HHandlerQueue.StatesMachine.LIST_GROUP_SOURCES: //Группы источников (источник)
+                    fillWorkItem(INDEX_SRC.SOURCE, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.SOURCE] as string[]);
+                    fillWorkItem(INDEX_SRC.DEST, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.DEST] as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SOURCES: //Группа (объект) источников (источник)
                     //m_arCurrentSrcItems [(int)INDEX_SRC.SOURCE] = par as ITEM_SRC;
                     fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SRC);
-                    break;
-                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES: //Группы источников (назначение)
-                    fillWorkItem(INDEX_SRC.DEST, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SOURCES: //Группа (объект) источников (назначение)
                     //m_arCurrentSrcItems[(int)INDEX_SRC.DEST] = par as ITEM_SRC;
@@ -174,9 +172,7 @@ namespace uLoader
                 case (int)HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS: //Объект группы сигналов (источник)
                     fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SIGNALS_SRC);
                     break;
-                case (int)HHandlerQueue.StatesMachine.STATE_SRC_GROUP_SOURCES: //Состояние группы источников  (источник)
-                    break;
-                case (int)HHandlerQueue.StatesMachine.STATE_DEST_GROUP_SOURCES: //Состояние группы источников  (назначение)
+                case (int)HHandlerQueue.StatesMachine.STATE_GROUP_SOURCES: //Состояние группы источников  (источник, назначение)
                     break;
                 default:
                     break;
@@ -223,8 +219,7 @@ namespace uLoader
             if (IsFirstActivated == true)
             {
                 //Запросить данные
-                DataAskedHost(new object[] { new object [] { (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCES /*, без параметров*/ }
-                                            , new object [] { (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES /*, без параметров*/ }
+                DataAskedHost(new object[] { new object [] { (int)HHandlerQueue.StatesMachine.LIST_GROUP_SOURCES /*, без параметров*/ }
                                             , new object [] { (int)HHandlerQueue.StatesMachine.TIMER_WORK_UPDATE /*, без параметров*/ }
                                         });                
             }
@@ -254,8 +249,7 @@ namespace uLoader
 
             //Запросить данные
             DataAskedHost(new object[] {
-                new object [] { (int)HHandlerQueue.StatesMachine.STATE_SRC_GROUP_SOURCES /*, без параметров*/ }
-                , new object [] { (int)HHandlerQueue.StatesMachine.STATE_DEST_GROUP_SOURCES /*, без параметров*/ }
+                new object [] { (int)HHandlerQueue.StatesMachine.STATE_GROUP_SOURCES /*, без параметров*/ }
             });
         }
 

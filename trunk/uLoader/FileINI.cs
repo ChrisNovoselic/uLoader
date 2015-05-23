@@ -186,6 +186,7 @@ namespace uLoader
                 {
                     case INDEX_TYPE_GROUP.SRC: //Добавить источник
                         itemSrc = new GROUP_SRC();
+                        (itemSrc as GROUP_SRC).m_IDCurrentConnSett = GetSecValueOfKey(secGroup, @"SCUR");
                         (itemSrc as GROUP_SRC).m_strDLLName = GetSecValueOfKey(secGroup, @"DLL_NAME");
                         (itemSrc as GROUP_SRC).m_arIDGroupSignals = GetSecValueOfKey(secGroup, KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS]).Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]);
                         m_arListGroupValues[(int)indxSrc].m_listGroupSrc.Add(itemSrc as GROUP_SRC);                        
@@ -442,7 +443,7 @@ namespace uLoader
 
                     i = 0;
                     foreach (SIGNAL_SRC sgnl in (itemSrc as GROUP_SIGNALS_SRC).m_listSgnls)
-                        arStrRes[i++] = sgnl.m_dictPars[@"KKS_NAME"];
+                        arStrRes[i++] = sgnl.m_dictPars[@"NAME_SHR"];
                 }
                 else
                     ;
@@ -502,7 +503,49 @@ namespace uLoader
                     //break;
                 }
             }
+            /// <summary>
+            /// Получить "маску" строкового идетификатора
+            /// </summary>
+            /// <param name="id"></param>
+            /// <returns></returns>
+            public static string GetIDMasked(string id)
+            {
+                string strRes = string.Empty;
+                int lengthMaskId = id.Length;
 
+                //Получить длину "маски" идентификатора
+                while (char.IsNumber(id[lengthMaskId - 1]) == true)
+                    lengthMaskId--;
+                //Получить "маску" идентификатора
+                strRes = id.Substring(0, lengthMaskId);
+
+                return strRes;
+            }
+            /// <summary>
+            /// Получить индекс строкового идентификатора
+            /// </summary>
+            /// <param name="id"></param>
+            /// <returns></returns>
+            public static int GetIDIndex(string id)
+            {
+                int iRes = -1;
+                int lengthMaskId = id.Length;
+
+                //Получить длину "маски" идентификатора
+                while (char.IsNumber(id[lengthMaskId - 1]) == true)
+                    lengthMaskId--;
+                //Получить индекс идентификатора
+                iRes = Int32.Parse(id.Substring(lengthMaskId, id.Length - lengthMaskId));
+
+                return iRes;
+            }
+            /// <summary>
+            /// Получить объект 'ITEM_SRC' по индксу панели, типу группы, индексу текущей группы
+            /// </summary>
+            /// <param name="indxSrc">Индекс панели</param>
+            /// <param name="groupType">Тип группы</param>
+            /// <param name="indxSel">Индекс выбранной группы</param>
+            /// <returns>Объект описания элемента группы</returns>
             private ITEM_SRC getItemSrc(INDEX_SRC indxSrc, int groupType, int indxSel)
             {
                 ITEM_SRC itemSrcRes = null;
@@ -522,21 +565,21 @@ namespace uLoader
                 }
 
                 return itemSrcRes;
-            }
-
+            }            
+            /// <summary>
+            /// Получить объект 'ITEM_SRC' по индксу панели, строковому идентификатору
+            /// </summary>
+            /// <param name="indxSrc">Индекс панели</param>
+            /// <param name="id">Строковый идентификатор объекта</param>
+            /// <returns>Объект описания элемента группы</returns>
             private ITEM_SRC getItemSrc(INDEX_SRC indxSrc, string id)
             {
                 ITEM_SRC itemSrcRes = null; //Результат
                 //Получить объект с 
                 SRC src = m_arListGroupValues[(int)indxSrc]; //источник/назначение
-                int groupType = -1
-                    , lengthMaskId = id.Length;
-                string idType = string.Empty;
-                //Получить длину "маски" идентификатора
-                while (char.IsNumber(id[lengthMaskId - 1]) == true)
-                    lengthMaskId--;
+                int groupType = -1;
                 //Получить "маску" идентификатора
-                idType = id.Substring(0, lengthMaskId);
+                string idType = GetIDMasked(id);
                 //Определить тип группы по "маске" идентификатора
                 //Сравнить с "маской" групп источников
                 if (idType.Equals(KEY_TREE_SRC[(int)INDEX_KEY_SRC.GROUP_SRC]) == true)
@@ -576,7 +619,7 @@ namespace uLoader
                     default:
                         break;
                 }
-
+                //Вернуть результат
                 return itemSrcRes;
             }         
         }

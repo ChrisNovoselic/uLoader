@@ -487,10 +487,11 @@ namespace uLoader
 
             switch (state)
             {
-                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCES: //Заполнить на панели источник - группы источников
-                    fillConfigItem(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.GROUP_SOURCES, (par as object[]) as string[]);
+                case (int)HHandlerQueue.StatesMachine.LIST_GROUP_SOURCES: //Заполнить на панели (источник, назаначение) - группы источников
+                    fillConfigItem(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.SOURCE] as string[]);
+                    fillConfigItem(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.DEST] as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS: //Заполнить на панели источник - элементы в группе источников
+                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS: //Заполнить на панели (источник, назаначение) - элементы в группе источников
                     fillConfigItem(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_PARS: //Заполнить на панели источник - наименования параметров элементов в группе источников
@@ -499,8 +500,9 @@ namespace uLoader
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_PROP: //Заполнить на панели источник - параметры элементов в группе источников
                     fillConfigItemProp(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNALS: //Заполнить на панели источник - группы сигналов
-                    fillConfigItem(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.GROUP_SIGNALS, (par as object[]) as string[]);
+                case (int)HHandlerQueue.StatesMachine.LIST_GROUP_SIGNALS: //Заполнить на панели источник - группы сигналов
+                    fillConfigItem(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.GROUP_SIGNALS, (par as object[])[(int)INDEX_SRC.SOURCE] as string[]);
+                    fillConfigItem(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.GROUP_SIGNALS, (par as object[])[(int)INDEX_SRC.DEST] as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS: //Заполнить на панели источник - элементы в группе сигналов
                     fillConfigItem(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
@@ -511,10 +513,7 @@ namespace uLoader
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_PROP: //Заполнить на панели источник - параметры элементов в группе сигналов
                     fillConfigItemProp(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES: //Заполнить на панели назначение - группы источников
-                    fillConfigItem(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.GROUP_SOURCES, (par as object[]) as string[]);
-                    break;
-                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS: //Заполнить на панели назначение - элементы в группе источников
+                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS: //Заполнить на панели (назаначение) - элементы в группе источников
                     fillConfigItem(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_PARS: //Заполнить на панели назначение - наименования параметров элементов в группе источников
@@ -522,9 +521,6 @@ namespace uLoader
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_PROP: //Заполнить на панели назначение - параметры элементов в группе источников
                     fillConfigItemProp(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
-                    break;
-                case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNALS: //Заполнить на панели назначение - группы сигналов
-                    fillConfigItem(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.GROUP_SIGNALS, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS: //Заполнить на панели назначение - элементы в группе сигналов
                     fillConfigItem(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
@@ -567,10 +563,8 @@ namespace uLoader
             bool bRes = base.Activate(active);
 
             if (IsFirstActivated == true)
-                DataAskedHost(new object[] { new object [] { (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCES /*, без параметров*/ }
-                                        , new object [] { (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNALS /*, без параметров*/ }
-                                        , new object [] { (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCES /*, без параметров*/ }
-                                        , new object [] { (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNALS /*, без параметров*/ }
+                DataAskedHost(new object[] { new object [] { (int)HHandlerQueue.StatesMachine.LIST_GROUP_SOURCES /*, без параметров*/ }
+                                        , new object [] { (int)HHandlerQueue.StatesMachine.LIST_GROUP_SIGNALS /*, без параметров*/ }
                                         });
             else
                 ;

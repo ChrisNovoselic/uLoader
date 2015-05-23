@@ -119,10 +119,11 @@ namespace uLoader
             HTabCtrlEx tabCtrl = obj as HTabCtrlEx;
             HPanelCommon panelCommon;
 
-            if (! (tabCtrl.PrevSelectedIndex < 0))
+            if (!(tabCtrl.PrevSelectedIndex < 0)
+                && (tabCtrl.PrevSelectedIndex < tabCtrl.TabCount))
             {
                 panelCommon = (tabCtrl.TabPages[tabCtrl.PrevSelectedIndex].Controls[0] as HPanelCommon);
-                panelCommon.Activate (false);                
+                panelCommon.Activate(false);
             }
             else
                 ;
@@ -139,14 +140,17 @@ namespace uLoader
         private void конфигурацияToolStripMenuItem_CheckStateChanged(object obj, EventArgs ev)
         {
             string strNameMenuItem = (obj as ToolStripMenuItem).Text;
-            
+
             if (конфигурацияToolStripMenuItem.Checked == true)
             {
                 m_TabCtrl.AddTabPage(strNameMenuItem, 2, HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
                 m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add(m_panelConfig);
             }
             else
+            {
+                m_panelConfig.Activate(false);
                 m_TabCtrl.RemoveTabPage(strNameMenuItem);
+            }
 
             activateMenuItemConfig(конфигурацияToolStripMenuItem.Checked);
         }

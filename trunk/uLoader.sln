@@ -18,6 +18,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestFunc", "TestFunc\TestFunc.csproj", "{FE9308E2-810E-4921-8F1A-55ED8CC9D460}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ktstusql", "ktstusql\ktstusql.csproj", "{94042DBA-B1AB-4FF1-93D8-02BFA9555EA3}"
+EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = uLoader.vsmdi
@@ -81,6 +83,16 @@ Global
 		{FE9308E2-810E-4921-8F1A-55ED8CC9D460}.Release|Mixed Platforms.Build.0 = Release|x86
 		{FE9308E2-810E-4921-8F1A-55ED8CC9D460}.Release|x86.ActiveCfg = Release|x86
 		{FE9308E2-810E-4921-8F1A-55ED8CC9D460}.Release|x86.Build.0 = Release|x86
+		{94042DBA-B1AB-4FF1-93D8-02BFA9555EA3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94042DBA-B1AB-4FF1-93D8-02BFA9555EA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94042DBA-B1AB-4FF1-93D8-02BFA9555EA3}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{94042DBA-B1AB-4FF1-93D8-02BFA9555EA3}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{94042DBA-B1AB-4FF1-93D8-02BFA9555EA3}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{94042DBA-B1AB-4FF1-93D8-02BFA9555EA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94042DBA-B1AB-4FF1-93D8-02BFA9555EA3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94042DBA-B1AB-4FF1-93D8-02BFA9555EA3}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{94042DBA-B1AB-4FF1-93D8-02BFA9555EA3}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{94042DBA-B1AB-4FF1-93D8-02BFA9555EA3}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
