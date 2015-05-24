@@ -13,7 +13,8 @@ namespace uLoader
     {
         public enum StatesMachine
         {
-            LIST_GROUP_SOURCES //Список групп источников (источник, назначение)
+            UNKNOWN = -1
+            , LIST_GROUP_SOURCES //Список групп источников (источник, назначение)
             , LIST_SRC_GROUP_SOURCE_ITEMS //Список источников в группе источников (источник)
             , LIST_SRC_GROUP_SOURCE_PARS //Список наименовний параметров соединения источников в группе источников (источник)
             , LIST_SRC_GROUP_SOURCE_PROP //Список параметров соединения источников в группе источников (источник)
@@ -33,9 +34,9 @@ namespace uLoader
             , OBJ_DEST_GROUP_SIGNALS //Объект группы сигналов (назначение)
             , TIMER_WORK_UPDATE //Период обновления панели "Работа"
             , STATE_GROUP_SOURCES //Состояние группы источников (источник, назначение)
-            , STATE_SRC_GROUP_SIGNALS //Состояние группы сигналов (источник)
             , STATE_GROUP_SIGNALS //Состояние группы сигналов (источник, назначение)
-            ,
+            , STATE_CHANGED_GROUP_SOURCES //Изменение состояния группы источников (источник, назначение) - инициатива пользователя
+            , STATE_CHANGED_GROUP_SIGNALS //Изменение состояния группы сигналов (источник, назначение) - инициатива пользователя
         }
 
         private FormMain.FileINI m_fileINI;

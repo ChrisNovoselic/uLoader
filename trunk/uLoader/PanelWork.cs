@@ -14,6 +14,10 @@ namespace uLoader
     public partial class PanelWork : PanelCommonDataHost
     {
         /// <summary>
+        /// Перечисление - индексы ПРЕДподготавливаемых параметров
+        /// </summary>
+        private enum INDEX_PREPARE_PARS { OBJECT, KEY_OBJECT, KEY_EVENT, INDEX_OBJ_GROUP_SOURCES_SEL, INDEX_OBJ_GROUP_SIGNALS_SEL, COUNT_INDEX_PREPARE_PARS }
+        /// <summary>
         /// Массив панелей (источник, назначение)
         /// </summary>
         PanelLoader[] m_arLoader;
@@ -106,6 +110,7 @@ namespace uLoader
         private int activeTimerUpdate (bool active)
         {
             int iRes = 0
+                //Отложить выызов функции обновлени на неопределенное время
                 , msecDueTime = System.Threading.Timeout.Infinite;
 
             if (active == true)
@@ -274,82 +279,119 @@ namespace uLoader
             });
         }
 
-        ///// <summary>
-        ///// Получить объект со списком групп (элементов групп)
-        ///// </summary>
-        ///// <param name="indxConfig">Индекс панели</param>
-        ///// <param name="indxPanel">Индекс типа объекта</param>
-        ///// <returns>Объект со списком групп</returns>
-        //private Control getWorkingItem(INDEX_SRC indxSrc, PanelLoader.KEY_CONTROLS key)
-        //{
-        //    return m_arLoader [(int)indxSrc].GetWorkingItem (key);
-        //}
-        
-        /// <summary>
-        /// Обработка события "изменение выбора" для 'DataGridView' - группы источников (источник)
-        /// </summary>
-        /// <param name="obj">Объект, иницировавший событие ('DataGridView')</param>
-        /// <param name="ev">Аргументы события</param>
-        private void panelWork_dgvConfigItemSrcGroupSourcesSelectionChanged (object obj, EventArgs ev)
-        {
-            if (IsFirstActivated == false)
-                m_arLoader [(int)INDEX_SRC.SOURCE].ClearValues();
-            else
-                ;
-
-            int selIndex = (obj as DataGridView).SelectedRows [0].Index;
-            DataAskedHost(new object[] { new object [] { (int)HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SOURCES, selIndex } });
-        }
-        /// <summary>
-        /// Обработка события "изменение выбора" для 'DataGridView' - группы сигналов (источник)
-        /// </summary>
-        /// <param name="obj">Объект, иницировавший событие ('DataGridView')</param>
-        /// <param name="ev">Аргументы события</param>
-        private void panelWork_dgvConfigItemSrcGroupSignalsSelectionChanged (object obj, EventArgs ev)
-        {
-            if (IsFirstActivated == false)
-                m_arLoader [(int)INDEX_SRC.SOURCE].ClearValues (PanelLoader.KEY_CONTROLS.DGV_SIGNALS_OF_GROUP);
-            else
-                ;
-
-            string idGroupSignals = (obj as DataGridView).SelectedRows[0].Cells[0].Value.ToString ().Trim ();
-            DataAskedHost(new object[] { new object[] { (int)HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS, INDEX_SRC.SOURCE, idGroupSignals } });
-        }
-        /// <summary>
-        /// Обработка события "изменение выбора" для 'DataGridView' - группы источников (назначение)
-        /// </summary>
-        /// <param name="obj">Объект, иницировавший событие ('DataGridView')</param>
-        /// <param name="ev">Аргументы события</param>
-        private void panelWork_dgvConfigItemDestGroupSourcesSelectionChanged (object obj, EventArgs ev)
-        {
-            if (IsFirstActivated == false)
-                m_arLoader[(int)INDEX_SRC.DEST].ClearValues ();
-            else
-                ;
-            
-            int selIndex = (obj as DataGridView).SelectedRows[0].Index;
-            DataAskedHost(new object[] { new object[] { (int)HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SOURCES, selIndex } });
-        }
-        /// <summary>
-        /// Обработка события "изменение выбора" для 'DataGridView' - группы сигналов (назначение)
-        /// </summary>
-        /// <param name="obj">Объект, иницировавший событие ('DataGridView')</param>
-        /// <param name="ev">Аргументы события</param>
-        private void panelWork_dgvConfigItemDestGroupSignalsSelectionChanged (object obj, EventArgs ev)
-        {
-            if (IsFirstActivated == false)
-                m_arLoader[(int)INDEX_SRC.DEST].ClearValues (PanelLoader.KEY_CONTROLS.DGV_SIGNALS_OF_GROUP);
-            else
-                ;
-        }
         /// <summary>
         /// Обработчик события 'EvtDataAskedHost' от панелей (источник, назначение)
         /// </summary>
-        /// <param name="obj">Параметр для передачи</param>
-        private void OnEvtDataAskedPanelWork_PanelLoader (object obj)
+        /// <param name="obj">Параметр для передачи-массив (0-панель, 1-индекс группы источников, 2-индекс группы сигналов)</param>
+        private void OnEvtDataAskedPanelWork_PanelLoader (object par)
         {
+            object []pars = (par as EventArgsDataHost).par[0] as object [];
+            //Массив параметров для передачи
+            object[] arObjToDataHost = new object [] { };
+            //Событие для постановки в очередь обработки событий
+            HHandlerQueue.StatesMachine state = HHandlerQueue.StatesMachine.UNKNOWN;
+            //Определить панель-инициатор сообщения
+            INDEX_SRC indxWork = (INDEX_SRC)this.Controls.GetChildIndex(pars[(int)INDEX_PREPARE_PARS.OBJECT] as PanelLoader);
+
+            switch ((PanelLoader.KEY_EVENT)pars[(int)INDEX_PREPARE_PARS.KEY_EVENT])
+            {
+                case PanelLoader.KEY_EVENT.SELECTION_CHANGED:
+                    switch (indxWork)
+                    {
+                        case INDEX_SRC.SOURCE:
+                            switch ((PanelLoader.KEY_CONTROLS)pars[(int)INDEX_PREPARE_PARS.KEY_OBJECT])
+                            {
+                                case PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES:
+                                    state = HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SOURCES;
+                                    arObjToDataHost = new object[] { new object[] { (int)state, pars[(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SOURCES_SEL] } };
+                                    break;
+                                case PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS:
+                                    state = HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS;
+                                    arObjToDataHost = new object[] {
+                                        new object[] {
+                                            (int)state
+                                            , indxWork
+                                            , (pars[(int)INDEX_PREPARE_PARS.OBJECT] as PanelLoader).GetWorkingItemValue (
+                                                (PanelLoader.KEY_CONTROLS)pars[(int)INDEX_PREPARE_PARS.KEY_OBJECT]
+                                                , (int)pars[(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SIGNALS_SEL]
+                                            )
+                                        }
+                                    };
+                                    break;
+                                default:
+                                    break;
+                            }
+                            break;
+                        case INDEX_SRC.DEST:
+                            switch ((PanelLoader.KEY_CONTROLS)pars[(int)INDEX_PREPARE_PARS.KEY_OBJECT])
+                            {
+                                case PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES:
+                                    state = HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SOURCES;
+                                    arObjToDataHost = new object[] { new object[] { (int)state, pars[(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SOURCES_SEL] } };
+                                    break;
+                                case PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS:
+                                    state = HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SIGNALS;
+                                    arObjToDataHost = new object[] {
+                                        new object[] {
+                                            (int)state
+                                            , indxWork
+                                            , (pars[(int)INDEX_PREPARE_PARS.OBJECT] as DataGridView).SelectedRows[0].Cells[0].Value.ToString ().Trim ()
+                                        }
+                                    };
+                                    break;
+                                default:
+                                    break;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case PanelLoader.KEY_EVENT.CELL_CLICK:
+                    switch (indxWork)
+                    {
+                        case INDEX_SRC.SOURCE:
+                            switch ((PanelLoader.KEY_CONTROLS)pars[(int)INDEX_PREPARE_PARS.KEY_OBJECT])
+                            {
+                                case PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES:
+                                    state = HHandlerQueue.StatesMachine.STATE_CHANGED_GROUP_SOURCES;
+                                    break;
+                                case PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS:
+                                    state = HHandlerQueue.StatesMachine.STATE_CHANGED_GROUP_SIGNALS;
+                                    break;
+                                default:
+                                    break;
+                            }
+                            break;
+                        case INDEX_SRC.DEST:
+                            switch ((PanelLoader.KEY_CONTROLS)pars[(int)INDEX_PREPARE_PARS.KEY_OBJECT])
+                            {
+                                case PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES:
+                                    state = HHandlerQueue.StatesMachine.STATE_CHANGED_GROUP_SOURCES;
+                                    break;
+                                case PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS:
+                                    state = HHandlerQueue.StatesMachine.STATE_CHANGED_GROUP_SIGNALS;
+                                    break;
+                                default:
+                                    break;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+
+                    arObjToDataHost = new object[] { (int)state
+                                                    , indxWork
+                                                    , pars[(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SOURCES_SEL]
+                                                    , pars[(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SIGNALS_SEL]
+                                                };
+                    break;
+                default:
+                    break;
+            }
+
             //Ретрансляция для постановки в очередь
-            //DataAskedHost (obj);
+            DataAskedHost(arObjToDataHost);
         }
     }
 
@@ -419,18 +461,6 @@ namespace uLoader
 
             this.ResumeLayout(false);
             this.PerformLayout();
-
-            DataGridView dgv = m_arLoader[(int)INDEX_SRC.SOURCE].GetWorkingItem(PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView;
-            dgv.SelectionChanged += new EventHandler(panelWork_dgvConfigItemSrcGroupSourcesSelectionChanged);
-
-            dgv = m_arLoader[(int)INDEX_SRC.SOURCE].GetWorkingItem(PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView;
-            dgv.SelectionChanged += new EventHandler(panelWork_dgvConfigItemSrcGroupSignalsSelectionChanged);
-
-            dgv = m_arLoader[(int)INDEX_SRC.DEST].GetWorkingItem(PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView;
-            dgv.SelectionChanged += new EventHandler(panelWork_dgvConfigItemDestGroupSourcesSelectionChanged);
-
-            dgv = m_arLoader[(int)INDEX_SRC.DEST].GetWorkingItem(PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView;
-            dgv.SelectionChanged += new EventHandler(panelWork_dgvConfigItemDestGroupSignalsSelectionChanged);
         }
 
         #endregion
