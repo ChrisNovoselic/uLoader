@@ -16,52 +16,94 @@ namespace biysktmora
     {
         protected IPlugIn _iPlugin;
 
-        private static int SEC_INTERVAL_DEFAULT = 60;
+        private static int SEC_SPANPERIOD_DEFAULT = 60;
+        private static int MSEC_INTERVAL_DEFAULT = 6666;
 
-        protected struct SIGNAL
+        private class GroupSignals
         {
-            public int m_id;
-            public string m_NameTable;
-            public SIGNAL (int id, string table)
+            public struct SIGNAL
             {
-                this.m_id = id;
-                this.m_NameTable = table;
+                public int m_id;
+                public string m_NameTable;
+
+                public SIGNAL(int id, string table)
+                {
+                    this.m_id = id;
+                    this.m_NameTable = table;
+                }
+            }
+
+            private SIGNAL[] m_arSignals;
+            public SIGNAL[] Signals { get { return m_arSignals; } }
+
+            private DateTime m_dtStart;
+            public DateTime DateTimeStart { get { return m_dtStart; } }
+            private TimeSpan m_tmSpanPeriod;
+            public TimeSpan TimeSpanPeriod { get { return m_tmSpanPeriod; } }
+            private long m_msecInterval;
+            public long MSecInterval { get { return m_msecInterval; } }
+
+            private DataTable m_tableResults;
+            public DataTable TableResults { get { return m_tableResults; } }
+
+            public GroupSignals(object [] pars)
+            {
+                //Инициализация "временнЫх" значений
+                // конкретные значения м.б. получены при "старте" 
+                m_dtStart = DateTime.MinValue;
+                m_tmSpanPeriod = new TimeSpan((long)(SEC_SPANPERIOD_DEFAULT * Math.Pow(10, 7)));
+                m_msecInterval = MSEC_INTERVAL_DEFAULT;
+                //Инициализировать массив сигналов
+                if (pars.Length > 0)
+                {
+                    m_arSignals = new SIGNAL[pars.Length];                
+
+                    for (int i = 0; i < pars.Length; i ++)
+                        m_arSignals[i] = new SIGNAL((int)(pars[i] as object[])[0], (pars[i] as object[])[1] as string);
+                }
+                else
+                    ;
+                
+                m_arSignals = new SIGNAL[]
+                                    { /*new SIGNAL(20049, @"TAG_000049")
+                                        , new SIGNAL(20002, @"TAG_000047")
+                                        , new SIGNAL(20003, @"TAG_000048")
+                                        , new SIGNAL(20004, @"TAG_000049")
+                                        , new SIGNAL(20005, @"TAG_000050")
+                                        , new SIGNAL(20006, @"TAG_000051")
+                                        , new SIGNAL(20007, @"TAG_000052")
+                                        , new SIGNAL(20008, @"TAG_000053")*/
+                                    };
             }
         }
-        protected Dictionary <int, SIGNAL []> m_dictSignals;
+
+        private Dictionary<int, GroupSignals> m_dictGroupSignals;
+
+        private GroupSignals.SIGNAL[] Signals { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].Signals; } }
+
+        private TimeSpan TimeSpanPeriod { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].TimeSpanPeriod; } }
+        private DateTime DateTimeStart { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].DateTimeStart; } }
+        private long MSecInterval { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].MSecInterval; } }
+
+        public DataTable TableResults { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].TableResults; } }
 
         enum StatesMachine {
             CurrentTime
             , Values
         }
 
-        private DateTime m_dtStart
-            , m_dtServer;
-        private TimeSpan m_tmSpanPeriod;
-        private long m_secInterval;
-        public DataTable m_tableResults;
+        private DateTime m_dtServer;        
         public ConnectionSettings m_connSett;
         public string m_strQuery = string.Empty;
+        private int m_IdGroupSignalsCurrent;
 
         public HBiyskTMOra()
         {
-            m_dtStart =
-            m_dtServer =
-                DateTime.MinValue;
+            m_dtServer = DateTime.MinValue;
 
-            m_tmSpanPeriod = new TimeSpan ((long)(SEC_INTERVAL_DEFAULT * Math.Pow (10, 7)));
+            m_IdGroupSignalsCurrent = 0;
 
-            //Инициализировать массив сигналов
-            m_dictSignals = new Dictionary<int, SIGNAL[]> ();
-                                        /*{ new SIGNAL(20049, @"TAG_000049")
-                                            , new SIGNAL(20002, @"TAG_000047")
-                                            , new SIGNAL(20003, @"TAG_000048")
-                                            , new SIGNAL(20004, @"TAG_000049")
-                                            , new SIGNAL(20005, @"TAG_000050")
-                                            , new SIGNAL(20006, @"TAG_000051")
-                                            , new SIGNAL(20007, @"TAG_000052")
-                                            , new SIGNAL(20008, @"TAG_000053")
-                                        };*/
+            m_dictGroupSignals = new Dictionary<int, GroupSignals>();
         }
 
         public HBiyskTMOra(IPlugIn iPlugIn) : this ()
@@ -82,15 +124,8 @@ namespace biysktmora
         {
             int iRes = 0;
 
-            if (pars.Length > 0)
-            {
-                SIGNAL []arSignals = new SIGNAL[pars.Length];                
-
-                for (int i = 0; i < pars.Length; i ++)
-                    arSignals[i] = new SIGNAL((int)(pars[i] as object[])[0], (pars[i] as object[])[1] as string);
-
-                m_dictSignals.Add(id, arSignals);
-            }
+            if (m_dictGroupSignals.Keys.Contains(id) == false)
+                m_dictGroupSignals.Add(id, new GroupSignals(pars));
             else
                 ;
 
@@ -105,7 +140,7 @@ namespace biysktmora
             {
                 secInterval =
                     //SEC_INTERVAL_DEFAULT
-                    (int)m_tmSpanPeriod.TotalSeconds
+                    (int)TimeSpanPeriod.TotalSeconds
                     ;
             }
             else
@@ -116,7 +151,7 @@ namespace biysktmora
                 , strStart = dtStart.ToString(@"yyyyMMdd HHmmss")
                 , strEnd = dtStart.AddSeconds(secInterval).ToString(@"yyyyMMdd HHmmss");
             //Формировать зпрос
-            foreach (SIGNAL s in m_dictSignals)
+            foreach (GroupSignals.SIGNAL s in Signals)
             {
                 m_strQuery += @"SELECT " + s.m_id + @" as ID, VALUE, QUALITY, DATETIME FROM ARCH_SIGNALS." + s.m_NameTable + @" WHERE DATETIME BETWEEN"
                 + @" to_timestamp('" + strStart + @"', 'yyyymmdd hh24miss')" + @" AND"
@@ -143,17 +178,18 @@ namespace biysktmora
 
         public override void StartDbInterfaces ()
         {            
-            foreach (int id in m_dictSignals.Keys)
-            {
-                if (m_dictIdListeners.ContainsKey (id) == false)
-                {
-                    m_dictIdListeners.Add(id, new int[] { -1 });
-                }
-                else
-                    ;
-
+            foreach (int id in m_dictGroupSignals.Keys)
                 register(id, 0, m_connSett, string.Empty);
-            }
+        }
+
+        protected override void register(int id, int indx, ConnectionSettings connSett, string name)
+        {
+            if (m_dictIdListeners.ContainsKey (id) == false)
+                m_dictIdListeners.Add(id, new int[] { -1 });
+            else
+                ;
+
+            base.register(id, indx, connSett, name);
         }
 
         public override void Start()
@@ -166,16 +202,16 @@ namespace biysktmora
         public override void ClearValues()
         {
             int iPrev = 0, iDel = 0, iCur = 0;
-            if (! (m_tableResults == null))
+            if (! (TableResults == null))
             {
-                iPrev = m_tableResults.Rows.Count;
+                iPrev = TableResults.Rows.Count;
                 string strSel =
-                    @"DATETIME<'" + m_dtStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"' OR DATETIME>='" + m_dtStart.AddSeconds(m_tmSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss") + @"'"
+                    @"DATETIME<'" + DateTimeStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"' OR DATETIME>='" + DateTimeStart.AddSeconds(TimeSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss") + @"'"
                     //@"DATETIME BETWEEN '" + m_dtStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"' AND '" + m_dtStart.AddSeconds(m_tmSpanPeriod.Seconds).ToString(@"yyyy/MM/dd HH:mm:ss") + @"'"
                     ;
 
                 DataRow[] rowsDel = null;
-                try { rowsDel = m_tableResults.Select(strSel); }
+                try { rowsDel = TableResults.Select(strSel); }
                 catch (Exception e)
                 {
                     Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HBiyskTMOra::ClearValues () - ...");
@@ -187,9 +223,9 @@ namespace biysktmora
                     if (rowsDel.Length > 0)
                     {
                         foreach (DataRow r in rowsDel)
-                            m_tableResults.Rows.Remove(r);
-
-                        m_tableResults.AcceptChanges();
+                            TableResults.Rows.Remove(r);
+                        //??? Обязательно ли...
+                        TableResults.AcceptChanges();
                     }
                     else
                         ;
@@ -197,7 +233,7 @@ namespace biysktmora
                 else
                     ;
 
-                iCur = m_tableResults.Rows.Count;
+                iCur = TableResults.Rows.Count;
 
                 Console.WriteLine(@"Обновление рез-та: [было=" + iPrev + @", удалено=" + iDel + @", осталось=" + iCur + @"]");
             }
@@ -211,9 +247,9 @@ namespace biysktmora
             DataRow []arSelWas = null;
             
             //Проверить наличие столбцов в результ./таблице (признак получения рез-та)
-            if (m_tableResults.Columns.Count > 0)
+            if (TableResults.Columns.Count > 0)
             {//Только при наличии результата
-                arSelWas = m_tableResults.Select(@"ID=" + id, @"DATETIME DESC");
+                arSelWas = TableResults.Select(@"ID=" + id, @"DATETIME DESC");
                 //Проверить результат для конкретного сигнала
                 if ((!(arSelWas == null)) && (arSelWas.Length > 0))
                 {//Только при наличии рез-та по конкретному сигналу
@@ -236,7 +272,7 @@ namespace biysktmora
             int iRes = 0;
 
             DataRow[] arSel;
-            foreach (DataRow rRes in m_tableResults.Rows)
+            foreach (DataRow rRes in TableResults.Rows)
             {
                 arSel = (table as DataTable).Select(@"ID=" + rRes[@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
                 iRes += arSel.Length;
@@ -255,12 +291,12 @@ namespace biysktmora
 
             table.Columns.Add (@"tmdelta", typeof (int));
 
-            for (int s = 0; s < m_arSignals.Length; s ++)
+            for (int s = 0; s < Signals.Length; s ++)
             {
                 try
                 {
                     //arSelIns = (table as DataTable).Select(string.Empty, @"ID, DATETIME");
-                    arSelIns = (table as DataTable).Select(@"ID=" + m_arSignals[s].m_id, @"DATETIME");
+                    arSelIns = (table as DataTable).Select(@"ID=" + Signals[s].m_id, @"DATETIME");
                 }
                 catch (Exception e)
                 {
@@ -276,7 +312,7 @@ namespace biysktmora
                         if (i == 0)
                         {//Только при прохождении 1-ой итерации цикла
                             //iTMDelta = 
-                            setTMDelta(m_arSignals[s].m_id, (DateTime)arSelIns[i][@"DATETIME"]);
+                            setTMDelta(Signals[s].m_id, (DateTime)arSelIns[i][@"DATETIME"]);
                         }
                         else
                         {
@@ -302,16 +338,16 @@ namespace biysktmora
         {
             int iRes = 0;
 
-            if (m_dtStart == DateTime.MinValue)
+            if (DateTimeStart == DateTime.MinValue)
             {
-                m_dtStart = m_dtServer;
-                m_dtStart = m_dtStart.AddSeconds(-1 * m_dtStart.Second);
+                DateTimeStart = m_dtServer;
+                DateTimeStart = DateTimeStart.AddSeconds(-1 * DateTimeStart.Second);
             }
             else
                 ;
 
-            if ((m_dtServer - m_dtStart.AddSeconds (m_tmSpanPeriod.TotalSeconds)).TotalSeconds > 6)
-                m_dtStart = m_dtStart.AddSeconds(m_tmSpanPeriod.TotalSeconds);
+            if ((m_dtServer - DateTimeStart.AddSeconds(TimeSpanPeriod.TotalSeconds)).TotalSeconds > 6)
+                DateTimeStart = DateTimeStart.AddSeconds(TimeSpanPeriod.TotalSeconds);
             else
                 ;
 
@@ -335,7 +371,7 @@ namespace biysktmora
                 case (int)StatesMachine.Values:                    
                     actualizeDatetimeStart ();
                     ClearValues();
-                    setQuery (m_dtStart);
+                    setQuery(DateTimeStart);
                     Request (m_dictIdListeners[0][0], m_strQuery);
                     break;
                 default:
@@ -358,16 +394,16 @@ namespace biysktmora
                     break;
                 case (int)StatesMachine.Values:
                     Console.WriteLine(@"Получено строк: " + (table as DataTable).Rows.Count);
-                    if (m_tableResults == null)
+                    if (TableResults == null)
                     {
-                        m_tableResults = new DataTable();
+                        TableResults = new DataTable();
                     }
                     else
                         ;
 
                     int iPrev = -1, iDupl = -1, iAdd = -1, iCur = -1;
                     iPrev = 0; iDupl = 0; iAdd = 0; iCur = 0;
-                    iPrev = m_tableResults.Rows.Count;
+                    iPrev = TableResults.Rows.Count;
 
                     //if (results.Rows.Count == 0)
                     //{
@@ -391,8 +427,8 @@ namespace biysktmora
                     //table.Columns.Add(@"tmdelta", Type.GetType("Int32"));
 
                     iAdd = table.Rows.Count;
-                    m_tableResults.Merge(table);
-                    iCur = m_tableResults.Rows.Count;
+                    TableResults.Merge(table);
+                    iCur = TableResults.Rows.Count;
                     Console.WriteLine(@"Объединение таблицы-рез-та: [было=" + iPrev + @", дублирущих= " + iDupl + @", добавлено=" + iAdd + @", стало=" + iCur + @"]");
                     //DataTable tableChanged = results.GetChanges();
                     //if (! (tableChanged == null))
@@ -497,11 +533,15 @@ namespace biysktmora
                     break;
                 case (int)ID_DATA_ASKED_HOST.START:
                     if (m_markDataHost.IsMarked((int)ID_DATA_ASKED_HOST.INIT_CONN_SETT) == true)
+                    {
                         target.Start();
+                        target.Activate(true);
+                    }
                     else
                         DataAskedHost((int)ID_DATA_ASKED_HOST.INIT_CONN_SETT);
                     break;
                 case (int)ID_DATA_ASKED_HOST.STOP:
+                    target.Activate(false);
                     target.Stop();
                     break;
                 default:

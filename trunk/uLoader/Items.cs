@@ -257,7 +257,7 @@ namespace uLoader
 
                     foreach (GroupSignals grpSgnls in m_listGroupSignals)
                     {
-                        if (grpSgnls.m_State == STATE.STARTED)
+                        if (grpSgnls.State == STATE.STARTED)
                         {
                             stateRes = STATE.STARTED;
                             break;
@@ -351,7 +351,7 @@ namespace uLoader
             {
                 int iRes = 0;
 
-                m_State = GroupSources.getNewState (m_State, out iRes);
+                State = GroupSources.getNewState (State, out iRes);
 
                 return iRes;
             }
@@ -431,8 +431,7 @@ namespace uLoader
             else
                 ;
 
-            EvtDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_CONN_SETT, new object[] { this.m_listConnSett[0] }));
-            //EvtDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_GROUP_SIGNALS, new object[] { }));
+            sendInitConnSett();
 
             foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
             {
@@ -550,15 +549,15 @@ namespace uLoader
                 case ID_DATA_ASKED_HOST.INIT_CONN_SETT: //Получен запрос на парметры инициализации                    
                     //Отправить данные для инициализации
                     sendInitConnSett ();
-                    if (! (m_listGroupSignals[iIDGroupSignals].m_State == STATE.UNAVAILABLE))
-                        sendState(iIDGroupSignals, m_listGroupSignals[iIDGroupSignals].m_State);
+                    if (! (m_listGroupSignals[iIDGroupSignals].State == STATE.UNAVAILABLE))
+                        sendState(iIDGroupSignals, m_listGroupSignals[iIDGroupSignals].State);
                     else
                         ;
                     break;
                 case ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP: //Получен запрос на обрабатываемую группу сигналов
                     sendInitGroupSignals(iIDGroupSignals);
-                    if (! (m_listGroupSignals[iIDGroupSignals].m_State == STATE.UNAVAILABLE))
-                        sendState(iIDGroupSignals, m_listGroupSignals[iIDGroupSignals].m_State);
+                    if (! (m_listGroupSignals[iIDGroupSignals].State == STATE.UNAVAILABLE))
+                        sendState(iIDGroupSignals, m_listGroupSignals[iIDGroupSignals].State);
                     else
                         ;
                     break;
@@ -573,7 +572,11 @@ namespace uLoader
                     break;
             }
         }
-
+        /// <summary>
+        /// Возвратить группу сигналов по целочисленному идентификатору
+        /// </summary>
+        /// <param name="id">Целочисленный идентификатор (целочисленное окончание строкового идентификатора)</param>
+        /// <returns>Объект группы сигналов</returns>
         private GroupSignals getGroupSignals (int id)
         {
             GroupSignals grpRes = null;
@@ -590,7 +593,12 @@ namespace uLoader
 
             return grpRes;
         }
-
+        /// <summary>
+        /// Возвратить "новое" состояние в ~ предыдущего состояния
+        /// </summary>
+        /// <param name="prevState">Предыдущее состояние</param>
+        /// <param name="iRes">Результат выполнения функции</param>
+        /// <returns>"Новое" состояние</returns>
         private static STATE getNewState (STATE prevState, out int iRes)
         {
             STATE stateRes = STATE.UNAVAILABLE;
@@ -615,37 +623,33 @@ namespace uLoader
         public int StateChange (int id)
         {
             int iRes = 0;
-
+            //Проверить параметр - идентификатор
             if (! (id < 0))
-            {
-                GroupSignals grpSgnls = null;
-                grpSgnls = getGroupSignals(id);
+            {//Изменить состояние только ОДНой группы сигналов
+                GroupSignals grpSgnls = getGroupSignals(id);
                 iRes = grpSgnls.StateChange ();
 
-                sendState (id, grpSgnls.m_State);
+                sendState (id, grpSgnls.State);
             }
             else
-            {
+            {//Изменить состояние ВСЕХ групп сигналов
                 STATE newState = getNewState (State, out iRes);
                 
                 foreach (GroupSignals grpSgnls in m_listGroupSignals)
-                {
-                    grpSgnls.StateChange(newState);
+                    //Проверить текцщее стостояние
+                    if (!(grpSgnls.State == newState))
+                    {
+                        //Изменить только, если "другое"
+                        grpSgnls.StateChange(newState);
 
-                    sendState(FormMain.FileINI.GetIDIndex(grpSgnls.m_strID), grpSgnls.m_State);
-                }
+                        sendState(FormMain.FileINI.GetIDIndex(grpSgnls.m_strID), grpSgnls.State);
+                    }
+                    else
+                        ;
             }
 
             return iRes;
         }
-
-        //public int Request (string id)
-        //{
-        //    int iRes = 0
-        //        , iID = uLoader.FormMain.FileINI.GetIDIndex(id);
-
-        //    return iRes;
-        //}
 
         public DataTable GetData(string id, out bool bErr)
         {
