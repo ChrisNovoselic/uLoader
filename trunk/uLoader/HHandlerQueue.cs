@@ -160,6 +160,8 @@ namespace uLoader
                 case (int)StatesMachine.OBJ_SRC_GROUP_SIGNALS:
                 case (int)StatesMachine.STATE_GROUP_SOURCES:
                 case (int)StatesMachine.STATE_GROUP_SIGNALS:
+                case (int)StatesMachine.STATE_CHANGED_GROUP_SOURCES:
+                case (int)StatesMachine.STATE_CHANGED_GROUP_SIGNALS:
                     dataHost.m_objRecieved.OnEvtDataRecievedHost(new object [] { state, obj });
                     break;
                 default:
@@ -169,9 +171,10 @@ namespace uLoader
             return iRes;
         }
 
-        protected override int StateCheckResponse(int state, out bool error, out object outobj)
+        protected override int StateCheckResponse(int s, out bool error, out object outobj)
         {
             int iRes = -1;
+            StatesMachine state = (StatesMachine)s;
 
             error = true;
             outobj = null;
@@ -189,28 +192,28 @@ namespace uLoader
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS:
+                case StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS:
                     error = false;
                     dataHost = Peek;
                     outobj = m_fileINI.GetListItemsOfGroupSource(dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.LIST_SRC_GROUP_SOURCE_PARS:
+                case StatesMachine.LIST_SRC_GROUP_SOURCE_PARS:
                     error = false;
                     dataHost = Peek;
                     outobj = m_fileINI.GetListParsOfGroupSource (dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.LIST_SRC_GROUP_SOURCE_PROP:
+                case StatesMachine.LIST_SRC_GROUP_SOURCE_PROP:
                     error = false;
                     dataHost = Peek;
                     outobj = m_fileINI.GetListItemPropOfGroupSource(dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.LIST_GROUP_SIGNALS:
+                case StatesMachine.LIST_GROUP_SIGNALS:
                     error = false;
                     outobj = new object[] {
                         m_fileINI.ListSrcGroupSignals
@@ -219,70 +222,70 @@ namespace uLoader
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS:
+                case StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS:
                     error = false;
                     dataHost = Peek;
                     outobj = m_fileINI.GetListItemsOfGroupSignal(dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_PARS:
+                case StatesMachine.LIST_SRC_GROUP_SIGNAL_PARS:
                     error = false;
                     dataHost = Peek;
                     outobj = m_fileINI.GetListParsOfGroupSignal (dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.LIST_SRC_GROUP_SIGNAL_PROP:
+                case StatesMachine.LIST_SRC_GROUP_SIGNAL_PROP:
                     error = false;
                     dataHost = Peek;
                     outobj = m_fileINI.GetListItemPropOfGroupSignal(dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS:
+                case StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS:
                     error = false;
                     dataHost = Peek;
                     outobj = m_fileINI.GetListItemsOfGroupSource(dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.LIST_DEST_GROUP_SOURCE_PARS:
+                case StatesMachine.LIST_DEST_GROUP_SOURCE_PARS:
                     error = false;
                     dataHost = Peek;
                     outobj = m_fileINI.GetListParsOfGroupSource (dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.LIST_DEST_GROUP_SOURCE_PROP:
+                case StatesMachine.LIST_DEST_GROUP_SOURCE_PROP:
                     error = false;
                     dataHost = Peek;
                     outobj = m_fileINI.GetListItemPropOfGroupSource(dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS:
+                case StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS:
                     error = false;
                     dataHost = Peek;
                     outobj = m_fileINI.GetListItemsOfGroupSignal(dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_PARS:
+                case StatesMachine.LIST_DEST_GROUP_SIGNAL_PARS:
                     error = false;
                     dataHost = Peek;
                     outobj = m_fileINI.GetListParsOfGroupSignal (dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.LIST_DEST_GROUP_SIGNAL_PROP:
+                case StatesMachine.LIST_DEST_GROUP_SIGNAL_PROP:
                     error = false;
                     dataHost = Peek;
                     outobj = m_fileINI.GetListItemPropOfGroupSignal(dataHost.m_pars.ToArray());
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.OBJ_SRC_GROUP_SOURCES:
+                case StatesMachine.OBJ_SRC_GROUP_SOURCES:
                     error = false;
                     dataHost = Peek;
                     //??? 0-й параметр индекс "выбранноой" группы источников
@@ -290,7 +293,7 @@ namespace uLoader
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.OBJ_DEST_GROUP_SOURCES:
+                case StatesMachine.OBJ_DEST_GROUP_SOURCES:
                     error = false;
                     dataHost = Peek;
                     //??? 0-й параметр индекс "выбранноой" группы источников
@@ -298,13 +301,13 @@ namespace uLoader
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.TIMER_WORK_UPDATE:
+                case StatesMachine.TIMER_WORK_UPDATE:
                     error = false;
                     outobj = m_fileINI.SecondWorkUpdate;
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.OBJ_SRC_GROUP_SIGNALS:
+                case StatesMachine.OBJ_SRC_GROUP_SIGNALS:
                     error = false;
                     dataHost = Peek;
                     //??? 0-й параметр идентификатор "выбранноой" группы сигналов
@@ -312,7 +315,7 @@ namespace uLoader
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.STATE_GROUP_SOURCES:
+                case StatesMachine.STATE_GROUP_SOURCES:
                     error = false;
                     outobj = new object[(int)INDEX_SRC.COUNT_INDEX_SRC];
                     for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
@@ -325,7 +328,7 @@ namespace uLoader
 
                     iRes = 0;
                     break;
-                case (int)StatesMachine.STATE_GROUP_SIGNALS:
+                case StatesMachine.STATE_GROUP_SIGNALS:
                     error = false;
                     dataHost = Peek;
                     //??? 0-й параметр индекс "выбранноой" группы сигналов
@@ -337,6 +340,20 @@ namespace uLoader
                             (outobj as object[])[(int)indxSrc] = new GroupSources.STATE[] { };
 
                     iRes = 0;
+                    break;
+                case StatesMachine.STATE_CHANGED_GROUP_SOURCES:
+                    error = false;
+                    dataHost = Peek;
+
+                    iRes = m_listGroupSources[(int)((INDEX_SRC)dataHost.m_pars[0])][(int)dataHost.m_pars[1]].StateChange((int)dataHost.m_pars[2]);
+
+                    iRes = -1;
+                    break;
+                case StatesMachine.STATE_CHANGED_GROUP_SIGNALS:
+                    error = false;
+                    dataHost = Peek;
+
+                    iRes = m_listGroupSources[(int)((INDEX_SRC)dataHost.m_pars[0])][(int)dataHost.m_pars[1]].StateChange((int)dataHost.m_pars[2]);
                     break;
                 default:
                     break;

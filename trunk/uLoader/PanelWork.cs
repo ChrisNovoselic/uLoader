@@ -97,10 +97,23 @@ namespace uLoader
         {
             m_arLoader[(int)indxWork].FillWorkItem(grpSrc);
         }
-
+        /// <summary>
+        /// "Включение"/"отключение" элементов интерфейса в зависимости от состояния
+        /// </summary>
+        /// <param name="indxWork">Индекс панели</param>
+        /// <param name="key">Ключ элемента интерфейса</param>
+        /// <param name="states">Массив состояний объектов</param>
         private void enabledWorkItem(INDEX_SRC indxWork, PanelLoader.KEY_CONTROLS key, GroupSources.STATE[] states)
         {
             m_arLoader[(int)indxWork].EnabledWorkItem(key, states);
+        }
+        private int changeTimerUpdate (int msec)
+        {
+            int iRes = -1;
+
+            iRes = m_timerUpdate.Change (msec, System.Threading.Timeout.Infinite) == true ? 0 : -1;
+
+            return iRes;
         }
         /// <summary>
         /// Активировать таймер
@@ -119,7 +132,7 @@ namespace uLoader
             else
                 ;
             //Изменить состояние таймера
-            iRes = m_timerUpdate.Change(msecDueTime, System.Threading.Timeout.Infinite) == true ? 0 : -1;
+            iRes = changeTimerUpdate(msecDueTime);
 
             return iRes;
         }
@@ -145,7 +158,7 @@ namespace uLoader
             else
                 ;
             //Выполнить действия для останова таймера
-            m_timerUpdate.Change (System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+            changeTimerUpdate (System.Threading.Timeout.Infinite);
             m_timerUpdate.Dispose ();
             m_timerUpdate = null;
         }
@@ -182,13 +195,19 @@ namespace uLoader
                 case (int)HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS: //Объект группы сигналов (источник)
                     fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SIGNALS_SRC);
                     break;
-                case (int)HHandlerQueue.StatesMachine.STATE_GROUP_SOURCES: //Состояние группы источников  (источник, назначение)
+                case (int)HHandlerQueue.StatesMachine.STATE_GROUP_SOURCES: //Состояние группы источников (источник, назначение)
                     for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
                         enabledWorkItem(indxSrc, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)indxSrc] as GroupSources.STATE[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.STATE_GROUP_SIGNALS: //Состояние группы источников  (источник, назначение)
+                case (int)HHandlerQueue.StatesMachine.STATE_GROUP_SIGNALS: //Состояние группы сигналов  (источник, назначение)
                     for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc ++ )
                         enabledWorkItem(indxSrc, PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS, (par as object[])[(int)indxSrc] as GroupSources.STATE[]);
+                    break;
+                case (int)HHandlerQueue.StatesMachine.STATE_CHANGED_GROUP_SOURCES: //Состояние (изменено) группы источников (источник, назначение)
+                    changeTimerUpdate (0);
+                    break;
+                case (int)HHandlerQueue.StatesMachine.STATE_CHANGED_GROUP_SIGNALS: //Состояние (изменено) группы сигналов (источник, назначение)
+                    changeTimerUpdate(0);
                     break;
                 default:
                     break;
@@ -236,6 +255,7 @@ namespace uLoader
             {
                 //Запросить данные
                 DataAskedHost(new object[] { new object [] { (int)HHandlerQueue.StatesMachine.LIST_GROUP_SOURCES /*, без параметров*/ }
+                                            //??? временно отключить для отладки...
                                             , new object [] { (int)HHandlerQueue.StatesMachine.TIMER_WORK_UPDATE /*, без параметров*/ }
                                         });                
             }
@@ -261,7 +281,7 @@ namespace uLoader
 
         private void fTimerUpdate (object par)
         {
-            m_timerUpdate.Change(1000 * m_iSecondUpdate, System.Threading.Timeout.Infinite);
+            changeTimerUpdate (1000 * m_iSecondUpdate);
 
             DataGridView ctrl = null;
             int indxSrcSel = -1
@@ -380,11 +400,14 @@ namespace uLoader
                             break;
                     }
 
-                    arObjToDataHost = new object[] { (int)state
-                                                    , indxWork
-                                                    , pars[(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SOURCES_SEL]
-                                                    , pars[(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SIGNALS_SEL]
-                                                };
+                    arObjToDataHost = new object[] { new object []
+                                                        {
+                                                            (int)state
+                                                            , indxWork
+                                                            , pars[(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SOURCES_SEL]
+                                                            , pars[(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SIGNALS_SEL]
+                                                        }
+                    };
                     break;
                 default:
                     break;

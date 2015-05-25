@@ -326,6 +326,27 @@ namespace uLoader
 
                 m_State = STATE.UNAVAILABLE;
             }
+
+            public int StateChange ()
+            {
+                int iRes = 0;
+
+                m_State = GroupSources.getNewState (m_State, out iRes);
+
+                return iRes;
+            }
+
+            public int StateChange (STATE newState)
+            {
+                int iRes = 0;
+
+                if (m_State == STATE.UNAVAILABLE)
+                    iRes = -1;
+                else
+                    m_State = newState;
+
+                return iRes;
+            }
         }
         /// <summary>
         /// Вспомогательный домен приложения для загрузки/выгрузки библиотеки
@@ -477,6 +498,65 @@ namespace uLoader
                 default:
                     break;
             }
+        }
+
+        private GroupSignals getGroupSignals (int id)
+        {
+            GroupSignals grpRes = null;
+
+            foreach (GroupSignals grpSgnls in m_listGroupSignals)
+                if (uLoader.FormMain.FileINI.GetIDIndex(grpSgnls.m_strID) == id)
+                {
+                    grpRes = grpSgnls;
+
+                    break;
+                }
+                else
+                    ;
+
+            return grpRes;
+        }
+
+        private static STATE getNewState (STATE prevState, out int iRes)
+        {
+            STATE stateRes = STATE.UNAVAILABLE;
+            iRes = 0;
+
+            if (prevState == STATE.UNAVAILABLE)
+                iRes = -1;
+            else
+            {
+                if (prevState == STATE.STARTED)
+                    stateRes = STATE.STOPPED;
+                else
+                    if (prevState == STATE.STOPPED)
+                        stateRes = STATE.STARTED;
+                    else
+                        throw new Exception(@"GroupSources::getNewState () - неизвестное состояние...");
+            }
+
+            return stateRes;
+        }
+
+        public int StateChange (int id)
+        {
+            int iRes = 0;
+
+            if (! (id < 0))
+            {
+                GroupSignals grpSgnls = null;
+                grpSgnls = getGroupSignals(id);
+                iRes = grpSgnls.StateChange ();
+            }
+            else
+            {
+                STATE newState = getNewState (State, out iRes);
+                
+                foreach (GroupSignals grpSgnls in m_listGroupSignals)
+                    grpSgnls.StateChange(newState);
+            }
+
+            return iRes;
         }
     }
 }
