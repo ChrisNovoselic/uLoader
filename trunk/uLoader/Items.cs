@@ -5,6 +5,7 @@ using System.Text;
 
 using System.Reflection; //Assembly
 using System.IO;
+using System.Data;
 
 using HClassLibrary;
 
@@ -295,15 +296,34 @@ namespace uLoader
         /// </summary>
         private class GroupSignals : GROUP_SIGNALS_SRC
         {
-            ///// <summary>
-            ///// Перечисление состояний группы сигналов
-            ///// </summary>
-            //public enum STATE { STOPPED, STARTED }
+            private System.Threading.Timer m_timerUpdate;
 
+            private STATE _state;
             /// <summary>
             /// Состояние группы сигналов
             /// </summary>
-            public STATE m_State;           
+            public STATE State
+            {
+                get { return _state; }
+
+                set
+                {
+                    if (value == STATE.STARTED)
+                        //Запустить таймер
+                        ;
+                    else
+                        if ((value == STATE.STOPPED)
+                            && (_state == STATE.STARTED))
+                            //Остановить таймер
+                            ;
+                        else
+                            ;
+
+                    _state = value;
+                }
+            }
+            
+            public DataTable m_tableData;           
 
             public GroupSignals(GROUP_SIGNALS_SRC srcItem)
                 : base()
@@ -324,7 +344,7 @@ namespace uLoader
 
                 this.m_strID = srcItem.m_strID;
 
-                m_State = STATE.UNAVAILABLE;
+                _state = STATE.UNAVAILABLE;
             }
 
             public int StateChange ()
@@ -340,10 +360,10 @@ namespace uLoader
             {
                 int iRes = 0;
 
-                if (m_State == STATE.UNAVAILABLE)
+                if (State == STATE.UNAVAILABLE)
                     iRes = -1;
                 else
-                    m_State = newState;
+                    State = newState;
 
                 return iRes;
             }
@@ -358,14 +378,14 @@ namespace uLoader
         /// </summary>
         List <GroupSignals> m_listGroupSignals;
         /// <summary>
-        /// Количество групп сигналов для группы источников
+        /// Возвратить массив состояний групп сигналов для группы источников
         /// </summary>
         public STATE[] GetStateGroupSignals ()
         {
             STATE []arRes = new STATE [m_listGroupSignals.Count];
 
             foreach (GroupSignals grpSgnls in m_listGroupSignals)
-                arRes[(int)m_listGroupSignals.IndexOf(grpSgnls)] = grpSgnls.m_State;
+                arRes[(int)m_listGroupSignals.IndexOf(grpSgnls)] = grpSgnls.State;
 
             return arRes;
         }
@@ -411,11 +431,14 @@ namespace uLoader
             else
                 ;
 
-            foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
-                itemGroupSignals.m_State = STATE.STOPPED;
-
             EvtDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_CONN_SETT, new object[] { this.m_listConnSett[0] }));
-            //EvtDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_GROUP_SIGNALS, new object[] { }));            
+            //EvtDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_GROUP_SIGNALS, new object[] { }));
+
+            foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
+            {
+                itemGroupSignals.State = STATE.STOPPED;
+                sendInitGroupSignals (FormMain.FileINI.GetIDIndex(itemGroupSignals.m_strID));
+            }
         }
         /// <summary>
         /// Загрузить библиотеку с именем 'm_strDLLName'
@@ -461,14 +484,13 @@ namespace uLoader
                     plugInRes = ((IPlugIn)Activator.CreateInstance(objType));
                     plugInRes.Host = (IPlugInHost)this;
 
-                    (plugInRes as HHPlugIn).EvtDataAskedHost += new DelegateObjectFunc(GroupSources_EvtDataAskedHost);
+                    (plugInRes as HHPlugIn).EvtDataAskedHost += new DelegateObjectFunc(GroupSources_OnEvtDataAskedHost);
                     EvtDataAskedHost += (plugInRes as HHPlugIn).OnEvtDataRecievedHost;
 
                     iRes = STATE_DLL.LOADED;
                 }
                 catch (Exception e)
                 {
-
                     Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"GroupSources::loadPlugin () ... CreateInstance ... plugIn.Name = " + name);
                 }
             else
@@ -479,21 +501,73 @@ namespace uLoader
 
             return plugInRes;
         }
+
+        private void sendInitConnSett ()
+        {
+            EvtDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_CONN_SETT, new object[] { this.m_listConnSett[FormMain.FileINI.GetIDIndex(m_IDCurrentConnSett)] }));
+        }
+
+        private void sendInitGroupSignals (int iIDGroupSignals)
+        {
+            GroupSignals grpSgnls = getGroupSignals(iIDGroupSignals);
+            object[] arToDataHost = new object[grpSgnls.m_listSgnls.Count];
+            foreach (SIGNAL_SRC sgnl in grpSgnls.m_listSgnls)
+                arToDataHost[grpSgnls.m_listSgnls.IndexOf(sgnl)] = new object[] { Int32.Parse(sgnl.m_dictPars[@"ID"]), sgnl.m_dictPars[@"KKS_NAME"] };
+            //Отправить данные для инициализации
+            EvtDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP, new object [] { iIDGroupSignals, arToDataHost }));
+        }
+
+        private void sendState(int iIDGroupSignals, STATE state)
+        {
+            ID_DATA_ASKED_HOST idToSend = ID_DATA_ASKED_HOST.UNKNOWN;
+
+            switch (state)
+            {
+                case STATE.STARTED:
+                    idToSend = ID_DATA_ASKED_HOST.START;
+                    break;
+                case STATE.STOPPED:
+                    idToSend = ID_DATA_ASKED_HOST.STOP;
+                    break;
+                default:
+                    break;
+            }
+
+            EvtDataAskedHost(new EventArgsDataHost((int)idToSend, new object[] { iIDGroupSignals }));
+        }
+
         /// <summary>
         /// Обработка сообщений "от" библиотеки
         /// </summary>
         /// <param name="obj"></param>
-        private void GroupSources_EvtDataAskedHost  (object obj)
+        private void GroupSources_OnEvtDataAskedHost  (object obj)
         {
             EventArgsDataHost ev = obj as EventArgsDataHost;
+            int iIDGroupSignals = 0; //??? д.б. указана в "запросе"
 
-            switch (ev.id)
+            switch ((ID_DATA_ASKED_HOST)(ev.par as object[])[0])
             {
-                case (int)ID_DATA_ASKED_HOST.INIT_CONN_SETT: //Получен запрос на парметры инициализации
+                case ID_DATA_ASKED_HOST.INIT_CONN_SETT: //Получен запрос на парметры инициализации                    
                     //Отправить данные для инициализации
-                    EvtDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_CONN_SETT, new object[] { this.m_listConnSett[0] }));
+                    sendInitConnSett ();
+                    if (! (m_listGroupSignals[iIDGroupSignals].m_State == STATE.UNAVAILABLE))
+                        sendState(iIDGroupSignals, m_listGroupSignals[iIDGroupSignals].m_State);
+                    else
+                        ;
                     break;
-                case (int)ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP: //Получен запрос на обрабатываемую группу сигналов
+                case ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP: //Получен запрос на обрабатываемую группу сигналов
+                    sendInitGroupSignals(iIDGroupSignals);
+                    if (! (m_listGroupSignals[iIDGroupSignals].m_State == STATE.UNAVAILABLE))
+                        sendState(iIDGroupSignals, m_listGroupSignals[iIDGroupSignals].m_State);
+                    else
+                        ;
+                    break;
+                case ID_DATA_ASKED_HOST.TABLE_RES:
+                    iIDGroupSignals = (int)(ev.par as object[])[1];
+                    m_listGroupSignals[iIDGroupSignals].m_tableData = ((ev.par as object[])[2] as DataTable).Copy();                    
+                    break;
+                case ID_DATA_ASKED_HOST.ERROR:
+                    iIDGroupSignals = (int)(ev.par as object[])[1];
                     break;
                 default:
                     break;
@@ -547,16 +621,49 @@ namespace uLoader
                 GroupSignals grpSgnls = null;
                 grpSgnls = getGroupSignals(id);
                 iRes = grpSgnls.StateChange ();
+
+                sendState (id, grpSgnls.m_State);
             }
             else
             {
                 STATE newState = getNewState (State, out iRes);
                 
                 foreach (GroupSignals grpSgnls in m_listGroupSignals)
+                {
                     grpSgnls.StateChange(newState);
+
+                    sendState(FormMain.FileINI.GetIDIndex(grpSgnls.m_strID), grpSgnls.m_State);
+                }
             }
 
             return iRes;
+        }
+
+        //public int Request (string id)
+        //{
+        //    int iRes = 0
+        //        , iID = uLoader.FormMain.FileINI.GetIDIndex(id);
+
+        //    return iRes;
+        //}
+
+        public DataTable GetData(string id, out bool bErr)
+        {
+            int iID = -1;            
+            bErr = false;
+
+            if (id.Length > 1)
+            {
+                iID = uLoader.FormMain.FileINI.GetIDIndex(id);
+
+                return getGroupSignals (iID).m_tableData;
+            }
+            else
+            {
+                //bErr = true;
+
+                return new DataTable();
+            }
         }
     }
 }

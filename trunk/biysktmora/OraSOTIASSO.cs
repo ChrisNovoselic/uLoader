@@ -17,7 +17,7 @@ namespace biysktmora
         protected IPlugIn _iPlugin;
 
         private static int SEC_INTERVAL_DEFAULT = 60;
-        
+
         protected struct SIGNAL
         {
             public int m_id;
@@ -28,7 +28,7 @@ namespace biysktmora
                 this.m_NameTable = table;
             }
         }
-        protected SIGNAL [] m_arSignals;
+        protected Dictionary <int, SIGNAL []> m_dictSignals;
 
         enum StatesMachine {
             CurrentTime
@@ -52,15 +52,16 @@ namespace biysktmora
             m_tmSpanPeriod = new TimeSpan ((long)(SEC_INTERVAL_DEFAULT * Math.Pow (10, 7)));
 
             //Инициализировать массив сигналов
-            m_arSignals = new SIGNAL[] { /*new SIGNAL(20049, @"TAG_000049")
-                                        , new SIGNAL(20002, @"TAG_000047")
-                                        , new SIGNAL(20003, @"TAG_000048")
-                                        , new SIGNAL(20004, @"TAG_000049")
-                                        , new SIGNAL(20005, @"TAG_000050")
-                                        , new SIGNAL(20006, @"TAG_000051")
-                                        , new SIGNAL(20007, @"TAG_000052")
-                                        , new SIGNAL(20008, @"TAG_000053")*/
-                                    };
+            m_dictSignals = new Dictionary<int, SIGNAL[]> ();
+                                        /*{ new SIGNAL(20049, @"TAG_000049")
+                                            , new SIGNAL(20002, @"TAG_000047")
+                                            , new SIGNAL(20003, @"TAG_000048")
+                                            , new SIGNAL(20004, @"TAG_000049")
+                                            , new SIGNAL(20005, @"TAG_000050")
+                                            , new SIGNAL(20006, @"TAG_000051")
+                                            , new SIGNAL(20007, @"TAG_000052")
+                                            , new SIGNAL(20008, @"TAG_000053")
+                                        };*/
         }
 
         public HBiyskTMOra(IPlugIn iPlugIn) : this ()
@@ -77,18 +78,18 @@ namespace biysktmora
             return iRes;
         }
 
-        public int Initialize(object [] pars)
+        public int Initialize(int id, object [] pars)
         {
             int iRes = 0;
 
             if (pars.Length > 0)
             {
-                m_arSignals = new SIGNAL[pars.Length];
+                SIGNAL []arSignals = new SIGNAL[pars.Length];                
 
                 for (int i = 0; i < pars.Length; i ++)
-                {
-                    m_arSignals[i] = new SIGNAL((int)(pars[i] as object[])[0], (pars[i] as object[])[1] as string);
-                }
+                    arSignals[i] = new SIGNAL((int)(pars[i] as object[])[0], (pars[i] as object[])[1] as string);
+
+                m_dictSignals.Add(id, arSignals);
             }
             else
                 ;
@@ -115,7 +116,7 @@ namespace biysktmora
                 , strStart = dtStart.ToString(@"yyyyMMdd HHmmss")
                 , strEnd = dtStart.AddSeconds(secInterval).ToString(@"yyyyMMdd HHmmss");
             //Формировать зпрос
-            foreach (SIGNAL s in m_arSignals)
+            foreach (SIGNAL s in m_dictSignals)
             {
                 m_strQuery += @"SELECT " + s.m_id + @" as ID, VALUE, QUALITY, DATETIME FROM ARCH_SIGNALS." + s.m_NameTable + @" WHERE DATETIME BETWEEN"
                 + @" to_timestamp('" + strStart + @"', 'yyyymmdd hh24miss')" + @" AND"
@@ -141,16 +142,25 @@ namespace biysktmora
         }
 
         public override void StartDbInterfaces ()
-        {
-            m_dictIdListeners.Add (0, new int [] { 0 });
-            register(0, 0, m_connSett, string.Empty);
+        {            
+            foreach (int id in m_dictSignals.Keys)
+            {
+                if (m_dictIdListeners.ContainsKey (id) == false)
+                {
+                    m_dictIdListeners.Add(id, new int[] { -1 });
+                }
+                else
+                    ;
+
+                register(id, 0, m_connSett, string.Empty);
+            }
         }
 
         public override void Start()
         {
-            StartDbInterfaces ();
-
             base.Start();
+
+            StartDbInterfaces ();            
         }
 
         public override void ClearValues()
@@ -389,6 +399,8 @@ namespace biysktmora
                     //    Console.WriteLine(@"Изменено строк: " + tableChanged.Rows.Count);
                     //else
                     //    Console.WriteLine(@"Изменено строк: " + 0);
+
+                    (_iPlugin as HHPlugIn).DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.TABLE_RES, 0, table });
                     break;
                 default:
                     break;
@@ -420,6 +432,8 @@ namespace biysktmora
                 ;
 
             Console.WriteLine(msgErr);
+
+            (_iPlugin as HHPlugIn).DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.ERROR, 0, state, msgErr });
         }
 
         protected override void StateWarnings(int state, int request, int result)
@@ -450,6 +464,8 @@ namespace biysktmora
 
     public class PlugIn : HHPlugIn
     {
+        //private Dictionary <int, HMark> m_dictMarkDataHost;
+
         public PlugIn()
             : base()
         {
@@ -477,14 +493,11 @@ namespace biysktmora
                     ));
                     break;
                 case (int)ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP:
-                    target.Initialize(ev.par as object []);
+                    target.Initialize((int)(ev.par as object[])[0], (ev.par as object[])[1] as object []);
                     break;
                 case (int)ID_DATA_ASKED_HOST.START:
                     if (m_markDataHost.IsMarked((int)ID_DATA_ASKED_HOST.INIT_CONN_SETT) == true)
-                        if (m_markDataHost.IsMarked((int)ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP) == true)
-                            target.Start();
-                        else
-                            DataAskedHost((int)ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP);
+                        target.Start();
                     else
                         DataAskedHost((int)ID_DATA_ASKED_HOST.INIT_CONN_SETT);
                     break;

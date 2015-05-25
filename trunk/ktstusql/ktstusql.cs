@@ -13,7 +13,7 @@ namespace ktstusql
         {
         }
 
-        public void Initialize(object [] pars)
+        public void Initialize(int id, object [] pars)
         {
         }
 
@@ -90,7 +90,7 @@ namespace ktstusql
                     ));
                     break;
                 case (int)ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP:
-                    target.Initialize(ev.par as object[]);
+                    target.Initialize((int)(ev.par as object[])[0], (ev.par as object[])[1] as object[]);
                     break;
                 case (int)ID_DATA_ASKED_HOST.START:
                     if (m_markDataHost.IsMarked((int)ID_DATA_ASKED_HOST.INIT_CONN_SETT) == true)

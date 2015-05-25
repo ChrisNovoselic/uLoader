@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 
 using System.Windows.Forms;
-
+using System.Data;
 
 using HClassLibrary;
 
@@ -14,7 +14,7 @@ namespace uLoader
 {
     public partial class PanelWork
     {
-        private partial class PanelLoader : PanelCommonDataHost
+        private abstract partial class PanelLoader : PanelCommonDataHost
         {
             /// <summary>
             /// Перечисление - ключи событий для передачи "родительской" панели
@@ -52,7 +52,7 @@ namespace uLoader
             }
         }
 
-        partial class PanelLoader
+        private abstract partial class PanelLoader
         {
             /// <summary>
             /// Требуется переменная конструктора.
@@ -679,6 +679,8 @@ namespace uLoader
 
                 return iRes;
             }
+
+            public abstract int UpdateData(DataTable table);
         }
 
         private class PanelLoaderSource : PanelLoader
@@ -728,6 +730,13 @@ namespace uLoader
                 this.ResumeLayout (false);
                 this.PerformLayout ();
             }
+
+            public override int UpdateData(DataTable table)
+            {
+                int iRes = 0;
+
+                return iRes;
+            }
         }
 
         private class PanelLoaderDest : PanelLoader
@@ -739,6 +748,13 @@ namespace uLoader
 
             private void InitializeComponent()
             {
+            }
+
+            public override int UpdateData(DataTable table)
+            {
+                int iRes = 0;
+
+                return iRes;
             }
         }
     }    

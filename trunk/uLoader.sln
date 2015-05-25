@@ -20,6 +20,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestFunc", "TestFunc\TestFu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ktstusql", "ktstusql\ktstusql.csproj", "{94042DBA-B1AB-4FF1-93D8-02BFA9555EA3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "statidsql", "statidsql\statidsql.csproj", "{7F0B3B61-D97A-45C6-BFBD-7F9A5E1064D6}"
+EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = uLoader.vsmdi
@@ -93,6 +95,16 @@ Global
 		{94042DBA-B1AB-4FF1-93D8-02BFA9555EA3}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{94042DBA-B1AB-4FF1-93D8-02BFA9555EA3}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{94042DBA-B1AB-4FF1-93D8-02BFA9555EA3}.Release|x86.ActiveCfg = Release|Any CPU
+		{7F0B3B61-D97A-45C6-BFBD-7F9A5E1064D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F0B3B61-D97A-45C6-BFBD-7F9A5E1064D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F0B3B61-D97A-45C6-BFBD-7F9A5E1064D6}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{7F0B3B61-D97A-45C6-BFBD-7F9A5E1064D6}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{7F0B3B61-D97A-45C6-BFBD-7F9A5E1064D6}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7F0B3B61-D97A-45C6-BFBD-7F9A5E1064D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F0B3B61-D97A-45C6-BFBD-7F9A5E1064D6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F0B3B61-D97A-45C6-BFBD-7F9A5E1064D6}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{7F0B3B61-D97A-45C6-BFBD-7F9A5E1064D6}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{7F0B3B61-D97A-45C6-BFBD-7F9A5E1064D6}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

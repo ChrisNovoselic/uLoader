@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 
 using System.Windows.Forms;
+using System.Data;
 
 using HClassLibrary;
 
@@ -170,44 +171,58 @@ namespace uLoader
         private void onEvtDataRecievedHost(object obj)
         {
             //Обработанное состояние 
-            int state = Int32.Parse((obj as object[])[0].ToString());
+            HHandlerQueue.StatesMachine state = (HHandlerQueue.StatesMachine)Int32.Parse((obj as object[])[0].ToString());
             //Параметры (массив) в 1-ом элементе результата
             object par = (obj as object[])[1];            
 
             switch (state)
             {
-                case (int)HHandlerQueue.StatesMachine.LIST_GROUP_SOURCES: //Группы источников (источник)
+                case HHandlerQueue.StatesMachine.LIST_GROUP_SOURCES: //Группы источников (источник)
                     fillWorkItem(INDEX_SRC.SOURCE, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.SOURCE] as string[]);
                     fillWorkItem(INDEX_SRC.DEST, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.DEST] as string[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SOURCES: //Группа (объект) источников (источник)
+                case HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SOURCES: //Группа (объект) источников (источник)
                     //m_arCurrentSrcItems [(int)INDEX_SRC.SOURCE] = par as ITEM_SRC;
                     fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SRC);
                     break;
-                case (int)HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SOURCES: //Группа (объект) источников (назначение)
+                case HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SOURCES: //Группа (объект) источников (назначение)
                     //m_arCurrentSrcItems[(int)INDEX_SRC.DEST] = par as ITEM_SRC;
                     fillWorkItem(INDEX_SRC.DEST, par as GROUP_SRC);
                     break;
-                case (int)HHandlerQueue.StatesMachine.TIMER_WORK_UPDATE:
+                case HHandlerQueue.StatesMachine.TIMER_WORK_UPDATE:
                     m_iSecondUpdate = (int)par;
                     startTimerUpdate ();
                     break;
-                case (int)HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS: //Объект группы сигналов (источник)
+                case HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS: //Объект группы сигналов (источник)
                     fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SIGNALS_SRC);
                     break;
-                case (int)HHandlerQueue.StatesMachine.STATE_GROUP_SOURCES: //Состояние группы источников (источник, назначение)
+                case HHandlerQueue.StatesMachine.STATE_GROUP_SOURCES: //Состояние группы источников (источник, назначение)
                     for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
                         enabledWorkItem(indxSrc, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)indxSrc] as GroupSources.STATE[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.STATE_GROUP_SIGNALS: //Состояние группы сигналов  (источник, назначение)
+                case HHandlerQueue.StatesMachine.STATE_GROUP_SIGNALS: //Состояние группы сигналов  (источник, назначение)
                     for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc ++ )
                         enabledWorkItem(indxSrc, PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS, (par as object[])[(int)indxSrc] as GroupSources.STATE[]);
                     break;
-                case (int)HHandlerQueue.StatesMachine.STATE_CHANGED_GROUP_SOURCES: //Состояние (изменено) группы источников (источник, назначение)
+                case HHandlerQueue.StatesMachine.STATE_CHANGED_GROUP_SOURCES: //Состояние (изменено) группы источников (источник, назначение)
+                    //Немедленно запросить состояния групп сигналов
                     changeTimerUpdate (0);
                     break;
-                case (int)HHandlerQueue.StatesMachine.STATE_CHANGED_GROUP_SIGNALS: //Состояние (изменено) группы сигналов (источник, назначение)
+                case HHandlerQueue.StatesMachine.STATE_CHANGED_GROUP_SIGNALS: //Состояние (изменено) группы сигналов (источник, назначение)
+                    //Немедленно запросить состояния групп сигналов
                     changeTimerUpdate(0);
+                    break;
+                case HHandlerQueue.StatesMachine.DATA_SRC_GROUP_SIGNALS:
+                    if (! (par == null))
+                        m_arLoader[(int)INDEX_SRC.SOURCE].UpdateData (par as DataTable);
+                    else
+                        ;
+                    break;
+                case HHandlerQueue.StatesMachine.DATA_DEST_GROUP_SIGNALS:
+                    if (!(par == null))
+                        m_arLoader[(int)INDEX_SRC.DEST].UpdateData(par as DataTable);
+                    else
+                        ;
                     break;
                 default:
                     break;
@@ -286,17 +301,34 @@ namespace uLoader
             DataGridView ctrl = null;
             int indxSrcSel = -1
                 , indxDestSel = -1;
+            string strSrcIDGrpSignals = string.Empty
+                , strDestIDGrpSignals = string.Empty;
 
             ctrl = m_arLoader[(int)INDEX_SRC.SOURCE].GetWorkingItem (PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView;
-            indxSrcSel = ctrl.SelectedRows.Count > 0 ? ctrl.SelectedRows[0].Index : -1;
+            indxSrcSel = ctrl.SelectedRows.Count > 0 ? ctrl.SelectedRows[0].Index : -1;            
             ctrl = m_arLoader[(int)INDEX_SRC.DEST].GetWorkingItem(PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView;
             indxDestSel = ctrl.SelectedRows.Count > 0 ? ctrl.SelectedRows[0].Index : -1;
+
+            ctrl = m_arLoader[(int)INDEX_SRC.SOURCE].GetWorkingItem(PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView;
+            strSrcIDGrpSignals = ctrl.SelectedRows.Count > 0 ? ctrl.SelectedRows[0].Cells[0].Value.ToString().Trim() : string.Empty;
+            ctrl = m_arLoader[(int)INDEX_SRC.DEST].GetWorkingItem(PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView;
+            strDestIDGrpSignals = ctrl.SelectedRows.Count > 0 ? ctrl.SelectedRows[0].Cells[0].Value.ToString().Trim() : string.Empty;
 
             //Запросить данные
             DataAskedHost(new object[] {
                 new object [] { (int)HHandlerQueue.StatesMachine.STATE_GROUP_SOURCES /*, без параметров*/ }
                 , new object [] { (int)HHandlerQueue.StatesMachine.STATE_GROUP_SIGNALS, indxSrcSel, indxDestSel }
+                , new object [] { (int)HHandlerQueue.StatesMachine.DATA_SRC_GROUP_SIGNALS, indxSrcSel, strSrcIDGrpSignals }
+                , new object [] { (int)HHandlerQueue.StatesMachine.DATA_DEST_GROUP_SIGNALS, indxDestSel, strDestIDGrpSignals }
             });
+
+            ////Запросить данные
+            //DataAskedHost(new object[] {
+            //    //new object [] { (int)HHandlerQueue.StatesMachine.STATE_GROUP_SOURCES /*, без параметров*/ }
+            //    //, new object [] { (int)HHandlerQueue.StatesMachine.STATE_GROUP_SIGNALS, indxSrcSel, indxDestSel }
+            //    new object [] { (int)HHandlerQueue.StatesMachine.DATA_SRC_GROUP_SIGNALS, strSrcIDGrpSignals }
+            //    , new object [] { (int)HHandlerQueue.StatesMachine.DATA_DEST_GROUP_SIGNALS, strDestIDGrpSignals }
+            //});
         }
 
         /// <summary>
