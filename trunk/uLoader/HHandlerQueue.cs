@@ -45,7 +45,19 @@ namespace uLoader
         public HHandlerQueue()
             : base ()
         {
-            m_fileINI = new FormMain.FileINI(@"setup_ktstusql.ini");
+            string strNameFileINI = string.Empty;
+            string []args = Environment.GetCommandLineArgs ();
+
+            if (args.Length > 1)
+            {
+                //strNameFileINI = @"setup_biysttmora.ini";
+                //strNameFileINI = @"setup_ktstusql.ini";
+                strNameFileINI = args[1];
+            }
+            else
+                strNameFileINI = @"setup.ini";
+            
+            m_fileINI = new FormMain.FileINI(strNameFileINI);
 
             m_listGroupSources = new List<GroupSources> [(int)INDEX_SRC.COUNT_INDEX_SRC];
 
