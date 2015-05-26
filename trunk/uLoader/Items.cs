@@ -8,16 +8,10 @@ using System.IO;
 using System.Data;
 
 using HClassLibrary;
+using uLoaderCommon;
 
 namespace uLoader
 {
-    /// <summary>
-    /// Перечисление для типов опроса
-    /// </summary>
-    public enum MODE_WORK { CUR_INTERVAL // по текущему интервалу
-        , COSTUMIZE // выборочно (история)
-        , COUNT_MODE_WORK
-    }
     /// <summary>
     /// Базовый класс для группы элементов (источников данных, сигналов)
     /// </summary>
@@ -77,9 +71,9 @@ namespace uLoader
             for (int i = 0; i < (int)MODE_WORK.COUNT_MODE_WORK; i ++)
                 m_arWorkIntervals[i] = new DATETIME_WORK();
 
-            m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_dtEnd = DateTime.Now;
+            m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_dtStart = DateTime.Now;
             //Выровнять по текущей минуте
-            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtEnd.AddMilliseconds (-1 * m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_dtEnd.Second * 1000 + m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_dtEnd.Millisecond);
+            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart.AddMilliseconds (-1 * m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_dtStart.Second * 1000 + m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_dtStart.Millisecond);
         }
     };
     /// <summary>
@@ -94,19 +88,19 @@ namespace uLoader
         /// <summary>
         /// Начало интервала
         /// </summary>
-        public DateTime m_dtBegin;
+        public DateTime m_dtStart;
         /// <summary>
         /// Окончание интервала (зависит от начала и длительности)
         /// </summary>
-        public DateTime m_dtEnd;
+        public TimeSpan m_tsPeriod;
         /// <summary>
         /// Конструктор - основной (без параметров)
         /// </summary>
         public DATETIME_WORK ()
         {
             m_iInterval = -1;
-            m_dtBegin = new DateTime ();
-            m_dtEnd = new DateTime();
+            m_dtStart = new DateTime ();
+            m_tsPeriod = TimeSpan.FromSeconds (60);
         }
         /// <summary>
         /// Установить значения для интервала
@@ -532,7 +526,28 @@ namespace uLoader
                     break;
             }
 
-            EvtDataAskedHost(new EventArgsDataHost((int)idToSend, new object[] { iIDGroupSignals }));
+            GroupSignals grpSgnls = getGroupSignals (iIDGroupSignals);
+            object []arDataAskedHost = null;
+
+            if (idToSend == ID_DATA_ASKED_HOST.START)
+                arDataAskedHost = new object[]
+                    {
+                        iIDGroupSignals
+                        , new object[]
+                        {
+                            grpSgnls.m_mode
+                            , grpSgnls.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart
+                            , grpSgnls.m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.TotalSeconds
+                            , grpSgnls.m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_iInterval
+                        }
+                    };
+            else
+                arDataAskedHost = new object[]
+                    {
+                        iIDGroupSignals
+                    };
+
+            EvtDataAskedHost(new EventArgsDataHost((int)idToSend, arDataAskedHost));
         }
 
         /// <summary>
@@ -543,8 +558,9 @@ namespace uLoader
         {
             EventArgsDataHost ev = obj as EventArgsDataHost;
             int iIDGroupSignals = 0; //??? д.б. указана в "запросе"
+            object []pars = (ev.par as object[])[0] as object [];
 
-            switch ((ID_DATA_ASKED_HOST)(ev.par as object[])[0])
+            switch ((ID_DATA_ASKED_HOST)pars[0])
             {
                 case ID_DATA_ASKED_HOST.INIT_CONN_SETT: //Получен запрос на парметры инициализации                    
                     //Отправить данные для инициализации
@@ -562,11 +578,11 @@ namespace uLoader
                         ;
                     break;
                 case ID_DATA_ASKED_HOST.TABLE_RES:
-                    iIDGroupSignals = (int)(ev.par as object[])[1];
-                    m_listGroupSignals[iIDGroupSignals].m_tableData = ((ev.par as object[])[2] as DataTable).Copy();                    
+                    iIDGroupSignals = (int)pars[1];
+                    m_listGroupSignals[iIDGroupSignals].m_tableData = (pars[2] as DataTable).Copy();                    
                     break;
                 case ID_DATA_ASKED_HOST.ERROR:
-                    iIDGroupSignals = (int)(ev.par as object[])[1];
+                    iIDGroupSignals = (int)pars[1];
                     break;
                 default:
                     break;
@@ -668,6 +684,16 @@ namespace uLoader
 
                 return new DataTable();
             }
+        }
+
+        public int Stop()
+        {
+            int iRes = 0;
+            
+            foreach (GroupSignals grpSgnls in m_listGroupSignals)
+                sendState(FormMain.FileINI.GetIDIndex(grpSgnls.m_strID), STATE.STOPPED);
+
+            return iRes;
         }
     }
 }

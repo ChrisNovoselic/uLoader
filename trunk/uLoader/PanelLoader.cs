@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using System.Data;
 
 using HClassLibrary;
+using uLoaderCommon;
 
 namespace uLoader
 {
@@ -678,6 +679,15 @@ namespace uLoader
                     iRes = -1;
 
                 return iRes;
+            }
+
+            public override void Stop()
+            {
+                //DataGridView dgv = GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView;
+                //foreach (DataGridViewRow row in dgv.Rows)
+                //    if ((row.Cells [1] is DataGridViewDisableButtonCell))
+                
+                base.Stop();
             }
 
             public abstract int UpdateData(DataTable table);

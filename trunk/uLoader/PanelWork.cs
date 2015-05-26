@@ -254,6 +254,9 @@ namespace uLoader
         {
             stopTimerUpdate ();
 
+            foreach (PanelLoader pLoader in m_arLoader)
+                pLoader.Stop ();
+
             base.Stop();
         }
 

@@ -127,8 +127,8 @@ namespace TestFunc
                         , @"arch_viewer"
                         , @"1"
                     ));
-            data.Initialize(
-                new object []
+            data.Initialize(0
+                , new object []
                 {
                     new object [] { 20049, @"TAG_000049" }
                     , new object [] { 20051, @"TAG_000051" }

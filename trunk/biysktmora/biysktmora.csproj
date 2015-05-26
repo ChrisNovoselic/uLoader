@@ -52,6 +52,10 @@
       <Project>{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}</Project>
       <Name>HClassLibrary</Name>
     </ProjectReference>
+    <ProjectReference Include="..\uLoaderCommon\uLoaderCommon.csproj">
+      <Project>{4869D4EB-4F7A-4311-B105-D3E09BB7290A}</Project>
+      <Name>uLoaderCommon</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -31,7 +31,7 @@
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
-    <PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -137,6 +137,10 @@
     <ProjectReference Include="..\..\HClassLibrary\HClassLibrary.csproj">
       <Project>{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}</Project>
       <Name>HClassLibrary</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\uLoaderCommon\uLoaderCommon.csproj">
+      <Project>{4869D4EB-4F7A-4311-B105-D3E09BB7290A}</Project>
+      <Name>uLoaderCommon</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

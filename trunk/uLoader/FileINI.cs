@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 
 using HClassLibrary;
+using uLoaderCommon;
 
 namespace uLoader
 {
@@ -141,8 +142,8 @@ namespace uLoader
             {
                 int iRes = 0;
 
-                dtWorkRes.m_dtBegin = DateTime.Now;
-                dtWorkRes.m_dtEnd = DateTime.Now;
+                dtWorkRes.m_dtStart = DateTime.Now;
+                dtWorkRes.m_tsPeriod = TimeSpan.FromSeconds (60);
                 dtWorkRes.m_iInterval = -1;
 
                 return iRes;

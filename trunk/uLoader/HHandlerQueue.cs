@@ -389,5 +389,18 @@ namespace uLoader
         {
             throw new NotImplementedException();
         }
+
+        public override void Stop()
+        {
+            for (int i = 0; i < m_listGroupSources.Length; i ++)
+            {
+                foreach (GroupSources grpSrc in m_listGroupSources[i])
+                {
+                    grpSrc.Stop ();
+                }
+            }
+            
+            base.Stop();
+        }
     }
 }

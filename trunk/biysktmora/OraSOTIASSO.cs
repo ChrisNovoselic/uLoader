@@ -6,9 +6,9 @@ using System.Text;
 using System.IO; //Path
 using System.Data; //DataTable
 using System.Data.Common; //DbConnection
+using System.Threading;
 
 using HClassLibrary;
-//using StatisticCommon;
 
 namespace biysktmora
 {    
@@ -18,9 +18,17 @@ namespace biysktmora
 
         private static int SEC_SPANPERIOD_DEFAULT = 60;
         private static int MSEC_INTERVAL_DEFAULT = 6666;
+        private static int MSEC_INTERVAL_TIMER_ACTIVATE = 66;
 
         private class GroupSignals
         {
+            public enum STATE { UNKNOWN = -1, SLEEP, TIMER, QUEUE, ACTIVE }
+            private STATE m_state;
+            public STATE State { get { return m_state; } set { m_state = value; } }
+
+            private uLoaderCommon.MODE_WORK m_mode;
+            public uLoaderCommon.MODE_WORK Mode { get { return m_mode; } set { m_mode = value; } }
+
             public struct SIGNAL
             {
                 public int m_id;
@@ -37,14 +45,16 @@ namespace biysktmora
             public SIGNAL[] Signals { get { return m_arSignals; } }
 
             private DateTime m_dtStart;
-            public DateTime DateTimeStart { get { return m_dtStart; } }
+            public DateTime DateTimeStart { get { return m_dtStart; } set { m_dtStart = value; } }
             private TimeSpan m_tmSpanPeriod;
-            public TimeSpan TimeSpanPeriod { get { return m_tmSpanPeriod; } }
+            public TimeSpan TimeSpanPeriod { get { return m_tmSpanPeriod; } set { m_tmSpanPeriod = value; } }
             private long m_msecInterval;
-            public long MSecInterval { get { return m_msecInterval; } }
+            public long MSecInterval { get { return m_msecInterval; } set { m_msecInterval = value; } }
+            private long m_msecRemaindToActivate;
+            public long MSecRemaindToActivate { get { return m_msecRemaindToActivate; } set { m_msecRemaindToActivate = value; } }
 
             private DataTable m_tableResults;
-            public DataTable TableResults { get { return m_tableResults; } }
+            public DataTable TableResults { get { return m_tableResults; } set { m_tableResults = value; } }
 
             public GroupSignals(object [] pars)
             {
@@ -63,47 +73,84 @@ namespace biysktmora
                 }
                 else
                     ;
-                
-                m_arSignals = new SIGNAL[]
-                                    { /*new SIGNAL(20049, @"TAG_000049")
+
+                /*m_arSignals = null; new SIGNAL[]
+                                    { new SIGNAL(20049, @"TAG_000049")
                                         , new SIGNAL(20002, @"TAG_000047")
                                         , new SIGNAL(20003, @"TAG_000048")
                                         , new SIGNAL(20004, @"TAG_000049")
                                         , new SIGNAL(20005, @"TAG_000050")
                                         , new SIGNAL(20006, @"TAG_000051")
                                         , new SIGNAL(20007, @"TAG_000052")
-                                        , new SIGNAL(20008, @"TAG_000053")*/
-                                    };
+                                        , new SIGNAL(20008, @"TAG_000053")
+                                    };*/
+            }
+
+            public static STATE GetMode (uLoaderCommon.MODE_WORK mode)
+            {
+                GroupSignals.STATE stateRes = GroupSignals.STATE.UNKNOWN;
+                if (mode == uLoaderCommon.MODE_WORK.CUR_INTERVAL)
+                    stateRes = GroupSignals.STATE.TIMER;
+                else
+                    if (mode == uLoaderCommon.MODE_WORK.CUR_INTERVAL)
+                        stateRes = GroupSignals.STATE.SLEEP;
+                    else
+                        //??? throw new Exception
+                        ;
+
+                return stateRes;
             }
         }
 
         private Dictionary<int, GroupSignals> m_dictGroupSignals;
 
+        private GroupSignals.STATE State { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].State; }  set { m_dictGroupSignals[m_IdGroupSignalsCurrent].State = value; } }
+
+        private uLoaderCommon.MODE_WORK Mode { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].Mode; } /*set { m_dictGroupSignals[m_IdGroupSignalsCurrent].Mode = value; }*/ }
+        
         private GroupSignals.SIGNAL[] Signals { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].Signals; } }
 
         private TimeSpan TimeSpanPeriod { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].TimeSpanPeriod; } }
-        private DateTime DateTimeStart { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].DateTimeStart; } }
+        private DateTime DateTimeStart { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].DateTimeStart; } set { m_dictGroupSignals[m_IdGroupSignalsCurrent].DateTimeStart = value; } }
         private long MSecInterval { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].MSecInterval; } }
+        private long MSecRemaindToActivate { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].MSecRemaindToActivate; } set { m_dictGroupSignals[m_IdGroupSignalsCurrent].MSecRemaindToActivate = value; } }
 
-        public DataTable TableResults { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].TableResults; } }
+        public DataTable TableResults { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].TableResults; } set { m_dictGroupSignals[m_IdGroupSignalsCurrent].TableResults = value; } }
 
         enum StatesMachine {
             CurrentTime
             , Values
         }
 
-        private DateTime m_dtServer;        
+        private DateTime m_dtServer;
+        private int m_msecIntervalTimerActivate;
         public ConnectionSettings m_connSett;
         public string m_strQuery = string.Empty;
         private int m_IdGroupSignalsCurrent;
 
+        private object m_lockStateGroupSignals
+            , m_lockQueue;
+        private System.Threading.Timer m_timerActivate;
+        private Thread m_threadQueue;
+        private Queue <int> m_queueIdGroupSignals;
+        private int threadQueueIsWorking;
+        private Semaphore m_semaQueue;
+
         public HBiyskTMOra()
         {
             m_dtServer = DateTime.MinValue;
+            m_msecIntervalTimerActivate = MSEC_INTERVAL_TIMER_ACTIVATE;
 
-            m_IdGroupSignalsCurrent = 0;
-
+            m_IdGroupSignalsCurrent = -1;
             m_dictGroupSignals = new Dictionary<int, GroupSignals>();
+
+            m_lockStateGroupSignals = new object();
+
+            //m_threadQueue = //Создание при "старте"
+            m_lockQueue = new object ();
+            m_queueIdGroupSignals = new Queue<int> ();
+            threadQueueIsWorking = -1;
+            m_semaQueue = null; //Создание при "старте"
         }
 
         public HBiyskTMOra(IPlugIn iPlugIn) : this ()
@@ -125,11 +172,154 @@ namespace biysktmora
             int iRes = 0;
 
             if (m_dictGroupSignals.Keys.Contains(id) == false)
+                //Считать переданные параметры - параметрами сигналов
                 m_dictGroupSignals.Add(id, new GroupSignals(pars));
             else
-                ;
+            {//Считать переданные параметры - параметрами группы сигналов
+                if (m_dictGroupSignals[id].Signals == null)
+                    iRes = -1;
+                else
+                {                
+                    lock (m_lockStateGroupSignals)
+                    {
+                        m_dictGroupSignals[id].Mode = (uLoaderCommon.MODE_WORK)pars [0];
+                        m_dictGroupSignals[id].State = GroupSignals.GetMode(m_dictGroupSignals[id].Mode);
+                        //m_dictGroupSignals[id].DateTimeStart = (DateTime)pars[1];
+                        //m_dictGroupSignals[id].TimeSpanPeriod = TimeSpan.FromSeconds((double)pars[2]);
+                        //m_dictGroupSignals[id].MSecInterval = (int)pars[3];
+                    }
+                }
+            }
 
             return iRes;
+        }
+
+        private void fTimerActivate (object obj)
+        {
+            lock (m_lockStateGroupSignals)
+            {
+                //Проверить наличие "активных" групп сигналов
+                foreach (KeyValuePair<int, GroupSignals> pair in m_dictGroupSignals)
+                    if (pair.Value.State == GroupSignals.STATE.ACTIVE)
+                        return;
+                    else
+                        ;
+                //Проверить наличие ожидающих обработки групп сигналов
+                foreach (KeyValuePair<int, GroupSignals> pair in m_dictGroupSignals)
+                    if (pair.Value.State == GroupSignals.STATE.QUEUE)
+                    {
+                        pair.Value.State = GroupSignals.STATE.ACTIVE;                        
+                        return;
+                    }
+                    else
+                        ;
+                bool bActivated = false; //Признак установки состояния "активное" для одной из групп
+                //Перевести в состояние "активное" ("ожидание") группы сигналов
+                foreach (KeyValuePair <int,GroupSignals> pair in m_dictGroupSignals)
+                    if (pair.Value.State == GroupSignals.STATE.TIMER)
+                    {
+                        pair.Value.MSecRemaindToActivate -= m_msecIntervalTimerActivate;
+
+                        if (pair.Value.MSecRemaindToActivate < 0)
+                        {
+                            if (bActivated == false)
+                            {
+                                pair.Value.State = GroupSignals.STATE.ACTIVE;
+                                bActivated = true;
+
+                                lock (m_lockQueue)
+                                {
+                                    m_queueIdGroupSignals.Enqueue(pair.Key);
+
+                                    if (m_queueIdGroupSignals.Count == 1)
+                                        m_semaQueue.Release (1);
+                                    else
+                                        ;
+                                }
+                            }
+                            else
+                                pair.Value.State = GroupSignals.STATE.QUEUE;
+                        }
+                        else
+                            ;
+                    }
+                    else
+                        ;
+            }
+        }
+
+        /// <summary>
+        /// Потоковая функция очереди обработки объектов с событиями
+        /// </summary>
+        private void fThreadQueue()
+        {
+            bool bRes = false;
+
+            while (!(threadQueueIsWorking < 0))
+            {
+                bRes = false;
+                //Ожидать когда появятся объекты для обработки
+                bRes = m_semaQueue.WaitOne();
+
+                while (true)
+                {
+                    lock (m_lockQueue)
+                    {
+                        if (m_queueIdGroupSignals.Count == 0)
+                            //Прерват, если обработаны все объекты
+                            break;
+                        else
+                            ;
+                    }
+                    //Получить объект очереди событий
+                    m_IdGroupSignalsCurrent = m_queueIdGroupSignals.Peek ();
+
+                    lock (m_lockState)
+                    {
+                        //Очистить все состояния
+                        ClearStates();
+                        //Добавить все состояния
+                        AddState((int)StatesMachine.CurrentTime);
+                        AddState((int)StatesMachine.Values);
+                    }
+
+                    //Обработать все состояния
+                    Run(@"HBiyskTMOra::fThreadQueue ()");
+
+                    //Ожидать обработки всех состояний
+                    m_waitHandleState[(int)INDEX_WAITHANDLE_REASON.SUCCESS].WaitOne(System.Threading.Timeout.Infinite);
+
+                    lock (m_lockQueue)
+                    {
+                        //Удалить объект очереди событий (обработанный)
+                        m_queueIdGroupSignals.Dequeue();
+                    }
+
+                    GroupSignals.STATE newState = GroupSignals.GetMode (Mode);
+
+                    lock (m_lockStateGroupSignals)
+                    {                        
+                        State = newState;
+                        MSecRemaindToActivate = MSecInterval; //(long)TimeSpanPeriod.TotalMilliseconds;
+                    }
+
+                    ((HHPlugIn)_iPlugin).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.TABLE_RES, m_IdGroupSignalsCurrent, TableResults });
+
+                    m_IdGroupSignalsCurrent = -1;
+                }
+            }
+            //Освободить ресурс ядра ОС
+            if (bRes == true)
+                try
+                {
+                    m_semaQueue.Release(1);
+                }
+                catch (Exception e)
+                { //System.Threading.SemaphoreFullException
+                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, "HHandler::fThreadQueue () - semaState.Release(1)");
+                }
+            else
+                ;
         }
 
         private void setQuery(DateTime dtStart, int secInterval = -1)
@@ -184,19 +374,135 @@ namespace biysktmora
 
         protected override void register(int id, int indx, ConnectionSettings connSett, string name)
         {
+            bool bReq = true;
+            
             if (m_dictIdListeners.ContainsKey (id) == false)
                 m_dictIdListeners.Add(id, new int[] { -1 });
             else
-                ;
+                if (! (m_dictIdListeners[id][indx] < 0))
+                    bReq = false;
+                else
+                    ;
 
-            base.register(id, indx, connSett, name);
+            if (bReq == true)
+                base.register(id, indx, connSett, name);
+            else
+                ;
         }
 
         public override void Start()
         {
             base.Start();
 
-            StartDbInterfaces ();            
+            StartDbInterfaces ();
+
+            startThreadQueue ();
+
+            startTimerActivate();
+        }
+
+        public override void Stop()
+        {            
+            stopTimerActivate ();
+
+            stopThreadQueue();
+
+            base.Stop();
+        }
+
+        private int startTimerActivate ()
+        {
+            int iRes = 0;
+
+            stopTimerActivate();
+            m_timerActivate = new System.Threading.Timer(fTimerActivate, null, 0, m_msecIntervalTimerActivate);
+
+            return iRes;
+        }
+
+        private int stopTimerActivate()
+        {
+            int iRes = 0;
+
+            if (! (m_timerActivate == null))
+            {
+                m_timerActivate.Change(System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+                m_timerActivate.Dispose();
+                m_timerActivate = null;
+            }
+            else
+                ;
+
+            return iRes;
+        }
+
+        private int startThreadQueue()
+        {
+            int iRes = 0;
+
+            if (threadQueueIsWorking < 0)
+            {
+                threadQueueIsWorking = 0;
+
+                m_threadQueue = new Thread(new ThreadStart(fThreadQueue));
+                m_threadQueue.Name = "Обработка очереди для объекта " + this.GetType().AssemblyQualifiedName;
+                m_threadQueue.IsBackground = true;
+                m_threadQueue.CurrentCulture =
+                m_threadQueue.CurrentUICulture =
+                    ProgramBase.ss_MainCultureInfo;
+
+                m_semaQueue = new Semaphore(1, 1);
+
+                //InitializeSyncState();
+                //Установить в "несигнальное" состояние
+                m_waitHandleState[(int)INDEX_WAITHANDLE_REASON.SUCCESS].WaitOne(System.Threading.Timeout.Infinite);
+
+                m_semaQueue.WaitOne();
+                
+                try { m_threadQueue.Start(); }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HBiyskTMOra::startThreadQueue () - ...");
+                }
+            }
+            else
+                iRes = 1;
+
+            return iRes;
+        }
+
+        private int stopThreadQueue()
+        {
+            int iRes = 0;
+
+            bool joined;
+            threadQueueIsWorking = -1;
+            //Очисить очередь событий
+            ClearStates();
+            //Прверить выполнение потоковой функции
+            if ((!(m_threadQueue == null)) && (m_threadQueue.IsAlive == true))
+            {
+                //Выход из потоковой функции
+                try { m_semaQueue.Release(1); }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, "HBiyskTMOra::stopThreadQueue () - m_semaQueue.Release(1)");
+                }
+                //Ожидать завершения потоковой функции
+                joined = m_threadQueue.Join(666);
+                //Проверить корректное завершение потоковой функции
+                if (joined == false)
+                    //Завершить аварийно потоковую функцию
+                    m_threadQueue.Abort();
+                else
+                    ;
+
+                m_semaQueue = null;
+                m_threadQueue = null;
+            }
+            else ;
+
+            return iRes;
         }
 
         public override void ClearValues()
@@ -269,7 +575,8 @@ namespace biysktmora
 
         private int clearDupValues (ref DataTable table)
         {
-            int iRes = 0;
+            int iRes = 0
+                , cnt = -1;
 
             DataRow[] arSel;
             foreach (DataRow rRes in TableResults.Rows)
@@ -278,8 +585,38 @@ namespace biysktmora
                 iRes += arSel.Length;
                 foreach (DataRow rDel in arSel)
                     (table as DataTable).Rows.Remove(rDel);
-                //table.AcceptChanges ();
+                table.AcceptChanges ();
             }
+
+            //!!! См. ВНИМАТЕЛЬНО файл конфигурации - ИДЕНТИФИКАТОРЫ д.б. уникальные
+            //List <int>listDel = new List<int>();
+            //foreach (DataRow rRes in table.Rows)
+            //{
+            //    arSel = (table as DataTable).Select(@"ID=" + rRes[@"ID"]
+            //        + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
+            //    if (arSel.Length > 1)
+            //    {
+            //        iRes ++;
+            //        //Logging.Logg().Error(@"HBiyskTMOra::clearDupValues () - "
+            //        //    + @"ID=" + rRes[@"ID"]
+            //        //    + @", " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
+            //        //    + @", " + @"QUALITY[" + arSel[0][@"QUALITY"] + @"," + arSel[1][@"QUALITY"] + @"]"
+            //        //, Logging.INDEX_MESSAGE.NOT_SET);
+            //        cnt = listDel.Count + arSel.Length;
+            //        foreach (DataRow rDel in arSel)
+            //            if (listDel.Count < (cnt - 1))
+            //                listDel.Add(table.Rows.IndexOf(rDel));
+            //            else
+            //                break;
+            //    }
+            //    else
+            //        ;
+            //}
+
+            //foreach (int indx in listDel)
+            //    //(table as DataTable).Rows.Remove(rDel);
+            //    (table as DataTable).Rows.RemoveAt(indx);
+            //table.AcceptChanges();
 
             return iRes;
         }
@@ -317,7 +654,8 @@ namespace biysktmora
                         else
                         {
                             //Определить смещение "соседних" значений сигнала
-                            arSelIns[i - 1][@"tmdelta"] = (int)((DateTime)arSelIns[i][@"DATETIME"] - (DateTime)arSelIns[i - 1][@"DATETIME"]).TotalMilliseconds;
+                            int iTMDelta = (int)((DateTime)arSelIns[i][@"DATETIME"] - (DateTime)arSelIns[i - 1][@"DATETIME"]).TotalMilliseconds;
+                            arSelIns[i - 1][@"tmdelta"] = iTMDelta;
                             Console.WriteLine(@", tmdelta=" + arSelIns[i - 1][@"tmdelta"]);
                         }
 
@@ -366,12 +704,19 @@ namespace biysktmora
             switch (state)
             {
                 case (int)StatesMachine.CurrentTime:
-                    GetCurrentTimeRequest (DbInterface.DB_TSQL_INTERFACE_TYPE.Oracle, m_dictIdListeners[0][0]);
+                    GetCurrentTimeRequest (DbInterface.DB_TSQL_INTERFACE_TYPE.Oracle, m_dictIdListeners[m_IdGroupSignalsCurrent][0]);
                     break;
                 case (int)StatesMachine.Values:                    
-                    actualizeDatetimeStart ();
-                    ClearValues();
-                    setQuery(DateTimeStart);
+                    try
+                    {
+                        actualizeDatetimeStart ();
+                        ClearValues();
+                        setQuery(DateTimeStart);
+                    }
+                    catch (Exception e)
+                    {
+                        Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HBiyskTMOra::StateRequest () - ::Values - ...");
+                    }
                     Request (m_dictIdListeners[0][0], m_strQuery);
                     break;
                 default:
@@ -389,54 +734,68 @@ namespace biysktmora
             switch (state)
             {
                 case (int)StatesMachine.CurrentTime:
-                    m_dtServer = (DateTime)(table as DataTable).Rows[0][0];
-                    Console.WriteLine(m_dtServer.ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
+                    try
+                    {
+                        m_dtServer = (DateTime)(table as DataTable).Rows[0][0];
+                        Console.WriteLine(m_dtServer.ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
+                    }
+                    catch (Exception e)
+                    {
+                        Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HBiyskTMOra::StateResponse () - ::CurrentTime - ...");
+                    }
                     break;
                 case (int)StatesMachine.Values:
-                    Console.WriteLine(@"Получено строк: " + (table as DataTable).Rows.Count);
-                    if (TableResults == null)
+                    try
                     {
-                        TableResults = new DataTable();
+                        Console.WriteLine(@"Получено строк: " + (table as DataTable).Rows.Count);
+                        if (TableResults == null)
+                        {
+                            TableResults = new DataTable();
+                        }
+                        else
+                            ;
+
+                        int iPrev = -1, iDupl = -1, iAdd = -1, iCur = -1;
+                        iPrev = 0; iDupl = 0; iAdd = 0; iCur = 0;
+                        iPrev = TableResults.Rows.Count;
+
+                        //if (results.Rows.Count == 0)
+                        //{
+                        //    results = table.Copy ();
+                        //}
+                        //else
+                        //    ;
+
+                        //Удалить из таблицы записи, метки времени в которых, совпадают с метками времени в таблице-рез-те предыдущего опроса
+                        iDupl = clearDupValues (ref table);
+
+                        //Сформировать таблицу с "новыми" данными
+                        DataTable tableIns = getTableIns(ref table);
+                        tableIns.Columns.Add(@"tmdelta", typeof(int));
+
+                        //foreach (DataRow r in tableIns.Rows)
+                        //{
+                        //    Console.WriteLine (@"ID=" + r[@"ID"] + @", DATETIME=" + ((DateTime)r[@"DATETIME"]).ToString (@"dd.MM.yyyy HH:mm:ss.fff"));
+                        //}
+
+                        //table.Columns.Add(@"tmdelta", Type.GetType("Int32"));
+
+                        iAdd = table.Rows.Count;
+                        TableResults.Merge(table);
+                        iCur = TableResults.Rows.Count;
+                        Console.WriteLine(@"Объединение таблицы-рез-та: [было=" + iPrev + @", дублирущих= " + iDupl + @", добавлено=" + iAdd + @", стало=" + iCur + @"]");
+                        //DataTable tableChanged = results.GetChanges();
+                        //if (! (tableChanged == null))
+                        //    Console.WriteLine(@"Изменено строк: " + tableChanged.Rows.Count);
+                        //else
+                        //    Console.WriteLine(@"Изменено строк: " + 0);
+
+                        //(_iPlugin as HHPlugIn).DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.TABLE_RES, 0, table });
                     }
-                    else
-                        ;
-
-                    int iPrev = -1, iDupl = -1, iAdd = -1, iCur = -1;
-                    iPrev = 0; iDupl = 0; iAdd = 0; iCur = 0;
-                    iPrev = TableResults.Rows.Count;
-
-                    //if (results.Rows.Count == 0)
-                    //{
-                    //    results = table.Copy ();
-                    //}
-                    //else
-                    //    ;
-
-                    //Удалить из таблицы записи, метки времени в которых, совпадают с метками времени в таблице-рез-те предыдущего опроса
-                    iDupl = clearDupValues (ref table);
-
-                    //Сформировать таблицу с "новыми" данными
-                    DataTable tableIns = getTableIns (ref table);
-                    tableIns.Columns.Add (@"tmdelta", typeof (int));
-
-                    //foreach (DataRow r in tableIns.Rows)
-                    //{
-                    //    Console.WriteLine (@"ID=" + r[@"ID"] + @", DATETIME=" + ((DateTime)r[@"DATETIME"]).ToString (@"dd.MM.yyyy HH:mm:ss.fff"));
-                    //}
-
-                    //table.Columns.Add(@"tmdelta", Type.GetType("Int32"));
-
-                    iAdd = table.Rows.Count;
-                    TableResults.Merge(table);
-                    iCur = TableResults.Rows.Count;
-                    Console.WriteLine(@"Объединение таблицы-рез-та: [было=" + iPrev + @", дублирущих= " + iDupl + @", добавлено=" + iAdd + @", стало=" + iCur + @"]");
-                    //DataTable tableChanged = results.GetChanges();
-                    //if (! (tableChanged == null))
-                    //    Console.WriteLine(@"Изменено строк: " + tableChanged.Rows.Count);
-                    //else
-                    //    Console.WriteLine(@"Изменено строк: " + 0);
-
-                    (_iPlugin as HHPlugIn).DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.TABLE_RES, 0, table });
+                    catch (Exception e)
+                    {
+                        Logging.Logg ().Exception (e, Logging.INDEX_MESSAGE.NOT_SET, @"HBiyskTMOra::StateResponse () - ::Values - ...");
+                    }
                     break;
                 default:
                     break;
@@ -534,11 +893,16 @@ namespace biysktmora
                 case (int)ID_DATA_ASKED_HOST.START:
                     if (m_markDataHost.IsMarked((int)ID_DATA_ASKED_HOST.INIT_CONN_SETT) == true)
                     {
-                        target.Start();
-                        target.Activate(true);
+                        if (target.Initialize((int)(ev.par as object[])[0], (ev.par as object[])[1] as object[]) == 0)
+                        {
+                            target.Start();
+                            target.Activate(true);
+                        }
+                        else
+                            DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP, (int)(ev.par as object[])[0] });
                     }
                     else
-                        DataAskedHost((int)ID_DATA_ASKED_HOST.INIT_CONN_SETT);
+                        DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.INIT_CONN_SETT } );
                     break;
                 case (int)ID_DATA_ASKED_HOST.STOP:
                     target.Activate(false);
