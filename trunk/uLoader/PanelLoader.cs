@@ -275,6 +275,30 @@ namespace uLoader
                 panelColumns = new PanelCommonULoader(10, 8);
                 this.Controls.Add(panelColumns, 2, 0);
                 this.SetColumnSpan(panelColumns, 2); this.SetRowSpan(panelColumns, 1);
+                ctrl = new DataGridView();
+                ctrl.Name = KEY_CONTROLS.DGV_SIGNALS_OF_GROUP.ToString();
+                (ctrl as DataGridView).Columns.AddRange(
+                    new DataGridViewColumn[] {
+                        new DataGridViewTextBoxColumn ()
+                        , new DataGridViewTextBoxColumn ()
+                        , new DataGridViewTextBoxColumn ()
+                    }
+                );
+                (ctrl as DataGridView).AllowUserToResizeColumns = false;
+                (ctrl as DataGridView).AllowUserToResizeRows = false;
+                (ctrl as DataGridView).AllowUserToAddRows = false;
+                (ctrl as DataGridView).AllowUserToDeleteRows = false;
+                (ctrl as DataGridView).MultiSelect = false;
+                (ctrl as DataGridView).SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+                (ctrl as DataGridView).RowHeadersVisible = false;
+                foreach (DataGridViewColumn col in (ctrl as DataGridView).Columns)
+                    if ((ctrl as DataGridView).Columns.IndexOf(col) < (ctrl as DataGridView).Columns.Count - 1)
+                        col.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+                    else
+                        col.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                ctrl.Dock = DockStyle.Fill;
+                panelColumns.Controls.Add(ctrl, 0, 0);
+                panelColumns.SetColumnSpan(ctrl, 10); panelColumns.SetRowSpan(ctrl, 5);
 
                 this.ResumeLayout (false);
                 this.PerformLayout ();
@@ -702,40 +726,7 @@ namespace uLoader
 
             private void InitializeComponent ()
             {
-                HPanelCommon panelColumns;
-
                 this.SuspendLayout();
-
-                //Панель сигналов группы
-                //panelColumns = new PanelCommonULoader(1, 8);
-                //this.Controls.Add(panelColumns, 2, 0);
-                //this.SetColumnSpan(panelColumns, 2); this.SetRowSpan(panelColumns, 1);
-                panelColumns = this.Controls[2] as HPanelCommon;                
-
-                DataGridView ctrl = new DataGridView ();
-                ctrl.Name = KEY_CONTROLS.DGV_SIGNALS_OF_GROUP.ToString ();                
-                (ctrl as DataGridView).Columns.AddRange(
-                    new DataGridViewColumn[] {
-                        new DataGridViewTextBoxColumn ()
-                        , new DataGridViewTextBoxColumn ()
-                        , new DataGridViewTextBoxColumn ()
-                    }
-                );                 
-                (ctrl as DataGridView).AllowUserToResizeColumns = false;
-                (ctrl as DataGridView).AllowUserToResizeRows = false;
-                (ctrl as DataGridView).AllowUserToAddRows = false;
-                (ctrl as DataGridView).AllowUserToDeleteRows = false;
-                (ctrl as DataGridView).MultiSelect = false;
-                (ctrl as DataGridView).SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-                (ctrl as DataGridView).RowHeadersVisible = false;
-                foreach (DataGridViewColumn col in (ctrl as DataGridView).Columns)
-                    if ((ctrl as DataGridView).Columns.IndexOf(col) < (ctrl as DataGridView).Columns.Count - 1)
-                        col.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
-                    else
-                        col.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                ctrl.Dock = DockStyle.Fill;
-                panelColumns.Controls.Add(ctrl, 0, 0);
-                panelColumns.SetColumnSpan(ctrl, 10); panelColumns.SetRowSpan(ctrl, 5);
 
                 this.ResumeLayout (false);
                 this.PerformLayout ();

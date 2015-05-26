@@ -52,7 +52,7 @@ namespace uLoader
 
             if (args.Length > 1)
             {
-                //strNameFileINI = @"setup_biysttmora.ini";
+                //strNameFileINI = @"setup_biysktmora.ini";
                 //strNameFileINI = @"setup_ktstusql.ini";
                 strNameFileINI = args[1];
             }

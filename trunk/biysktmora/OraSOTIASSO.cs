@@ -86,13 +86,22 @@ namespace biysktmora
                                     };*/
             }
 
-            public static STATE GetMode (uLoaderCommon.MODE_WORK mode)
+            public static STATE GetMode (uLoaderCommon.MODE_WORK mode, STATE prevState)
             {
                 GroupSignals.STATE stateRes = GroupSignals.STATE.UNKNOWN;
                 if (mode == uLoaderCommon.MODE_WORK.CUR_INTERVAL)
-                    stateRes = GroupSignals.STATE.TIMER;
+                    switch (prevState)
+                    {
+                        case STATE.ACTIVE:
+                        case STATE.UNKNOWN:
+                            stateRes = GroupSignals.STATE.TIMER;
+                            break;
+                        default:
+                            stateRes = GroupSignals.STATE.SLEEP;
+                            break;
+                    }
                 else
-                    if (mode == uLoaderCommon.MODE_WORK.CUR_INTERVAL)
+                    if (mode == uLoaderCommon.MODE_WORK.COSTUMIZE)
                         stateRes = GroupSignals.STATE.SLEEP;
                     else
                         //??? throw new Exception
@@ -183,7 +192,7 @@ namespace biysktmora
                     lock (m_lockStateGroupSignals)
                     {
                         m_dictGroupSignals[id].Mode = (uLoaderCommon.MODE_WORK)pars [0];
-                        m_dictGroupSignals[id].State = GroupSignals.GetMode(m_dictGroupSignals[id].Mode);
+                        m_dictGroupSignals[id].State = GroupSignals.GetMode(m_dictGroupSignals[id].Mode, GroupSignals.STATE.UNKNOWN);
                         //m_dictGroupSignals[id].DateTimeStart = (DateTime)pars[1];
                         //m_dictGroupSignals[id].TimeSpanPeriod = TimeSpan.FromSeconds((double)pars[2]);
                         //m_dictGroupSignals[id].MSecInterval = (int)pars[3];
@@ -295,7 +304,7 @@ namespace biysktmora
                         m_queueIdGroupSignals.Dequeue();
                     }
 
-                    GroupSignals.STATE newState = GroupSignals.GetMode (Mode);
+                    GroupSignals.STATE newState = GroupSignals.GetMode (Mode, State);
 
                     lock (m_lockStateGroupSignals)
                     {                        
@@ -408,6 +417,37 @@ namespace biysktmora
             stopThreadQueue();
 
             base.Stop();
+        }
+
+        public void Stop(int id)
+        {
+            bool bStopped = true;
+
+            lock (m_lockStateGroupSignals)
+            {
+                m_dictGroupSignals[id].State = GroupSignals.STATE.SLEEP;
+
+                foreach (GroupSignals grpSgnls in m_dictGroupSignals.Values)
+                    if ((grpSgnls.State == GroupSignals.STATE.ACTIVE)
+                        || (grpSgnls.State == GroupSignals.STATE.QUEUE)
+                        || (grpSgnls.State == GroupSignals.STATE.TIMER)
+                        )
+                    {
+                        bStopped = false;
+
+                        break;
+                    }
+                    else
+                        ;
+            }
+
+            if (bStopped == true)
+            {
+                Activate(false);
+                Stop();
+            }
+            else
+                ;
         }
 
         private int startTimerActivate ()
@@ -905,8 +945,7 @@ namespace biysktmora
                         DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.INIT_CONN_SETT } );
                     break;
                 case (int)ID_DATA_ASKED_HOST.STOP:
-                    target.Activate(false);
-                    target.Stop();
+                    target.Stop((int)(ev.par as object[])[0]);
                     break;
                 default:
                     break;
