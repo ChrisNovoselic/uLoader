@@ -361,6 +361,28 @@ namespace uLoader
 
                 return iRes;
             }
+
+            public object [] Pack ()
+            {
+                object[] arObjRes = new object[m_listSgnls.Count];
+
+                int i = -1
+                    , j = -1
+                    , iVal = -1;
+
+                for (i = 0; i < arObjRes.Length; i ++)
+                {
+                    arObjRes[i] = new object[m_keys.Length];
+
+                    for (j = 0; j < m_keys.Length; j++)
+                        if (Int32.TryParse(m_listSgnls[i].m_dictPars[m_keys[j]].ToString().Trim(), out iVal) == true)
+                            (arObjRes[i] as object [])[j] = iVal;
+                        else
+                            (arObjRes[i] as object[])[j] = m_listSgnls[i].m_dictPars[m_keys[j]];
+                }
+
+                return arObjRes;
+            }
         }
         /// <summary>
         /// Вспомогательный домен приложения для загрузки/выгрузки библиотеки
@@ -390,7 +412,7 @@ namespace uLoader
         /// <summary>
         /// Событие для обмена данными с библиотекой
         /// </summary>
-        private event DelegateObjectFunc EvtDataAskedHost;
+        private event DelegateObjectFunc EvtDataAskedHost; 
         /// <summary>
         /// Коструктор (с параметрами)
         /// </summary>
@@ -476,8 +498,10 @@ namespace uLoader
                 {
                     plugInRes = ((IPlugIn)Activator.CreateInstance(objType));
                     plugInRes.Host = (IPlugInHost)this;
-
-                    (plugInRes as HHPlugIn).EvtDataAskedHost += new DelegateObjectFunc(GroupSources_OnEvtDataAskedHost);
+                    //Взаимная "привязка" для обмена сообщениями
+                    // библиотека - объект класса
+                    (plugInRes as HHPlugIn).EvtDataAskedHost += new DelegateObjectFunc(plugIn_OnEvtDataAskedHost);
+                    // объект класса - библиотека
                     EvtDataAskedHost += (plugInRes as HHPlugIn).OnEvtDataRecievedHost;
 
                     iRes = STATE_DLL.LOADED;
@@ -497,17 +521,20 @@ namespace uLoader
 
         private void sendInitConnSett ()
         {
-            EvtDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_CONN_SETT, new object[] { this.m_listConnSett[FormMain.FileINI.GetIDIndex(m_IDCurrentConnSett)] }));
+            PerformDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_CONN_SETT, new object[] { this.m_listConnSett[FormMain.FileINI.GetIDIndex(m_IDCurrentConnSett)] }));
+        }
+
+        protected void PerformDataAskedHost (EventArgsDataHost ev)
+        {
+            EvtDataAskedHost (ev);
         }
 
         private void sendInitGroupSignals (int iIDGroupSignals)
         {
             GroupSignals grpSgnls = getGroupSignals(iIDGroupSignals);
-            object[] arToDataHost = new object[grpSgnls.m_listSgnls.Count];
-            foreach (SIGNAL_SRC sgnl in grpSgnls.m_listSgnls)
-                arToDataHost[grpSgnls.m_listSgnls.IndexOf(sgnl)] = new object[] { Int32.Parse(sgnl.m_dictPars[@"ID"]), sgnl.m_dictPars[@"KKS_NAME"] };
+            object[] arToDataHost = grpSgnls.Pack ();            
             //Отправить данные для инициализации
-            EvtDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP, new object [] { iIDGroupSignals, arToDataHost }));
+            PerformDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP, new object[] { iIDGroupSignals, arToDataHost }));
         }
 
         private void sendState(int iIDGroupSignals, STATE state)
@@ -547,14 +574,14 @@ namespace uLoader
                         iIDGroupSignals
                     };
 
-            EvtDataAskedHost(new EventArgsDataHost((int)idToSend, arDataAskedHost));
+            PerformDataAskedHost(new EventArgsDataHost((int)idToSend, arDataAskedHost));
         }
 
         /// <summary>
         /// Обработка сообщений "от" библиотеки
         /// </summary>
         /// <param name="obj"></param>
-        private void GroupSources_OnEvtDataAskedHost  (object obj)
+        private void plugIn_OnEvtDataAskedHost  (object obj)
         {
             EventArgsDataHost ev = obj as EventArgsDataHost;
             int iIDGroupSignals = 0; //??? д.б. указана в "запросе"
@@ -635,7 +662,11 @@ namespace uLoader
 
             return stateRes;
         }
-
+        /// <summary>
+        /// Остановить/запустить группу сигналов
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public int StateChange (int id)
         {
             int iRes = 0;
@@ -666,26 +697,34 @@ namespace uLoader
 
             return iRes;
         }
-
+        /// <summary>
+        /// Получить данные (результаты запроса в ~ режима) 'DataTable' по указанной группе сигналов
+        /// </summary>
+        /// <param name="id">Строковый идентификатор группы сигналов</param>
+        /// <param name="bErr">Признак ошибки при выполнении функции</param>
+        /// <returns>Таблица-результат</returns>
         public DataTable GetData(string id, out bool bErr)
         {
             int iID = -1;            
             bErr = false;
-
+            //Проверить длину идентификатора
             if (id.Length > 1)
-            {
+            {//Только при длине > 1 м. определить целочисленное значение идентификатора
                 iID = uLoader.FormMain.FileINI.GetIDIndex(id);
 
                 return getGroupSignals (iID).m_tableData;
             }
             else
-            {
+            {//Нельзя определить целочисленный идентификатор - возвратить пустую таблицу
                 //bErr = true;
 
                 return new DataTable();
             }
         }
-
+        /// <summary>
+        /// Остановить группу источников
+        /// </summary>
+        /// <returns></returns>
         public int Stop()
         {
             int iRes = 0;
@@ -694,6 +733,50 @@ namespace uLoader
                 sendState(FormMain.FileINI.GetIDIndex(grpSgnls.m_strID), STATE.STOPPED);
 
             return iRes;
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="fOnEvt">Функция обработки</param>
+        public void AddDelegatePlugInOnEvtDataAskedHost (DelegateObjectFunc fOnEvt)
+        {
+            (m_plugIn as HHPlugIn).EvtDataAskedHost += fOnEvt;
+        }        
+    }
+
+    public class GroupSourcesDest : GroupSources
+    {
+        public GroupSourcesDest(GROUP_SRC grpSrc, List<GROUP_SIGNALS_SRC> listGrpSgnls)
+            : base(grpSrc, listGrpSgnls)
+        {
+        }
+        /// <summary>
+        /// Получает сообщения от библиотеки из "другого" (источника) объекта
+        /// </summary>
+        /// <param name="obj"></param>
+        public void Clone_OnEvtDataAskedHost(object obj)
+        {
+            EventArgsDataHost ev = obj as EventArgsDataHost;
+            int iIDGroupSignals = 0; //??? д.б. указана в "запросе"
+            object[] pars = (ev.par as object[])[0] as object[];
+
+            switch ((ID_DATA_ASKED_HOST)pars[0])
+            {
+                case ID_DATA_ASKED_HOST.INIT_CONN_SETT: //Получен запрос на парметры инициализации
+                    break;
+                case ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP: //Получен запрос на обрабатываемую группу сигналов
+                    break;
+                case ID_DATA_ASKED_HOST.TABLE_RES:
+                    //pars[1] - идентификатор группы сигналов
+                    //pars[2] - таблица с данными для "вставки"
+                    PerformDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.TO_INSERT, new object[] { (int)pars[1], (pars[2] as DataTable).Copy() }));
+                    break;
+                case ID_DATA_ASKED_HOST.ERROR:
+                    iIDGroupSignals = (int)pars[1];
+                    break;
+                default:
+                    break;
+            }
         }
     }
 }

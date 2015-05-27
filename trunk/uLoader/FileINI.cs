@@ -185,14 +185,14 @@ namespace uLoader
                 //Добавить элемент группы
                 switch (typeGroup)
                 {
-                    case INDEX_TYPE_GROUP.SRC: //Добавить источник
+                    case INDEX_TYPE_GROUP.SRC: //Добавить группу источников
                         itemSrc = new GROUP_SRC();
                         (itemSrc as GROUP_SRC).m_IDCurrentConnSett = GetSecValueOfKey(secGroup, @"SCUR");
                         (itemSrc as GROUP_SRC).m_strDLLName = GetSecValueOfKey(secGroup, @"DLL_NAME");
                         (itemSrc as GROUP_SRC).m_arIDGroupSignals = GetSecValueOfKey(secGroup, KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS]).Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]);
                         m_arListGroupValues[(int)indxSrc].m_listGroupSrc.Add(itemSrc as GROUP_SRC);                        
                         break;
-                    case INDEX_TYPE_GROUP.SIGNAL: //Добавить сигнал
+                    case INDEX_TYPE_GROUP.SIGNAL: //Добавить группу сигналов
                         itemSrc = new GROUP_SIGNALS_SRC();
                         (itemSrc as GROUP_SIGNALS_SRC).m_iAutoStart = bool.Parse(GetSecValueOfKey(secGroup, @"AUTO_START")) == true ? 1 : 0;
                         (itemSrc as GROUP_SIGNALS_SRC).m_mode = bool.Parse(GetSecValueOfKey(secGroup, @"CUR_INTERVAL_STATE")) == true ? MODE_WORK.CUR_INTERVAL : MODE_WORK.COSTUMIZE;
@@ -285,7 +285,8 @@ namespace uLoader
                                             }
 
                                             (itemSrc as GROUP_SRC).m_listConnSett.Add(new ConnectionSettings(
-                                                dictItemValues[@"NAME_SHR"]
+                                                Int32.Parse(dictItemValues[@"ID"])
+                                                , dictItemValues[@"NAME_SHR"]
                                                 , dictItemValues[@"IP"]
                                                 , Int32.Parse(dictItemValues[@"PORT"])
                                                 , dictItemValues[@"DB_NAME"]

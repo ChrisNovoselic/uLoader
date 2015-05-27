@@ -198,6 +198,9 @@ namespace uLoader
                 case HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS: //Объект группы сигналов (источник)
                     fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SIGNALS_SRC);
                     break;
+                case HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SIGNALS: //Объект группы сигналов (назначение)
+                    fillWorkItem(INDEX_SRC.DEST, par as GROUP_SIGNALS_SRC);
+                    break;
                 case HHandlerQueue.StatesMachine.STATE_GROUP_SOURCES: //Состояние группы источников (источник, назначение)
                     for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
                         enabledWorkItem(indxSrc, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)indxSrc] as GroupSources.STATE[]);
@@ -392,7 +395,10 @@ namespace uLoader
                                         new object[] {
                                             (int)state
                                             , indxWork
-                                            , (pars[(int)INDEX_PREPARE_PARS.OBJECT] as DataGridView).SelectedRows[0].Cells[0].Value.ToString ().Trim ()
+                                            , (pars[(int)INDEX_PREPARE_PARS.OBJECT] as PanelLoader).GetWorkingItemValue (
+                                                (PanelLoader.KEY_CONTROLS)pars[(int)INDEX_PREPARE_PARS.KEY_OBJECT]
+                                                , (int)pars[(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SIGNALS_SEL]
+                                            )
                                         }
                                     };
                                     break;

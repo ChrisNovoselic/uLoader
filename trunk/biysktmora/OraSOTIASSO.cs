@@ -16,10 +16,6 @@ namespace biysktmora
     {
         protected IPlugIn _iPlugin;
 
-        private static int SEC_SPANPERIOD_DEFAULT = 60;
-        private static int MSEC_INTERVAL_DEFAULT = 6666;
-        private static int MSEC_INTERVAL_TIMER_ACTIVATE = 66;
-
         private class GroupSignals
         {
             public enum STATE { UNKNOWN = -1, SLEEP, TIMER, QUEUE, ACTIVE }
@@ -61,15 +57,15 @@ namespace biysktmora
                 //Инициализация "временнЫх" значений
                 // конкретные значения м.б. получены при "старте" 
                 m_dtStart = DateTime.MinValue;
-                m_tmSpanPeriod = new TimeSpan((long)(SEC_SPANPERIOD_DEFAULT * Math.Pow(10, 7)));
-                m_msecInterval = MSEC_INTERVAL_DEFAULT;
+                m_tmSpanPeriod = new TimeSpan((long)((int)uLoaderCommon.DATETIME.SEC_SPANPERIOD_DEFAULT * Math.Pow(10, 7)));
+                m_msecInterval = (int)uLoaderCommon.DATETIME.MSEC_INTERVAL_DEFAULT;
                 //Инициализировать массив сигналов
                 if (pars.Length > 0)
                 {
                     m_arSignals = new SIGNAL[pars.Length];                
 
                     for (int i = 0; i < pars.Length; i ++)
-                        m_arSignals[i] = new SIGNAL((int)(pars[i] as object[])[0], (pars[i] as object[])[1] as string);
+                        m_arSignals[i] = new SIGNAL((int)(pars[i] as object[])[0], (pars[i] as object[])[2] as string);
                 }
                 else
                     ;
@@ -148,7 +144,7 @@ namespace biysktmora
         public HBiyskTMOra()
         {
             m_dtServer = DateTime.MinValue;
-            m_msecIntervalTimerActivate = MSEC_INTERVAL_TIMER_ACTIVATE;
+            m_msecIntervalTimerActivate = (int)uLoaderCommon.DATETIME.MSEC_INTERVAL_TIMER_ACTIVATE;
 
             m_IdGroupSignalsCurrent = -1;
             m_dictGroupSignals = new Dictionary<int, GroupSignals>();
@@ -353,9 +349,9 @@ namespace biysktmora
             foreach (GroupSignals.SIGNAL s in Signals)
             {
                 m_strQuery += @"SELECT " + s.m_id + @" as ID, VALUE, QUALITY, DATETIME FROM ARCH_SIGNALS." + s.m_NameTable + @" WHERE DATETIME BETWEEN"
-                + @" to_timestamp('" + strStart + @"', 'yyyymmdd hh24miss')" + @" AND"
-                + @" to_timestamp('" + strEnd + @"', 'yyyymmdd hh24miss')"
-                + strUnion
+                    + @" to_timestamp('" + strStart + @"', 'yyyymmdd hh24miss')" + @" AND"
+                    + @" to_timestamp('" + strEnd + @"', 'yyyymmdd hh24miss')"
+                    + strUnion
                 ;
             }
 
@@ -585,132 +581,7 @@ namespace biysktmora
             }
             else
                 ;
-        }
-
-        private int setTMDelta (int id, DateTime dtCurrent)
-        {
-            int iRes = -1;
-            DataRow []arSelWas = null;
-            
-            //Проверить наличие столбцов в результ./таблице (признак получения рез-та)
-            if (TableResults.Columns.Count > 0)
-            {//Только при наличии результата
-                arSelWas = TableResults.Select(@"ID=" + id, @"DATETIME DESC");
-                //Проверить результат для конкретного сигнала
-                if ((!(arSelWas == null)) && (arSelWas.Length > 0))
-                {//Только при наличии рез-та по конкретному сигналу
-                    iRes = (int)(dtCurrent - (DateTime)arSelWas[0][@"DATETIME"]).TotalMilliseconds;
-                    arSelWas[0][@"tmdelta"] = iRes;
-
-                    Console.WriteLine(@"Установлен для ID=" + id + @", DATETIME=" + ((DateTime)arSelWas[0][@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff") + @" tmdelta=" + iRes);
-                }
-                else
-                    ; //Без полученного рез-та для конкретного сигнала - невозможно
-            }
-            else
-                ; //Без полученного рез-та - невозможно
-
-            return iRes;
-        }
-
-        private int clearDupValues (ref DataTable table)
-        {
-            int iRes = 0
-                , cnt = -1;
-
-            DataRow[] arSel;
-            foreach (DataRow rRes in TableResults.Rows)
-            {
-                arSel = (table as DataTable).Select(@"ID=" + rRes[@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
-                iRes += arSel.Length;
-                foreach (DataRow rDel in arSel)
-                    (table as DataTable).Rows.Remove(rDel);
-                table.AcceptChanges ();
-            }
-
-            //!!! См. ВНИМАТЕЛЬНО файл конфигурации - ИДЕНТИФИКАТОРЫ д.б. уникальные
-            //List <int>listDel = new List<int>();
-            //foreach (DataRow rRes in table.Rows)
-            //{
-            //    arSel = (table as DataTable).Select(@"ID=" + rRes[@"ID"]
-            //        + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
-            //    if (arSel.Length > 1)
-            //    {
-            //        iRes ++;
-            //        //Logging.Logg().Error(@"HBiyskTMOra::clearDupValues () - "
-            //        //    + @"ID=" + rRes[@"ID"]
-            //        //    + @", " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
-            //        //    + @", " + @"QUALITY[" + arSel[0][@"QUALITY"] + @"," + arSel[1][@"QUALITY"] + @"]"
-            //        //, Logging.INDEX_MESSAGE.NOT_SET);
-            //        cnt = listDel.Count + arSel.Length;
-            //        foreach (DataRow rDel in arSel)
-            //            if (listDel.Count < (cnt - 1))
-            //                listDel.Add(table.Rows.IndexOf(rDel));
-            //            else
-            //                break;
-            //    }
-            //    else
-            //        ;
-            //}
-
-            //foreach (int indx in listDel)
-            //    //(table as DataTable).Rows.Remove(rDel);
-            //    (table as DataTable).Rows.RemoveAt(indx);
-            //table.AcceptChanges();
-
-            return iRes;
-        }
-
-        private DataTable getTableIns(ref DataTable table)
-        {
-            DataTable tableRes = new DataTable();
-            DataRow []arSelIns = null;
-
-            table.Columns.Add (@"tmdelta", typeof (int));
-
-            for (int s = 0; s < Signals.Length; s ++)
-            {
-                try
-                {
-                    //arSelIns = (table as DataTable).Select(string.Empty, @"ID, DATETIME");
-                    arSelIns = (table as DataTable).Select(@"ID=" + Signals[s].m_id, @"DATETIME");
-                }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HBiyskTMOra::getTableIns () - ...");
-                }
-
-                if (! (arSelIns == null))
-                    for (int i = 0; i < arSelIns.Length; i++)
-                    {
-                        tableRes.ImportRow(arSelIns[i]);                           
-
-                        //Проверитьт № итерации
-                        if (i == 0)
-                        {//Только при прохождении 1-ой итерации цикла
-                            //iTMDelta = 
-                            setTMDelta(Signals[s].m_id, (DateTime)arSelIns[i][@"DATETIME"]);
-                        }
-                        else
-                        {
-                            //Определить смещение "соседних" значений сигнала
-                            int iTMDelta = (int)((DateTime)arSelIns[i][@"DATETIME"] - (DateTime)arSelIns[i - 1][@"DATETIME"]).TotalMilliseconds;
-                            arSelIns[i - 1][@"tmdelta"] = iTMDelta;
-                            Console.WriteLine(@", tmdelta=" + arSelIns[i - 1][@"tmdelta"]);
-                        }
-
-                        Console.Write(@"ID=" + arSelIns[i][@"ID"] + @", DATETIME=" + ((DateTime)arSelIns[i][@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
-                    }
-                    //Корректировать вывод
-                    if (arSelIns.Length > 0)
-                        Console.WriteLine();
-                    else ;
-            } //Цикл по сигналам...
-
-            //tableRes.AcceptChanges();
-
-            return tableRes;
-        }
+        }                
 
         private int actualizeDatetimeStart ()
         {
@@ -795,9 +666,9 @@ namespace biysktmora
                         else
                             ;
 
-                        int iPrev = -1, iDupl = -1, iAdd = -1, iCur = -1;
-                        iPrev = 0; iDupl = 0; iAdd = 0; iCur = 0;
-                        iPrev = TableResults.Rows.Count;
+                        //int iPrev = -1, iDupl = -1, iAdd = -1, iCur = -1;
+                        //iPrev = 0; iDupl = 0; iAdd = 0; iCur = 0;
+                        //iPrev = TableResults.Rows.Count;
 
                         //if (results.Rows.Count == 0)
                         //{
@@ -806,31 +677,21 @@ namespace biysktmora
                         //else
                         //    ;
 
-                        //Удалить из таблицы записи, метки времени в которых, совпадают с метками времени в таблице-рез-те предыдущего опроса
-                        iDupl = clearDupValues (ref table);
+                        //!!! Перенесена в библ. для "вставки"
+                        ////Удалить из таблицы записи, метки времени в которых, совпадают с метками времени в таблице-рез-те предыдущего опроса
+                        //iDupl = clearDupValues (ref table);
 
-                        //Сформировать таблицу с "новыми" данными
-                        DataTable tableIns = getTableIns(ref table);
-                        tableIns.Columns.Add(@"tmdelta", typeof(int));
+                        ////!!! Перенесена в библ. для "вставки"
+                        ////Сформировать таблицу с "новыми" данными
+                        //DataTable tableIns = getTableIns(ref table);
+                        //tableIns.Columns.Add(@"tmdelta", typeof(int));
 
-                        //foreach (DataRow r in tableIns.Rows)
-                        //{
-                        //    Console.WriteLine (@"ID=" + r[@"ID"] + @", DATETIME=" + ((DateTime)r[@"DATETIME"]).ToString (@"dd.MM.yyyy HH:mm:ss.fff"));
-                        //}
+                        //iAdd = table.Rows.Count;
+                        //TableResults.Merge(table);
+                        //iCur = TableResults.Rows.Count;
+                        //Console.WriteLine(@"Объединение таблицы-рез-та: [было=" + iPrev + @", дублирущих= " + iDupl + @", добавлено=" + iAdd + @", стало=" + iCur + @"]");
 
-                        //table.Columns.Add(@"tmdelta", Type.GetType("Int32"));
-
-                        iAdd = table.Rows.Count;
-                        TableResults.Merge(table);
-                        iCur = TableResults.Rows.Count;
-                        Console.WriteLine(@"Объединение таблицы-рез-та: [было=" + iPrev + @", дублирущих= " + iDupl + @", добавлено=" + iAdd + @", стало=" + iCur + @"]");
-                        //DataTable tableChanged = results.GetChanges();
-                        //if (! (tableChanged == null))
-                        //    Console.WriteLine(@"Изменено строк: " + tableChanged.Rows.Count);
-                        //else
-                        //    Console.WriteLine(@"Изменено строк: " + 0);
-
-                        //(_iPlugin as HHPlugIn).DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.TABLE_RES, 0, table });
+                        TableResults = table.Copy ();
                     }
                     catch (Exception e)
                     {
@@ -917,15 +778,7 @@ namespace biysktmora
             switch (ev.id)
             {
                 case (int)ID_DATA_ASKED_HOST.INIT_CONN_SETT:
-                    ConnectionSettings connSett = ev.par [0] as ConnectionSettings;
-                    target.Initialize(new ConnectionSettings (
-                        connSett.name
-                        , connSett.server
-                        , connSett.port
-                        , connSett.dbName
-                        , connSett.userName
-                        , connSett.password
-                    ));
+                    target.Initialize(ev.par [0] as ConnectionSettings);
                     break;
                 case (int)ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP:
                     target.Initialize((int)(ev.par as object[])[0], (ev.par as object[])[1] as object []);
