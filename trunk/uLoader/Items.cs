@@ -500,9 +500,9 @@ namespace uLoader
                     plugInRes.Host = (IPlugInHost)this;
                     //Взаимная "привязка" для обмена сообщениями
                     // библиотека - объект класса
-                    (plugInRes as HHPlugIn).EvtDataAskedHost += new DelegateObjectFunc(plugIn_OnEvtDataAskedHost);
+                    (plugInRes as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(plugIn_OnEvtDataAskedHost);
                     // объект класса - библиотека
-                    EvtDataAskedHost += (plugInRes as HHPlugIn).OnEvtDataRecievedHost;
+                    EvtDataAskedHost += (plugInRes as PlugInBase).OnEvtDataRecievedHost;
 
                     iRes = STATE_DLL.LOADED;
                 }
@@ -740,7 +740,7 @@ namespace uLoader
         /// <param name="fOnEvt">Функция обработки</param>
         public void AddDelegatePlugInOnEvtDataAskedHost (DelegateObjectFunc fOnEvt)
         {
-            (m_plugIn as HHPlugIn).EvtDataAskedHost += fOnEvt;
+            (m_plugIn as PlugInBase).EvtDataAskedHost += fOnEvt;
         }        
     }
 
