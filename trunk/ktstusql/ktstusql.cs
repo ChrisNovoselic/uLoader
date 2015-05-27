@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 
 using HClassLibrary;
+using uLoaderCommon;
 
 namespace ktstusql
 {
-    public class ktstusql : HHandlerDb
+    public class ktstusql : HHandlerDbULoader
     {
         public void Initialize(ConnectionSettings connSett)
         {
@@ -59,9 +60,21 @@ namespace ktstusql
         {
             throw new NotImplementedException();
         }
+
+        protected override int addAllStates()
+        {
+            int iRes = 0;
+
+            return iRes;
+        }
+
+        protected override GroupSignals createGroupSignals(object[] objs)
+        {
+            throw new NotImplementedException();
+        }
     }
 
-    public class PlugIn : HHPlugIn
+    public class PlugIn : PlugInULoader
     {
         public PlugIn()
             : base()
@@ -73,41 +86,6 @@ namespace ktstusql
 
         public override void OnEvtDataRecievedHost(object obj)
         {
-            EventArgsDataHost ev = obj as EventArgsDataHost;
-            ktstusql target = _object as ktstusql;
-
-            switch (ev.id)
-            {
-                case (int)ID_DATA_ASKED_HOST.INIT_CONN_SETT:
-                    ConnectionSettings connSett = ev.par[0] as ConnectionSettings;
-                    target.Initialize(new ConnectionSettings(
-                        connSett.name
-                        , connSett.server
-                        , connSett.port
-                        , connSett.dbName
-                        , connSett.userName
-                        , connSett.password
-                    ));
-                    break;
-                case (int)ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP:
-                    target.Initialize((int)(ev.par as object[])[0], (ev.par as object[])[1] as object[]);
-                    break;
-                case (int)ID_DATA_ASKED_HOST.START:
-                    if (m_markDataHost.IsMarked((int)ID_DATA_ASKED_HOST.INIT_CONN_SETT) == true)
-                        if (m_markDataHost.IsMarked((int)ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP) == true)
-                            target.Start();
-                        else
-                            DataAskedHost((int)ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP);
-                    else
-                        DataAskedHost((int)ID_DATA_ASKED_HOST.INIT_CONN_SETT);
-                    break;
-                case (int)ID_DATA_ASKED_HOST.STOP:
-                    target.Stop();
-                    break;
-                default:
-                    break;
-            }
-
             base.OnEvtDataRecievedHost(obj);
         }
     }
