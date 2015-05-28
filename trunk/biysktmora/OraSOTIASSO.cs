@@ -151,7 +151,7 @@ namespace biysktmora
 
                 iCur = TableResults.Rows.Count;
 
-                Console.WriteLine(@"Обновление рез-та: [было=" + iPrev + @", удалено=" + iDel + @", осталось=" + iCur + @"]");
+                Console.WriteLine(@"Обновление рез-та [ID=" + m_IdGroupSignalsCurrent + @"]: " + @"(было=" + iPrev + @", удалено=" + iDel + @", осталось=" + iCur + @")");
             }
             else
                 ;
@@ -164,7 +164,10 @@ namespace biysktmora
             switch (state)
             {
                 case (int)StatesMachine.CurrentTime:
-                    GetCurrentTimeRequest (DbInterface.DB_TSQL_INTERFACE_TYPE.Oracle, m_dictIdListeners[m_IdGroupSignalsCurrent][0]);
+                    if (! (m_IdGroupSignalsCurrent < 0))
+                        GetCurrentTimeRequest (DbInterface.DB_TSQL_INTERFACE_TYPE.Oracle, m_dictIdListeners[m_IdGroupSignalsCurrent][0]);
+                    else
+                        throw new Exception(@"HBiyskTMOra::StateRequest () - state=" + state.ToString () + @"...");
                     break;
                 case (int)StatesMachine.Values:                    
                     try
@@ -207,7 +210,7 @@ namespace biysktmora
                 case (int)StatesMachine.Values:
                     try
                     {
-                        Console.WriteLine(@"Получено строк: " + (table as DataTable).Rows.Count);
+                        Console.WriteLine(@"Получено строк [ID=" + m_IdGroupSignalsCurrent + @"]: " + (table as DataTable).Rows.Count);
                         if (TableResults == null)
                         {
                             TableResults = new DataTable();

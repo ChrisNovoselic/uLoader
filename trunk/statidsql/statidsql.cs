@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data;
+using System.Globalization;
 
 using HClassLibrary;
 using uLoaderCommon;
@@ -11,8 +12,6 @@ namespace statidsql
 {
     public class statidsql : HHandlerDbULoader
     {
-        DataTable [] m_arTableResults;
-
         enum StatesMachine
         {
             Unknown = -1
@@ -33,7 +32,7 @@ namespace statidsql
 
         private class GroupSignalsStatIdSQL : GroupSignals
         {
-            private enum INDEX_DATATABLE_RES
+            public enum INDEX_DATATABLE_RES
             {
                 PREVIOUS,
                 CURRENT
@@ -55,29 +54,308 @@ namespace statidsql
             private DataTable []m_arTableRes;
             public override DataTable TableResults
             {
-                get { return m_arTableRes[(int)INDEX_DATATABLE_RES.CURRENT]; }
+                get
+                {
+                    lock (this)
+                    {
+                        return m_arTableRes[(int)INDEX_DATATABLE_RES.CURRENT];
+                    }
+                }
 
                 set
                 {
-                    m_arTableRes[(int)INDEX_DATATABLE_RES.PREVIOUS] = m_arTableRes[(int)INDEX_DATATABLE_RES.CURRENT].Copy();
-                    m_arTableRes[(int)INDEX_DATATABLE_RES.CURRENT] = value.Copy();
+                    lock (this)
+                    {
+                        m_arTableRes[(int)INDEX_DATATABLE_RES.PREVIOUS] = m_arTableRes[(int)INDEX_DATATABLE_RES.CURRENT].Copy();
+                        m_arTableRes[(int)INDEX_DATATABLE_RES.CURRENT] = value.Copy();
+                    }
                 }
             }
+
+            //Для 'GetInsertQuery'
+            public DataTable TablePrevious { get { return m_arTableRes[(int)INDEX_DATATABLE_RES.PREVIOUS]; } }
+            public DataTable TableCurrent { get { return m_arTableRes[(int)INDEX_DATATABLE_RES.CURRENT]; } }
 
             public GroupSignalsStatIdSQL(object[] pars)
                 : base(pars)
             {
+                m_arTableRes = new DataTable [(int)INDEX_DATATABLE_RES.COUNT_INDEX_DATATABLE_RES];
+                for (int i = 0; i < (int)INDEX_DATATABLE_RES.COUNT_INDEX_DATATABLE_RES; i ++)
+                    m_arTableRes[i] = new DataTable ();
             }
 
             public override GroupSignals.SIGNAL createSignal(object[] objs)
             {
                 return new SIGNALStatIdSQL((int)objs[0], (int)objs[1], (int)objs[3]);
             }
+
+            private DataTable getTableIns(ref DataTable table)
+            {
+                DataTable tableRes = new DataTable();
+                DataRow[] arSelIns = null;
+                DataRow rowCur = null
+                    , rowAdd
+                    , rowPrev = null;
+                int idSgnl = -1
+                    , tmDelta = -1;
+
+                if ((table.Columns.Count > 2)
+                    && ((!(table.Columns.IndexOf (@"ID") < 0)) && (!(table.Columns.IndexOf (@"DATETIME") < 0))))
+                {
+                    table.Columns.Add(@"tmdelta", typeof(int));
+                    tableRes = table.Clone ();
+
+                    for (int s = 0; s < Signals.Length; s++)
+                    {
+                        try
+                        {
+                            idSgnl = (Signals[s] as GroupSignalsStatIdSQL.SIGNALStatIdSQL).m_idLink;
+                            
+                            //arSelIns = (table as DataTable).Select(string.Empty, @"ID, DATETIME");
+                            arSelIns = (table as DataTable).Select(@"ID=" + idSgnl, @"DATETIME");
+                        }
+                        catch (Exception e)
+                        {
+                            Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"statidsql::getTableIns () - ...");
+                        }
+
+                        if (!(arSelIns == null))
+                            for (int i = 0; i < arSelIns.Length; i++)
+                            {
+                                if (i < (arSelIns.Length - 1))
+                                {
+                                    tableRes.ImportRow (arSelIns[i]);
+                                    rowCur = tableRes.Rows[tableRes.Rows.Count - 1];
+                                }
+                                else
+                                    //Не вставлять без известной 'tmdelta'
+                                    rowCur = null;
+
+                                //Проверитьт № итерации
+                                if (i == 0)
+                                {//Только при прохождении 1-ой итерации цикла
+                                    tmDelta = -1;
+                                    //Определить 'tmdelta' для записи из предыдущего опроса
+                                    rowAdd = null;
+                                    rowPrev = setTMDelta(idSgnl, (DateTime)arSelIns[i][@"DATETIME"], out tmDelta);
+
+                                    if ((!(rowPrev == null))
+                                        && (tmDelta > 0))
+                                    {
+                                        //Добавить из предыдущего опроса
+                                        rowAdd = tableRes.Rows.Add();
+                                        //Скопировать все значения
+                                        foreach (DataColumn col in tableRes.Columns)
+                                        {
+                                            if (col.ColumnName.Equals (@"tmdelta") == true)
+                                                //Для "нового" столбца - найденное значение
+                                                rowAdd[col.ColumnName] = tmDelta;
+                                            else
+                                                //"Старые" значения
+                                                rowAdd[col.ColumnName] = rowPrev[col.ColumnName];
+                                        }
+
+                                        Console.WriteLine(@"Установлен для ID=" + idSgnl + @", DATETIME=" + ((DateTime)rowAdd[@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff") + @" tmdelta=" + rowAdd[@"tmdelta"]);
+                                    }
+                                    else
+                                        ;
+                                }
+                                else
+                                {
+                                    //Определить смещение "соседних" значений сигнала
+                                    long iTMDelta = (((DateTime)arSelIns[i][@"DATETIME"]).Ticks - ((DateTime)arSelIns[i - 1][@"DATETIME"]).Ticks) / TimeSpan.TicksPerMillisecond;                                    
+                                    rowPrev[@"tmdelta"] = (int)iTMDelta;
+                                    Console.WriteLine(@", tmdelta=" + rowPrev[@"tmdelta"]);
+                                }
+
+                                if (! (rowCur == null))
+                                    Console.Write(@"ID=" + rowCur[@"ID"] + @", DATETIME=" + ((DateTime)rowCur[@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
+                                else
+                                    Console.Write(@"ID=" + arSelIns[i][@"ID"] + @", DATETIME=" + ((DateTime)arSelIns[i][@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
+
+                                rowPrev = rowCur;
+                            }
+                        else
+                            ; //arSelIns == null
+
+                        //Корректировать вывод
+                        if (arSelIns.Length > 0)
+                            Console.WriteLine();
+                        else ;
+                    } //Цикл по сигналам...
+                }
+                else
+                    ; //Отсутствуют необходимые столбцы (т.е. у таблицы нет структуры)
+
+                tableRes.AcceptChanges();
+
+                return tableRes;
+            }
+
+            private int getIdStat (int idLink)
+            {
+                int iRes = -1;
+
+                foreach (SIGNALStatIdSQL sgnl in m_arSignals)
+                    if (sgnl.m_idLink == idLink)
+                    {
+                        iRes = sgnl.m_idStat;
+
+                        break;
+                    }
+                    else
+                        ;
+
+                return iRes;
+            }
+
+            public string GetInsertValuesQuery ()
+            {
+                string strRes = string.Empty;
+
+                DataTable tblRes = getTableRes ();
+
+                if ((!(tblRes == null)) 
+                    && (tblRes.Rows.Count > 0))
+                {
+                    string strRow = string.Empty;
+
+                    strRes = @"INSERT INTO [dbo].[ALL_PARAM_SOTIASSO] ("
+                        + @"[ID]"
+                        + @",[ID_TEC]"
+                        + @",[Value]"
+                        + @",[last_changed_at]"
+                        + @",[tmdelta]"
+                        //+ @",[INSERT_DATETIME]"
+                            + @") VALUES";
+
+                    foreach (DataRow row in tblRes.Rows)
+                    {
+                       strRow = @"(";
+
+                       strRow += getIdStat (Int32.Parse (row[@"ID"].ToString().Trim())) + @",";
+                       strRow += @"6" + @",";
+                       strRow += ((decimal)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
+                       strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(-6).ToString (@"yyyyMMdd hh:mm:ss.fff") + @"',";
+                       strRow += row[@"tmdelta"]// + @","
+                       //strRow += @"GETDATE()"
+                       ;
+
+                       strRow += @"),";
+
+                       strRes += strRow;
+                    }
+                    //Лишняя ','
+                    strRes = strRes.Substring (0, strRes.Length - 1);
+                }
+                else
+                    ;
+
+                //Console.WriteLine (@"Запрос на вставку [" + );
+
+                return
+                    //string.Empty
+                    strRes
+                    ;
+            }
+
+            private DataTable getTableRes ()
+            {
+                DataTable tblDiff = clearDupValues ()
+                    , tblRes = getTableIns (ref tblDiff);
+
+                return tblRes;
+            }
+
+            private DataTable clearDupValues()
+            {
+                int iDup = 0;
+
+                DataTable tblPrev = TablePrevious.Copy()
+                    , tblRes = TableResults.Copy();
+
+                if (((!(tblRes.Columns.IndexOf(@"ID") < 0)) && (!(tblRes.Columns.IndexOf(@"DATETIME") < 0)))
+                    && (tblRes.Rows.Count > 0))
+                {
+                    DataRow[] arSel;
+                    foreach (DataRow rRes in tblPrev.Rows)
+                    {
+                        arSel = (tblRes as DataTable).Select(@"ID=" + rRes[@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
+                        iDup += arSel.Length;
+                        foreach (DataRow rDel in arSel)
+                            (tblRes as DataTable).Rows.Remove(rDel);
+                        tblRes.AcceptChanges();
+                    }
+
+                    //!!! См. ВНИМАТЕЛЬНО файл конфигурации - ИДЕНТИФИКАТОРЫ д.б. уникальные
+                    //int cnt = -1;
+                    //List <int>listDel = new List<int>();
+                    //foreach (DataRow rRes in table.Rows)
+                    //{
+                    //    arSel = (table as DataTable).Select(@"ID=" + rRes[@"ID"]
+                    //        + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
+                    //    if (arSel.Length > 1)
+                    //    {
+                    //        iRes ++;
+                    //        //Logging.Logg().Error(@"HBiyskTMOra::clearDupValues () - "
+                    //        //    + @"ID=" + rRes[@"ID"]
+                    //        //    + @", " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
+                    //        //    + @", " + @"QUALITY[" + arSel[0][@"QUALITY"] + @"," + arSel[1][@"QUALITY"] + @"]"
+                    //        //, Logging.INDEX_MESSAGE.NOT_SET);
+                    //        cnt = listDel.Count + arSel.Length;
+                    //        foreach (DataRow rDel in arSel)
+                    //            if (listDel.Count < (cnt - 1))
+                    //                listDel.Add(table.Rows.IndexOf(rDel));
+                    //            else
+                    //                break;
+                    //    }
+                    //    else
+                    //        ;
+                    //}
+
+                    //foreach (int indx in listDel)
+                    //    //(table as DataTable).Rows.Remove(rDel);
+                    //    (table as DataTable).Rows.RemoveAt(indx);
+                    //table.AcceptChanges();
+                }
+                else
+                    ;
+
+                return tblRes;
+            }
+
+            private DataRow setTMDelta(int id, DateTime dtCurrent, out int tmDelta)
+            {
+                tmDelta = -1;
+                DataRow rowRes = null;
+                DataRow[] arSelWas = null;
+
+                //Проверить наличие столбцов в результ./таблице (признак получения рез-та)
+                if (TablePrevious.Columns.Count > 0)
+                {//Только при наличии результата
+                    arSelWas = TablePrevious.Select(@"ID=" + id, @"DATETIME DESC");
+                    //Проверить результат для конкретного сигнала
+                    if ((!(arSelWas == null)) && (arSelWas.Length > 0))
+                    {//Только при наличии рез-та по конкретному сигналу
+                        rowRes = arSelWas[0];
+                        tmDelta = (int)(dtCurrent - (DateTime)arSelWas[0][@"DATETIME"]).TotalMilliseconds;
+
+                        //arSelWas[0][@"tmdelta"] = iRes;
+                        //Console.WriteLine(@"Установлен для ID=" + id + @", DATETIME=" + ((DateTime)arSelWas[0][@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff") + @" tmdelta=" + iRes);
+                    }
+                    else
+                        ; //Без полученного рез-та для конкретного сигнала - невозможно
+                }
+                else
+                    ; //Без полученного рез-та - невозможно
+
+                return rowRes;
+            }
         }
 
         public override void ClearValues()
         {
-            throw new NotImplementedException();
+            TableResults = new DataTable ();
         }
 
         protected override int StateRequest(int state)
@@ -87,10 +365,13 @@ namespace statidsql
             switch ((StatesMachine)state)
             {
                 case StatesMachine.CurrentTime:
-                    GetCurrentTimeRequest(DbInterface.DB_TSQL_INTERFACE_TYPE.MSSQL, m_dictIdListeners[m_IdGroupSignalsCurrent][0]);
+                    if (!(m_IdGroupSignalsCurrent < 0))
+                        GetCurrentTimeRequest(DbInterface.DB_TSQL_INTERFACE_TYPE.MSSQL, m_dictIdListeners[m_IdGroupSignalsCurrent][0]);
+                    else
+                        throw new Exception(@"statdidsql::StateRequest () - state=" + state.ToString() + @"...");
                     break;
                 case StatesMachine.Insert:
-                    string query = GetInsertValuesQuery ();
+                    string query = (m_dictGroupSignals[m_IdGroupSignalsCurrent] as GroupSignalsStatIdSQL).GetInsertValuesQuery ();
                     if (query.Equals (string.Empty) == false)
                         Request(m_dictIdListeners[m_IdGroupSignalsCurrent][0], query);
                     else
@@ -111,6 +392,7 @@ namespace statidsql
             {
                 case StatesMachine.CurrentTime:
                     m_dtServer = (DateTime)(obj as DataTable).Rows[0][0];
+                    Console.WriteLine(@"statidsql::StateResponse () - m_IdGroupSignalsCurrent=" + m_IdGroupSignalsCurrent + @", DATETIME_CURRENT=" + m_dtServer.ToString(@"dd.MM.yyyy hh.mm.ss.fff"));
                     break;
                 case StatesMachine.Insert:
                     break;
@@ -135,149 +417,7 @@ namespace statidsql
         {
             int iRes = 0;
 
-            TableResults = tableIn.Copy ();
-
-            if (IsStarted == true)
-            {
-                //AddState ((int)StatesMachine.Insert);
-                AddState((int)StatesMachine.CurrentTime);
-
-                Run(@"statidsql::Insert () - ...");
-            }
-            else
-                ;
-
-            return iRes;
-        }
-
-        private string GetInsertValuesQuery ()
-        {
-            string strRes = string.Empty;
-
-            return strRes;
-        }
-
-        private DataTable getTableIns(ref DataTable table)
-        {
-            DataTable tableRes = new DataTable();
-            DataRow[] arSelIns = null;
-
-            table.Columns.Add(@"tmdelta", typeof(int));
-
-            for (int s = 0; s < Signals.Length; s++)
-            {
-                try
-                {
-                    //arSelIns = (table as DataTable).Select(string.Empty, @"ID, DATETIME");
-                    arSelIns = (table as DataTable).Select(@"ID=" + (Signals[s] as GroupSignalsStatIdSQL.SIGNALStatIdSQL).m_idLink, @"DATETIME");
-                }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HBiyskTMOra::getTableIns () - ...");
-                }
-
-                if (!(arSelIns == null))
-                    for (int i = 0; i < arSelIns.Length; i++)
-                    {
-                        tableRes.ImportRow(arSelIns[i]);
-
-                        //Проверитьт № итерации
-                        if (i == 0)
-                        {//Только при прохождении 1-ой итерации цикла
-                            //iTMDelta = 
-                            setTMDelta((Signals[s] as GroupSignalsStatIdSQL.SIGNALStatIdSQL).m_idLink, (DateTime)arSelIns[i][@"DATETIME"]);
-                        }
-                        else
-                        {
-                            //Определить смещение "соседних" значений сигнала
-                            int iTMDelta = (int)((DateTime)arSelIns[i][@"DATETIME"] - (DateTime)arSelIns[i - 1][@"DATETIME"]).TotalMilliseconds;
-                            arSelIns[i - 1][@"tmdelta"] = iTMDelta;
-                            Console.WriteLine(@", tmdelta=" + arSelIns[i - 1][@"tmdelta"]);
-                        }
-
-                        Console.Write(@"ID=" + arSelIns[i][@"ID"] + @", DATETIME=" + ((DateTime)arSelIns[i][@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
-                    }
-                //Корректировать вывод
-                if (arSelIns.Length > 0)
-                    Console.WriteLine();
-                else ;
-            } //Цикл по сигналам...
-
-            //tableRes.AcceptChanges();
-
-            return tableRes;
-        }
-
-        private int clearDupValues(ref DataTable table)
-        {
-            int iRes = 0
-                , cnt = -1;
-
-            DataRow[] arSel;
-            foreach (DataRow rRes in TableResults.Rows)
-            {
-                arSel = (table as DataTable).Select(@"ID=" + rRes[@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
-                iRes += arSel.Length;
-                foreach (DataRow rDel in arSel)
-                    (table as DataTable).Rows.Remove(rDel);
-                table.AcceptChanges();
-            }
-
-            //!!! См. ВНИМАТЕЛЬНО файл конфигурации - ИДЕНТИФИКАТОРЫ д.б. уникальные
-            //List <int>listDel = new List<int>();
-            //foreach (DataRow rRes in table.Rows)
-            //{
-            //    arSel = (table as DataTable).Select(@"ID=" + rRes[@"ID"]
-            //        + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
-            //    if (arSel.Length > 1)
-            //    {
-            //        iRes ++;
-            //        //Logging.Logg().Error(@"HBiyskTMOra::clearDupValues () - "
-            //        //    + @"ID=" + rRes[@"ID"]
-            //        //    + @", " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
-            //        //    + @", " + @"QUALITY[" + arSel[0][@"QUALITY"] + @"," + arSel[1][@"QUALITY"] + @"]"
-            //        //, Logging.INDEX_MESSAGE.NOT_SET);
-            //        cnt = listDel.Count + arSel.Length;
-            //        foreach (DataRow rDel in arSel)
-            //            if (listDel.Count < (cnt - 1))
-            //                listDel.Add(table.Rows.IndexOf(rDel));
-            //            else
-            //                break;
-            //    }
-            //    else
-            //        ;
-            //}
-
-            //foreach (int indx in listDel)
-            //    //(table as DataTable).Rows.Remove(rDel);
-            //    (table as DataTable).Rows.RemoveAt(indx);
-            //table.AcceptChanges();
-
-            return iRes;
-        }
-
-        private int setTMDelta(int id, DateTime dtCurrent)
-        {
-            int iRes = -1;
-            DataRow[] arSelWas = null;
-
-            //Проверить наличие столбцов в результ./таблице (признак получения рез-та)
-            if (TableResults.Columns.Count > 0)
-            {//Только при наличии результата
-                arSelWas = TableResults.Select(@"ID=" + id, @"DATETIME DESC");
-                //Проверить результат для конкретного сигнала
-                if ((!(arSelWas == null)) && (arSelWas.Length > 0))
-                {//Только при наличии рез-та по конкретному сигналу
-                    iRes = (int)(dtCurrent - (DateTime)arSelWas[0][@"DATETIME"]).TotalMilliseconds;
-                    arSelWas[0][@"tmdelta"] = iRes;
-
-                    Console.WriteLine(@"Установлен для ID=" + id + @", DATETIME=" + ((DateTime)arSelWas[0][@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff") + @" tmdelta=" + iRes);
-                }
-                else
-                    ; //Без полученного рез-та для конкретного сигнала - невозможно
-            }
-            else
-                ; //Без полученного рез-та - невозможно
+            m_dictGroupSignals[id].TableResults = tableIn.Copy();
 
             return iRes;
         }
@@ -286,7 +426,8 @@ namespace statidsql
         {
             int iRes = 0;
 
-            AddState ((int)StatesMachine.Insert);
+            AddState((int)StatesMachine.CurrentTime);
+            AddState((int)StatesMachine.Insert);
 
             return iRes;
         }

@@ -62,10 +62,11 @@ namespace uLoader
                 //Получить ключ для чтения параметров в секции
                 KEY_PARS = GetMainValueOfKey(@"KEY_PARS");
                 //Получить период для обновления информации на панели "Работа"
-                if (Int32.TryParse (GetMainValueOfKey(@"PANEL_WORK_UPDATE"), out m_iSecPanelWorkUpdate) == false)
-                    throw new Exception(@"FileINI::FileINI () - Параметр PANEL_WORK_UPDATE не удалось инициализировать ...");
-                else
-                    ;
+                Logging.Logg().Debug (@"FileINI::ctor () - PANEL_WORK_UPDATE = " + GetMainValueOfKey(@"PANEL_WORK_UPDATE"), Logging.INDEX_MESSAGE.NOT_SET);
+                m_iSecPanelWorkUpdate = Int32.Parse (GetMainValueOfKey(@"PANEL_WORK_UPDATE"));
+                //if (Int32.TryParse (GetMainValueOfKey(@"PANEL_WORK_UPDATE"), out m_iSecPanelWorkUpdate) == false)
+                //    throw new Exception(@"FileINI::FileINI () - Параметр PANEL_WORK_UPDATE не удалось инициализировать ...");
+                //else ;
 
                 //Создать все объекты, списки для значений из файла конфигурации
                 m_arListGroupValues = new SRC [(int)INDEX_SRC.COUNT_INDEX_SRC];

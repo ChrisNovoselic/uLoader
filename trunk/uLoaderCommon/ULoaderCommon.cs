@@ -111,20 +111,129 @@ namespace uLoaderCommon
             }
         }
 
-        private Dictionary<int, GroupSignals> m_dictGroupSignals;
+        protected Dictionary<int, GroupSignals> m_dictGroupSignals;
 
-        private GroupSignals.STATE State { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].State; } set { m_dictGroupSignals[m_IdGroupSignalsCurrent].State = value; } }
+        private GroupSignals.STATE State
+        {
+            get
+            {
+                if (!(m_IdGroupSignalsCurrent < 0))
+                    return m_dictGroupSignals[m_IdGroupSignalsCurrent].State;
+                else
+                    throw new Exception(@"ULoaderCommon::State.get ...");
+            }
+            
+            set
+            {
+                if (!(m_IdGroupSignalsCurrent < 0))
+                    m_dictGroupSignals[m_IdGroupSignalsCurrent].State = value;
+                else
+                    throw new Exception(@"ULoaderCommon::State.set ...");
+            }
+        }
 
-        private MODE_WORK Mode { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].Mode; } /*set { m_dictGroupSignals[m_IdGroupSignalsCurrent].Mode = value; }*/ }
+        private MODE_WORK Mode
+        {
+            get
+            {
+                if (!(m_IdGroupSignalsCurrent < 0))
+                    return m_dictGroupSignals[m_IdGroupSignalsCurrent].Mode;
+                else
+                    throw new Exception(@"ULoaderCommon::Mode.get ...");
+            }
+            
+            /*set { m_dictGroupSignals[m_IdGroupSignalsCurrent].Mode = value; }*/
+        }
 
-        protected GroupSignals.SIGNAL[] Signals { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].Signals; } }
+        protected GroupSignals.SIGNAL[] Signals
+        {
+            get
+            {
+                if (!(m_IdGroupSignalsCurrent < 0))
+                    return m_dictGroupSignals[m_IdGroupSignalsCurrent].Signals;
+                else
+                    throw new Exception(@"ULoaderCommon::Signals.get ...");
+            }
+        }
 
-        protected TimeSpan TimeSpanPeriod { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].TimeSpanPeriod; } }
-        protected DateTime DateTimeStart { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].DateTimeStart; } set { m_dictGroupSignals[m_IdGroupSignalsCurrent].DateTimeStart = value; } }
-        protected long MSecInterval { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].MSecInterval; } }
-        protected long MSecRemaindToActivate { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].MSecRemaindToActivate; } set { m_dictGroupSignals[m_IdGroupSignalsCurrent].MSecRemaindToActivate = value; } }
+        protected TimeSpan TimeSpanPeriod
+        {
+            get
+            {
+                if (!(m_IdGroupSignalsCurrent < 0))
+                    return m_dictGroupSignals[m_IdGroupSignalsCurrent].TimeSpanPeriod;
+                else
+                    throw new Exception(@"ULoaderCommon::TimeSpanPeriod.get ...");
+            }
+        }
 
-        public DataTable TableResults { get { return m_dictGroupSignals[m_IdGroupSignalsCurrent].TableResults; } set { m_dictGroupSignals[m_IdGroupSignalsCurrent].TableResults = value; } }
+        protected DateTime DateTimeStart
+        {
+            get
+            {
+                if (! (m_IdGroupSignalsCurrent < 0))
+                    return m_dictGroupSignals[m_IdGroupSignalsCurrent].DateTimeStart;
+                else
+                    throw new Exception(@"ULoaderCommon::DateTimeStart.get ...");
+            }
+
+            set
+            {
+                if (!(m_IdGroupSignalsCurrent < 0))
+                    m_dictGroupSignals[m_IdGroupSignalsCurrent].DateTimeStart = value;
+                else
+                    throw new Exception(@"ULoaderCommon::DateTimeStart.set ...");
+            }
+        }
+
+        protected long MSecInterval
+        {
+            get
+            {
+                if (!(m_IdGroupSignalsCurrent < 0))
+                    return m_dictGroupSignals[m_IdGroupSignalsCurrent].MSecInterval;
+                else
+                    throw new Exception(@"ULoaderCommon::MSecInterval.get ...");
+            }
+        }
+
+        protected long MSecRemaindToActivate
+        {
+            get
+            {
+                if (!(m_IdGroupSignalsCurrent < 0))
+                    return m_dictGroupSignals[m_IdGroupSignalsCurrent].MSecRemaindToActivate;
+                else
+                    throw new Exception(@"ULoaderCommon::MSecRemaindToActivate.get ...");
+            }
+
+            set
+            {
+                if (!(m_IdGroupSignalsCurrent < 0))
+                    m_dictGroupSignals[m_IdGroupSignalsCurrent].MSecRemaindToActivate = value;
+                else
+                    throw new Exception(@"ULoaderCommon::MSecRemaindToActivate.set ...");
+            }
+        }
+
+        public DataTable TableResults
+        {
+            get
+            {
+                if (!(m_IdGroupSignalsCurrent < 0))
+                    return m_dictGroupSignals[m_IdGroupSignalsCurrent].TableResults;
+                else
+                    throw new Exception(@"ULoaderCommon::TableResults.get ...");
+            }
+
+            set
+            {
+                if (!(m_IdGroupSignalsCurrent < 0))
+                    m_dictGroupSignals[m_IdGroupSignalsCurrent].TableResults = value;
+                else
+                    throw new Exception(@"ULoaderCommon::TableResults.set ...");
+            }
+        }
 
         protected DateTime m_dtServer;
         private int m_msecIntervalTimerActivate;
@@ -313,7 +422,14 @@ namespace uLoaderCommon
 
                     ((PlugInBase)_iPlugin).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.TABLE_RES, m_IdGroupSignalsCurrent, TableResults });
 
-                    m_IdGroupSignalsCurrent = -1;
+                    try
+                    {
+                        m_IdGroupSignalsCurrent = -1;
+                    }
+                    catch (Exception e)
+                    {
+                        Logging.Logg().Exception (e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader.fThreadQueue () - ...");
+                    }
                 }
             }
             //Освободить ресурс ядра ОС
@@ -381,6 +497,7 @@ namespace uLoaderCommon
             lock (m_lockStateGroupSignals)
             {
                 m_dictGroupSignals[id].State = GroupSignals.STATE.SLEEP;
+                m_dictGroupSignals[id].TableResults = new DataTable ();
 
                 foreach (GroupSignals grpSgnls in m_dictGroupSignals.Values)
                     if ((grpSgnls.State == GroupSignals.STATE.ACTIVE)
