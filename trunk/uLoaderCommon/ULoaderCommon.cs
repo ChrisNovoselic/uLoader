@@ -483,6 +483,8 @@ namespace uLoaderCommon
 
         public override void Stop()
         {
+            Logging.Logg().Debug(@"HHandlerDbULoader::Stop () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            
             stopTimerActivate();
 
             stopThreadQueue();
