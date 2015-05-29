@@ -53,14 +53,14 @@ namespace statidsql
                 }
             }
 
-            private DataTable []m_arTableRes;
-            public override DataTable TableResults
+            private DataTable []m_arTableRec;
+            public override DataTable TableRecieved
             {
                 get
                 {
                     lock (this)
                     {
-                        return m_arTableRes[(int)INDEX_DATATABLE_RES.CURRENT];
+                        return m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT];
                     }
                 }
 
@@ -68,22 +68,22 @@ namespace statidsql
                 {
                     lock (this)
                     {
-                        m_arTableRes[(int)INDEX_DATATABLE_RES.PREVIOUS] = m_arTableRes[(int)INDEX_DATATABLE_RES.CURRENT].Copy();
-                        m_arTableRes[(int)INDEX_DATATABLE_RES.CURRENT] = value.Copy();
+                        m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS] = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Copy();
+                        m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT] = value.Copy();
                     }
                 }
             }
 
             //Для 'GetInsertQuery'
-            public DataTable TablePrevious { get { return m_arTableRes[(int)INDEX_DATATABLE_RES.PREVIOUS]; } }
-            public DataTable TableCurrent { get { return m_arTableRes[(int)INDEX_DATATABLE_RES.CURRENT]; } }
+            public DataTable TableRecievedPrev { get { return m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS]; } }
+            public DataTable TableRecievedCur { get { return m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT]; } }
 
             public GroupSignalsStatIdSQL(object[] pars)
                 : base(pars)
             {
-                m_arTableRes = new DataTable [(int)INDEX_DATATABLE_RES.COUNT_INDEX_DATATABLE_RES];
+                m_arTableRec = new DataTable[(int)INDEX_DATATABLE_RES.COUNT_INDEX_DATATABLE_RES];
                 for (int i = 0; i < (int)INDEX_DATATABLE_RES.COUNT_INDEX_DATATABLE_RES; i ++)
-                    m_arTableRes[i] = new DataTable ();
+                    m_arTableRec[i] = new DataTable();
             }
 
             public override GroupSignals.SIGNAL createSignal(object[] objs)
@@ -272,8 +272,8 @@ namespace statidsql
             {
                 int iDup = 0;
 
-                DataTable tblPrev = TablePrevious.Copy()
-                    , tblRes = TableResults.Copy();
+                DataTable tblPrev = TableRecievedPrev.Copy()
+                    , tblRes = TableRecieved.Copy();
 
                 if (((!(tblRes.Columns.IndexOf(@"ID") < 0)) && (!(tblRes.Columns.IndexOf(@"DATETIME") < 0)))
                     && (tblRes.Rows.Count > 0))
@@ -332,9 +332,9 @@ namespace statidsql
                 DataRow[] arSelWas = null;
 
                 //Проверить наличие столбцов в результ./таблице (признак получения рез-та)
-                if (TablePrevious.Columns.Count > 0)
+                if (TableRecievedPrev.Columns.Count > 0)
                 {//Только при наличии результата
-                    arSelWas = TablePrevious.Select(@"ID=" + id, @"DATETIME DESC");
+                    arSelWas = TableRecievedPrev.Select(@"ID=" + id, @"DATETIME DESC");
                     //Проверить результат для конкретного сигнала
                     if ((!(arSelWas == null)) && (arSelWas.Length > 0))
                     {//Только при наличии рез-та по конкретному сигналу
@@ -418,7 +418,7 @@ namespace statidsql
         {
             int iRes = 0;
 
-            m_dictGroupSignals[id].TableResults = tableIn.Copy();
+            m_dictGroupSignals[id].TableRecieved = tableIn.Copy();
 
             return iRes;
         }

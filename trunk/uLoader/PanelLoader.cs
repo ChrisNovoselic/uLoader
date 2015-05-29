@@ -38,7 +38,7 @@ namespace uLoader
                                         , DGV_SIGNALS_OF_GROUP
                                         , COUNT_KEY_CONTROLS
                                         ,};
-        
+
             public PanelLoader()
                 : base (4, 1)
             {
@@ -282,6 +282,7 @@ namespace uLoader
                         new DataGridViewTextBoxColumn ()
                         , new DataGridViewTextBoxColumn ()
                         , new DataGridViewTextBoxColumn ()
+                        , new DataGridViewTextBoxColumn ()
                     }
                 );
                 (ctrl as DataGridView).AllowUserToResizeColumns = false;
@@ -296,6 +297,10 @@ namespace uLoader
                         col.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
                     else
                         col.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                (ctrl as DataGridView).Columns[0].HeaderCell.Value = @"Сигнал";
+                (ctrl as DataGridView).Columns[1].HeaderCell.Value = @"Кр./знач.";
+                (ctrl as DataGridView).Columns[2].HeaderCell.Value = @"Дата/время кр./знач.";
+                (ctrl as DataGridView).Columns[3].HeaderCell.Value = @"Кол-во";
                 ctrl.Dock = DockStyle.Fill;
                 panelColumns.Controls.Add(ctrl, 0, 0);
                 panelColumns.SetColumnSpan(ctrl, 10); panelColumns.SetRowSpan(ctrl, 5);
@@ -736,6 +741,32 @@ namespace uLoader
             {
                 int iRes = 0;
 
+                if (table.Rows.Count > 0)
+                {
+                    DataGridView dgv = GetWorkingItem (KEY_CONTROLS.DGV_SIGNALS_OF_GROUP) as DataGridView;
+                    DataRow []arSel = null;
+                    foreach (DataGridViewRow dgvRow in dgv.Rows)
+                    {
+                        arSel = table.Select (@"NAME_SHR='" + dgvRow.Cells[0].Value + @"'");
+                        if (arSel.Length == 1)
+                        {
+                            dgvRow.Cells[1].Value = arSel[0][@"VALUE"];
+                            dgvRow.Cells[2].Value = arSel[0][@"DATETIME"];
+                            dgvRow.Cells[3].Value = arSel[0][@"COUNT"];
+                        }
+                        else
+                            //throw new Exception(@"PanelWork.PanelLoaderSource::UpdateData () - невозможно определить строку для отображения [NAME_SHR=" + dgvRow.Cells[0].Value + @"]...");
+                        {
+                            dgvRow.Cells[1].Value =
+                            dgvRow.Cells[2].Value =
+                            dgvRow.Cells[3].Value =
+                                string.Empty;
+                        }
+                    }
+                }
+                else
+                    ;
+
                 return iRes;
             }
         }
@@ -754,6 +785,32 @@ namespace uLoader
             public override int UpdateData(DataTable table)
             {
                 int iRes = 0;
+
+                if (table.Rows.Count > 0)
+                {
+                    DataGridView dgv = GetWorkingItem (KEY_CONTROLS.DGV_SIGNALS_OF_GROUP) as DataGridView;
+                    DataRow []arSel = null;
+                    foreach (DataGridViewRow dgvRow in dgv.Rows)
+                    {
+                        arSel = table.Select (@"NAME_SHR='" + dgvRow.Cells[0].Value + @"'");
+                        if (arSel.Length == 1)
+                        {
+                            dgvRow.Cells[1].Value = arSel[0][@"VALUE"];
+                            dgvRow.Cells[2].Value = arSel[0][@"DATETIME"];
+                            dgvRow.Cells[3].Value = arSel[0][@"COUNT"];
+                        }
+                        else
+                            //throw new Exception(@"PanelWork.PanelLoaderSource::UpdateData () - невозможно определить строку для отображения [NAME_SHR=" + dgvRow.Cells[0].Value + @"]...");
+                        {
+                            dgvRow.Cells[1].Value =
+                            dgvRow.Cells[2].Value =
+                            dgvRow.Cells[3].Value =
+                                string.Empty;
+                        }
+                    }
+                }
+                else
+                    ;
 
                 return iRes;
             }

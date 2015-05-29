@@ -43,8 +43,8 @@ namespace biysktmora
                 }
             }
 
-            private DataTable m_tableResults;
-            public override DataTable TableResults { get { return m_tableResults; } set { m_tableResults = value; } }
+            private DataTable m_tableRec;
+            public override DataTable TableRecieved { get { return m_tableRec; } set { m_tableRec = value; } }
 
             public GroupSignalsBiyskTMOra(object[] pars) : base (pars)
             {

@@ -63,7 +63,7 @@ namespace uLoaderCommon
             private long m_msecRemaindToActivate;
             public long MSecRemaindToActivate { get { return m_msecRemaindToActivate; } set { m_msecRemaindToActivate = value; } }
 
-            public abstract DataTable TableResults { get; set; }
+            public abstract DataTable TableRecieved { get; set; }
 
             public GroupSignals(object[] pars)
             {
@@ -221,7 +221,7 @@ namespace uLoaderCommon
             get
             {
                 if (!(m_IdGroupSignalsCurrent < 0))
-                    return m_dictGroupSignals[m_IdGroupSignalsCurrent].TableResults;
+                    return m_dictGroupSignals[m_IdGroupSignalsCurrent].TableRecieved;
                 else
                     throw new Exception(@"ULoaderCommon::TableResults.get ...");
             }
@@ -229,7 +229,7 @@ namespace uLoaderCommon
             set
             {
                 if (!(m_IdGroupSignalsCurrent < 0))
-                    m_dictGroupSignals[m_IdGroupSignalsCurrent].TableResults = value;
+                    m_dictGroupSignals[m_IdGroupSignalsCurrent].TableRecieved = value;
                 else
                     throw new Exception(@"ULoaderCommon::TableResults.set ...");
             }
@@ -501,7 +501,7 @@ namespace uLoaderCommon
             lock (m_lockStateGroupSignals)
             {
                 m_dictGroupSignals[id].State = GroupSignals.STATE.SLEEP;
-                m_dictGroupSignals[id].TableResults = new DataTable ();
+                m_dictGroupSignals[id].TableRecieved = new DataTable();
 
                 foreach (GroupSignals grpSgnls in m_dictGroupSignals.Values)
                     if ((grpSgnls.State == GroupSignals.STATE.ACTIVE)

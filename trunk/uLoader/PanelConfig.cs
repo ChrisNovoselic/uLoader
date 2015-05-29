@@ -655,11 +655,17 @@ namespace uLoader
             getConfigItem(infxConfig, indxPanelToClear).Rows.Clear();
             //Очистить список с параметрами соединения
             getConfigItemProp(infxConfig, indxPanelToClear).Rows.Clear();
+
+            int indxItemSelected = (int)getConfigItem (infxConfig, indxPanelSelected).SelectedRows [0].Index;
             //Запросить
             DataAskedHost(new object[] {
                                     new object [] //Список параметров соединения для источника из выбранной группы (строки)
                                         {
-                                            statePars //без параметров
+                                            statePars
+                                                //с параметрами
+                                                , (int)infxConfig //Индекс панели
+                                                , (int)indxPanelSelected //Индекс группы элементов на панели
+                                                , indxItemSelected // выбранная строка группы элементов
                                         }
                                     , new object [] //Список источников для выбранной строки
                                         {
@@ -667,7 +673,7 @@ namespace uLoader
                                                 //с параметрами
                                                 , (int)infxConfig //Индекс панели
                                                 , (int)indxPanelSelected //Индекс группы элементов на панели
-                                                , (int)getConfigItem (infxConfig, indxPanelSelected).SelectedRows [0].Index // выбранная строка группы элементов
+                                                ,  indxItemSelected // выбранная строка группы элементов
                                         }
                                 }
                             );

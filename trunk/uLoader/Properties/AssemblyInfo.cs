@@ -6,12 +6,12 @@ using System.Runtime.InteropServices;
 // набора атрибутов. Измените значения этих атрибутов, чтобы изменить сведения,
 // связанные со сборкой.
 [assembly: AssemblyTitle("uLoader")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Универсальный загрузчик")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("WORKGROUP")]
+[assembly: AssemblyCompany("СибЭКо Информационные технологии и связь")]
 [assembly: AssemblyProduct("uLoader")]
-[assembly: AssemblyCopyright("Copyright © WORKGROUP 2015")]
-[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCopyright("Copyright ©ZAO ITC 2015")]
+[assembly: AssemblyTrademark("©ZAO ITC")]
 [assembly: AssemblyCulture("")]
 
 // Параметр ComVisible со значением FALSE делает типы в сборке невидимыми 
@@ -32,7 +32,7 @@ using System.Runtime.InteropServices;
 // Можно задать все значения или принять номер построения и номер редакции по умолчанию, 
 // используя "*", как показано ниже:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.0.0.1")]
+[assembly: AssemblyFileVersion("1.0.0.1")]
 
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("TestProject_001")]
