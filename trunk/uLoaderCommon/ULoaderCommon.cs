@@ -12,7 +12,7 @@ namespace uLoaderCommon
     public enum DATETIME
     {
         SEC_SPANPERIOD_DEFAULT = 60
-        , MSEC_INTERVAL_DEFAULT = 6666
+        , MSEC_INTERVAL_DEFAULT = 4444
         , MSEC_INTERVAL_TIMER_ACTIVATE = 66
     }
     /// <summary>
@@ -391,6 +391,8 @@ namespace uLoaderCommon
                     }
                     //Получить объект очереди событий
                     m_IdGroupSignalsCurrent = m_queueIdGroupSignals.Peek();
+
+                    Logging.Logg().Debug(@"HHandlerDbULoader::fThreadQueue () - начало обработки группы событий очереди (ID_PLUGIN=" + (_iPlugin as PlugInBase)._Id + @", ID_GSGNLS=" + m_IdGroupSignalsCurrent + @")", Logging.INDEX_MESSAGE.NOT_SET);
 
                     lock (m_lockState)
                     {

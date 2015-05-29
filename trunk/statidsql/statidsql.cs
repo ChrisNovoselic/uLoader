@@ -12,6 +12,8 @@ namespace statidsql
 {
     public class statidsql : HHandlerDbULoader
     {
+        private static string m_strNameDestTable = @"ALL_PARAM_SOTIASSO-TEST";
+
         enum StatesMachine
         {
             Unknown = -1
@@ -220,13 +222,13 @@ namespace statidsql
                 {
                     string strRow = string.Empty;
 
-                    strRes = @"INSERT INTO [dbo].[ALL_PARAM_SOTIASSO] ("
+                    strRes = @"INSERT INTO [dbo].[" + m_strNameDestTable + @"] ("
                         + @"[ID]"
                         + @",[ID_TEC]"
                         + @",[Value]"
                         + @",[last_changed_at]"
                         + @",[tmdelta]"
-                        //+ @",[INSERT_DATETIME]"
+                        + @",[INSERT_DATETIME]"
                             + @") VALUES";
 
                     foreach (DataRow row in tblRes.Rows)
@@ -237,9 +239,8 @@ namespace statidsql
                        strRow += @"6" + @",";
                        strRow += ((decimal)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
                        strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(-6).ToString (@"yyyyMMdd hh:mm:ss.fff") + @"',";
-                       strRow += row[@"tmdelta"]// + @","
-                       //strRow += @"GETDATE()"
-                       ;
+                       strRow += row[@"tmdelta"] + @",";
+                       strRow += @"GETDATE()";
 
                        strRow += @"),";
 
@@ -355,7 +356,7 @@ namespace statidsql
 
         public override void ClearValues()
         {
-            TableResults = new DataTable ();
+            //TableResults = new DataTable ();
         }
 
         protected override int StateRequest(int state)
@@ -405,12 +406,12 @@ namespace statidsql
 
         protected override void StateErrors(int state, int req, int res)
         {
-            throw new NotImplementedException();
+            Logging.Logg().Error(@"statidsql::StateErrors (state" + ((StatesMachine)state).ToString () + @", req=" + req + @", res=" + res + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
 
         protected override void StateWarnings(int state, int req, int res)
         {
-            throw new NotImplementedException();
+            Logging.Logg().Warning(@"statidsql::StateWarnings (state" + ((StatesMachine)state).ToString() + @", req=" + req + @", res=" + res + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
 
         public int Insert (int id, DataTable tableIn)
