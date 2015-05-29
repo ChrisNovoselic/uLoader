@@ -111,7 +111,9 @@ namespace uLoader
                 (ctrl as DataGridView).SelectionMode = DataGridViewSelectionMode.FullRowSelect;
                 (ctrl as DataGridView).RowHeadersVisible = false;
                 (ctrl as DataGridView).Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                (ctrl as DataGridView).Columns[0].HeaderText = @"Группы источн.";
                 (ctrl as DataGridView).Columns[1].Width = 37;
+                (ctrl as DataGridView).Columns[1].HeaderText = @"Вкл./выкл.";
                 //(ctrl as DataGridView).Columns[1].ReadOnly = true;
                 //(ctrl as DataGridView).ReadOnly = true;
                 (ctrl as DataGridView).RowsAdded += new DataGridViewRowsAddedEventHandler(panelLoader_WorkItemRowsAdded);
@@ -166,7 +168,9 @@ namespace uLoader
                 (ctrl as DataGridView).SelectionMode = DataGridViewSelectionMode.FullRowSelect;
                 (ctrl as DataGridView).RowHeadersVisible = false;
                 (ctrl as DataGridView).Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                (ctrl as DataGridView).Columns[0].HeaderText = @"Группы сигн.";
                 (ctrl as DataGridView).Columns[1].Width = 37;
+                (ctrl as DataGridView).Columns[1].HeaderText = @"Вкл./выкл.";
                 //(ctrl as DataGridView).Columns[1].ReadOnly = true;
                 //(ctrl as DataGridView).ReadOnly = true;
                 (ctrl as DataGridView).RowsAdded += new DataGridViewRowsAddedEventHandler(panelLoader_WorkItemRowsAdded);

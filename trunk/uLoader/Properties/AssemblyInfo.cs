@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // Управление общими сведениями о сборке осуществляется с помощью 
 // набора атрибутов. Измените значения этих атрибутов, чтобы изменить сведения,
 // связанные со сборкой.
-[assembly: AssemblyTitle("uLoader")]
+[assembly: AssemblyTitle("У-Загрузчик")]
 [assembly: AssemblyDescription("Универсальный загрузчик")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("СибЭКо Информационные технологии и связь")]
-[assembly: AssemblyProduct("uLoader")]
+[assembly: AssemblyProduct("У-Загрузчик")]
 [assembly: AssemblyCopyright("Copyright ©ZAO ITC 2015")]
 [assembly: AssemblyTrademark("©ZAO ITC")]
 [assembly: AssemblyCulture("")]
