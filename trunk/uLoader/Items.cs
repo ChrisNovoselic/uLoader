@@ -725,32 +725,37 @@ namespace uLoader
                 if ((!(tblRec == null))
                     && (tblRec.Rows.Count > 0))
                 {
-                    tblToPanel = new DataTable ();
-                    tblToPanel.Columns.AddRange (new DataColumn [] { new DataColumn (@"NAME_SHR", typeof (string))
-                                                                    , new DataColumn (@"VALUE", typeof (string)) //new DataColumn (@"VALUE", typeof (decimal))
-                                                                    , new DataColumn (@"DATETIME", typeof (string)) //new DataColumn (@"DATETIME", typeof (DateTime))
-                                                                    , new DataColumn (@"COUNT", typeof (string)) //new DataColumn (@"COUNT", typeof (int))
-                                                                    });
-
-                    if (this.GetType ().Equals (typeof (GroupSources)) == true)
-                        strNameFieldID = @"ID";
-                    else
-                        if (this.GetType ().Equals (typeof (GroupSourcesDest)) == true)
-                            strNameFieldID = @"ID_SRC";
-                        else
-                            ;
-                        
-                    
-                    foreach (SIGNAL_SRC sgnl in grpSgnls.m_listSgnls)
+                    if ((!(tblRec.Columns.IndexOf(@"ID") < 0)) && (!(tblRec.Columns.IndexOf(@"DATETIME") < 0)))
                     {
-                        arSel = tblRec.Select (@"ID=" + sgnl.m_dictPars[strNameFieldID], @"DATETIME DESC");
-                        if (arSel.Length > 0)
-                            arObjToRow = new object[] { sgnl.m_dictPars[@"NAME_SHR"], arSel[0][@"VALUE"], ((DateTime)arSel[0][@"DATETIME"]).ToString(@"dd.MM.yyyy hh:mm:ss.fff"), arSel.Length };
-                        else
-                            arObjToRow = new object[] { sgnl.m_dictPars[@"NAME_SHR"], string.Empty, string.Empty, string.Empty };
+                        tblToPanel = new DataTable();
+                        tblToPanel.Columns.AddRange(new DataColumn[] { new DataColumn (@"NAME_SHR", typeof (string))
+                                                                        , new DataColumn (@"VALUE", typeof (string)) //new DataColumn (@"VALUE", typeof (decimal))
+                                                                        , new DataColumn (@"DATETIME", typeof (string)) //new DataColumn (@"DATETIME", typeof (DateTime))
+                                                                        , new DataColumn (@"COUNT", typeof (string)) //new DataColumn (@"COUNT", typeof (int))
+                                                                        });
 
-                        tblToPanel.Rows.Add(arObjToRow);
+                        if (this.GetType().Equals(typeof(GroupSources)) == true)
+                            strNameFieldID = @"ID";
+                        else
+                            if (this.GetType().Equals(typeof(GroupSourcesDest)) == true)
+                                strNameFieldID = @"ID_SRC";
+                            else
+                                ;
+
+
+                        foreach (SIGNAL_SRC sgnl in grpSgnls.m_listSgnls)
+                        {
+                            arSel = tblRec.Select(@"ID=" + sgnl.m_dictPars[strNameFieldID], @"DATETIME DESC");
+                            if (arSel.Length > 0)
+                                arObjToRow = new object[] { sgnl.m_dictPars[@"NAME_SHR"], arSel[0][@"VALUE"], ((DateTime)arSel[0][@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"), arSel.Length };
+                            else
+                                arObjToRow = new object[] { sgnl.m_dictPars[@"NAME_SHR"], string.Empty, string.Empty, string.Empty };
+
+                            tblToPanel.Rows.Add(arObjToRow);
+                        }
                     }
+                    else
+                        throw new Exception(@"uLoader::GroupSources::GetDataToPanel () - ...");
                 }
                 else
                     ;

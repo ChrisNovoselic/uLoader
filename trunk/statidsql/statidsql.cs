@@ -238,7 +238,7 @@ namespace statidsql
                        strRow += getIdStat (Int32.Parse (row[@"ID"].ToString().Trim())) + @",";
                        strRow += @"6" + @",";
                        strRow += ((decimal)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
-                       strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(-6).ToString (@"yyyyMMdd hh:mm:ss.fff") + @"',";
+                       strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(-6).ToString (@"yyyyMMdd HH:mm:ss.fff") + @"',";
                        strRow += row[@"tmdelta"] + @",";
                        strRow += @"GETDATE()";
 
@@ -371,6 +371,8 @@ namespace statidsql
                     else
                         throw new Exception(@"statdidsql::StateRequest () - state=" + state.ToString() + @"...");
                     break;
+                case StatesMachine.Values:
+                    break;
                 case StatesMachine.Insert:
                     string query = (m_dictGroupSignals[m_IdGroupSignalsCurrent] as GroupSignalsStatIdSQL).GetInsertValuesQuery ();
                     if (query.Equals (string.Empty) == false)
@@ -393,7 +395,9 @@ namespace statidsql
             {
                 case StatesMachine.CurrentTime:
                     m_dtServer = (DateTime)(obj as DataTable).Rows[0][0];
-                    Console.WriteLine(@"statidsql::StateResponse () - m_IdGroupSignalsCurrent=" + m_IdGroupSignalsCurrent + @", DATETIME_CURRENT=" + m_dtServer.ToString(@"dd.MM.yyyy hh.mm.ss.fff"));
+                    Console.WriteLine(@"statidsql::StateResponse () - m_IdGroupSignalsCurrent=" + m_IdGroupSignalsCurrent + @", DATETIME_CURRENT=" + m_dtServer.ToString(@"dd.MM.yyyy HH.mm.ss.fff"));
+                    break;
+                case StatesMachine.Values:
                     break;
                 case StatesMachine.Insert:
                     break;
@@ -428,6 +432,7 @@ namespace statidsql
             int iRes = 0;
 
             AddState((int)StatesMachine.CurrentTime);
+            //AddState((int)StatesMachine.Values);
             AddState((int)StatesMachine.Insert);
 
             return iRes;

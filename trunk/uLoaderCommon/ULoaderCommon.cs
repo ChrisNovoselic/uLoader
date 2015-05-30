@@ -12,7 +12,7 @@ namespace uLoaderCommon
     public enum DATETIME
     {
         SEC_SPANPERIOD_DEFAULT = 60
-        , MSEC_INTERVAL_DEFAULT = 4444
+        , MSEC_INTERVAL_DEFAULT = 6666
         , MSEC_INTERVAL_TIMER_ACTIVATE = 66
     }
     /// <summary>
@@ -72,6 +72,7 @@ namespace uLoaderCommon
                 m_dtStart = DateTime.MinValue;
                 m_tmSpanPeriod = new TimeSpan((long)((int)uLoaderCommon.DATETIME.SEC_SPANPERIOD_DEFAULT * Math.Pow(10, 7)));
                 m_msecInterval = (int)uLoaderCommon.DATETIME.MSEC_INTERVAL_DEFAULT;
+
                 //Инициализировать массив сигналов
                 if (pars.Length > 0)
                 {
@@ -145,16 +146,16 @@ namespace uLoaderCommon
             /*set { m_dictGroupSignals[m_IdGroupSignalsCurrent].Mode = value; }*/
         }
 
-        protected GroupSignals.SIGNAL[] Signals
-        {
-            get
-            {
-                if (!(m_IdGroupSignalsCurrent < 0))
-                    return m_dictGroupSignals[m_IdGroupSignalsCurrent].Signals;
-                else
-                    throw new Exception(@"ULoaderCommon::Signals.get ...");
-            }
-        }
+        //protected GroupSignals.SIGNAL[] Signals
+        //{
+        //    get
+        //    {
+        //        if (!(m_IdGroupSignalsCurrent < 0))
+        //            return m_dictGroupSignals[m_IdGroupSignalsCurrent].Signals;
+        //        else
+        //            throw new Exception(@"ULoaderCommon::Signals.get ...");
+        //    }
+        //}
 
         protected TimeSpan TimeSpanPeriod
         {
@@ -216,7 +217,7 @@ namespace uLoaderCommon
             }
         }
 
-        public DataTable TableResults
+        public DataTable TableRecieved
         {
             get
             {
@@ -235,10 +236,28 @@ namespace uLoaderCommon
             }
         }
 
+        //protected string Query
+        //{
+        //    get
+        //    {
+        //        if (!(m_IdGroupSignalsCurrent < 0))
+        //            return m_dictGroupSignals[m_IdGroupSignalsCurrent].Query;
+        //        else
+        //            throw new Exception(@"ULoaderCommon::Query.get ...");
+        //    }
+
+        //    set
+        //    {
+        //        if (!(m_IdGroupSignalsCurrent < 0))
+        //            m_dictGroupSignals[m_IdGroupSignalsCurrent].Query = value;
+        //        else
+        //            throw new Exception(@"ULoaderCommon::Query.set ...");
+        //    }
+        //}
+
         protected DateTime m_dtServer;
         private int m_msecIntervalTimerActivate;
-        public ConnectionSettings m_connSett;
-        public string m_strQuery = string.Empty;
+        public ConnectionSettings m_connSett;        
         protected int m_IdGroupSignalsCurrent;
 
         private object m_lockStateGroupSignals
@@ -281,7 +300,7 @@ namespace uLoaderCommon
             return iRes;
         }
 
-        public int Initialize(int id, object[] pars)
+        public virtual int Initialize(int id, object[] pars)
         {
             int iRes = 0;
 
@@ -310,6 +329,21 @@ namespace uLoaderCommon
 
         protected abstract GroupSignals createGroupSignals(object []objs);
 
+        private void enqueue(int key)
+        {
+            Logging.Logg().Debug(@"HHandlerDbULoader::enqueue () - [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + key + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+            
+            lock (m_lockQueue)
+            {
+                m_queueIdGroupSignals.Enqueue(key);
+
+                if (m_queueIdGroupSignals.Count == 1)
+                    m_semaQueue.Release(1);
+                else
+                    ;
+            }
+        }
+
         private void fTimerActivate(object obj)
         {
             lock (m_lockStateGroupSignals)
@@ -325,6 +359,9 @@ namespace uLoaderCommon
                     if (pair.Value.State == GroupSignals.STATE.QUEUE)
                     {
                         pair.Value.State = GroupSignals.STATE.ACTIVE;
+
+                        enqueue(pair.Key);
+
                         return;
                     }
                     else
@@ -343,15 +380,7 @@ namespace uLoaderCommon
                                 pair.Value.State = GroupSignals.STATE.ACTIVE;
                                 bActivated = true;
 
-                                lock (m_lockQueue)
-                                {
-                                    m_queueIdGroupSignals.Enqueue(pair.Key);
-
-                                    if (m_queueIdGroupSignals.Count == 1)
-                                        m_semaQueue.Release(1);
-                                    else
-                                        ;
-                                }
+                                enqueue(pair.Key);
                             }
                             else
                                 pair.Value.State = GroupSignals.STATE.QUEUE;
@@ -422,7 +451,9 @@ namespace uLoaderCommon
                         MSecRemaindToActivate = MSecInterval; //(long)TimeSpanPeriod.TotalMilliseconds;
                     }
 
-                    ((PlugInBase)_iPlugin).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.TABLE_RES, m_IdGroupSignalsCurrent, TableResults });
+                    ((PlugInBase)_iPlugin).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.TABLE_RES, m_IdGroupSignalsCurrent, TableRecieved });
+
+                    Logging.Logg().Debug(@"HHandlerDbULoader::fThreadQueue () - окончание обработки группы событий очереди (ID_PLUGIN=" + (_iPlugin as PlugInBase)._Id + @", ID_GSGNLS=" + m_IdGroupSignalsCurrent + @")", Logging.INDEX_MESSAGE.NOT_SET);
 
                     try
                     {
@@ -617,26 +648,6 @@ namespace uLoaderCommon
                 m_threadQueue = null;
             }
             else ;
-
-            return iRes;
-        }
-
-        protected int actualizeDatetimeStart()
-        {
-            int iRes = 0;
-
-            if (DateTimeStart == DateTime.MinValue)
-            {
-                DateTimeStart = m_dtServer;
-                DateTimeStart = DateTimeStart.AddSeconds(-1 * DateTimeStart.Second);
-            }
-            else
-                ;
-
-            if ((m_dtServer - DateTimeStart.AddSeconds(TimeSpanPeriod.TotalSeconds)).TotalSeconds > 6)
-                DateTimeStart = DateTimeStart.AddSeconds(TimeSpanPeriod.TotalSeconds);
-            else
-                ;
 
             return iRes;
         }
