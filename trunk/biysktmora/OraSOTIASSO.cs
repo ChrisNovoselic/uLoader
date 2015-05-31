@@ -15,6 +15,9 @@ namespace biysktmora
 {    
     public class HBiyskTMOra : HHandlerDbULoader
     {
+        private int m_msecIntervalTimerActivate;
+        private System.Threading.Timer m_timerActivate;
+
         enum StatesMachine
         {
             CurrentTime
@@ -24,6 +27,7 @@ namespace biysktmora
         public HBiyskTMOra()
             : base()
         {
+            initialize();
         }
         
         public HBiyskTMOra(IPlugIn iPlugIn)
@@ -36,20 +40,86 @@ namespace biysktmora
         {
             int iRes = 0;
 
+            m_msecIntervalTimerActivate = (int)uLoaderCommon.DATETIME.MSEC_INTERVAL_TIMER_ACTIVATE;
+
             return iRes;
         }
 
         public override void Start()
         {            
             base.Start();
+
+            startTimerActivate();
+        }
+
+        public override void Stop()
+        {
+            stopTimerActivate();
+            
+            base.Stop();
+        }
+
+        private int startTimerActivate()
+        {
+            int iRes = 0;
+
+            stopTimerActivate();
+            m_timerActivate = new System.Threading.Timer(fTimerActivate, null, 0, m_msecIntervalTimerActivate);
+
+            return iRes;
+        }
+
+        private int stopTimerActivate()
+        {
+            int iRes = 0;
+
+            if (!(m_timerActivate == null))
+            {
+                m_timerActivate.Change(System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+                m_timerActivate.Dispose();
+                m_timerActivate = null;
+            }
+            else
+                ;
+
+            return iRes;
+        }
+
+        private void fTimerActivate(object obj)
+        {
+            lock (m_lockStateGroupSignals)
+            {
+                //Logging.Logg().Debug(@"HHandlerDbULoader::fTimerActivate () - [ID=" + (_iPlugin as PlugInBase)._Id + @"]" + @" 'QUEUE' не найдено...", Logging.INDEX_MESSAGE.NOT_SET);
+                //Перевести в состояние "активное" ("ожидание") группы сигналов
+                foreach (KeyValuePair<int, GroupSignals> pair in m_dictGroupSignals)
+                    if (pair.Value.State == GroupSignals.STATE.TIMER)
+                    {
+                        (pair.Value as GroupSignalsBiyskTMOra).MSecRemaindToActivate -= m_msecIntervalTimerActivate;
+
+                        //Logging.Logg().Debug(@"HHandlerDbULoader::fTimerActivate () - [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + pair.Key + @"] - MSecRemaindToActivate=" + pair.Value.MSecRemaindToActivate + @"...", Logging.INDEX_MESSAGE.NOT_SET);
+
+                        if ((pair.Value as GroupSignalsBiyskTMOra).MSecRemaindToActivate < 0)
+                        {
+                            pair.Value.State = GroupSignals.STATE.QUEUE;
+
+                            enqueue(pair.Key);
+                        }
+                        else
+                            ;
+                    }
+                    else
+                        ;
+            }
         }
 
         public override int Initialize(int id, object[] pars)
         {
             int iRes = base.Initialize(id, pars);
 
-            foreach (GroupSignalsBiyskTMOra grpSgnls in m_dictGroupSignals.Values)
-                grpSgnls.SetDelegateActualizeDateTimeStart (actualizeDateTimeStart);
+            if (m_dictGroupSignals.Keys.Contains(id) == true)
+                (m_dictGroupSignals[id] as GroupSignalsBiyskTMOra).SetDelegateActualizeDateTimeStart(actualizeDateTimeStart);
+            else
+                ;
 
             return iRes;
         }
@@ -65,6 +135,9 @@ namespace biysktmora
                     this.m_NameTable = nameTable;
                 }
             }
+
+            private DateTime m_dtStart;
+            public DateTime DateTimeStart { get { return m_dtStart; } set { m_dtStart = value; } }            
 
             private event IntDelegateFunc EvtActualizeDateTimeStart;
             public void SetDelegateActualizeDateTimeStart(IntDelegateFunc fActualize)
@@ -117,6 +190,10 @@ namespace biysktmora
             public GroupSignalsBiyskTMOra(object[] pars) : base (pars)
             {
                 m_iRowCountRecieved = -1;
+
+                //Инициализация "временнЫх" значений
+                // конкретные значения м.б. получены при "старте" 
+                m_dtStart = DateTime.MinValue;                
             }
 
             public override GroupSignals.SIGNAL createSignal(object[] objs)
@@ -137,8 +214,8 @@ namespace biysktmora
                 {
                     m_strQuery += @"SELECT " + s.m_idMain + @" as ID, VALUE, QUALITY, DATETIME FROM ARCH_SIGNALS." + s.m_NameTable
                         + @" WHERE"
-                        + @" DATETIME >" + @" to_timestamp('" + strStart + @"', 'yyyymmdd hh24miss')"
-                        + @" AND DATETIME <=" + @" to_timestamp('" + strEnd + @"', 'yyyymmdd hh24miss')"
+                        + @" DATETIME >=" + @" to_timestamp('" + strStart + @"', 'yyyymmdd hh24miss')"
+                        + @" AND DATETIME <" + @" to_timestamp('" + strEnd + @"', 'yyyymmdd hh24miss')"
                         + strUnion
                     ;
                 }
@@ -174,8 +251,7 @@ namespace biysktmora
 
             if (DateTimeStart == DateTime.MinValue)
             {
-                DateTimeStart = m_dtServer;
-                DateTimeStart = DateTimeStart.AddSeconds(-1 * DateTimeStart.Second);
+                DateTimeStart = m_dtServer.AddMilliseconds(-1 * (m_dtServer.Second * 1000 + m_dtServer.Millisecond));
                 iRes = 1;
             }
             else
@@ -188,13 +264,33 @@ namespace biysktmora
                     ;
 
             Logging.Logg().Debug(@"HBiyskTMOra::actualizeDateTimeStart () - "
-                                + @"m_dtServer=" + m_dtServer.ToString (@"dd.MM.yyyy HH:mm.ss.fff")
+                                + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"]"
+                                + @", m_dtServer=" + m_dtServer.ToString (@"dd.MM.yyyy HH:mm.ss.fff")
                                 + @", DateTimeStart=" + DateTimeStart.ToString(@"dd.MM.yyyy HH:mm.ss.fff")
                                 + @", iRes=" + iRes
                                 + @"...", Logging.INDEX_MESSAGE.NOT_SET);
 
             return iRes;
-        }
+        }        
+
+        protected DateTime DateTimeStart
+        {
+            get
+            {
+                if (!(m_IdGroupSignalsCurrent < 0))
+                    return (m_dictGroupSignals[m_IdGroupSignalsCurrent] as GroupSignalsBiyskTMOra).DateTimeStart;
+                else
+                    throw new Exception(@"ULoaderCommon::DateTimeStart.get ...");
+            }
+
+            set
+            {
+                if (!(m_IdGroupSignalsCurrent < 0))
+                    (m_dictGroupSignals[m_IdGroupSignalsCurrent] as GroupSignalsBiyskTMOra).DateTimeStart = value;
+                else
+                    throw new Exception(@"ULoaderCommon::DateTimeStart.set ...");
+            }
+        }        
 
         public void ChangeState()
         {

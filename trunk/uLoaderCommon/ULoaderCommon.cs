@@ -32,12 +32,30 @@ namespace uLoaderCommon
 
         protected abstract class GroupSignals
         {
-            public enum STATE { UNKNOWN = -1, SLEEP, TIMER, QUEUE, ACTIVE }
+            public enum STATE { UNKNOWN = -1, STOP, SLEEP, TIMER, QUEUE, ACTIVE }
             private STATE m_state;
             public STATE State { get { return m_state; } set { m_state = value; } }
 
+            public bool IsStarted
+            {
+                get
+                {
+                    return (State == GroupSignals.STATE.ACTIVE)
+                      || (State == GroupSignals.STATE.QUEUE)
+                      || (State == GroupSignals.STATE.TIMER)
+                      || (State == GroupSignals.STATE.SLEEP);
+                }
+            }
+
             private uLoaderCommon.MODE_WORK m_mode;
             public uLoaderCommon.MODE_WORK Mode { get { return m_mode; } set { m_mode = value; } }
+
+            private TimeSpan m_tmSpanPeriod;
+            public TimeSpan TimeSpanPeriod { get { return m_tmSpanPeriod; } set { m_tmSpanPeriod = value; } }
+            private long m_msecInterval;
+            public long MSecInterval { get { return m_msecInterval; } set { m_msecInterval = value; } }
+            private long m_msecRemaindToActivate;
+            public long MSecRemaindToActivate { get { return m_msecRemaindToActivate; } set { m_msecRemaindToActivate = value; } }
 
             public class SIGNAL
             {
@@ -54,22 +72,10 @@ namespace uLoaderCommon
             protected SIGNAL[] m_arSignals;
             public SIGNAL[] Signals { get { return m_arSignals; } }
 
-            private DateTime m_dtStart;
-            public DateTime DateTimeStart { get { return m_dtStart; } set { m_dtStart = value; } }
-            private TimeSpan m_tmSpanPeriod;
-            public TimeSpan TimeSpanPeriod { get { return m_tmSpanPeriod; } set { m_tmSpanPeriod = value; } }
-            private long m_msecInterval;
-            public long MSecInterval { get { return m_msecInterval; } set { m_msecInterval = value; } }
-            private long m_msecRemaindToActivate;
-            public long MSecRemaindToActivate { get { return m_msecRemaindToActivate; } set { m_msecRemaindToActivate = value; } }
-
             public abstract DataTable TableRecieved { get; set; }
 
             public GroupSignals(object[] pars)
             {
-                //Инициализация "временнЫх" значений
-                // конкретные значения м.б. получены при "старте" 
-                m_dtStart = DateTime.MinValue;
                 m_tmSpanPeriod = new TimeSpan((long)((int)uLoaderCommon.DATETIME.SEC_SPANPERIOD_DEFAULT * Math.Pow(10, 7)));
                 m_msecInterval = (int)uLoaderCommon.DATETIME.MSEC_INTERVAL_DEFAULT;
 
@@ -87,7 +93,7 @@ namespace uLoaderCommon
 
             public abstract SIGNAL createSignal(object []objs);
 
-            public static STATE GetMode(uLoaderCommon.MODE_WORK mode, STATE prevState)
+            public static STATE NewState(uLoaderCommon.MODE_WORK mode, STATE prevState)
             {
                 GroupSignals.STATE stateRes = GroupSignals.STATE.UNKNOWN;
                 if (mode == uLoaderCommon.MODE_WORK.CUR_INTERVAL)
@@ -146,17 +152,6 @@ namespace uLoaderCommon
             /*set { m_dictGroupSignals[m_IdGroupSignalsCurrent].Mode = value; }*/
         }
 
-        //protected GroupSignals.SIGNAL[] Signals
-        //{
-        //    get
-        //    {
-        //        if (!(m_IdGroupSignalsCurrent < 0))
-        //            return m_dictGroupSignals[m_IdGroupSignalsCurrent].Signals;
-        //        else
-        //            throw new Exception(@"ULoaderCommon::Signals.get ...");
-        //    }
-        //}
-
         protected TimeSpan TimeSpanPeriod
         {
             get
@@ -165,25 +160,6 @@ namespace uLoaderCommon
                     return m_dictGroupSignals[m_IdGroupSignalsCurrent].TimeSpanPeriod;
                 else
                     throw new Exception(@"ULoaderCommon::TimeSpanPeriod.get ...");
-            }
-        }
-
-        protected DateTime DateTimeStart
-        {
-            get
-            {
-                if (! (m_IdGroupSignalsCurrent < 0))
-                    return m_dictGroupSignals[m_IdGroupSignalsCurrent].DateTimeStart;
-                else
-                    throw new Exception(@"ULoaderCommon::DateTimeStart.get ...");
-            }
-
-            set
-            {
-                if (!(m_IdGroupSignalsCurrent < 0))
-                    m_dictGroupSignals[m_IdGroupSignalsCurrent].DateTimeStart = value;
-                else
-                    throw new Exception(@"ULoaderCommon::DateTimeStart.set ...");
             }
         }
 
@@ -216,6 +192,17 @@ namespace uLoaderCommon
                     throw new Exception(@"ULoaderCommon::MSecRemaindToActivate.set ...");
             }
         }
+
+        //protected GroupSignals.SIGNAL[] Signals
+        //{
+        //    get
+        //    {
+        //        if (!(m_IdGroupSignalsCurrent < 0))
+        //            return m_dictGroupSignals[m_IdGroupSignalsCurrent].Signals;
+        //        else
+        //            throw new Exception(@"ULoaderCommon::Signals.get ...");
+        //    }
+        //}
 
         public DataTable TableRecieved
         {
@@ -255,14 +242,12 @@ namespace uLoaderCommon
         //    }
         //}
 
-        protected DateTime m_dtServer;
-        private int m_msecIntervalTimerActivate;
+        protected DateTime m_dtServer;        
         public ConnectionSettings m_connSett;        
         protected int m_IdGroupSignalsCurrent;
 
-        private object m_lockStateGroupSignals
-            , m_lockQueue;
-        private System.Threading.Timer m_timerActivate;
+        protected object m_lockStateGroupSignals;
+        private object m_lockQueue;        
         private Thread m_threadQueue;
         private Queue<int> m_queueIdGroupSignals;
         private int threadQueueIsWorking;
@@ -270,8 +255,7 @@ namespace uLoaderCommon
 
         public HHandlerDbULoader()
         {
-            m_dtServer = DateTime.MinValue;
-            m_msecIntervalTimerActivate = (int)uLoaderCommon.DATETIME.MSEC_INTERVAL_TIMER_ACTIVATE;
+            m_dtServer = DateTime.MinValue;            
 
             m_IdGroupSignalsCurrent = -1;
             m_dictGroupSignals = new Dictionary<int, GroupSignals>();
@@ -316,10 +300,10 @@ namespace uLoaderCommon
                     lock (m_lockStateGroupSignals)
                     {
                         m_dictGroupSignals[id].Mode = (uLoaderCommon.MODE_WORK)pars[0];
-                        m_dictGroupSignals[id].State = GroupSignals.GetMode(m_dictGroupSignals[id].Mode, GroupSignals.STATE.UNKNOWN);
+                        m_dictGroupSignals[id].State = GroupSignals.STATE.STOP;
                         //m_dictGroupSignals[id].DateTimeStart = (DateTime)pars[1];
-                        //m_dictGroupSignals[id].TimeSpanPeriod = TimeSpan.FromSeconds((double)pars[2]);
-                        //m_dictGroupSignals[id].MSecInterval = (int)pars[3];
+                        m_dictGroupSignals[id].TimeSpanPeriod = TimeSpan.FromSeconds((double)pars[2]);
+                        m_dictGroupSignals[id].MSecInterval = (int)pars[3];
                     }
                 }
             }
@@ -329,7 +313,7 @@ namespace uLoaderCommon
 
         protected abstract GroupSignals createGroupSignals(object []objs);
 
-        private void enqueue(int key)
+        protected void enqueue(int key)
         {
             Logging.Logg().Debug(@"HHandlerDbULoader::enqueue () - [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + key + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
             
@@ -342,56 +326,7 @@ namespace uLoaderCommon
                 else
                     ;
             }
-        }
-
-        private void fTimerActivate(object obj)
-        {
-            lock (m_lockStateGroupSignals)
-            {
-                //Проверить наличие "активных" групп сигналов
-                foreach (KeyValuePair<int, GroupSignals> pair in m_dictGroupSignals)
-                    if (pair.Value.State == GroupSignals.STATE.ACTIVE)
-                        return;
-                    else
-                        ;
-                //Проверить наличие ожидающих обработки групп сигналов
-                foreach (KeyValuePair<int, GroupSignals> pair in m_dictGroupSignals)
-                    if (pair.Value.State == GroupSignals.STATE.QUEUE)
-                    {
-                        pair.Value.State = GroupSignals.STATE.ACTIVE;
-
-                        enqueue(pair.Key);
-
-                        return;
-                    }
-                    else
-                        ;
-                bool bActivated = false; //Признак установки состояния "активное" для одной из групп
-                //Перевести в состояние "активное" ("ожидание") группы сигналов
-                foreach (KeyValuePair<int, GroupSignals> pair in m_dictGroupSignals)
-                    if (pair.Value.State == GroupSignals.STATE.TIMER)
-                    {
-                        pair.Value.MSecRemaindToActivate -= m_msecIntervalTimerActivate;
-
-                        if (pair.Value.MSecRemaindToActivate < 0)
-                        {
-                            if (bActivated == false)
-                            {
-                                pair.Value.State = GroupSignals.STATE.ACTIVE;
-                                bActivated = true;
-
-                                enqueue(pair.Key);
-                            }
-                            else
-                                pair.Value.State = GroupSignals.STATE.QUEUE;
-                        }
-                        else
-                            ;
-                    }
-                    else
-                        ;
-            }
-        }
+        }        
 
         protected abstract int addAllStates ();
 
@@ -421,6 +356,8 @@ namespace uLoaderCommon
                     //Получить объект очереди событий
                     m_IdGroupSignalsCurrent = m_queueIdGroupSignals.Peek();
 
+                    State = GroupSignals.STATE.ACTIVE;
+
                     Logging.Logg().Debug(@"HHandlerDbULoader::fThreadQueue () - начало обработки группы событий очереди (ID_PLUGIN=" + (_iPlugin as PlugInBase)._Id + @", ID_GSGNLS=" + m_IdGroupSignalsCurrent + @")", Logging.INDEX_MESSAGE.NOT_SET);
 
                     lock (m_lockState)
@@ -443,7 +380,7 @@ namespace uLoaderCommon
                         m_queueIdGroupSignals.Dequeue();
                     }
 
-                    GroupSignals.STATE newState = GroupSignals.GetMode(Mode, State);
+                    GroupSignals.STATE newState = GroupSignals.NewState(Mode, State);
 
                     lock (m_lockStateGroupSignals)
                     {
@@ -466,14 +403,15 @@ namespace uLoaderCommon
                 }
             }
             //Освободить ресурс ядра ОС
-            if (bRes == true)
+            //??? "везде" 'true'
+            if (bRes == false)
                 try
                 {
                     m_semaQueue.Release(1);
                 }
                 catch (Exception e)
                 { //System.Threading.SemaphoreFullException
-                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, "HHandler::fThreadQueue () - semaState.Release(1)");
+                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, "HHandlerDbULoader::fThreadQueue () - semaState.Release(1)");
                 }
             else
                 ;
@@ -509,16 +447,41 @@ namespace uLoaderCommon
 
             StartDbInterfaces();
 
-            startThreadQueue();
+            startThreadQueue();            
+        }
 
-            startTimerActivate();
+        public void Start(int id)
+        {
+            if (IsStarted == false)
+            {
+                Start();
+                Activate(true);
+            }
+            else
+                ;
+
+            GroupSignals.STATE initState = GroupSignals.STATE.UNKNOWN;
+            switch (m_dictGroupSignals[id].Mode)
+            {
+                case MODE_WORK.CUR_INTERVAL:
+                    initState = GroupSignals.STATE.TIMER;
+                    break;
+                case MODE_WORK.COSTUMIZE:
+                    initState = GroupSignals.STATE.SLEEP;
+                    break;
+                default:
+                    break;
+            }
+            
+            lock (m_lockStateGroupSignals)
+            {
+                m_dictGroupSignals[id].State = initState;
+            }
         }
 
         public override void Stop()
         {
             Logging.Logg().Debug(@"HHandlerDbULoader::Stop () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-            
-            stopTimerActivate();
 
             stopThreadQueue();
 
@@ -531,14 +494,11 @@ namespace uLoaderCommon
 
             lock (m_lockStateGroupSignals)
             {
-                m_dictGroupSignals[id].State = GroupSignals.STATE.SLEEP;
+                m_dictGroupSignals[id].State = GroupSignals.STATE.STOP;
                 m_dictGroupSignals[id].TableRecieved = new DataTable();
 
                 foreach (GroupSignals grpSgnls in m_dictGroupSignals.Values)
-                    if ((grpSgnls.State == GroupSignals.STATE.ACTIVE)
-                        || (grpSgnls.State == GroupSignals.STATE.QUEUE)
-                        || (grpSgnls.State == GroupSignals.STATE.TIMER)
-                        )
+                    if (grpSgnls.IsStarted == true)
                     {
                         bStopped = false;
 
@@ -555,32 +515,6 @@ namespace uLoaderCommon
             }
             else
                 ;
-        }
-
-        private int startTimerActivate()
-        {
-            int iRes = 0;
-
-            stopTimerActivate();
-            m_timerActivate = new System.Threading.Timer(fTimerActivate, null, 0, m_msecIntervalTimerActivate);
-
-            return iRes;
-        }
-
-        private int stopTimerActivate()
-        {
-            int iRes = 0;
-
-            if (!(m_timerActivate == null))
-            {
-                m_timerActivate.Change(System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
-                m_timerActivate.Dispose();
-                m_timerActivate = null;
-            }
-            else
-                ;
-
-            return iRes;
         }
 
         private int startThreadQueue()
@@ -609,7 +543,7 @@ namespace uLoaderCommon
                 try { m_threadQueue.Start(); }
                 catch (Exception e)
                 {
-                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HBiyskTMOra::startThreadQueue () - ...");
+                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader::startThreadQueue () - ...");
                 }
             }
             else
@@ -621,6 +555,11 @@ namespace uLoaderCommon
         private int stopThreadQueue()
         {
             int iRes = 0;
+
+            lock (m_lockQueue)
+            {
+                m_queueIdGroupSignals.Clear();
+            }
 
             bool joined;
             threadQueueIsWorking = -1;
@@ -683,8 +622,7 @@ namespace uLoaderCommon
                     {
                         if (target.Initialize((int)(ev.par as object[])[0], (ev.par as object[])[1] as object[]) == 0)
                         {
-                            target.Start();
-                            target.Activate(true);
+                            target.Start((int)(ev.par as object[])[0]);
                         }
                         else
                             DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP, (int)(ev.par as object[])[0] });

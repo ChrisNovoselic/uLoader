@@ -68,8 +68,16 @@ namespace statidsql
                 {
                     lock (this)
                     {
-                        m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS] = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Copy();
-                        m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT] = value.Copy();
+                        if (value.Rows.Count > 0)
+                        {
+                            if (m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Rows.Count > 0)
+                                m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS] = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Copy();
+                            else
+                                ;
+                            m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT] = value.Copy();
+                        }
+                        else
+                            ;
                     }
                 }
             }
@@ -378,7 +386,10 @@ namespace statidsql
                     if (query.Equals (string.Empty) == false)
                         Request(m_dictIdListeners[m_IdGroupSignalsCurrent][0], query);
                     else
-                        ;
+                        Logging.Logg().Error(@"statidsql::StateRequest () ::" + ((StatesMachine)state).ToString() + @" - "
+                            + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"] "
+                            + @"query=Empty" + @"..."
+                            , Logging.INDEX_MESSAGE.NOT_SET);
                     break;
                 default:
                     break;
@@ -395,7 +406,10 @@ namespace statidsql
             {
                 case StatesMachine.CurrentTime:
                     m_dtServer = (DateTime)(obj as DataTable).Rows[0][0];
-                    Console.WriteLine(@"statidsql::StateResponse () - m_IdGroupSignalsCurrent=" + m_IdGroupSignalsCurrent + @", DATETIME_CURRENT=" + m_dtServer.ToString(@"dd.MM.yyyy HH.mm.ss.fff"));
+                    Logging.Logg().Error(@"statidsql::StateResponse () ::" + ((StatesMachine)state).ToString() + @" - "
+                        + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"] "
+                        + @"DATETIME=" + m_dtServer.ToString(@"dd.MM.yyyy HH.mm.ss.fff") + @"..."
+                        , Logging.INDEX_MESSAGE.NOT_SET);
                     break;
                 case StatesMachine.Values:
                     break;
@@ -410,7 +424,10 @@ namespace statidsql
 
         protected override void StateErrors(int state, int req, int res)
         {
-            Logging.Logg().Error(@"statidsql::StateErrors (state" + ((StatesMachine)state).ToString () + @", req=" + req + @", res=" + res + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            Logging.Logg().Error(@"statidsql::StateErrors (state=" + ((StatesMachine)state).ToString () + @", req=" + req + @", res=" + res + @") - "
+                + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"]"
+                + @"..."
+                , Logging.INDEX_MESSAGE.NOT_SET);
         }
 
         protected override void StateWarnings(int state, int req, int res)
@@ -422,7 +439,17 @@ namespace statidsql
         {
             int iRes = 0;
 
-            m_dictGroupSignals[id].TableRecieved = tableIn.Copy();
+            lock (m_lockStateGroupSignals)
+            {
+                if (m_dictGroupSignals[id].IsStarted == true)
+                {
+                    m_dictGroupSignals[id].TableRecieved = tableIn.Copy();
+
+                    enqueue(id);
+                }
+                else
+                    ;
+            }
 
             return iRes;
         }
