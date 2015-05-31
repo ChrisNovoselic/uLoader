@@ -11,9 +11,9 @@ using System.Threading;
 using HClassLibrary;
 using uLoaderCommon;
 
-namespace biysktmora
+namespace SrcBiyskTMora
 {    
-    public class HBiyskTMOra : HHandlerDbULoader
+    public class SrcBiyskTMora : HHandlerDbULoader
     {
         private int m_msecIntervalTimerActivate;
         private int m_msecCorrectTimerActivate;
@@ -25,13 +25,13 @@ namespace biysktmora
             , Values
         }
 
-        public HBiyskTMOra()
+        public SrcBiyskTMora()
             : base()
         {
             initialize();
         }
-        
-        public HBiyskTMOra(IPlugIn iPlugIn)
+
+        public SrcBiyskTMora(IPlugIn iPlugIn)
             : base(iPlugIn)
         {
             initialize();
@@ -525,7 +525,7 @@ namespace biysktmora
         {
             _Id = 1001;
 
-            createObject(typeof(HBiyskTMOra));
+            createObject(typeof(SrcBiyskTMora));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

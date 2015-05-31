@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // Управление общими сведениями о сборке осуществляется с помощью 
 // набора атрибутов. Измените значения этих атрибутов, чтобы изменить сведения,
 // связанные со сборкой.
-[assembly: AssemblyTitle("biysktmora")]
+[assembly: AssemblyTitle("DestStatIDsql")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("biysktmora")]
-[assembly: AssemblyCopyright("Copyright ©  2015")]
+[assembly: AssemblyCompany("WORKGROUP")]
+[assembly: AssemblyProduct("DestStatIDsql")]
+[assembly: AssemblyCopyright("Copyright © WORKGROUP 2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // Следующий GUID служит для идентификации библиотеки типов, если этот проект будет видимым для COM
-[assembly: Guid("36d3b629-7ff2-4646-beb8-9accac61fb18")]
+[assembly: Guid("1d45ecb4-54c2-4987-85ad-a8a17b1bdf71")]
 
 // Сведения о версии сборки состоят из следующих четырех значений:
 //

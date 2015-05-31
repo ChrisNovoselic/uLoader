@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // Управление общими сведениями о сборке осуществляется с помощью 
 // набора атрибутов. Измените значения этих атрибутов, чтобы изменить сведения,
 // связанные со сборкой.
-[assembly: AssemblyTitle("ktstusql")]
+[assembly: AssemblyTitle("SrcBiyskTMora")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("WORKGROUP")]
-[assembly: AssemblyProduct("ktstusql")]
+[assembly: AssemblyProduct("SrcBiyskTMora")]
 [assembly: AssemblyCopyright("Copyright © WORKGROUP 2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // Следующий GUID служит для идентификации библиотеки типов, если этот проект будет видимым для COM
-[assembly: Guid("83dbcd23-500d-47a4-b25b-9914a49a47b5")]
+[assembly: Guid("d1ba44fd-7d5c-4e64-8658-2a219cc8d113")]
 
 // Сведения о версии сборки состоят из следующих четырех значений:
 //
