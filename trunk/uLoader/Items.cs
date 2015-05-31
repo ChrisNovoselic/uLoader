@@ -290,8 +290,6 @@ namespace uLoader
         /// </summary>
         private class GroupSignals : GROUP_SIGNALS_SRC
         {
-            private System.Threading.Timer m_timerUpdate;
-
             private STATE _state;
             /// <summary>
             /// Состояние группы сигналов

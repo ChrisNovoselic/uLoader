@@ -50,9 +50,9 @@
       <Project>{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}</Project>
       <Name>HClassLibrary</Name>
     </ProjectReference>
-    <ProjectReference Include="..\biysktmora\biysktmora.csproj">
-      <Project>{2086F646-4759-41EA-A9E3-76662D95127D}</Project>
-      <Name>biysktmora</Name>
+    <ProjectReference Include="..\SrcBiyskTMora\SrcBiyskTMora.csproj">
+      <Project>{E323D5BE-103A-42D8-A9BD-652CBC6BF1F9}</Project>
+      <Name>SrcBiyskTMora</Name>
     </ProjectReference>
     <ProjectReference Include="..\uLoaderCommon\uLoaderCommon.csproj">
       <Project>{4869D4EB-4F7A-4311-B105-D3E09BB7290A}</Project>

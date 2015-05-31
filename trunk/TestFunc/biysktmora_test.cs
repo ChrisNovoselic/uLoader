@@ -7,7 +7,7 @@ using System.Threading;
 
 using HClassLibrary;
 
-using biysktmora;
+using SrcBiyskTMora;
 
 namespace TestFunc
 {
@@ -19,7 +19,7 @@ namespace TestFunc
             , timerKeyPress;
         static object lockTimer;
 
-        static HBiyskTMOra data;
+        static SrcBiyskTMora.SrcBiyskTMora data;
 
         private event DelegateObjectFunc EvtKeyPress;
         private bool _keyPress;
@@ -118,7 +118,7 @@ namespace TestFunc
 
             EvtKeyPress += new DelegateObjectFunc(biysktmora_test_EvtKeyPress);
 
-            data = new HBiyskTMOra();
+            data = new SrcBiyskTMora.SrcBiyskTMora();
             data.Initialize (new ConnectionSettings (
                         @"OraSOTIASSO-ORD"
                         , @"10.220.2.5"

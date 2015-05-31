@@ -378,26 +378,33 @@ namespace uLoader
             }
             /// <summary>
             /// Заполнить рабочий элемент - список групп 
+            ///  + параметры режима опроса
             /// </summary>
             /// <param name="grpSrc">Объект с данными для заполнения</param>
-            public void FillWorkItem(GROUP_SIGNALS_SRC grpSrc)
+            public virtual void FillWorkItem(GROUP_SIGNALS_SRC grpSrc)
             {
                 Control workItem;
                 PanelLoader.KEY_CONTROLS key;
                 //Отобразить активный режим
-                switch (grpSrc.m_mode)
+                // только, если панель - источник
+                if (this is PanelLoaderSource)
                 {
-                    case MODE_WORK.CUR_INTERVAL:
-                        key = PanelLoader.KEY_CONTROLS.RBUTTON_CUR_DATETIME;
-                        break;
-                    case MODE_WORK.COSTUMIZE:
-                        key = PanelLoader.KEY_CONTROLS.RBUTTON_COSTUMIZE;
-                        break;
-                    default:
-                        throw new Exception(@"PanelWork::fillWorkItem () - ...");
+                    switch (grpSrc.m_mode)
+                    {
+                        case MODE_WORK.CUR_INTERVAL:
+                            key = PanelLoader.KEY_CONTROLS.RBUTTON_CUR_DATETIME;
+                            break;
+                        case MODE_WORK.COSTUMIZE:
+                            key = PanelLoader.KEY_CONTROLS.RBUTTON_COSTUMIZE;
+                            break;
+                        default:
+                            throw new Exception(@"PanelWork::fillWorkItem () - ...");
+                    }
+                    workItem = GetWorkingItem(key);
+                    (workItem as RadioButton).Checked = true;
                 }
-                workItem = GetWorkingItem(key);
-                (workItem as RadioButton).Checked = true;
+                else
+                    ;
                 //Список сигналов группы
                 key = PanelLoader.KEY_CONTROLS.DGV_SIGNALS_OF_GROUP;
                 workItem = GetWorkingItem(key);
@@ -609,7 +616,7 @@ namespace uLoader
                 panelColumns.Controls.Add(ctrl, 0, 3);
                 panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 5);
                 //Панель для ГроупБокса
-                HPanelCommon panelGroupBox = new PanelCommonULoader(8, 7);
+                HPanelCommon panelGroupBox = new PanelCommonULoader(8, 8);
                 panelGroupBox.Dock = DockStyle.Fill;
                 ctrl.Controls.Add(panelGroupBox);
                 //Текущая дата/время
@@ -789,6 +796,30 @@ namespace uLoader
 
             private void InitializeComponent()
             {
+                Control ctrl;
+                HPanelCommon panelColumns = this.Controls[1] as HPanelCommon;
+
+                this.SuspendLayout();
+
+                //ГроупБокс управления очистки данных
+                ctrl = new GroupBox();
+                ctrl.Name = KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS.ToString();
+                (ctrl as GroupBox).Text = @"Удалить значения";
+                ctrl.Enabled = false;
+                ctrl.Dock = DockStyle.Fill;
+                panelColumns.Controls.Add(ctrl, 0, 3);
+                //На 1-у строку меньше, чем для 'Source'
+                panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 4);
+                //Панель для ГроупБокса
+                HPanelCommon panelGroupBox = new PanelCommonULoader(8, 7);
+                panelGroupBox.Dock = DockStyle.Fill;
+                ctrl.Controls.Add(panelGroupBox);
+
+                //Увеличить кол-во строк
+                this.SetRowSpan(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SIGNALS), 4);
+
+                this.ResumeLayout(false);
+                this.PerformLayout();
             }
 
             public override int UpdateData(DataTable table)
