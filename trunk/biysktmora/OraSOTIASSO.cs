@@ -16,6 +16,7 @@ namespace biysktmora
     public class HBiyskTMOra : HHandlerDbULoader
     {
         private int m_msecIntervalTimerActivate;
+        private int m_msecCorrectTimerActivate;
         private System.Threading.Timer m_timerActivate;
 
         enum StatesMachine
@@ -64,7 +65,7 @@ namespace biysktmora
             int iRes = 0;
 
             stopTimerActivate();
-            m_timerActivate = new System.Threading.Timer(fTimerActivate, null, 0, m_msecIntervalTimerActivate);
+            m_timerActivate = new System.Threading.Timer(fTimerActivate, null, 0, System.Threading.Timeout.Infinite);
 
             return iRes;
         }
@@ -110,6 +111,8 @@ namespace biysktmora
                     else
                         ;
             }
+
+            m_timerActivate.Change(m_msecIntervalTimerActivate, System.Threading.Timeout.Infinite);
         }
 
         public override int Initialize(int id, object[] pars)

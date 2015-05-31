@@ -217,7 +217,23 @@ namespace uLoaderCommon
             set
             {
                 if (!(m_IdGroupSignalsCurrent < 0))
+                {
+                    int cntPrev = -1;
+                    if (! (m_dictGroupSignals[m_IdGroupSignalsCurrent].TableRecieved == null))
+                        cntPrev = m_dictGroupSignals[m_IdGroupSignalsCurrent].TableRecieved.Rows.Count;
+                    else
+                        ;
+
+                    Logging.Logg().Debug(@"HHandlerDbULoader::TableRecieved.set - "
+                        + @"[ID=" + (_iPlugin as PlugInBase)._Id
+                        + @", key=" + m_IdGroupSignalsCurrent + @"] "
+                        + @"строк_было=" + cntPrev
+                        + @", строк_стало=" + value.Rows.Count
+                        + @" ..."
+                        , Logging.INDEX_MESSAGE.NOT_SET);
+
                     m_dictGroupSignals[m_IdGroupSignalsCurrent].TableRecieved = value;
+                }
                 else
                     throw new Exception(@"ULoaderCommon::TableResults.set ...");
             }
@@ -358,7 +374,7 @@ namespace uLoaderCommon
 
                     State = GroupSignals.STATE.ACTIVE;
 
-                    Logging.Logg().Debug(@"HHandlerDbULoader::fThreadQueue () - начало обработки группы событий очереди (ID_PLUGIN=" + (_iPlugin as PlugInBase)._Id + @", ID_GSGNLS=" + m_IdGroupSignalsCurrent + @")", Logging.INDEX_MESSAGE.NOT_SET);
+                    //Logging.Logg().Debug(@"HHandlerDbULoader::fThreadQueue () - начало обработки группы событий очереди (ID_PLUGIN=" + (_iPlugin as PlugInBase)._Id + @", ID_GSGNLS=" + m_IdGroupSignalsCurrent + @")", Logging.INDEX_MESSAGE.NOT_SET);
 
                     lock (m_lockState)
                     {
@@ -390,7 +406,7 @@ namespace uLoaderCommon
 
                     ((PlugInBase)_iPlugin).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.TABLE_RES, m_IdGroupSignalsCurrent, TableRecieved });
 
-                    Logging.Logg().Debug(@"HHandlerDbULoader::fThreadQueue () - окончание обработки группы событий очереди (ID_PLUGIN=" + (_iPlugin as PlugInBase)._Id + @", ID_GSGNLS=" + m_IdGroupSignalsCurrent + @")", Logging.INDEX_MESSAGE.NOT_SET);
+                    //Logging.Logg().Debug(@"HHandlerDbULoader::fThreadQueue () - окончание обработки группы событий очереди (ID_PLUGIN=" + (_iPlugin as PlugInBase)._Id + @", ID_GSGNLS=" + m_IdGroupSignalsCurrent + @")", Logging.INDEX_MESSAGE.NOT_SET);
 
                     try
                     {
@@ -404,7 +420,7 @@ namespace uLoaderCommon
             }
             //Освободить ресурс ядра ОС
             //??? "везде" 'true'
-            if (bRes == false)
+            if (bRes == true)
                 try
                 {
                     m_semaQueue.Release(1);
