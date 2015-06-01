@@ -51,8 +51,15 @@ namespace uLoaderCommon
             public uLoaderCommon.MODE_WORK Mode { get { return m_mode; } set { m_mode = value; } }
 
             private TimeSpan m_tmSpanPeriod;
+            /// <summary>
+            /// Период времени для формирования запроса значений
+            /// </summary>
             public TimeSpan TimeSpanPeriod { get { return m_tmSpanPeriod; } set { m_tmSpanPeriod = value; } }
+
             private long m_msecInterval;
+            /// <summary>
+            /// Интервал (милисекунды) между опросами значений
+            /// </summary>
             public long MSecInterval { get { return m_msecInterval; } set { m_msecInterval = value; } }
             private long m_msecRemaindToActivate;
             public long MSecRemaindToActivate { get { return m_msecRemaindToActivate; } set { m_msecRemaindToActivate = value; } }
@@ -116,6 +123,99 @@ namespace uLoaderCommon
 
                 return stateRes;
             }
+
+            /// <summary>
+            /// Очистить "текущую" таблицу от записей,
+            ///  содержащихся в "предыдущей" таблице
+            /// </summary>
+            /// <param name="tblPrev">"Предыдущая таблица"</param>
+            /// <param name="tblRes">"Текущая" таблица</param>
+            /// <returns>Таблица без "дублирующих" записей</returns>
+            public static DataTable clearDupValues(DataTable tblPrev, DataTable tblRes)
+            {
+                int iDup = 0;
+
+                if (((!(tblRes.Columns.IndexOf(@"ID") < 0)) && (!(tblRes.Columns.IndexOf(@"DATETIME") < 0)))
+                    && (tblRes.Rows.Count > 0))
+                {
+                    DataRow[] arSel;
+                    foreach (DataRow rRes in tblPrev.Rows)
+                    {
+                        arSel = (tblRes as DataTable).Select(@"ID=" + rRes[@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
+                        iDup += arSel.Length;
+                        foreach (DataRow rDel in arSel)
+                            (tblRes as DataTable).Rows.Remove(rDel);
+                        tblRes.AcceptChanges();
+                    }
+
+                    //!!! См. ВНИМАТЕЛЬНО файл конфигурации - ИДЕНТИФИКАТОРЫ д.б. уникальные
+                    //int cnt = -1;
+                    //List <int>listDel = new List<int>();
+                    //foreach (DataRow rRes in table.Rows)
+                    //{
+                    //    arSel = (table as DataTable).Select(@"ID=" + rRes[@"ID"]
+                    //        + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
+                    //    if (arSel.Length > 1)
+                    //    {
+                    //        iRes ++;
+                    //        //Logging.Logg().Error(@"HBiyskTMOra::clearDupValues () - "
+                    //        //    + @"ID=" + rRes[@"ID"]
+                    //        //    + @", " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
+                    //        //    + @", " + @"QUALITY[" + arSel[0][@"QUALITY"] + @"," + arSel[1][@"QUALITY"] + @"]"
+                    //        //, Logging.INDEX_MESSAGE.NOT_SET);
+                    //        cnt = listDel.Count + arSel.Length;
+                    //        foreach (DataRow rDel in arSel)
+                    //            if (listDel.Count < (cnt - 1))
+                    //                listDel.Add(table.Rows.IndexOf(rDel));
+                    //            else
+                    //                break;
+                    //    }
+                    //    else
+                    //        ;
+                    //}
+
+                    //foreach (int indx in listDel)
+                    //    //(table as DataTable).Rows.Remove(rDel);
+                    //    (table as DataTable).Rows.RemoveAt(indx);
+                    //table.AcceptChanges();
+                }
+                else
+                    ;
+
+                return tblRes;
+            }
+
+            public static DataTable clearDupValues(DataTable tblDup)
+            {
+                DataTable tblRes = tblDup.Clone();
+
+                List<int> listIndxToDelete = new List<int>();
+                DataRow[] arDup = null;
+
+                foreach (DataRow r in tblDup.Rows)
+                {
+                    if (listIndxToDelete.IndexOf (tblDup.Rows.IndexOf(r)) < 0)
+                    {
+                        arDup = (tblDup as DataTable).Select(@"ID=" + r[@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)r[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
+                        if (arDup.Length > 1)
+                            for (int i = 1; i < arDup.Length; i ++)
+                                listIndxToDelete.Add(tblDup.Rows.IndexOf(arDup[i]));
+                        else
+                            if (arDup.Length == 0)
+                                throw new Exception("HHandlerDbULoader.GroupSignals.clearDupValues () - в таблице не найдена \"собственная\" строка...");
+                            else
+                                ;
+
+                        tblRes.ImportRow(arDup[0]);                            
+                    }
+                    else
+                        ;
+                }
+
+                tblRes.AcceptChanges();
+
+                return tblRes;
+            }
         }
 
         protected Dictionary<int, GroupSignals> m_dictGroupSignals;
@@ -162,7 +262,9 @@ namespace uLoaderCommon
                     throw new Exception(@"ULoaderCommon::TimeSpanPeriod.get ...");
             }
         }
-
+        /// <summary>
+        /// Интервал (милисекунды) между опросами значений обрабатываемой группы сигналов
+        /// </summary>
         protected long MSecInterval
         {
             get
@@ -224,13 +326,14 @@ namespace uLoaderCommon
                     else
                         ;
 
-                    Logging.Logg().Debug(@"HHandlerDbULoader::TableRecieved.set - "
+                    string msg = @"HHandlerDbULoader::TableRecieved.set - "
                         + @"[ID=" + (_iPlugin as PlugInBase)._Id
                         + @", key=" + m_IdGroupSignalsCurrent + @"] "
                         + @"строк_было=" + cntPrev
                         + @", строк_стало=" + value.Rows.Count
-                        + @" ..."
-                        , Logging.INDEX_MESSAGE.NOT_SET);
+                        + @" ...";
+                    Console.WriteLine (msg);
+                    //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
 
                     m_dictGroupSignals[m_IdGroupSignalsCurrent].TableRecieved = value;
                 }
@@ -466,15 +569,35 @@ namespace uLoaderCommon
             startThreadQueue();            
         }
 
+        public override bool IsStarted
+        {
+            get
+            {
+                bool bRes = false;
+
+                lock (m_lockStateGroupSignals)
+                {
+                    foreach (GroupSignals grpSgnls in m_dictGroupSignals.Values)
+                        if (grpSgnls.IsStarted == true)
+                        {
+                            bRes = true;
+
+                            break;
+                        }
+                        else
+                            ;
+                }
+
+                if ((bRes == true) && (base.IsStarted == false))
+                    throw new Exception (@"HHandlerDbULoader::IsStarted.get - несовпадение признака 'Старт' с базовым классом...");
+
+                return bRes;
+            }
+        }
+
         public void Start(int id)
         {
-            if (IsStarted == false)
-            {
-                Start();
-                Activate(true);
-            }
-            else
-                ;
+            bool bNeedStarted = ! IsStarted;            
 
             GroupSignals.STATE initState = GroupSignals.STATE.UNKNOWN;
             switch (m_dictGroupSignals[id].Mode)
@@ -493,6 +616,14 @@ namespace uLoaderCommon
             {
                 m_dictGroupSignals[id].State = initState;
             }
+
+            if (bNeedStarted == true)
+            {
+                Start();
+                Activate(true);
+            }
+            else
+                ;
         }
 
         public override void Stop()
@@ -506,25 +637,17 @@ namespace uLoaderCommon
 
         public void Stop(int id)
         {
-            bool bStopped = true;
+            bool bNeedStopped = true;
 
             lock (m_lockStateGroupSignals)
             {
                 m_dictGroupSignals[id].State = GroupSignals.STATE.STOP;
                 m_dictGroupSignals[id].TableRecieved = new DataTable();
-
-                foreach (GroupSignals grpSgnls in m_dictGroupSignals.Values)
-                    if (grpSgnls.IsStarted == true)
-                    {
-                        bStopped = false;
-
-                        break;
-                    }
-                    else
-                        ;
             }
 
-            if (bStopped == true)
+            bNeedStopped = ! IsStarted;
+
+            if (bNeedStopped == true)
             {
                 Activate(false);
                 Stop();
@@ -572,11 +695,6 @@ namespace uLoaderCommon
         {
             int iRes = 0;
 
-            lock (m_lockQueue)
-            {
-                m_queueIdGroupSignals.Clear();
-            }
-
             bool joined;
             threadQueueIsWorking = -1;
             //Очисить очередь событий
@@ -599,7 +717,8 @@ namespace uLoaderCommon
                 else
                     ;
 
-                m_semaQueue = null;
+                m_semaQueue = null;                
+                m_queueIdGroupSignals.Clear();
                 m_threadQueue = null;
             }
             else ;

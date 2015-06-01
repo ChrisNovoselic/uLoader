@@ -36,7 +36,12 @@ namespace TestFunc
 
             dt1.Merge(dt2, true);
 
-            dt1 = dt1.DefaultView.ToTable(true);
+            ////Вариант №1
+            ////ТаблицаБезОдинаковыхСтрок = YourTable.DefaultView.ToTable(true,ColumnList);
+            //dt1 = dt1.DefaultView.ToTable(true, @"ID", @"DATETIME");
+
+            //IEnumerable<DataRow> distinctRows = dt1.AsEnumerable().Distinct(c >= (DataRow)c[@"DATETIME"]);
+            var vRes = dt1.AsEnumerable().Select(c => (DataRow)c["ID"]).Distinct().ToList();
 
             Type typeTest =
                 //Вариант №1

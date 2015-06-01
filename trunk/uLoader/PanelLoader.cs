@@ -148,7 +148,7 @@ namespace uLoader
                 panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 1);
 
                 //Панель опроса
-                panelColumns = new PanelCommonULoader(5, 8);
+                panelColumns = new PanelCommonULoader(1, 16);
                 this.Controls.Add(panelColumns, 1, 0);
                 this.SetColumnSpan(panelColumns, 1); this.SetRowSpan(panelColumns, 1);
                 //Группы сигналов
@@ -178,7 +178,7 @@ namespace uLoader
                 (ctrl as DataGridView).SelectionChanged += new EventHandler(panelLoader_WorkItemSelectionChanged);
                 ctrl.Dock = DockStyle.Fill;
                 panelColumns.Controls.Add(ctrl, 0, 0);
-                panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 3);                
+                panelColumns.SetColumnSpan(ctrl, 1); panelColumns.SetRowSpan(ctrl, 5);                
 
                 //Панель рез-ов опроса
                 panelColumns = new PanelCommonULoader(10, 8);
@@ -212,7 +212,7 @@ namespace uLoader
                 (ctrl as DataGridView).Columns[3].HeaderCell.Value = @"Кол-во";
                 ctrl.Dock = DockStyle.Fill;
                 panelColumns.Controls.Add(ctrl, 0, 0);
-                panelColumns.SetColumnSpan(ctrl, 10); panelColumns.SetRowSpan(ctrl, 5);
+                panelColumns.SetColumnSpan(ctrl, 10); panelColumns.SetRowSpan(ctrl, 8);
 
                 this.ResumeLayout (false);
                 this.PerformLayout ();
@@ -604,7 +604,7 @@ namespace uLoader
             {
                 Control ctrl;
                 HPanelCommon panelColumns = this.Controls[1] as HPanelCommon;
-                
+
                 this.SuspendLayout();
 
                 //ГроупБокс режима опроса
@@ -613,8 +613,8 @@ namespace uLoader
                 (ctrl as GroupBox).Text = @"Режим опроса";
                 ctrl.Enabled = false;
                 ctrl.Dock = DockStyle.Fill;
-                panelColumns.Controls.Add(ctrl, 0, 3);
-                panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 5);
+                panelColumns.Controls.Add(ctrl, 0, 5);
+                panelColumns.SetColumnSpan(ctrl, 1); panelColumns.SetRowSpan(ctrl, 11);
                 //Панель для ГроупБокса
                 HPanelCommon panelGroupBox = new PanelCommonULoader(8, 8);
                 panelGroupBox.Dock = DockStyle.Fill;
@@ -807,16 +807,16 @@ namespace uLoader
                 (ctrl as GroupBox).Text = @"Удалить значения";
                 ctrl.Enabled = false;
                 ctrl.Dock = DockStyle.Fill;
-                panelColumns.Controls.Add(ctrl, 0, 3);
+                panelColumns.Controls.Add(ctrl, 0, 8);
                 //На 1-у строку меньше, чем для 'Source'
-                panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 4);
+                panelColumns.SetColumnSpan(ctrl, 1); panelColumns.SetRowSpan(ctrl, 8);
                 //Панель для ГроупБокса
                 HPanelCommon panelGroupBox = new PanelCommonULoader(8, 7);
                 panelGroupBox.Dock = DockStyle.Fill;
                 ctrl.Controls.Add(panelGroupBox);
 
                 //Увеличить кол-во строк
-                this.SetRowSpan(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SIGNALS), 4);
+                this.SetRowSpan(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SIGNALS), 8);
 
                 this.ResumeLayout(false);
                 this.PerformLayout();

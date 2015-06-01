@@ -65,7 +65,8 @@ namespace SrcBiyskTMora
             int iRes = 0;
 
             stopTimerActivate();
-            m_timerActivate = new System.Threading.Timer(fTimerActivate, null, 0, System.Threading.Timeout.Infinite);
+            m_timerActivate = new System.Threading.Timer(fTimerActivate, null, System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+            m_timerActivate.Change(0, System.Threading.Timeout.Infinite);
 
             return iRes;
         }
@@ -217,8 +218,8 @@ namespace SrcBiyskTMora
                 {
                     m_strQuery += @"SELECT " + s.m_idMain + @" as ID, VALUE, QUALITY, DATETIME FROM ARCH_SIGNALS." + s.m_NameTable
                         + @" WHERE"
-                        + @" DATETIME >=" + @" to_timestamp('" + strStart + @"', 'yyyymmdd hh24miss')"
-                        + @" AND DATETIME <" + @" to_timestamp('" + strEnd + @"', 'yyyymmdd hh24miss')"
+                        + @" DATETIME >=" + @" to_timestamp('" + strStart + @"', 'yyyymmdd hh24missFF9')"
+                        + @" AND DATETIME <" + @" to_timestamp('" + strEnd + @"', 'yyyymmdd hh24missFF9')"
                         + strUnion
                     ;
                 }
@@ -258,7 +259,7 @@ namespace SrcBiyskTMora
                 iRes = 1;
             }
             else
-                if ((m_dtServer - DateTimeStart.AddSeconds(TimeSpanPeriod.TotalSeconds)).TotalMilliseconds > 666)
+                if ((m_dtServer - DateTimeStart.AddSeconds(TimeSpanPeriod.TotalSeconds)).TotalMilliseconds > MSecInterval)
                 {
                     DateTimeStart = DateTimeStart.AddSeconds(TimeSpanPeriod.TotalSeconds);
                     iRes = 1;
@@ -311,7 +312,7 @@ namespace SrcBiyskTMora
             {
                 iPrev = TableRecieved.Rows.Count;
                 string strSel =
-                    @"DATETIME<'" + DateTimeStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"' OR DATETIME>='" + DateTimeStart.AddSeconds(TimeSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss") + @"'"
+                    @"DATETIME<'" + DateTimeStart.ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"' OR DATETIME>='" + DateTimeStart.AddSeconds(TimeSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
                     //@"DATETIME BETWEEN '" + m_dtStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"' AND '" + m_dtStart.AddSeconds(m_tmSpanPeriod.Seconds).ToString(@"yyyy/MM/dd HH:mm:ss") + @"'"
                     ;
 
@@ -406,8 +407,11 @@ namespace SrcBiyskTMora
                     try
                     {
                         m_dtServer = (DateTime)(table as DataTable).Rows[0][0];
-                        //Console.WriteLine(m_dtServer.ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
-                        Logging.Logg().Debug(@"HBiyskTMOra::StateResponse (::CurrentTime) - DATETIME=" + m_dtServer.ToString(@"dd.MM.yyyy HH:mm:ss.fff"), Logging.INDEX_MESSAGE.NOT_SET);
+                        //string msg = @"SrcBiyskTMora::StateResponse () ::" + ((StatesMachine)state).ToString() + @" - "
+                        //    + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"] "
+                        //    + @"DATETIME=" + m_dtServer.ToString(@"dd.MM.yyyy HH.mm.ss.fff") + @"...";
+                        //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
+                        //Console.WriteLine (msg);
                     }
                     catch (Exception e)
                     {
@@ -418,7 +422,7 @@ namespace SrcBiyskTMora
                     try
                     {
                         RowCountRecieved = table.Rows.Count;
-                        Console.WriteLine(@"Получено строк [ID=" + m_IdGroupSignalsCurrent + @"]: " + (table as DataTable).Rows.Count);
+                        Console.WriteLine(@"Получено строк [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"]: " + (table as DataTable).Rows.Count);
                         if (TableRecieved == null)
                         {
                             TableRecieved = new DataTable();
@@ -451,7 +455,7 @@ namespace SrcBiyskTMora
                         //iCur = TableResults.Rows.Count;
                         //Console.WriteLine(@"Объединение таблицы-рез-та: [было=" + iPrev + @", дублирущих= " + iDupl + @", добавлено=" + iAdd + @", стало=" + iCur + @"]");
 
-                        TableRecieved = table.Copy();
+                        TableRecieved = GroupSignals.clearDupValues (table);
                     }
                     catch (Exception e)
                     {

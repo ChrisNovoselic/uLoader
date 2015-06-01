@@ -295,65 +295,8 @@ namespace DestStatIDsql
 
             private DataTable getTableRes()
             {
-                DataTable tblDiff = clearDupValues()
+                DataTable tblDiff = clearDupValues(TableRecievedPrev.Copy(), TableRecieved.Copy())
                     , tblRes = getTableIns(ref tblDiff);
-
-                return tblRes;
-            }
-
-            private DataTable clearDupValues()
-            {
-                int iDup = 0;
-
-                DataTable tblPrev = TableRecievedPrev.Copy()
-                    , tblRes = TableRecieved.Copy();
-
-                if (((!(tblRes.Columns.IndexOf(@"ID") < 0)) && (!(tblRes.Columns.IndexOf(@"DATETIME") < 0)))
-                    && (tblRes.Rows.Count > 0))
-                {
-                    DataRow[] arSel;
-                    foreach (DataRow rRes in tblPrev.Rows)
-                    {
-                        arSel = (tblRes as DataTable).Select(@"ID=" + rRes[@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
-                        iDup += arSel.Length;
-                        foreach (DataRow rDel in arSel)
-                            (tblRes as DataTable).Rows.Remove(rDel);
-                        tblRes.AcceptChanges();
-                    }
-
-                    //!!! См. ВНИМАТЕЛЬНО файл конфигурации - ИДЕНТИФИКАТОРЫ д.б. уникальные
-                    //int cnt = -1;
-                    //List <int>listDel = new List<int>();
-                    //foreach (DataRow rRes in table.Rows)
-                    //{
-                    //    arSel = (table as DataTable).Select(@"ID=" + rRes[@"ID"]
-                    //        + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
-                    //    if (arSel.Length > 1)
-                    //    {
-                    //        iRes ++;
-                    //        //Logging.Logg().Error(@"HBiyskTMOra::clearDupValues () - "
-                    //        //    + @"ID=" + rRes[@"ID"]
-                    //        //    + @", " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
-                    //        //    + @", " + @"QUALITY[" + arSel[0][@"QUALITY"] + @"," + arSel[1][@"QUALITY"] + @"]"
-                    //        //, Logging.INDEX_MESSAGE.NOT_SET);
-                    //        cnt = listDel.Count + arSel.Length;
-                    //        foreach (DataRow rDel in arSel)
-                    //            if (listDel.Count < (cnt - 1))
-                    //                listDel.Add(table.Rows.IndexOf(rDel));
-                    //            else
-                    //                break;
-                    //    }
-                    //    else
-                    //        ;
-                    //}
-
-                    //foreach (int indx in listDel)
-                    //    //(table as DataTable).Rows.Remove(rDel);
-                    //    (table as DataTable).Rows.RemoveAt(indx);
-                    //table.AcceptChanges();
-                }
-                else
-                    ;
 
                 return tblRes;
             }
@@ -431,10 +374,11 @@ namespace DestStatIDsql
             {
                 case StatesMachine.CurrentTime:
                     m_dtServer = (DateTime)(obj as DataTable).Rows[0][0];
-                    Logging.Logg().Error(@"statidsql::StateResponse () ::" + ((StatesMachine)state).ToString() + @" - "
-                        + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"] "
-                        + @"DATETIME=" + m_dtServer.ToString(@"dd.MM.yyyy HH.mm.ss.fff") + @"..."
-                        , Logging.INDEX_MESSAGE.NOT_SET);
+                    //string msg = @"statidsql::StateResponse () ::" + ((StatesMachine)state).ToString() + @" - "
+                    //    + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"] "
+                    //    + @"DATETIME=" + m_dtServer.ToString(@"dd.MM.yyyy HH.mm.ss.fff") + @"...";
+                    //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
+                    //Console.WriteLine (msg);
                     break;
                 case StatesMachine.Values:
                     break;

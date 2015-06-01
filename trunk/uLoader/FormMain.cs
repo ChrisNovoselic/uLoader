@@ -85,6 +85,35 @@ namespace uLoader
             }
             else
                 ;
+
+            this.m_notifyIcon.Icon = this.Icon;
+        }
+
+        private void NotifyIcon_Click(object sender, EventArgs e)
+        {
+            this.WindowState = FormWindowState.Normal;
+            this.ShowInTaskbar = true;
+            m_notifyIcon.Visible = false;
+        }
+
+        // Перехват нажатия на кнопку свернуть
+        protected override void WndProc(ref Message m)
+        {
+            if (m.Msg == 0x112)
+            {
+                if (m.WParam.ToInt32() == 0xF020)
+                {
+                    this.WindowState = FormWindowState.Minimized;
+                    this.ShowInTaskbar = false;
+                    m_notifyIcon.Visible = true;
+
+                    return;
+                }
+            }
+            else
+                ;
+
+            base.WndProc(ref m);
         }
 
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
