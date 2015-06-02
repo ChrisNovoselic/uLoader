@@ -109,15 +109,7 @@ namespace uLoader
         private void enabledWorkItem(INDEX_SRC indxWork, PanelLoader.KEY_CONTROLS key, GroupSources.STATE[] states)
         {
             m_arLoader[(int)indxWork].EnabledWorkItem(key, states);
-        }
-        private int changeTimerUpdate (int msec)
-        {
-            int iRes = -1;
-
-            iRes = m_timerUpdate.Change (msec, System.Threading.Timeout.Infinite) == true ? 0 : -1;
-
-            return iRes;
-        }
+        }        
         /// <summary>
         /// Активировать таймер
         /// </summary>
@@ -148,7 +140,8 @@ namespace uLoader
             stopTimerUpdate ();
             
             //Создать таймер запроса на обновление информации
-            m_timerUpdate = new System.Threading.Timer (fTimerUpdate, null, 0, System.Threading.Timeout.Infinite); 
+            m_timerUpdate = new System.Threading.Timer(fTimerUpdate, null, System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+            //changeTimerUpdate (0);
         }
         /// <summary>
         /// Остановить таймер
@@ -165,7 +158,19 @@ namespace uLoader
             m_timerUpdate.Dispose ();
             m_timerUpdate = null;
         }
+        /// <summary>
+        /// Мзменить состояние таймера обновления
+        /// </summary>
+        /// <param name="msec">Интервалл доо очередного запуска функции таймера</param>
+        /// <returns></returns>
+        private int changeTimerUpdate(int msec)
+        {
+            int iRes = -1;
 
+            iRes = m_timerUpdate.Change(msec, System.Threading.Timeout.Infinite) == true ? 0 : -1;
+
+            return iRes;
+        }
         /// <summary>
         /// Обработчик события получения данных по запросу (выполняется в текущем потоке)
         /// </summary>
@@ -194,6 +199,7 @@ namespace uLoader
                 case HHandlerQueue.StatesMachine.TIMER_WORK_UPDATE:
                     m_iSecondUpdate = (int)par;
                     startTimerUpdate ();
+                    activeTimerUpdate (true);
                     break;
                 case HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS: //Объект группы сигналов (источник)
                     fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SIGNALS_SRC);
@@ -286,12 +292,17 @@ namespace uLoader
                 ;
 
             //Проверить необходимость активации/деактивации
-            bool bActiveTimerUpdate = true;
+            bool bActiveTimerUpdate = false;
             if (bRes == true)
+                //Вариантт №1 (при "автостарте" птоковой функции таймера)
                 if (Actived == true)
-                    bActiveTimerUpdate = ! IsFirstActivated;
+                    bActiveTimerUpdate = !IsFirstActivated;
                 else
                     ;
+                ////Вариант №2
+                //bActiveTimerUpdate = Actived;
+            else
+                ; //Рез-т выпорлнения базовой функции активации = 'нет изменений'
 
             if (bActiveTimerUpdate == true)
                 //Активировать/деактивировать таймер запроса на обновление информации

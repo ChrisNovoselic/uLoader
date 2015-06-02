@@ -33,8 +33,8 @@ namespace uLoader
             public enum KEY_CONTROLS { DGV_GROUP_SOURCES, LABEL_DLLNAME_GROUPSOURCES, BUTTON_DLLNAME_GROUPSOURCES, CBX_SOURCE_OF_GROUP
                                         , DGV_GROUP_SIGNALS
                                         , GROUP_BOX_GROUP_SIGNALS
-                                        , RBUTTON_CUR_DATETIME, NUMUD_CUR_DATETIME
-                                        , RBUTTON_COSTUMIZE, CALENDAR_COSTUMIZE, TBX_BEGIN_TIME, TBX_END_TIME, NUMUD_COSTUMIZE_STEP
+                                        , RBUTTON_CUR_DATETIME, TBX_CUR_PERIOD, TBX_CUR_INTERVAL
+                                        , RBUTTON_COSTUMIZE, CALENDAR_COSTUMIZE, TBX_COSTUMIZE_START_TIME, TBX_COSTUMIZE_PERIOD, TBX_COSTUMIZE_INTERVAL
                                         , DGV_SIGNALS_OF_GROUP
                                         , COUNT_KEY_CONTROLS
                                         ,};
@@ -102,16 +102,18 @@ namespace uLoader
                         new DataGridViewTextBoxColumn ()
                         , new DataGridViewDisableButtonColumn ()
                     }
-                );                
+                );
+                (ctrl as DataGridView).AllowUserToOrderColumns= false;
                 (ctrl as DataGridView).AllowUserToResizeColumns = false;
                 (ctrl as DataGridView).AllowUserToResizeRows = false;
                 (ctrl as DataGridView).AllowUserToAddRows = false;
                 (ctrl as DataGridView).AllowUserToDeleteRows = false;
                 (ctrl as DataGridView).MultiSelect = false;
                 (ctrl as DataGridView).SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+                (ctrl as DataGridView).ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
                 (ctrl as DataGridView).RowHeadersVisible = false;
                 (ctrl as DataGridView).Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                (ctrl as DataGridView).Columns[0].HeaderText = @"Группы источн.";
+                (ctrl as DataGridView).Columns[0].HeaderText = @"Группы источников";
                 (ctrl as DataGridView).Columns[1].Width = 37;
                 (ctrl as DataGridView).Columns[1].HeaderText = @"Вкл./выкл.";
                 //(ctrl as DataGridView).Columns[1].ReadOnly = true;
@@ -159,16 +161,18 @@ namespace uLoader
                         new DataGridViewTextBoxColumn ()
                         , new DataGridViewDisableButtonColumn ()
                     }
-                );                
+                );
+                (ctrl as DataGridView).AllowUserToOrderColumns = false;
                 (ctrl as DataGridView).AllowUserToResizeColumns = false;
                 (ctrl as DataGridView).AllowUserToResizeRows = false;
                 (ctrl as DataGridView).AllowUserToAddRows = false;
                 (ctrl as DataGridView).AllowUserToDeleteRows = false;
                 (ctrl as DataGridView).MultiSelect = false;
                 (ctrl as DataGridView).SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+                (ctrl as DataGridView).ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
                 (ctrl as DataGridView).RowHeadersVisible = false;
                 (ctrl as DataGridView).Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                (ctrl as DataGridView).Columns[0].HeaderText = @"Группы сигн.";
+                (ctrl as DataGridView).Columns[0].HeaderText = @"Группы сигналов";
                 (ctrl as DataGridView).Columns[1].Width = 37;
                 (ctrl as DataGridView).Columns[1].HeaderText = @"Вкл./выкл.";
                 //(ctrl as DataGridView).Columns[1].ReadOnly = true;
@@ -178,7 +182,8 @@ namespace uLoader
                 (ctrl as DataGridView).SelectionChanged += new EventHandler(panelLoader_WorkItemSelectionChanged);
                 ctrl.Dock = DockStyle.Fill;
                 panelColumns.Controls.Add(ctrl, 0, 0);
-                panelColumns.SetColumnSpan(ctrl, 1); panelColumns.SetRowSpan(ctrl, 5);                
+                panelColumns.SetColumnSpan(ctrl, 1); panelColumns.SetRowSpan(ctrl, 4);
+                //ГроупБокс... (в "своем" классе)
 
                 //Панель рез-ов опроса
                 panelColumns = new PanelCommonULoader(10, 8);
@@ -613,8 +618,8 @@ namespace uLoader
                 (ctrl as GroupBox).Text = @"Режим опроса";
                 ctrl.Enabled = false;
                 ctrl.Dock = DockStyle.Fill;
-                panelColumns.Controls.Add(ctrl, 0, 5);
-                panelColumns.SetColumnSpan(ctrl, 1); panelColumns.SetRowSpan(ctrl, 11);
+                panelColumns.Controls.Add(ctrl, 0, panelColumns.GetRow(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SIGNALS)) + panelColumns.GetRowSpan(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SIGNALS)));
+                panelColumns.SetColumnSpan(ctrl, 1); panelColumns.SetRowSpan(ctrl, panelColumns.RowCount - panelColumns.GetRowSpan(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SIGNALS)));
                 //Панель для ГроупБокса
                 HPanelCommon panelGroupBox = new PanelCommonULoader(8, 8);
                 panelGroupBox.Dock = DockStyle.Fill;
@@ -630,19 +635,30 @@ namespace uLoader
                 panelGroupBox.SetColumnSpan(ctrl, 8); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Описание для интервала
                 ctrl = new Label();
-                (ctrl as Label).Text = @"Интервал(сек)";
+                (ctrl as Label).Text = @"Период(ЧЧ:ММ)";
                 //ctrl.Dock = DockStyle.Bottom;
                 ctrl.Anchor = ((AnchorStyles)(AnchorStyles.Bottom | AnchorStyles.Left));
                 panelGroupBox.Controls.Add(ctrl, 0, 1);
-                panelGroupBox.SetColumnSpan(ctrl, 5); panelGroupBox.SetRowSpan(ctrl, 1);
-                //NumericUpDown изменения интервала
-                ctrl = new NumericUpDown();
-                ctrl.Name = KEY_CONTROLS.NUMUD_CUR_DATETIME.ToString();
-                (ctrl as NumericUpDown).Minimum = 6; (ctrl as NumericUpDown).Maximum = 600;
-                (ctrl as NumericUpDown).Increment = 10;
+                panelGroupBox.SetColumnSpan(ctrl, 6); panelGroupBox.SetRowSpan(ctrl, 1);
+                //TextBox изменения интервала
+                ctrl = new TextBox();
+                ctrl.Name = KEY_CONTROLS.TBX_CUR_PERIOD.ToString();
                 ctrl.Dock = DockStyle.Bottom;
-                panelGroupBox.Controls.Add(ctrl, 5, 1);
-                panelGroupBox.SetColumnSpan(ctrl, 3); panelGroupBox.SetRowSpan(ctrl, 1);
+                panelGroupBox.Controls.Add(ctrl, 6, 1);
+                panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
+                //Описание для периода
+                ctrl = new Label();
+                (ctrl as Label).Text = @"Интервал (ЧЧ:ММ)";
+                //ctrl.Dock = DockStyle.Bottom;
+                ctrl.Anchor = ((AnchorStyles)(AnchorStyles.Bottom | AnchorStyles.Left));
+                panelGroupBox.Controls.Add(ctrl, 0, 2);
+                panelGroupBox.SetColumnSpan(ctrl, 6); panelGroupBox.SetRowSpan(ctrl, 1);
+                //TextBox изменения интервала
+                ctrl = new TextBox();
+                ctrl.Name = KEY_CONTROLS.TBX_CUR_INTERVAL.ToString();
+                ctrl.Dock = DockStyle.Bottom;
+                panelGroupBox.Controls.Add(ctrl, 6, 2);
+                panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Выборочно
                 //РадиоБуттон (выборочно)
                 ctrl = new RadioButton();
@@ -658,49 +674,47 @@ namespace uLoader
                 ctrl.Dock = DockStyle.Fill;
                 panelGroupBox.Controls.Add(ctrl, 0, 4);
                 panelGroupBox.SetColumnSpan(ctrl, 8); panelGroupBox.SetRowSpan(ctrl, 1);
-                ////Начало периода
-                //ctrl = new Label();
-                //(ctrl as Label).Text = @"Начало";
-                ////ctrl.Dock = DockStyle.Bottom;
-                //ctrl.Anchor = AnchorStyles.Bottom;
-                //panelGroupBox.Controls.Add(ctrl, 0, 5);
-                //panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
-                ////Тире
-                ////Окончание периода
-                //ctrl = new Label();
-                //(ctrl as Label).Text = @"Оконч.";
-                //ctrl.Dock = DockStyle.Bottom;
-                //panelGroupBox.Controls.Add(ctrl, 3, 5);
-                //panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
-                ////Тире
-                ////Шаг(мин)
-                ////NumericUpDown изменения шага
-                //ctrl = new Label();
-                //(ctrl as Label).Text = @"Шаг(мин)";
-                //ctrl.Dock = DockStyle.Bottom;
-                //panelGroupBox.Controls.Add(ctrl, 6, 5);
-                //panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Начало периода
+                //Начало периода - описание
+                ctrl = new Label();
+                (ctrl as Label).Text = @"Начало (ЧЧ:ММ)";
+                //ctrl.Dock = DockStyle.Bottom;
+                //ctrl.Anchor = ((AnchorStyles)(AnchorStyles.Bottom | AnchorStyles.Left));
+                panelGroupBox.Controls.Add(ctrl, 0, 5);
+                panelGroupBox.SetColumnSpan(ctrl, 6); panelGroupBox.SetRowSpan(ctrl, 1);                
+                //Начало периода - значение
                 ctrl = new TextBox();
-                ctrl.Name = KEY_CONTROLS.TBX_BEGIN_TIME.ToString();
+                ctrl.Name = KEY_CONTROLS.TBX_COSTUMIZE_START_TIME.ToString();
                 ctrl.Dock = DockStyle.Fill;
+                panelGroupBox.Controls.Add(ctrl, 6, 5);
+                panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
+                //Период
+                //Период - описание
+                ctrl = new Label();
+                (ctrl as Label).Text = @"Период (ЧЧ:ММ)";
+                //ctrl.Dock = DockStyle.Bottom;
+                ctrl.Anchor = ((AnchorStyles)(AnchorStyles.Bottom | AnchorStyles.Left));
                 panelGroupBox.Controls.Add(ctrl, 0, 6);
-                panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
-                //Тире
-                //Окончание периода
+                panelGroupBox.SetColumnSpan(ctrl, 6); panelGroupBox.SetRowSpan(ctrl, 1);
+                //Период - значение
                 ctrl = new TextBox();
-                ctrl.Name = KEY_CONTROLS.TBX_END_TIME.ToString();
-                ctrl.Dock = DockStyle.Fill;
-                panelGroupBox.Controls.Add(ctrl, 3, 6);
-                panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
-                //Тире
-                //Шаг(мин)
-                //NumericUpDown изменения шага
-                ctrl = new NumericUpDown();
-                ctrl.Name = KEY_CONTROLS.NUMUD_COSTUMIZE_STEP.ToString();
-                (ctrl as NumericUpDown).Minimum = 1; (ctrl as NumericUpDown).Maximum = 60;
+                ctrl.Name = KEY_CONTROLS.TBX_COSTUMIZE_PERIOD.ToString();
                 ctrl.Dock = DockStyle.Fill;
                 panelGroupBox.Controls.Add(ctrl, 6, 6);
+                panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
+                //Интервал
+                //Интервал - описание
+                ctrl = new Label();
+                (ctrl as Label).Text = @"Интервал (ЧЧ:ММ)";
+                //ctrl.Dock = DockStyle.Bottom;
+                ctrl.Anchor = ((AnchorStyles)(AnchorStyles.Bottom | AnchorStyles.Left));
+                panelGroupBox.Controls.Add(ctrl, 0, 7);
+                panelGroupBox.SetColumnSpan(ctrl, 6); panelGroupBox.SetRowSpan(ctrl, 1);
+                //Интервал - значение
+                ctrl = new TextBox();
+                ctrl.Name = KEY_CONTROLS.TBX_COSTUMIZE_INTERVAL.ToString();
+                ctrl.Dock = DockStyle.Fill;
+                panelGroupBox.Controls.Add(ctrl, 6, 7);
                 panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
 
                 this.ResumeLayout (false);
@@ -737,16 +751,18 @@ namespace uLoader
                     //    else
                     //        ;
 
-                    key = KEY_CONTROLS.NUMUD_CUR_DATETIME;
+                    key = KEY_CONTROLS.TBX_CUR_PERIOD;
+                    Controls.Find(key.ToString(), true)[0].Enabled = !bCostumizeEnabled;
+                    key = KEY_CONTROLS.TBX_CUR_INTERVAL;
                     Controls.Find(key.ToString(), true)[0].Enabled = !bCostumizeEnabled;
 
                     key = KEY_CONTROLS.CALENDAR_COSTUMIZE;
                     Controls.Find(key.ToString(), true)[0].Enabled = bCostumizeEnabled;
-                    key = KEY_CONTROLS.TBX_BEGIN_TIME;
+                    key = KEY_CONTROLS.TBX_COSTUMIZE_START_TIME;
                     Controls.Find(key.ToString(), true)[0].Enabled = bCostumizeEnabled;
-                    key = KEY_CONTROLS.TBX_END_TIME;
+                    key = KEY_CONTROLS.TBX_COSTUMIZE_PERIOD;
                     Controls.Find(key.ToString(), true)[0].Enabled = bCostumizeEnabled;
-                    key = KEY_CONTROLS.NUMUD_COSTUMIZE_STEP;
+                    key = KEY_CONTROLS.TBX_COSTUMIZE_INTERVAL;
                     Controls.Find(key.ToString(), true)[0].Enabled = bCostumizeEnabled;
                 }
                 else
@@ -802,21 +818,72 @@ namespace uLoader
                 this.SuspendLayout();
 
                 //ГроупБокс управления очистки данных
+                //ГроупБокс
                 ctrl = new GroupBox();
                 ctrl.Name = KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS.ToString();
                 (ctrl as GroupBox).Text = @"Удалить значения";
                 ctrl.Enabled = false;
                 ctrl.Dock = DockStyle.Fill;
-                panelColumns.Controls.Add(ctrl, 0, 8);
-                //На 1-у строку меньше, чем для 'Source'
+                panelColumns.Controls.Add(ctrl, 0, 4);
                 panelColumns.SetColumnSpan(ctrl, 1); panelColumns.SetRowSpan(ctrl, 8);
                 //Панель для ГроупБокса
-                HPanelCommon panelGroupBox = new PanelCommonULoader(8, 7);
+                HPanelCommon panelGroupBox = new PanelCommonULoader(8, 4);
                 panelGroupBox.Dock = DockStyle.Fill;
                 ctrl.Controls.Add(panelGroupBox);
+                //Календарь
+                ctrl = new DateTimePicker();
+                ctrl.Name = KEY_CONTROLS.CALENDAR_COSTUMIZE.ToString();
+                ctrl.Dock = DockStyle.Fill;
+                panelGroupBox.Controls.Add(ctrl, 0, 0);
+                panelGroupBox.SetColumnSpan(ctrl, 8); panelGroupBox.SetRowSpan(ctrl, 1);
+                //Начало периода
+                //Начало периода - описание
+                ctrl = new Label();
+                (ctrl as Label).Text = @"Начало (ЧЧ:ММ)";
+                //ctrl.Dock = DockStyle.Bottom;
+                //ctrl.Anchor = ((AnchorStyles)(AnchorStyles.Bottom | AnchorStyles.Left));
+                panelGroupBox.Controls.Add(ctrl, 0, 1);
+                panelGroupBox.SetColumnSpan(ctrl, 6); panelGroupBox.SetRowSpan(ctrl, 1);
+                //Начало периода - значение
+                ctrl = new TextBox();
+                ctrl.Name = KEY_CONTROLS.TBX_COSTUMIZE_START_TIME.ToString();
+                ctrl.Dock = DockStyle.Fill;
+                panelGroupBox.Controls.Add(ctrl, 6, 1);
+                panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
+                //Период
+                //Период - описание
+                ctrl = new Label();
+                (ctrl as Label).Text = @"Период (ЧЧ:ММ)";
+                //ctrl.Dock = DockStyle.Bottom;
+                ctrl.Anchor = ((AnchorStyles)(AnchorStyles.Bottom | AnchorStyles.Left));
+                panelGroupBox.Controls.Add(ctrl, 0, 2);
+                panelGroupBox.SetColumnSpan(ctrl, 6); panelGroupBox.SetRowSpan(ctrl, 1);
+                //Период - значение
+                ctrl = new TextBox();
+                ctrl.Name = KEY_CONTROLS.TBX_COSTUMIZE_PERIOD.ToString();
+                ctrl.Dock = DockStyle.Fill;
+                panelGroupBox.Controls.Add(ctrl, 6, 2);
+                panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
+                //Кнопка - выполнить
+                ctrl = new Button();
+                ctrl.Name = @"BTN_CLEAR";
+                (ctrl as Button).Text = @"Выполнить";
+                ctrl.Dock = DockStyle.Fill;
+                panelGroupBox.Controls.Add(ctrl, 0, 3);
+                panelGroupBox.SetColumnSpan(ctrl, 8); panelGroupBox.SetRowSpan(ctrl, 1);
 
-                //Увеличить кол-во строк
-                this.SetRowSpan(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SIGNALS), 8);
+                //ГроупБокс дополнительных настроек для группы сигналов
+                ctrl = new GroupBox();
+                ctrl.Name = KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS.ToString() + @"-ADDING";
+                (ctrl as GroupBox).Text = @"Дополнительные параметры";
+                ctrl.Enabled = false;
+                ctrl.Dock = DockStyle.Fill;
+                panelColumns.Controls.Add(ctrl, 0, 12);
+                panelColumns.SetColumnSpan(ctrl, 1); panelColumns.SetRowSpan(ctrl, 4);
+                //TextBox для редактирования дополнительных параметров
+                ctrl.Controls.Add(new TextBox ());
+                (ctrl.Controls[0] as TextBox).Multiline = true;
+                ctrl.Controls[0].Dock = DockStyle.Fill;
 
                 this.ResumeLayout(false);
                 this.PerformLayout();

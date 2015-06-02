@@ -192,7 +192,7 @@ namespace DestStatIDsql
                                                 rowAdd[col.ColumnName] = rowPrev[col.ColumnName];
                                         }
 
-                                        Console.WriteLine(@"Установлен для ID=" + idSgnl + @", DATETIME=" + ((DateTime)rowAdd[@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff") + @" tmdelta=" + rowAdd[@"tmdelta"]);
+                                        //Console.WriteLine(@"Установлен для ID=" + idSgnl + @", DATETIME=" + ((DateTime)rowAdd[@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff") + @" tmdelta=" + rowAdd[@"tmdelta"]);
                                     }
                                     else
                                         ;
@@ -202,13 +202,13 @@ namespace DestStatIDsql
                                     //Определить смещение "соседних" значений сигнала
                                     long iTMDelta = (((DateTime)arSelIns[i][@"DATETIME"]).Ticks - ((DateTime)arSelIns[i - 1][@"DATETIME"]).Ticks) / TimeSpan.TicksPerMillisecond;
                                     rowPrev[@"tmdelta"] = (int)iTMDelta;
-                                    Console.WriteLine(@", tmdelta=" + rowPrev[@"tmdelta"]);
+                                    //Console.WriteLine(@", tmdelta=" + rowPrev[@"tmdelta"]);
                                 }
 
-                                if (!(rowCur == null))
-                                    Console.Write(@"ID=" + rowCur[@"ID"] + @", DATETIME=" + ((DateTime)rowCur[@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
-                                else
-                                    Console.Write(@"ID=" + arSelIns[i][@"ID"] + @", DATETIME=" + ((DateTime)arSelIns[i][@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
+                                //if (!(rowCur == null))
+                                //    Console.Write(@"ID=" + rowCur[@"ID"] + @", DATETIME=" + ((DateTime)rowCur[@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
+                                //else
+                                //    Console.Write(@"ID=" + arSelIns[i][@"ID"] + @", DATETIME=" + ((DateTime)arSelIns[i][@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
 
                                 rowPrev = rowCur;
                             }
