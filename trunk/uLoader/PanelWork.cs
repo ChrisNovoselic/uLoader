@@ -56,7 +56,7 @@ namespace uLoader
 
         private int initialize ()
         {
-            int ires = 0;
+            int iRes = 0;
 
             InitializeComponent ();
 
@@ -64,7 +64,7 @@ namespace uLoader
 
             m_iSecondUpdate = -1;
 
-            return ires;
+            return iRes;
         }
 
         /// <summary>

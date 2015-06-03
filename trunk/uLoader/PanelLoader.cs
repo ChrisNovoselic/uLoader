@@ -30,11 +30,12 @@ namespace uLoader
             /// <summary>
             /// Перечисление - ключи элементов управления
             /// </summary>
-            public enum KEY_CONTROLS { DGV_GROUP_SOURCES, LABEL_DLLNAME_GROUPSOURCES, BUTTON_DLLNAME_GROUPSOURCES, CBX_SOURCE_OF_GROUP
+            public enum KEY_CONTROLS { DGV_GROUP_SOURCES, LABEL_DLLNAME_GROUPSOURCES, BUTTON_DLLNAME_GROUPSOURCES, CBX_SOURCE_OF_GROUP, TBX_GROUPSOURCES_ADDING
                                         , DGV_GROUP_SIGNALS
                                         , GROUP_BOX_GROUP_SIGNALS
                                         , RBUTTON_CUR_DATETIME, TBX_CUR_PERIOD, TBX_CUR_INTERVAL
                                         , RBUTTON_COSTUMIZE, CALENDAR_COSTUMIZE, TBX_COSTUMIZE_START_TIME, TBX_COSTUMIZE_PERIOD, TBX_COSTUMIZE_INTERVAL
+                                        , TBX_GROUPSIGNALS_ADDING
                                         , DGV_SIGNALS_OF_GROUP
                                         , COUNT_KEY_CONTROLS
                                         ,};
@@ -123,14 +124,14 @@ namespace uLoader
                 (ctrl as DataGridView).SelectionChanged += new EventHandler(panelLoader_WorkItemSelectionChanged);
                 ctrl.Dock = DockStyle.Fill;
                 panelColumns.Controls.Add(ctrl, 0, 0);
-                panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 6);
+                panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 4);
                 //Библиотека для загрузки
                 ctrl = new Label();
                 ctrl.Name = KEY_CONTROLS.LABEL_DLLNAME_GROUPSOURCES.ToString();
                 (ctrl as Label).BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
                 (ctrl as Label).FlatStyle = FlatStyle.Standard;
                 ctrl.Dock = DockStyle.Fill;
-                panelColumns.Controls.Add(ctrl, 0, 6);
+                panelColumns.Controls.Add(ctrl, 0, 4);
                 panelColumns.SetColumnSpan(ctrl, 4); panelColumns.SetRowSpan(ctrl, 1);
                 //Кнопка для выгрузки/загрузки библиотеки
                 ctrl = new Button();
@@ -138,7 +139,7 @@ namespace uLoader
                 (ctrl as Button).Text = @"<->";
                 ctrl.Enabled = false;
                 ctrl.Dock = DockStyle.Fill;
-                panelColumns.Controls.Add(ctrl, 4, 6);
+                panelColumns.Controls.Add(ctrl, 4, 4);
                 panelColumns.SetColumnSpan(ctrl, 1); panelColumns.SetRowSpan(ctrl, 1);
                 //Выбор текущего источника
                 ctrl = new ComboBox();
@@ -146,8 +147,20 @@ namespace uLoader
                 (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
                 ctrl.Enabled = false;
                 ctrl.Dock = DockStyle.Bottom;
-                panelColumns.Controls.Add(ctrl, 0, 7);
+                panelColumns.Controls.Add(ctrl, 0, 5);
                 panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 1);
+                //ГроупБокс для дополнительных параметров
+                ctrl = new GroupBox();
+                (ctrl as GroupBox).Text = @"Дополнительные параметры";
+                ctrl.Enabled = false;
+                ctrl.Dock = DockStyle.Fill;
+                panelColumns.Controls.Add(ctrl, 0, 6);
+                panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 2);
+                //TextBox для редактирования дополнительных параметров
+                ctrl.Controls.Add(new TextBox());
+                ctrl.Controls[0].Name = KEY_CONTROLS.TBX_GROUPSOURCES_ADDING.ToString();
+                (ctrl.Controls[0] as TextBox).Multiline = true;
+                ctrl.Controls[0].Dock = DockStyle.Fill;
 
                 //Панель опроса
                 panelColumns = new PanelCommonULoader(1, 16);
@@ -882,6 +895,7 @@ namespace uLoader
                 panelColumns.SetColumnSpan(ctrl, 1); panelColumns.SetRowSpan(ctrl, 4);
                 //TextBox для редактирования дополнительных параметров
                 ctrl.Controls.Add(new TextBox ());
+                ctrl.Controls[0].Name = KEY_CONTROLS.TBX_GROUPSIGNALS_ADDING.ToString ();
                 (ctrl.Controls[0] as TextBox).Multiline = true;
                 ctrl.Controls[0].Dock = DockStyle.Fill;
 

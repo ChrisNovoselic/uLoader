@@ -12,7 +12,7 @@ namespace DestStatIDsql
 {
     public class DestStatIDsql : HHandlerDbULoader
     {
-        private static string m_strNameDestTable = @"ALL_PARAM_SOTIASSO-TEST";
+        private static string m_strNameDestTable = @"ALL_PARAM_SOTIASSO";
 
         enum StatesMachine
         {
