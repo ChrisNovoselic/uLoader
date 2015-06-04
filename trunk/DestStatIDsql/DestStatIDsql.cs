@@ -12,7 +12,8 @@ namespace DestStatIDsql
 {
     public class DestStatIDsql : HHandlerDbULoader
     {
-        private static string m_strNameDestTable = @"ALL_PARAM_SOTIASSO";
+        private static string m_strNameDestTableStatID = @"ALL_PARAM_SOTIASSO"
+            , m_strNameDestTableStatKKSName = @"ALL_PARAM_SOTIASSO_KKS";
 
         enum StatesMachine
         {
@@ -47,12 +48,14 @@ namespace DestStatIDsql
             {
                 public int m_idLink
                     , m_idStat;
+                public string m_strStatKKSName;
 
-                public SIGNALStatIdSQL(int idMain, int idLink, int idStat)
+                public SIGNALStatIdSQL(int idMain, int idLink, int idStat, string StatKKSName)
                     : base(idMain)
                 {
                     this.m_idLink = idLink;
                     this.m_idStat = idStat;
+                    m_strStatKKSName = StatKKSName;
                 }
             }
 
@@ -123,7 +126,7 @@ namespace DestStatIDsql
 
             public override GroupSignals.SIGNAL createSignal(object[] objs)
             {
-                return new SIGNALStatIdSQL((int)objs[0], (int)objs[1], (int)objs[3]);
+                return new SIGNALStatIdSQL((int)objs[0], (int)objs[1], (int)objs[3], (string)objs[4]);
             }
 
             private DataTable getTableIns(ref DataTable table)
@@ -246,6 +249,23 @@ namespace DestStatIDsql
                 return iRes;
             }
 
+            private string getStatKKSName(int idLink)
+            {
+                string strRes = string.Empty;
+
+                foreach (SIGNALStatIdSQL sgnl in m_arSignals)
+                    if (sgnl.m_idLink == idLink)
+                    {
+                        strRes = sgnl.m_strStatKKSName;
+
+                        break;
+                    }
+                    else
+                        ;
+
+                return strRes;
+            }
+
             public string GetInsertValuesQuery()
             {
                 string strRes = string.Empty;
@@ -257,7 +277,7 @@ namespace DestStatIDsql
                 {
                     string strRow = string.Empty;
 
-                    strRes = @"INSERT INTO [dbo].[" + m_strNameDestTable + @"] ("
+                    strRes = @"INSERT INTO [dbo].[" + m_strNameDestTableStatID + @"] ("
                         + @"[ID]"
                         + @",[ID_TEC]"
                         + @",[Value]"
@@ -276,6 +296,39 @@ namespace DestStatIDsql
                         strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(-6).ToString(@"yyyyMMdd HH:mm:ss.fff") + @"',";
                         strRow += row[@"tmdelta"] + @",";
                         strRow += @"GETDATE()";
+
+                        strRow += @"),";
+
+                        strRes += strRow;
+                    }
+                    //Лишняя ','
+                    strRes = strRes.Substring(0, strRes.Length - 1);
+
+                    strRes += @";";
+
+                    strRes += @"INSERT INTO [dbo].[" + m_strNameDestTableStatKKSName + @"] ("
+                        + @"[KKS_NAME]"
+                        + @",[ID_TEC]"
+                        + @",[Value]"
+                        + @",[last_changed_at]"
+                        + @",[tmdelta]"
+                        + @",[INSERT_DATETIME]"
+                        + @",[ID_SOURCE]"
+                        + @",[ID_SRV_TM]"
+                            + @") VALUES";
+
+                    foreach (DataRow row in tblRes.Rows)
+                    {
+                        strRow = @"(";
+
+                        strRow += @"'" + getStatKKSName(Int32.Parse(row[@"ID"].ToString().Trim())) + @"'" + @",";
+                        strRow += @"6" + @",";
+                        strRow += ((decimal)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
+                        strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(-6).ToString(@"yyyyMMdd HH:mm:ss.fff") + @"',";
+                        strRow += row[@"tmdelta"] + @",";
+                        strRow += @"GETDATE()" + @",";
+                        strRow += @"63" + @",";
+                        strRow += @"2";
 
                         strRow += @"),";
 
@@ -381,6 +434,9 @@ namespace DestStatIDsql
                     //Console.WriteLine (msg);
                     break;
                 case StatesMachine.Values:
+                    Logging.Logg ().Action (@"statidsql::StateResponse () ::" + ((StatesMachine)state).ToString() + @" - "
+                        + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"] "
+                        + @"Ok! ...", Logging.INDEX_MESSAGE.NOT_SET);
                     break;
                 case StatesMachine.Insert:
                     break;
