@@ -27,6 +27,10 @@ namespace SrcBiyskTMora
 
         private class GroupSignalsBiyskTMOra : GroupSignalsSrc
         {
+            public GroupSignalsBiyskTMOra (object []pars) : base (pars)
+            {
+            }
+            
             public class SIGNALBiyskTMOra : SIGNAL
             {
                 public string m_NameTable;

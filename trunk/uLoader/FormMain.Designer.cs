@@ -175,7 +175,7 @@ namespace uLoader
             this.m_TabCtrl.Size = new System.Drawing.Size(this.ClientSize.Width, this.ClientSize.Height - MainMenuStrip.ClientSize.Height - 0/*m_statusStripMain.ClientSize.Height*/);
             this.m_TabCtrl.TabIndex = 3;
             this.m_TabCtrl.SelectedIndexChanged += new System.EventHandler(this.TabCtrl_OnSelectedIndexChanged);
-            this.m_TabCtrl.PrevSelectedIndexChanged += new System.EventHandler(this.TabCtrl_OnPrevSelectedIndexChanged);
+            this.m_TabCtrl.EventPrevSelectedIndexChanged += new System.EventHandler(this.TabCtrl_OnPrevSelectedIndexChanged);
             this.Controls.Add(this.m_TabCtrl);
 
             this.ResumeLayout(false);
