@@ -24,6 +24,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SrcBiyskTMora", "SrcBiyskTM
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DestStatIDsql", "DestStatIDsql\DestStatIDsql.csproj", "{FC9E170A-8AA9-44BE-9E13-A985AD2F01B0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SrcMSTTMsql", "SrcMSTTMsql\SrcMSTTMsql.csproj", "{95541E81-8469-4A9A-96FC-95A845A5BA74}"
+EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = uLoader.vsmdi
@@ -117,6 +119,16 @@ Global
 		{FC9E170A-8AA9-44BE-9E13-A985AD2F01B0}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{FC9E170A-8AA9-44BE-9E13-A985AD2F01B0}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{FC9E170A-8AA9-44BE-9E13-A985AD2F01B0}.Release|x86.ActiveCfg = Release|Any CPU
+		{95541E81-8469-4A9A-96FC-95A845A5BA74}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{95541E81-8469-4A9A-96FC-95A845A5BA74}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{95541E81-8469-4A9A-96FC-95A845A5BA74}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{95541E81-8469-4A9A-96FC-95A845A5BA74}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{95541E81-8469-4A9A-96FC-95A845A5BA74}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{95541E81-8469-4A9A-96FC-95A845A5BA74}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{95541E81-8469-4A9A-96FC-95A845A5BA74}.Release|Any CPU.Build.0 = Release|Any CPU
+		{95541E81-8469-4A9A-96FC-95A845A5BA74}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{95541E81-8469-4A9A-96FC-95A845A5BA74}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{95541E81-8469-4A9A-96FC-95A845A5BA74}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
