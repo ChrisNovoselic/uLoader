@@ -25,17 +25,17 @@ namespace SrcBiyskTMora
         {
         }
 
-        private class GroupSignalsBiyskTMOra : GroupSignalsSrc
+        private class GroupSignalsBiyskTMora : GroupSignalsSrc
         {
-            public GroupSignalsBiyskTMOra (object []pars) : base (pars)
+            public GroupSignalsBiyskTMora (object []pars) : base (pars)
             {
             }
-            
-            public class SIGNALBiyskTMOra : SIGNAL
+
+            public class SIGNALBiyskTMora : SIGNAL
             {
                 public string m_NameTable;
 
-                public SIGNALBiyskTMOra(int idMain, string nameTable) : base (idMain)
+                public SIGNALBiyskTMora(int idMain, string nameTable) : base (idMain)
                 {
                     this.m_NameTable = nameTable;
                 }
@@ -43,7 +43,7 @@ namespace SrcBiyskTMora
 
             public override GroupSignals.SIGNAL createSignal(object[] objs)
             {
-                return new SIGNALBiyskTMOra((int)objs[0], objs[2] as string);
+                return new SIGNALBiyskTMora((int)objs[0], objs[2] as string);
             }
 
             protected override void setQuery()
@@ -55,7 +55,7 @@ namespace SrcBiyskTMora
                     , strStart = DateTimeStart.ToString(@"yyyyMMdd HHmmss")
                     , strEnd = DateTimeStart.AddSeconds((int)TimeSpanPeriod.TotalSeconds).ToString(@"yyyyMMdd HHmmss");
                 //Формировать зпрос
-                foreach (GroupSignalsBiyskTMOra.SIGNALBiyskTMOra s in m_arSignals)
+                foreach (GroupSignalsBiyskTMora.SIGNALBiyskTMora s in m_arSignals)
                 {
                     m_strQuery += @"SELECT " + s.m_idMain + @" as ID, VALUE, QUALITY, DATETIME FROM ARCH_SIGNALS." + s.m_NameTable
                         + @" WHERE"
@@ -77,7 +77,7 @@ namespace SrcBiyskTMora
 
         protected override HHandlerDbULoader.GroupSignals createGroupSignals(object[] objs)
         {
-            return new GroupSignalsBiyskTMOra(objs);
+            return new GroupSignalsBiyskTMora(objs);
         }
 
         public override void ClearValues()

@@ -8,55 +8,55 @@ using System.Globalization;
 using HClassLibrary;
 using uLoaderCommon;
 
-namespace DestStatIDsql
+namespace DestStatKKSNAMEsql
 {
-    public class DestStatIDsql : HHandlerDbULoaderDest
+    public class DestStatKKSNAMEsql : HHandlerDbULoaderDest
     {
-        private static string m_strNameDestTable = @"ALL_PARAM_SOTIASSO";
+        private static string m_strNameDestTable = @"ALL_PARAM_SOTIASSO_KKS";
 
-        public DestStatIDsql()
+        public DestStatKKSNAMEsql()
             : base()
         {
         }
 
-        public DestStatIDsql(IPlugIn iPlugIn)
+        public DestStatKKSNAMEsql(IPlugIn iPlugIn)
             : base(iPlugIn)
         {
         }
 
-        private class GroupSignalsStatIdsql : GroupSignalsDest
+        private class GroupSignalsStatKKSNAMEsql : GroupSignalsDest
         {
-            protected class SIGNALStatIdsql : GroupSignalsDest.SIGNALDest
+            protected class SIGNALStatKKSNAMEsql : GroupSignalsDest.SIGNALDest
             {
-                public int m_idStat;
+                public string m_strStatKKSName;
 
-                public SIGNALStatIdsql(int idMain, int idLink, int idStat)
+                public SIGNALStatKKSNAMEsql(int idMain, int idLink, string statKKSName)
                     : base(idMain, idLink)
                 {
-                    this.m_idStat = idStat;
+                    m_strStatKKSName = statKKSName;
                 }
             }
 
             public override GroupSignals.SIGNAL createSignal(object[] objs)
             {
-                return new SIGNALStatIdsql((int)objs[0], (int)objs[1], (int)objs[3]);
+                return new SIGNALStatKKSNAMEsql((int)objs[0], (int)objs[1], (string)objs[3]);
             }
 
             protected override object getIdToInsert(int idLink)
             {
-                int iRes = -1;
+                string strRes = string.Empty;
 
-                foreach (SIGNALStatIdsql sgnl in m_arSignals)
+                foreach (SIGNALStatKKSNAMEsql sgnl in m_arSignals)
                     if (sgnl.m_idLink == idLink)
                     {
-                        iRes = sgnl.m_idStat;
+                        strRes = sgnl.m_strStatKKSName;
 
                         break;
                     }
                     else
                         ;
 
-                return iRes;
+                return strRes;
             }
 
             protected override string getInsertValuesQuery(DataTable tblRes)
@@ -65,24 +65,28 @@ namespace DestStatIDsql
                     , strRow = string.Empty;
 
                 strRes = @"INSERT INTO [dbo].[" + m_strNameDestTable + @"] ("
-                    + @"[ID]"
+                    + @"[KKS_NAME]"
                     + @",[ID_TEC]"
                     + @",[Value]"
                     + @",[last_changed_at]"
                     + @",[tmdelta]"
                     + @",[INSERT_DATETIME]"
+                    + @",[ID_SOURCE]"
+                    + @",[ID_SRV_TM]"
                         + @") VALUES";
 
                 foreach (DataRow row in tblRes.Rows)
                 {
                     strRow = @"(";
 
-                    strRow += getIdToInsert(Int32.Parse(row[@"ID"].ToString().Trim())) + @",";
+                    strRow += @"'" + getIdToInsert(Int32.Parse(row[@"ID"].ToString().Trim())) + @"'" + @",";
                     strRow += @"6" + @",";
                     strRow += ((decimal)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
                     strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(-6).ToString(@"yyyyMMdd HH:mm:ss.fff") + @"',";
                     strRow += row[@"tmdelta"] + @",";
-                    strRow += @"GETDATE()";
+                    strRow += @"GETDATE()" + @",";
+                    strRow += @"63" + @",";
+                    strRow += @"2";
 
                     strRow += @"),";
 
@@ -100,7 +104,7 @@ namespace DestStatIDsql
 
         protected override GroupSignals createGroupSignals(object[] objs)
         {
-            return new GroupSignalsStatIdsql(objs);
+            return new GroupSignalsStatKKSNAMEsql(objs);
         }
     }
 
@@ -111,9 +115,9 @@ namespace DestStatIDsql
         public PlugIn()
             : base()
         {
-            _Id = 2001;
+            _Id = 2002;
 
-            createObject(typeof(DestStatIDsql));
+            createObject(typeof(DestStatKKSNAMEsql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)
