@@ -108,6 +108,7 @@ namespace uLoader
             string[] arIDGroupSignals;
             foreach (GROUP_SRC itemSrc in arGroupSources)
             {
+                listGroupSignals.Clear();
                 arIDGroupSignals = (itemSrc as GROUP_SRC).m_arIDGroupSignals;
                 foreach (string id in arIDGroupSignals)
                     foreach (GROUP_SIGNALS_SRC itemGrooupSignals in arGroupSignals)

@@ -10,7 +10,7 @@ using uLoaderCommon;
 
 namespace DestStatKKSNAMEsql
 {
-    public class DestStatKKSNAMEsql : HHandlerDbULoaderDest
+    public class DestStatKKSNAMEsql : HHandlerDbULoaderStatTMDest
     {
         private static string m_strNameDestTable = @"ALL_PARAM_SOTIASSO_KKS";
 
@@ -24,8 +24,12 @@ namespace DestStatKKSNAMEsql
         {
         }
 
-        private class GroupSignalsStatKKSNAMEsql : GroupSignalsDest
+        private class GroupSignalsStatKKSNAMEsql : GroupSignalsStatTMDest
         {
+            public GroupSignalsStatKKSNAMEsql(object []pars) : base (pars)
+            {
+            }
+            
             protected class SIGNALStatKKSNAMEsql : GroupSignalsDest.SIGNALDest
             {
                 public string m_strStatKKSName;
@@ -39,7 +43,7 @@ namespace DestStatKKSNAMEsql
 
             public override GroupSignals.SIGNAL createSignal(object[] objs)
             {
-                return new SIGNALStatKKSNAMEsql((int)objs[0], (int)objs[1], (string)objs[3]);
+                return new SIGNALStatKKSNAMEsql((int)objs[0], (int)objs[1], (string)objs[4]);
             }
 
             protected override object getIdToInsert(int idLink)

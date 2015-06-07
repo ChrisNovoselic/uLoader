@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{95541E81-8469-4A9A-96FC-95A845A5BA74}</ProjectGuid>
+    <ProjectGuid>{A6E811BC-D6F5-4F65-8F96-4C1C125BF348}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SrcMSTTMsql</RootNamespace>
-    <AssemblyName>SrcMSTTMsql</AssemblyName>
+    <RootNamespace>SrcMSTIdsql</RootNamespace>
+    <AssemblyName>SrcMSTIdsql</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -40,7 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="SrcMSTTMsql.cs" />
+    <Compile Include="SrcMSTIdsql.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -343,28 +343,34 @@ namespace uLoader
             /// <param name="ev"></param>
             private void panelLoader_WorkItemSelectionChanged(object obj, EventArgs ev)
             {
-                //Подготовить параметры для передачи "родительской" панели
-                object[] arPreparePars = getPreparePars(obj as DataGridView, (obj as DataGridView).SelectedRows[0].Index);
-
-                switch ((KEY_CONTROLS)arPreparePars[(int)INDEX_PREPARE_PARS.KEY_OBJECT])
+                //Проверить наличие возможности выбора строки
+                if ((obj as DataGridView).SelectedRows.Count > 0)
                 {
-                    case KEY_CONTROLS.DGV_GROUP_SOURCES:
-                        clearValues();
-                        break;
-                    case KEY_CONTROLS.DGV_GROUP_SIGNALS:
-                        clearValues(KEY_CONTROLS.DGV_SIGNALS_OF_GROUP);
-                        break;
-                    default:
-                        break;
-                }
+                    //Подготовить параметры для передачи "родительской" панели
+                    object[] arPreparePars = getPreparePars(obj as DataGridView, (obj as DataGridView).SelectedRows[0].Index);
 
-                //Отправить сообщение "родительской" панели (для дальнейшей ретрансляции)
-                DataAskedHost(new object[] { this
-                                            , arPreparePars [(int)INDEX_PREPARE_PARS.KEY_OBJECT]
-                                            , KEY_EVENT.SELECTION_CHANGED
-                                            , arPreparePars [(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SOURCES_SEL]
-                                            , arPreparePars [(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SIGNALS_SEL]
-                });
+                    switch ((KEY_CONTROLS)arPreparePars[(int)INDEX_PREPARE_PARS.KEY_OBJECT])
+                    {
+                        case KEY_CONTROLS.DGV_GROUP_SOURCES:
+                            clearValues();
+                            break;
+                        case KEY_CONTROLS.DGV_GROUP_SIGNALS:
+                            clearValues(KEY_CONTROLS.DGV_SIGNALS_OF_GROUP);
+                            break;
+                        default:
+                            break;
+                    }
+
+                    //Отправить сообщение "родительской" панели (для дальнейшей ретрансляции)
+                    DataAskedHost(new object[] { this
+                                                , arPreparePars [(int)INDEX_PREPARE_PARS.KEY_OBJECT]
+                                                , KEY_EVENT.SELECTION_CHANGED
+                                                , arPreparePars [(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SOURCES_SEL]
+                                                , arPreparePars [(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SIGNALS_SEL]
+                    });
+                }
+                else
+                    ; //Нет выбранных строк
             }
             /// <summary>
             /// Заполнить рабочий элемент - список источников 
@@ -457,9 +463,9 @@ namespace uLoader
                 //Индекс выбранной на текущий момент строки (объекта)
                 int indxSel = (ctrl as DataGridView).SelectedRows.Count > 0 ? (ctrl as DataGridView).SelectedRows[0].Index : -1;
 
-                //if ((!(indxSel < 0))
+                if ((!(indxSel < 0))
                 //    //&& ((ctrl as DataGridView).Rows.Count == states.Length)
-                //    )
+                    )
                     for (int i = 0; i < states.Length; i++)
                     {
                         //Получить объект "кнопка"
@@ -506,10 +512,10 @@ namespace uLoader
                         else
                             ;
                     }
-                //else
+                else
                 //    //Нельзя назначить состояние несуществцющей строке
                 //    // , и наоборот нельзя оставить без состояния существующую строку
-                //    ;
+                    ;
 
                 return iRes;
             }

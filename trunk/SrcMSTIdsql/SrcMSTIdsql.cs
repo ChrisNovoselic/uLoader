@@ -11,9 +11,9 @@ using System.Threading;
 using HClassLibrary;
 using uLoaderCommon;
 
-namespace SrcMSTTMsql
+namespace SrcMSTIdsql
 {
-    public class SrcMSTTMsql : HHandlerDbULoaderSrc
+    public class SrcMSTIdsql : HHandlerDbULoaderSrc
     {
         private class GroupSignalsBiyskTMOra : GroupSignalsSrc
         {
@@ -58,7 +58,7 @@ namespace SrcMSTTMsql
         {
             _Id = 1001;
 
-            createObject(typeof(SrcMSTTMsql));
+            createObject(typeof(SrcMSTIdsql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

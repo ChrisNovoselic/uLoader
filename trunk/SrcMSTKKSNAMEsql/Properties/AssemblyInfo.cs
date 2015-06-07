@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // Управление общими сведениями о сборке осуществляется с помощью 
 // набора атрибутов. Измените значения этих атрибутов, чтобы изменить сведения,
 // связанные со сборкой.
-[assembly: AssemblyTitle("SrcMSTTMsql")]
+[assembly: AssemblyTitle("SrcMSTKKSNAMEsql")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("SrcMSTTMsql")]
-[assembly: AssemblyCopyright("Copyright ©  2015")]
+[assembly: AssemblyCompany("WORKGROUP")]
+[assembly: AssemblyProduct("SrcMSTKKSNAMEsql")]
+[assembly: AssemblyCopyright("Copyright © WORKGROUP 2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // Следующий GUID служит для идентификации библиотеки типов, если этот проект будет видимым для COM
-[assembly: Guid("3b09d419-d8bb-4f50-a3bb-659e39477d09")]
+[assembly: Guid("9abc9ce8-6322-47a7-a45f-530ff985e354")]
 
 // Сведения о версии сборки состоят из следующих четырех значений:
 //

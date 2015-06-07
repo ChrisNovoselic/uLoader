@@ -10,7 +10,7 @@ using uLoaderCommon;
 
 namespace DestStatIDsql
 {
-    public class DestStatIDsql : HHandlerDbULoaderDest
+    public class DestStatIDsql : HHandlerDbULoaderStatTMDest
     {
         private static string m_strNameDestTable = @"ALL_PARAM_SOTIASSO";
 
@@ -24,8 +24,13 @@ namespace DestStatIDsql
         {
         }
 
-        private class GroupSignalsStatIdsql : GroupSignalsDest
+        private class GroupSignalsStatIdsql : GroupSignalsStatTMDest
         {
+            public GroupSignalsStatIdsql(object[] pars)
+                : base(pars)
+            {
+            }
+            
             protected class SIGNALStatIdsql : GroupSignalsDest.SIGNALDest
             {
                 public int m_idStat;
