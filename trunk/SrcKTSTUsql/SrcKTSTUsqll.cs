@@ -8,69 +8,51 @@ using uLoaderCommon;
 
 namespace SrcKTSTUsql
 {
-    public class SrcKTSTUsql : HHandlerDbULoader
+    public class SrcKTSTUsql : HHandlerDbULoaderSrc
     {
-        public void Initialize(ConnectionSettings connSett)
+        public SrcKTSTUsql()
+            : base()
         {
         }
 
-        public void Initialize(int id, object [] pars)
+        public SrcKTSTUsql(IPlugIn iPlugIn)
+            : base(iPlugIn)
         {
         }
 
-        public override void Start()
+        private class GroupSignalsBiyskTMOra : GroupSignalsSrc
         {
+            public GroupSignalsBiyskTMOra(object[] pars)
+                : base(pars)
+            {
+            }
+
+            public class SIGNALMSTTMsql : SIGNAL
+            {
+                public SIGNALMSTTMsql(int idMain)
+                    : base(idMain)
+                {
+                }
+            }
+
+            public override GroupSignals.SIGNAL createSignal(object[] objs)
+            {
+                return new SIGNALMSTTMsql((int)objs[0]);
+            }
+
+            protected override void setQuery()
+            {
+                m_strQuery = string.Empty;
+            }
         }
 
-        public override void Stop()
+        protected override HHandlerDbULoader.GroupSignals createGroupSignals(object[] objs)
         {
+            return new GroupSignalsBiyskTMOra(objs);
         }
 
         public override void ClearValues()
         {
-            throw new NotImplementedException();
-        }
-
-        public override void StartDbInterfaces()
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override int StateCheckResponse(int state, out bool error, out object outobj)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override int StateRequest(int state)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override int StateResponse(int state, object obj)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override void StateErrors(int state, int req, int res)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override void StateWarnings(int state, int req, int res)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override int addAllStates()
-        {
-            int iRes = 0;
-
-            return iRes;
-        }
-
-        protected override GroupSignals createGroupSignals(object[] objs)
-        {
-            throw new NotImplementedException();
         }
     }
 

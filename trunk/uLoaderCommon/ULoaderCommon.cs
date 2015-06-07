@@ -402,7 +402,7 @@ namespace uLoaderCommon
 
         protected abstract GroupSignals createGroupSignals(object []objs);
 
-        protected void enqueue(int key)
+        protected void push(int key)
         {
             Logging.Logg().Debug(@"HHandlerDbULoader::enqueue () - [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + key + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
             
@@ -793,7 +793,7 @@ namespace uLoaderCommon
                         {
                             pair.Value.State = GroupSignals.STATE.QUEUE;
 
-                            enqueue(pair.Key);
+                            push(pair.Key);
                         }
                         else
                             ;
@@ -802,7 +802,10 @@ namespace uLoaderCommon
                         ;
             }
 
-            m_timerActivate.Change(m_msecIntervalTimerActivate, System.Threading.Timeout.Infinite);
+            if (!(m_timerActivate == null))
+                m_timerActivate.Change(m_msecIntervalTimerActivate, System.Threading.Timeout.Infinite);
+            else
+                ;
         }
 
         public override int Initialize(int id, object[] pars)
@@ -821,6 +824,18 @@ namespace uLoaderCommon
         {
             private DateTime m_dtStart;
             public DateTime DateTimeStart { get { return m_dtStart; } set { m_dtStart = value; } }
+
+            //Строки для условия "по дате/времени"
+            // начало
+            protected virtual string DateTimeStartFormat
+            {
+                get { return DateTimeStart.ToString(@"yyyyMMdd HHmmss"); }
+            }
+            // окончание
+            protected virtual string DateTimeCurIntervalEndFormat
+            {
+                get { return DateTimeStart.AddSeconds((int)TimeSpanPeriod.TotalSeconds).ToString(@"yyyyMMdd HHmmss"); }
+            }
 
             private event IntDelegateFunc EvtActualizeDateTimeStart;
             public void SetDelegateActualizeDateTimeStart(IntDelegateFunc fActualize)
@@ -971,7 +986,7 @@ namespace uLoaderCommon
                     else
                         ;
 
-                    //Logging.Logg().Debug(@"HBiyskTMOra::StateRequest (::Values) - Query=" + Query, Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Debug(@"HHandlerDbULoaderSrc::StateRequest (::Values) - Query=" + Query, Logging.INDEX_MESSAGE.NOT_SET);
 
                     //try
                     //{
@@ -1024,7 +1039,7 @@ namespace uLoaderCommon
                     try
                     {
                         RowCountRecieved = table.Rows.Count;
-                        Console.WriteLine(@"Получено строк [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"]: " + (table as DataTable).Rows.Count);
+                        Logging.Logg().Debug(@"Получено строк [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"]: " + (table as DataTable).Rows.Count, Logging.INDEX_MESSAGE.NOT_SET);
                         if (TableRecieved == null)
                         {
                             TableRecieved = new DataTable();
@@ -1345,7 +1360,7 @@ namespace uLoaderCommon
                 {
                     m_dictGroupSignals[id].TableRecieved = tableIn.Copy();
 
-                    enqueue(id);
+                    push(id);
                 }
                 else
                     ;

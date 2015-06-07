@@ -25,7 +25,7 @@ namespace uLoader
             /// <summary>
             /// Перечисление - индексы ПРЕДподготавливаемых параметров
             /// </summary>
-            private enum INDEX_PREPARE_PARS { KEY_OBJECT, INDEX_OBJ_GROUP_SOURCES_SEL, INDEX_OBJ_GROUP_SIGNALS_SEL, COUNT_INDEX_PREPARE_PARS }
+            public enum INDEX_PREPARE_PARS { OBJ, KEY_OBJ, KEY_EVT, ID_OBJ_GROUP_SOURCES_SEL, ID_OBJ_GROUP_SIGNALS_SEL, COUNT_INDEX_PREPARE_PARS }
 
             /// <summary>
             /// Перечисление - ключи элементов управления
@@ -261,9 +261,9 @@ namespace uLoader
                 //1 - Индекс "выделенной" строки в объекте с группами источников
                 //2 - Индекс "выделенной" строки в объекте с группами сигналов (-1 , если объект-инициатор группа источников)
                 object[] arObjRes = new object[(int)INDEX_PREPARE_PARS.COUNT_INDEX_PREPARE_PARS];
-                arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJECT] = KEY_CONTROLS.COUNT_KEY_CONTROLS;
-                arObjRes[(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SOURCES_SEL] =
-                arObjRes[(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SIGNALS_SEL] =
+                arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJ] = KEY_CONTROLS.COUNT_KEY_CONTROLS;
+                arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_GROUP_SOURCES_SEL] =
+                arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_GROUP_SIGNALS_SEL] =
                     -1;
 
                 //Найти целочисленный идентфикатор элемента управления
@@ -274,7 +274,7 @@ namespace uLoader
                     if (key.ToString().Trim().Equals((obj as Control).Name) == true)
                     {
                         //Запомнить идентификатор
-                        arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJECT] = key;
+                        arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJ] = key;
                         //Прервать цикл
                         break;
                     }
@@ -282,21 +282,21 @@ namespace uLoader
                         ;
                 }
                 //Проверить рез-т поиска целочисленного идентфикатора
-                if ((KEY_CONTROLS)arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJECT] == KEY_CONTROLS.COUNT_KEY_CONTROLS)
+                if ((KEY_CONTROLS)arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJ] == KEY_CONTROLS.COUNT_KEY_CONTROLS)
                     throw new Exception(@"PanelLoader::panelLoader_WorkItemClick () - не найден ключ [" + (obj as Control).Name + @"] для элемента управления...");
                 else
                     ;
 
-                if ((KEY_CONTROLS)arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJECT] == KEY_CONTROLS.DGV_GROUP_SOURCES)                    
-                    arObjRes[(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SOURCES_SEL] = indxRow;
+                if ((KEY_CONTROLS)arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJ] == KEY_CONTROLS.DGV_GROUP_SOURCES)                    
+                    arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_GROUP_SOURCES_SEL] = (obj as DataGridView).Rows[indxRow].Cells[0].Value;
                     //Для группы сигналов индекс оставить значение по умолчанию (-1)...
                 else
-                    if ((KEY_CONTROLS)arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJECT] == KEY_CONTROLS.DGV_GROUP_SIGNALS)
+                    if ((KEY_CONTROLS)arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJ] == KEY_CONTROLS.DGV_GROUP_SIGNALS)
                     {
                         //Если есть "выбранная" группа сигналов (ее состояние пользователь "изменяет")
                         // , значит обязательно есть и группа источников (которой принадлежит "выбранная" группа сигналов)
-                        arObjRes[(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SOURCES_SEL] = (GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView).SelectedRows[0].Index;
-                        arObjRes[(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SIGNALS_SEL] = indxRow;
+                        arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_GROUP_SOURCES_SEL] = (GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView).SelectedRows[0].Cells[0].Value;
+                        arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_GROUP_SIGNALS_SEL] = (obj as DataGridView).Rows[indxRow].Cells[0].Value;
                     }
                     else
                         throw new Exception(@"PanelLoader::panelLoader_WorkItemClick () - найденный ключ [" + (obj as Control).Name + @"] не м.б. использован в этой операции...");
@@ -322,13 +322,11 @@ namespace uLoader
                         //Подготовить параметры для передачи "родительской" панели
                         object[] arPreparePars = getPreparePars(obj as DataGridView, ev.RowIndex);
 
+                        arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = this;
+                        arPreparePars[(int)INDEX_PREPARE_PARS.KEY_EVT] = KEY_EVENT.CELL_CLICK;
+
                         //Отправить сообщение "родительской" панели (для дальнейшей ретрансляции)
-                        DataAskedHost(new object[] { this
-                                                    , arPreparePars [(int)INDEX_PREPARE_PARS.KEY_OBJECT]
-                                                    , KEY_EVENT.CELL_CLICK
-                                                    , arPreparePars [(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SOURCES_SEL]
-                                                    , arPreparePars [(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SIGNALS_SEL]
-                        });
+                        DataAskedHost(arPreparePars);
                     }
                     else
                         ;
@@ -349,7 +347,7 @@ namespace uLoader
                     //Подготовить параметры для передачи "родительской" панели
                     object[] arPreparePars = getPreparePars(obj as DataGridView, (obj as DataGridView).SelectedRows[0].Index);
 
-                    switch ((KEY_CONTROLS)arPreparePars[(int)INDEX_PREPARE_PARS.KEY_OBJECT])
+                    switch ((KEY_CONTROLS)arPreparePars[(int)INDEX_PREPARE_PARS.KEY_OBJ])
                     {
                         case KEY_CONTROLS.DGV_GROUP_SOURCES:
                             clearValues();
@@ -361,13 +359,11 @@ namespace uLoader
                             break;
                     }
 
+                    arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = this;
+                    arPreparePars[(int)INDEX_PREPARE_PARS.KEY_EVT] = KEY_EVENT.SELECTION_CHANGED;
+
                     //Отправить сообщение "родительской" панели (для дальнейшей ретрансляции)
-                    DataAskedHost(new object[] { this
-                                                , arPreparePars [(int)INDEX_PREPARE_PARS.KEY_OBJECT]
-                                                , KEY_EVENT.SELECTION_CHANGED
-                                                , arPreparePars [(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SOURCES_SEL]
-                                                , arPreparePars [(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SIGNALS_SEL]
-                    });
+                    DataAskedHost(arPreparePars);
                 }
                 else
                     ; //Нет выбранных строк
@@ -409,42 +405,55 @@ namespace uLoader
             {
                 Control workItem;
                 PanelLoader.KEY_CONTROLS key;
-                //Отобразить активный режим
-                // только, если панель - источник
-                if (this is PanelLoaderSource)
+
+                if (!(grpSrc == null))
                 {
-                    switch (grpSrc.m_mode)
+                    //Отобразить активный режим
+                    // только, если панель - источник
+                    if (this is PanelLoaderSource)
                     {
-                        case MODE_WORK.CUR_INTERVAL:
-                            key = PanelLoader.KEY_CONTROLS.RBUTTON_CUR_DATETIME;
-                            break;
-                        case MODE_WORK.COSTUMIZE:
-                            key = PanelLoader.KEY_CONTROLS.RBUTTON_COSTUMIZE;
-                            break;
-                        default:
-                            throw new Exception(@"PanelWork::fillWorkItem () - ...");
+                        switch (grpSrc.m_mode)
+                        {
+                            case MODE_WORK.CUR_INTERVAL:
+                                key = PanelLoader.KEY_CONTROLS.RBUTTON_CUR_DATETIME;
+                                break;
+                            case MODE_WORK.COSTUMIZE:
+                                key = PanelLoader.KEY_CONTROLS.RBUTTON_COSTUMIZE;
+                                break;
+                            default:
+                                throw new Exception(@"PanelWork::fillWorkItem () - ...");
+                        }
+                        workItem = GetWorkingItem(key);
+                        (workItem as RadioButton).Checked = true;
                     }
+                    else
+                        ;
+                    //Список сигналов группы
+                    key = PanelLoader.KEY_CONTROLS.DGV_SIGNALS_OF_GROUP;
                     workItem = GetWorkingItem(key);
-                    (workItem as RadioButton).Checked = true;
+
+                    if (!(grpSrc.m_listSgnls == null))
+                        foreach (SIGNAL_SRC sgnl in grpSrc.m_listSgnls)
+                            (workItem as DataGridView).Rows.Add(new object[] { sgnl.m_dictPars[@"NAME_SHR"] });
+                    else
+                        // группа сигналов == null
+                        Logging.Logg().Warning(@"PanelLoader::FillWorkItem () - список сигналов == null...", Logging.INDEX_MESSAGE.NOT_SET);
+
+                    //??? Отобразить интервал опроса для режима 'CUR_INTERVAL'
+
+                    //Отобразить шаг опроса для режима 'CUR_INTERVAL'
+
+                    //Отобразить дата опроса для режима 'COSTUMIZE'
+
+                    //Отобразить нач./время опроса для режима 'COSTUMIZE'
+
+                    //Отобразить кон./время опроса для режима 'COSTUMIZE'
+
+                    //Отобразить шаг опроса для режима 'COSTUMIZE'
                 }
                 else
-                    ;
-                //Список сигналов группы
-                key = PanelLoader.KEY_CONTROLS.DGV_SIGNALS_OF_GROUP;
-                workItem = GetWorkingItem(key);
-                foreach (SIGNAL_SRC sgnl in grpSrc.m_listSgnls)
-                    (workItem as DataGridView).Rows.Add(new object[] { sgnl.m_dictPars[@"NAME_SHR"] });
-                //??? Отобразить интервал опроса для режима 'CUR_INTERVAL'
-
-                //Отобразить шаг опроса для режима 'CUR_INTERVAL'
-
-                //Отобразить дата опроса для режима 'COSTUMIZE'
-
-                //Отобразить нач./время опроса для режима 'COSTUMIZE'
-
-                //Отобразить кон./время опроса для режима 'COSTUMIZE'
-
-                //Отобразить шаг опроса для режима 'COSTUMIZE'
+                    // не найдена группа сигналов
+                    Logging.Logg().Warning(@"PanelLoader::FillWorkItem () - не найдена группа сигналов...", Logging.INDEX_MESSAGE.NOT_SET);
             }
             /// <summary>
             /// Включить элементы управления в соответствии с состоянием объектов
@@ -567,9 +576,16 @@ namespace uLoader
                 int iRes = 0;
 
                 iRes = clearValues(KEY_CONTROLS.DGV_GROUP_SIGNALS);
-                //перед выполнением очередной операции проверить результат выполнения предыдущей
+                // перед выполнением очередной операции проверить результат выполнения предыдущей
                 if (iRes == 0)
-                    iRes = clearValues(KEY_CONTROLS.DGV_SIGNALS_OF_GROUP);
+                {
+                    iRes = clearValues(KEY_CONTROLS.CBX_SOURCE_OF_GROUP);
+
+                    if (iRes == 0)
+                        iRes = clearValues(KEY_CONTROLS.DGV_SIGNALS_OF_GROUP);
+                    else
+                        ;
+                }
                 else
                     ;
 
@@ -592,12 +608,17 @@ namespace uLoader
                         (ctrl as DataGridView).Rows.Clear();
                     }
                     else
-                        if (ctrl.GetType().Equals(typeof(TextBox)) == true)
-                        {//Очистиить как 'TextBox'
-                            (ctrl as TextBox).Text = string.Empty;
+                        if (ctrl.GetType().Equals(typeof(ComboBox)) == true)
+                        {//Очистиить как 'ComboBox'
+                            (ctrl as ComboBox).Items.Clear ();
                         }
                         else
-                            ;
+                            if (ctrl.GetType().Equals(typeof(TextBox)) == true)
+                            {//Очистиить как 'TextBox'
+                                (ctrl as TextBox).Text = string.Empty;
+                            }
+                            else
+                                ;
                 else
                     //Элемент управления не найден
                     iRes = -1;
@@ -792,6 +813,8 @@ namespace uLoader
             {
                 int iRes = 0;
 
+                Logging.Logg().Debug(@"PanelLoaderSources::UpdateData () - строк для отображения=" + table.Rows.Count + @"...", Logging.INDEX_MESSAGE.NOT_SET);
+
                 if (table.Rows.Count > 0)
                 {
                     DataGridView dgv = GetWorkingItem (KEY_CONTROLS.DGV_SIGNALS_OF_GROUP) as DataGridView;
@@ -801,13 +824,22 @@ namespace uLoader
                         arSel = table.Select (@"NAME_SHR='" + dgvRow.Cells[0].Value + @"'");
                         if (arSel.Length == 1)
                         {
-                            dgvRow.Cells[1].Value = arSel[0][@"VALUE"];
-                            dgvRow.Cells[2].Value = arSel[0][@"DATETIME"];
-                            dgvRow.Cells[3].Value = arSel[0][@"COUNT"];
+                            try
+                            {
+                                dgvRow.Cells[1].Value = arSel[0][@"VALUE"];
+                                dgvRow.Cells[2].Value = arSel[0][@"DATETIME"];
+                                dgvRow.Cells[3].Value = arSel[0][@"COUNT"];
+                            }
+                            catch (Exception e)
+                            {
+                                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"PanelLoaderSources::UpdateData () - ...");
+                            }
                         }
                         else
                             //throw new Exception(@"PanelWork.PanelLoaderSource::UpdateData () - невозможно определить строку для отображения [NAME_SHR=" + dgvRow.Cells[0].Value + @"]...");
                         {
+                            Logging.Logg().Error(@"PanelLoaderSources::UpdateData () - не найдена строка для NAME_SHR=" + dgvRow.Cells[0].Value + @"...", Logging.INDEX_MESSAGE.NOT_SET);
+
                             dgvRow.Cells[1].Value =
                             dgvRow.Cells[2].Value =
                             dgvRow.Cells[3].Value =

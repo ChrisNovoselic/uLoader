@@ -323,8 +323,8 @@ namespace uLoader
                 case StatesMachine.OBJ_SRC_GROUP_SOURCES:
                     error = false;
                     itemQueue = Peek;
-                    //??? 0-й параметр индекс "выбранноой" группы источников
-                    outobj = m_fileINI.AllObjectsSrcGroupSources[(int)itemQueue.Pars[0]];
+                    //??? 0-й параметр строковый идентификатор "выбранноой" группы источников
+                    outobj = m_fileINI.GetObjectSrcGroupSources((string)itemQueue.Pars[0]);
 
                     iRes = 0;
                     break;
@@ -332,7 +332,7 @@ namespace uLoader
                     error = false;
                     itemQueue = Peek;
                     //??? 0-й параметр индекс "выбранноой" группы источников
-                    outobj = m_fileINI.AllObjectsDestGroupSources[(int)itemQueue.Pars[0]];
+                    outobj = m_fileINI.GetObjectDestGroupSources((string)itemQueue.Pars[0]);
 
                     iRes = 0;
                     break;
@@ -388,13 +388,13 @@ namespace uLoader
                     error = false;
                     itemQueue = Peek;
 
-                    iRes = m_listGroupSources[(int)((INDEX_SRC)itemQueue.Pars[0])][(int)itemQueue.Pars[1]].StateChange((int)itemQueue.Pars[2]);
+                    iRes = m_listGroupSources[(int)((INDEX_SRC)itemQueue.Pars[0])][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].StateChange();
                     break;
                 case StatesMachine.STATE_CHANGED_GROUP_SIGNALS:
                     error = false;
                     itemQueue = Peek;
 
-                    iRes = m_listGroupSources[(int)((INDEX_SRC)itemQueue.Pars[0])][(int)itemQueue.Pars[1]].StateChange((int)itemQueue.Pars[2]);
+                    iRes = m_listGroupSources[(int)((INDEX_SRC)itemQueue.Pars[0])][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].StateChange((string)itemQueue.Pars[2]);
                     break;
                 case StatesMachine.DATA_SRC_GROUP_SIGNALS:
                     error = false;

@@ -15,35 +15,77 @@ namespace SrcMSTIdsql
 {
     public class SrcMSTIdsql : HHandlerDbULoaderSrc
     {
-        private class GroupSignalsBiyskTMOra : GroupSignalsSrc
+        public SrcMSTIdsql()
+            : base()
         {
-            public GroupSignalsBiyskTMOra(object[] pars)
+        }
+
+        public SrcMSTIdsql(IPlugIn iPlugIn)
+            : base(iPlugIn)
+        {
+        }
+
+        private class GroupSignalsMSTIdsql : GroupSignalsSrc
+        {
+            public GroupSignalsMSTIdsql(object[] pars)
                 : base(pars)
             {
             }
 
-            public class SIGNALMSTTMsql : SIGNAL
+            //Строки для условия "по дате/времени"
+            // начало
+            protected override string DateTimeStartFormat
             {
-                public SIGNALMSTTMsql(int idMain)
+                get { return DateTimeStart.AddHours(-6).AddSeconds(-1 * (int)TimeSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss"); }
+            }
+            // окончание
+            protected override string DateTimeCurIntervalEndFormat
+            {
+                //get { return DateTimeStart.AddHours(-6).AddSeconds((int)TimeSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss"); }
+                get { return DateTimeStart.AddHours(-6).ToString(@"yyyy/MM/dd HH:mm:ss"); }
+            }
+
+            public class SIGNALMSTIdsql : SIGNAL
+            {
+                public int m_id;
+
+                public SIGNALMSTIdsql(int idMain, int id)
                     : base(idMain)
                 {
+                    m_id = id;
                 }
             }
 
             public override GroupSignals.SIGNAL createSignal(object[] objs)
             {
-                return new SIGNALMSTTMsql((int)objs[0]);
+                return new SIGNALMSTIdsql((int)objs[0], (int)objs[2]);
             }
 
             protected override void setQuery()
             {
                 m_strQuery = string.Empty;
+                string strIds = string.Empty;
+
+                foreach (SIGNALMSTIdsql sgnl in m_arSignals)
+                    strIds += sgnl.m_id + @",";
+                //удалить "лишнюю" запятую
+                strIds = strIds.Substring(0, strIds.Length - 1);
+
+                m_strQuery = @"SELECT [ID], 1 AS [ID_TEC],"
+                    + @" CASE WHEN ([Value] > -0.1 AND [Value] < 0.1) THEN 0 ELSE [Value] END AS [VALUE],"
+                    + @" [last_changed_at] as [DATETIME],[tmdelta]"
+                    + @" FROM [dbo].[v_STATISTICS_real_his]"
+                        + @" WHERE"
+                        + @" [last_changed_at] >='" + DateTimeStartFormat + @"'"
+                        + @" AND [last_changed_at] <'" + DateTimeCurIntervalEndFormat + @"'"
+                            + @" AND [ID] IN (" + strIds + @")"
+                    ;
             }
         }
 
         protected override HHandlerDbULoader.GroupSignals createGroupSignals(object[] objs)
         {
-            return new GroupSignalsBiyskTMOra(objs);
+            return new GroupSignalsMSTIdsql(objs);
         }
 
         public override void ClearValues()
@@ -56,7 +98,7 @@ namespace SrcMSTIdsql
         public PlugIn()
             : base()
         {
-            _Id = 1001;
+            _Id = 1003;
 
             createObject(typeof(SrcMSTIdsql));
         }

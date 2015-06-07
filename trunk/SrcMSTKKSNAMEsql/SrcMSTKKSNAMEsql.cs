@@ -15,6 +15,16 @@ namespace SrcMSTKKSNAMEsql
 {
     public class SrcMSTKKSNAMEsql : HHandlerDbULoaderSrc
     {
+        public SrcMSTKKSNAMEsql()
+            : base()
+        {
+        }
+
+        public SrcMSTKKSNAMEsql(IPlugIn iPlugIn)
+            : base(iPlugIn)
+        {
+        }
+
         private class GroupSignalsBiyskTMOra : GroupSignalsSrc
         {
             public GroupSignalsBiyskTMOra(object[] pars)
@@ -56,7 +66,7 @@ namespace SrcMSTKKSNAMEsql
         public PlugIn()
             : base()
         {
-            _Id = 1001;
+            _Id = 1004;
 
             createObject(typeof(SrcMSTKKSNAMEsql));
         }

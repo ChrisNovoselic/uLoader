@@ -31,7 +31,7 @@ namespace SrcBiyskTMora
             {
             }
 
-            public class SIGNALBiyskTMora : SIGNAL
+            private class SIGNALBiyskTMora : SIGNAL
             {
                 public string m_NameTable;
 
@@ -50,17 +50,15 @@ namespace SrcBiyskTMora
             {
                 m_strQuery = string.Empty;
 
-                string strUnion = @" UNION "
-                    //Строки для условия "по дате/времени"
-                    , strStart = DateTimeStart.ToString(@"yyyyMMdd HHmmss")
-                    , strEnd = DateTimeStart.AddSeconds((int)TimeSpanPeriod.TotalSeconds).ToString(@"yyyyMMdd HHmmss");
+                string strUnion = @" UNION ";
+
                 //Формировать зпрос
                 foreach (GroupSignalsBiyskTMora.SIGNALBiyskTMora s in m_arSignals)
                 {
                     m_strQuery += @"SELECT " + s.m_idMain + @" as ID, VALUE, QUALITY, DATETIME FROM ARCH_SIGNALS." + s.m_NameTable
                         + @" WHERE"
-                        + @" DATETIME >=" + @" to_timestamp('" + strStart + @"', 'yyyymmdd hh24missFF9')"
-                        + @" AND DATETIME <" + @" to_timestamp('" + strEnd + @"', 'yyyymmdd hh24missFF9')"
+                        + @" DATETIME >=" + @" to_timestamp('" + DateTimeStartFormat + @"', 'yyyymmdd hh24missFF9')"
+                        + @" AND DATETIME <" + @" to_timestamp('" + DateTimeCurIntervalEndFormat + @"', 'yyyymmdd hh24missFF9')"
                         + strUnion
                     ;
                 }

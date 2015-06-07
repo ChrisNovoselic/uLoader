@@ -16,10 +16,10 @@ namespace uLoader
 {    
     public partial class PanelWork : PanelCommonDataHost
     {
-        /// <summary>
-        /// Перечисление - индексы ПРЕДподготавливаемых параметров
-        /// </summary>
-        private enum INDEX_PREPARE_PARS { OBJECT, KEY_OBJECT, KEY_EVENT, INDEX_OBJ_GROUP_SOURCES_SEL, INDEX_OBJ_GROUP_SIGNALS_SEL, COUNT_INDEX_PREPARE_PARS }
+        ///// <summary>
+        ///// Перечисление - индексы ПРЕДподготавливаемых параметров
+        ///// </summary>
+        //private enum INDEX_PREPARE_PARS { OBJECT, KEY_OBJECT, KEY_EVENT, ID_OBJ_GROUP_SOURCES_SEL, ID_OBJ_GROUP_SIGNALS_SEL, COUNT_INDEX_PREPARE_PARS }
         /// <summary>
         /// Массив панелей (источник, назначение)
         /// </summary>
@@ -362,19 +362,19 @@ namespace uLoader
             //Событие для постановки в очередь обработки событий
             HHandlerQueue.StatesMachine state = HHandlerQueue.StatesMachine.UNKNOWN;
             //Определить панель-инициатор сообщения
-            INDEX_SRC indxWork = (INDEX_SRC)this.Controls.GetChildIndex(pars[(int)INDEX_PREPARE_PARS.OBJECT] as PanelLoader);
+            INDEX_SRC indxWork = (INDEX_SRC)this.Controls.GetChildIndex(pars[(int)PanelLoader.INDEX_PREPARE_PARS.OBJ] as PanelLoader);
 
-            switch ((PanelLoader.KEY_EVENT)pars[(int)INDEX_PREPARE_PARS.KEY_EVENT])
+            switch ((PanelLoader.KEY_EVENT)pars[(int)PanelLoader.INDEX_PREPARE_PARS.KEY_EVT])
             {
                 case PanelLoader.KEY_EVENT.SELECTION_CHANGED:
                     switch (indxWork)
                     {
                         case INDEX_SRC.SOURCE:
-                            switch ((PanelLoader.KEY_CONTROLS)pars[(int)INDEX_PREPARE_PARS.KEY_OBJECT])
+                            switch ((PanelLoader.KEY_CONTROLS)pars[(int)PanelLoader.INDEX_PREPARE_PARS.KEY_OBJ])
                             {
                                 case PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES:
                                     state = HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SOURCES;
-                                    arObjToDataHost = new object[] { new object[] { (int)state, pars[(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SOURCES_SEL] } };
+                                    arObjToDataHost = new object[] { new object[] { (int)state, pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SOURCES_SEL] } };
                                     break;
                                 case PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS:
                                     state = HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS;
@@ -382,10 +382,7 @@ namespace uLoader
                                         new object[] {
                                             (int)state
                                             , indxWork
-                                            , (pars[(int)INDEX_PREPARE_PARS.OBJECT] as PanelLoader).GetWorkingItemValue (
-                                                (PanelLoader.KEY_CONTROLS)pars[(int)INDEX_PREPARE_PARS.KEY_OBJECT]
-                                                , (int)pars[(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SIGNALS_SEL]
-                                            )
+                                            , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SIGNALS_SEL]
                                         }
                                     };
                                     break;
@@ -394,11 +391,11 @@ namespace uLoader
                             }
                             break;
                         case INDEX_SRC.DEST:
-                            switch ((PanelLoader.KEY_CONTROLS)pars[(int)INDEX_PREPARE_PARS.KEY_OBJECT])
+                            switch ((PanelLoader.KEY_CONTROLS)pars[(int)PanelLoader.INDEX_PREPARE_PARS.KEY_OBJ])
                             {
                                 case PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES:
                                     state = HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SOURCES;
-                                    arObjToDataHost = new object[] { new object[] { (int)state, pars[(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SOURCES_SEL] } };
+                                    arObjToDataHost = new object[] { new object[] { (int)state, pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SOURCES_SEL] } };
                                     break;
                                 case PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS:
                                     state = HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SIGNALS;
@@ -406,10 +403,7 @@ namespace uLoader
                                         new object[] {
                                             (int)state
                                             , indxWork
-                                            , (pars[(int)INDEX_PREPARE_PARS.OBJECT] as PanelLoader).GetWorkingItemValue (
-                                                (PanelLoader.KEY_CONTROLS)pars[(int)INDEX_PREPARE_PARS.KEY_OBJECT]
-                                                , (int)pars[(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SIGNALS_SEL]
-                                            )
+                                            , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SIGNALS_SEL]
                                         }
                                     };
                                     break;
@@ -425,7 +419,7 @@ namespace uLoader
                     switch (indxWork)
                     {
                         case INDEX_SRC.SOURCE:
-                            switch ((PanelLoader.KEY_CONTROLS)pars[(int)INDEX_PREPARE_PARS.KEY_OBJECT])
+                            switch ((PanelLoader.KEY_CONTROLS)pars[(int)PanelLoader.INDEX_PREPARE_PARS.KEY_OBJ])
                             {
                                 case PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES:
                                     state = HHandlerQueue.StatesMachine.STATE_CHANGED_GROUP_SOURCES;
@@ -438,7 +432,7 @@ namespace uLoader
                             }
                             break;
                         case INDEX_SRC.DEST:
-                            switch ((PanelLoader.KEY_CONTROLS)pars[(int)INDEX_PREPARE_PARS.KEY_OBJECT])
+                            switch ((PanelLoader.KEY_CONTROLS)pars[(int)PanelLoader.INDEX_PREPARE_PARS.KEY_OBJ])
                             {
                                 case PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES:
                                     state = HHandlerQueue.StatesMachine.STATE_CHANGED_GROUP_SOURCES;
@@ -458,8 +452,8 @@ namespace uLoader
                                                         {
                                                             (int)state
                                                             , indxWork
-                                                            , pars[(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SOURCES_SEL]
-                                                            , pars[(int)INDEX_PREPARE_PARS.INDEX_OBJ_GROUP_SIGNALS_SEL]
+                                                            , pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SOURCES_SEL]
+                                                            , pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SIGNALS_SEL]
                                                         }
                     };
                     break;

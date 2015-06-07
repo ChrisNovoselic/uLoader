@@ -354,11 +354,50 @@ namespace uLoader
                 return arStrRes;
             }
 
+            private GROUP_SRC getObjectSrcGroupSources(INDEX_SRC indxPanel, string id)
+            {
+                foreach (GROUP_SRC grpSrc in m_arListGroupValues[(int)indxPanel].m_listGroupSrc)
+                    if (grpSrc.m_strID.Equals(id) == true)
+                        return grpSrc;
+                    else
+                        ;
+
+                return null;
+            }
+
+            private GROUP_SIGNALS_SRC getObjectSrcGroupSignals(INDEX_SRC indxPanel, string id)
+            {
+                foreach (GROUP_SIGNALS_SRC grpSgnls in m_arListGroupValues[(int)indxPanel].m_listGroupSgnlsSrc)
+                    if (grpSgnls.m_strID.Equals(id) == true)
+                        return grpSgnls;
+                    else
+                        ;
+
+                return null;
+            }
+
             public GROUP_SRC[] AllObjectsSrcGroupSources { get { return m_arListGroupValues[(int)INDEX_SRC.SOURCE].m_listGroupSrc.ToArray(); } }
+            public GROUP_SRC GetObjectSrcGroupSources(string id)
+            {
+                return getObjectSrcGroupSources(INDEX_SRC.SOURCE, id);
+            }
             public GROUP_SIGNALS_SRC[] AllObjectsSrcGroupSignals { get { return m_arListGroupValues[(int)INDEX_SRC.SOURCE].m_listGroupSgnlsSrc.ToArray(); } }
+            public GROUP_SIGNALS_SRC GetObjectSrcGroupSignals(string id)
+            {
+                return getObjectSrcGroupSignals(INDEX_SRC.SOURCE, id);
+            }
+
 
             public GROUP_SRC[] AllObjectsDestGroupSources { get { return m_arListGroupValues[(int)INDEX_SRC.DEST].m_listGroupSrc.ToArray(); } }
+            public GROUP_SRC GetObjectDestGroupSources(string id)
+            {
+                return getObjectSrcGroupSources(INDEX_SRC.DEST, id);
+            }
             public GROUP_SIGNALS_SRC[] AllObjectsDestGroupSignals { get { return m_arListGroupValues[(int)INDEX_SRC.DEST].m_listGroupSgnlsSrc.ToArray(); } }
+            public GROUP_SIGNALS_SRC GetObjectDestGroupSignals(string id)
+            {
+                return getObjectSrcGroupSignals(INDEX_SRC.DEST, id);
+            }
             
             public string[] ListSrcGroupSources { get { return GetListGroupSources(INDEX_SRC.SOURCE); } }
 
@@ -568,7 +607,31 @@ namespace uLoader
                 }
 
                 return itemSrcRes;
-            }            
+            }
+            /// <summary>
+            /// Определить тип группы по строковому идентификатору
+            /// </summary>
+            /// <param name="strId"></param>
+            /// <returns>Тип группы (0 - группы источников, 2 - группы сигналов)</returns>
+            private int getTypeGroup(string strId)
+            {
+                int iRes = -1;
+                
+                //Получить "маску" идентификатора
+                string idType = GetIDMasked(strId);
+                //Определить тип группы по "маске" идентификатора
+                //Сравнить с "маской" групп источников
+                if (idType.Equals(KEY_TREE_SRC[(int)INDEX_KEY_SRC.GROUP_SRC]) == true)
+                    iRes = 0;
+                else
+                    //Сравнить с "маской" групп сигналов
+                    if (idType.Equals(KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS]) == true)
+                        iRes = 2;
+                    else
+                        throw new Exception(@"FileINI::getItemSrc () - ...");
+
+                return iRes;
+            }
             /// <summary>
             /// Получить объект 'ITEM_SRC' по индксу панели, строковому идентификатору
             /// </summary>
@@ -580,19 +643,7 @@ namespace uLoader
                 ITEM_SRC itemSrcRes = null; //Результат
                 //Получить объект с 
                 SRC src = m_arListGroupValues[(int)indxSrc]; //источник/назначение
-                int groupType = -1;
-                //Получить "маску" идентификатора
-                string idType = GetIDMasked(id);
-                //Определить тип группы по "маске" идентификатора
-                //Сравнить с "маской" групп источников
-                if (idType.Equals(KEY_TREE_SRC[(int)INDEX_KEY_SRC.GROUP_SRC]) == true)
-                    groupType = 0;
-                else
-                    //Сравнить с "маской" групп сигналов
-                    if (idType.Equals(KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS]) == true)
-                        groupType = 2;
-                    else
-                        throw new Exception(@"FileINI::getItemSrc () - ...");
+                int groupType = getTypeGroup (id);
 
                 //группы источников/сигналов
                 switch (groupType)
