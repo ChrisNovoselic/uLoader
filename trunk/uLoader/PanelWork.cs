@@ -361,9 +361,9 @@ namespace uLoader
             //Определить панель-инициатор сообщения
             INDEX_SRC indxWork = (INDEX_SRC)this.Controls.GetChildIndex(pars[(int)PanelLoader.INDEX_PREPARE_PARS.OBJ] as PanelLoader);
 
-            switch ((PanelLoader.KEY_EVENT)pars[(int)PanelLoader.INDEX_PREPARE_PARS.KEY_EVT])
+            switch ((KEY_EVENT)pars[(int)PanelLoader.INDEX_PREPARE_PARS.KEY_EVT])
             {
-                case PanelLoader.KEY_EVENT.SELECTION_CHANGED:
+                case KEY_EVENT.SELECTION_CHANGED:
                     switch (indxWork)
                     {
                         case INDEX_SRC.SOURCE:
@@ -412,7 +412,7 @@ namespace uLoader
                             break;
                     }
                     break;
-                case PanelLoader.KEY_EVENT.CELL_CLICK:
+                case KEY_EVENT.CELL_CLICK:
                     switch (indxWork)
                     {
                         case INDEX_SRC.SOURCE:

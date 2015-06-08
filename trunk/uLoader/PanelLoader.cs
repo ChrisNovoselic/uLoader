@@ -13,15 +13,15 @@ using uLoaderCommon;
 
 namespace uLoader
 {
+    /// <summary>
+    /// Перечисление - ключи событий для передачи событий "родительской" панели
+    /// </summary>
+    public enum KEY_EVENT { SELECTION_CHANGED, CELL_CLICK }
+
     public partial class PanelWork
     {
         private abstract partial class PanelLoader : PanelCommonDataHost
         {
-            /// <summary>
-            /// Перечисление - ключи событий для передачи "родительской" панели
-            /// </summary>
-            public enum KEY_EVENT { SELECTION_CHANGED, CELL_CLICK }
-
             /// <summary>
             /// Перечисление - индексы ПРЕДподготавливаемых параметров
             /// </summary>
