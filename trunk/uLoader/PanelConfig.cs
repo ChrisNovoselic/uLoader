@@ -292,6 +292,10 @@ namespace uLoader
             private object []getPreparePars (DataGridViewConfigItem obj, int indx)
             {
                 object[] arObjRes = new object[(int)INDEX_PREPARE_PARS.COUNT_INDEX_PREPARE_PARS];
+                //Значения для идентификаторов "по умолчанию"
+                arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_GROUP_SEL] =
+                arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_ITEM_SEL] =
+                    string.Empty;
 
                 foreach (KeyValuePair <INDEX_CONTROL, Control> pair in m_dictControl)
                     if (pair.Value.Equals (obj) == true)
@@ -303,15 +307,40 @@ namespace uLoader
                     else
                         ;
 
+                switch ((INDEX_PANEL)arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJ])
+                {
+                    case INDEX_PANEL.GROUP_SOURCES:
+                        arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_GROUP_SEL] = m_dictIds[INDEX_PANEL.GROUP_SOURCES][indx];
+                        //arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_ITEM_SEL] = "по умолчанию"
+                        break;
+                    case INDEX_PANEL.SOURCES_OF_GROUP:
+                        arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_GROUP_SEL] = m_dictIds[INDEX_PANEL.GROUP_SOURCES][getConfigItem(INDEX_PANEL.GROUP_SOURCES).SelectedRows[0].Index];
+                        arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_ITEM_SEL] = m_dictIds[INDEX_PANEL.SOURCES_OF_GROUP][indx];
+                        break;
+                    case INDEX_PANEL.GROUP_SIGNALS:
+                        arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_GROUP_SEL] = m_dictIds[INDEX_PANEL.GROUP_SIGNALS][indx];
+                        //arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_ITEM_SEL] = "по умолчанию"
+                        break;
+                    case INDEX_PANEL.SIGNALS_OF_GROUP:
+                        arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_GROUP_SEL] = m_dictIds[INDEX_PANEL.GROUP_SIGNALS][getConfigItem(INDEX_PANEL.GROUP_SIGNALS).SelectedRows[0].Index];
+                        arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_ITEM_SEL] = m_dictIds[INDEX_PANEL.SIGNALS_OF_GROUP][indx];
+                        break;
+                    default:
+                        break;
+                }
+
                 return arObjRes;
             }
             
             private void clearValues (INDEX_PANEL indxPanel)
             {
+                DataGridViewConfigItem ctrl = getConfigItem(indxPanel);
+                ctrl.Rows.Clear ();
             }
 
             private void clearValues(INDEX_CONTROL indxCtrl)
             {
+                (m_dictControl[indxCtrl] as DataGridView).Rows.Clear();
             } 
 
             private void PanelSources_ConfigItemSelectionChanged(object obj, EventArgs ev)
@@ -342,7 +371,7 @@ namespace uLoader
                             break;
                     }
 
-                    arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = this;
+                    arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = obj;
                     arPreparePars[(int)INDEX_PREPARE_PARS.KEY_EVT] = KEY_EVENT.SELECTION_CHANGED;
 
                     //Отправить сообщение "родительской" панели (для дальнейшей ретрансляции)
@@ -419,10 +448,24 @@ namespace uLoader
                 if (!(rows == null))
                 {
                     j = 0;
-                    for (j = 0; j < cnt; j ++)
+                    for (j = 0; j < cnt; j++)
                     {
                         m_dictIds[indxPanel][j] = rows[0, j];
-                        cfgItem.Rows.Add(new object[] { rows[1, j], @"-" });
+                        try
+                        {
+                            ////Вариант №1
+                            //(cfgItem as DataGridView).Rows.Add(new object[] { rows[1, j], @"-" });
+                            ////Вариант №2
+                            //(cfgItem as DataGridView).Rows.Add(1);
+                            //(cfgItem as DataGridView).Rows[j].Cells[0].Value = rows[1, j];
+                            //(cfgItem as DataGridView).Rows[j].Cells[1].Value = @"-";
+                            //Вариант №3
+                            (cfgItem as DataGridViewConfigItem).AddRow(new object[] { rows[1, j], @"-" });
+                        }
+                        catch (ArgumentException e)
+                        {
+                            Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FillConfigItem (IndexConfig=" + IndexConfig + @") - indxPanel=" + indxPanel.ToString() + @" - ...");
+                        }
                     }
                 }
                 else
@@ -640,8 +683,8 @@ namespace uLoader
                     fillConfigItemProp(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_GROUP_SIGNALS: //Заполнить на панели источник - группы сигналов
-                    fillConfigItem(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.GROUP_SIGNALS, (par as object[])[(int)INDEX_SRC.SOURCE] as string[]);
-                    fillConfigItem(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.GROUP_SIGNALS, (par as object[])[(int)INDEX_SRC.DEST] as string[]);
+                    fillConfigItem(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.GROUP_SIGNALS, (par as object[])[(int)INDEX_SRC.SOURCE] as string[,]);
+                    fillConfigItem(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.GROUP_SIGNALS, (par as object[])[(int)INDEX_SRC.DEST] as string[,]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS: //Заполнить на панели источник - элементы в группе сигналов
                     fillConfigItem(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
@@ -723,240 +766,181 @@ namespace uLoader
             //Событие для постановки в очередь обработки событий
             HHandlerQueue.StatesMachine state = HHandlerQueue.StatesMachine.UNKNOWN;
             //Определить панель-инициатор сообщения
-            INDEX_SRC indxWork = (INDEX_SRC)this.Controls.GetChildIndex(pars[(int)PanelSources.INDEX_PREPARE_PARS.OBJ] as PanelSources);
+            INDEX_SRC indxConfig= (INDEX_SRC)this.Controls.GetChildIndex(pars[(int)PanelSources.INDEX_PREPARE_PARS.OBJ] as PanelSources);
 
             switch ((KEY_EVENT)pars[(int)PanelSources.INDEX_PREPARE_PARS.KEY_EVT])
             {
                 case KEY_EVENT.SELECTION_CHANGED:
+                    switch (indxConfig)
+                    {
+                        case INDEX_SRC.SOURCE:
+                            switch ((PanelSources.INDEX_PANEL)pars[(int)PanelSources.INDEX_PREPARE_PARS.KEY_OBJ])
+                            {
+                                case PanelSources.INDEX_PANEL.GROUP_SOURCES:
+                                    arObjToDataHost = new object[] {
+                                            new object [] //Список параметров соединения для источника из выбранной группы (строки)
+                                                {
+                                                    HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_PARS
+                                                        //с параметрами
+                                                        , (int)indxConfig //Индекс панели
+                                                        , (int)(PanelSources.INDEX_PANEL)pars[(int)PanelSources.INDEX_PREPARE_PARS.KEY_OBJ] //Индекс группы элементов на панели
+                                                        , pars[(int)PanelSources.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SEL] // выбранная строка группы элементов
+                                                }
+                                            , new object [] //Список источников для выбранной строки
+                                                {
+                                                    HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS //Состояние для обработки
+                                                        //с параметрами
+                                                        , (int)indxConfig //Индекс панели
+                                                        , (int)(PanelSources.INDEX_PANEL)pars[(int)PanelSources.INDEX_PREPARE_PARS.KEY_OBJ] //!!! Индекс группы элементов на панели
+                                                        ,  pars[(int)PanelSources.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SEL] // выбранная строка группы элементов
+                                                }
+                                        };
+                                    break;
+                                case PanelSources.INDEX_PANEL.SOURCES_OF_GROUP:
+                                    arObjToDataHost = new object[] {
+                                            new object [] //Список источников для выбранной строки
+                                                {
+                                                    HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_PROP //Состояние для обработки
+                                                        //с параметрами
+                                                        , (int)indxConfig //Индекс панели
+                                                        , (int)PanelSources.INDEX_PANEL.GROUP_SOURCES //!!! Индекс группы элементов на панели
+                                                        , pars[(int)PanelSources.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SEL] // выбранная строка группы элементов
+                                                        , pars[(int)PanelSources.INDEX_PREPARE_PARS.ID_OBJ_ITEM_SEL] // выбранная строка в списке элементов группы
+                                                }
+                                        };
+                                    break;
+                                case PanelSources.INDEX_PANEL.GROUP_SIGNALS:
+                                    arObjToDataHost = new object[] {
+                                            new object [] //Список параметров соединения для источника из выбранной группы (строки)
+                                                {
+                                                    HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_PARS
+                                                        //с параметрами
+                                                        , (int)indxConfig //Индекс панели
+                                                        , (int)(PanelSources.INDEX_PANEL)pars[(int)PanelSources.INDEX_PREPARE_PARS.KEY_OBJ] //Индекс группы элементов на панели
+                                                        , pars[(int)PanelSources.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SEL] // выбранная строка группы элементов
+                                                }
+                                            , new object [] //Список источников для выбранной строки
+                                                {
+                                                    HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS //Состояние для обработки
+                                                        //с параметрами
+                                                        , (int)indxConfig //Индекс панели
+                                                        , (int)(PanelSources.INDEX_PANEL)pars[(int)PanelSources.INDEX_PREPARE_PARS.KEY_OBJ] //!!! Индекс группы элементов на панели
+                                                        ,  pars[(int)PanelSources.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SEL] // выбранная строка группы элементов
+                                                }
+                                        };
+                                    break;
+                                case PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP:
+                                    arObjToDataHost = new object[] {
+                                            new object [] //Список источников для выбранной строки
+                                                {
+                                                    HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_PROP //Состояние для обработки
+                                                        //с параметрами
+                                                        , (int)indxConfig //Индекс панели
+                                                        , (int)PanelSources.INDEX_PANEL.GROUP_SIGNALS //!!! Индекс группы элементов на панели
+                                                        , pars[(int)PanelSources.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SEL] // выбранная строка группы элементов
+                                                        , pars[(int)PanelSources.INDEX_PREPARE_PARS.ID_OBJ_ITEM_SEL] // выбранная строка в списке элементов группы
+                                                }
+                                        };
+                                    break;
+                                default:
+                                    break;
+                            }
+                            break;
+                        case INDEX_SRC.DEST:
+                            switch ((PanelSources.INDEX_PANEL)pars[(int)PanelSources.INDEX_PREPARE_PARS.KEY_OBJ])
+                            {
+                                case PanelSources.INDEX_PANEL.GROUP_SOURCES:
+                                    arObjToDataHost = new object[] {
+                                            new object [] //Список параметров соединения для источника из выбранной группы (строки)
+                                                {
+                                                    HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_PARS
+                                                        //с параметрами
+                                                        , (int)indxConfig //Индекс панели
+                                                        , (int)(PanelSources.INDEX_PANEL)pars[(int)PanelSources.INDEX_PREPARE_PARS.KEY_OBJ] //Индекс группы элементов на панели
+                                                        , pars[(int)PanelSources.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SEL] // выбранная строка группы элементов
+                                                }
+                                            , new object [] //Список источников для выбранной строки
+                                                {
+                                                    HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS //Состояние для обработки
+                                                        //с параметрами
+                                                        , (int)indxConfig //Индекс панели
+                                                        , (int)(PanelSources.INDEX_PANEL)pars[(int)PanelSources.INDEX_PREPARE_PARS.KEY_OBJ] //!!! Индекс группы элементов на панели
+                                                        ,  pars[(int)PanelSources.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SEL] // выбранная строка группы элементов
+                                                }
+                                        };
+                                    break;
+                                case PanelSources.INDEX_PANEL.SOURCES_OF_GROUP:
+                                    arObjToDataHost = new object[] {
+                                            new object [] //Список источников для выбранной строки
+                                                {
+                                                    HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_PROP //Состояние для обработки
+                                                        //с параметрами
+                                                        , (int)indxConfig //Индекс панели
+                                                        , (int)PanelSources.INDEX_PANEL.GROUP_SOURCES //!!! Индекс группы элементов на панели
+                                                        , pars[(int)PanelSources.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SEL] // выбранная строка группы элементов
+                                                        , pars[(int)PanelSources.INDEX_PREPARE_PARS.ID_OBJ_ITEM_SEL] // выбранная строка в списке элементов группы
+                                                }
+                                        };
+                                    break;
+                                case PanelSources.INDEX_PANEL.GROUP_SIGNALS:
+                                    arObjToDataHost = new object[] {
+                                            new object [] //Список параметров соединения для источника из выбранной группы (строки)
+                                                {
+                                                    HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_PARS
+                                                        //с параметрами
+                                                        , (int)indxConfig //Индекс панели
+                                                        , (int)(PanelSources.INDEX_PANEL)pars[(int)PanelSources.INDEX_PREPARE_PARS.KEY_OBJ] //Индекс группы элементов на панели
+                                                        , pars[(int)PanelSources.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SEL] // выбранная строка группы элементов
+                                                }
+                                            , new object [] //Список источников для выбранной строки
+                                                {
+                                                    HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS //Состояние для обработки
+                                                        //с параметрами
+                                                        , (int)indxConfig //Индекс панели
+                                                        , (int)(PanelSources.INDEX_PANEL)pars[(int)PanelSources.INDEX_PREPARE_PARS.KEY_OBJ] //!!! Индекс группы элементов на панели
+                                                        ,  pars[(int)PanelSources.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SEL] // выбранная строка группы элементов
+                                                }
+                                        };
+                                    break;
+                                case PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP:
+                                    arObjToDataHost = new object[] {
+                                            new object [] //Список источников для выбранной строки
+                                                {
+                                                    HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_PROP //Состояние для обработки
+                                                        //с параметрами
+                                                        , (int)indxConfig //Индекс панели
+                                                        , (int)PanelSources.INDEX_PANEL.GROUP_SIGNALS //!!! Индекс группы элементов на панели
+                                                        , pars[(int)PanelSources.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SEL] // выбранная строка группы элементов
+                                                        , pars[(int)PanelSources.INDEX_PREPARE_PARS.ID_OBJ_ITEM_SEL] // выбранная строка в списке элементов группы
+                                                }
+                                        };
+                                    break;
+                                default:
+                                    break;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
                     break;
                 case KEY_EVENT.CELL_CLICK:
+                    switch (indxConfig)
+                    {
+                        case INDEX_SRC.SOURCE:
+                            break;
+                        case INDEX_SRC.DEST:
+                            break;
+                        default:
+                            break;
+                    }
                     break;
                 default:
                     break;
             }
+
+            //Ретрансляция для постановки в очередь
+            DataAskedHost(arObjToDataHost);
         }
-
-        ///// <summary>
-        ///// Универсальный "отправитель" запроса на получение данных (строк) для отображения
-        /////  при возникновении события 'SelectionChanged'
-        ///// </summary>
-        ///// <param name="obj">Объект, инициировавший событие 'SelectionChanged'</param>
-        ///// <param name="ev">Аргументы события</param>
-        ///// <param name="infxConfig">Индекс панели конфигурации</param>
-        ///// <param name="indxPanelToClear">Индекс панели, напрямую зависимой от инициировавшей событие (для удаления всех элементов)</param>
-        ///// <param name="indxPanelSelected">Индекс</param>
-        ///// <param name="statePars">Состояние для обработки (параметры элементов группы)</param>
-        ///// <param name="stateItems">Состояние для обработки (элементы группы)</param>
-        //private void panelConfig_dgvConfigGroupSelectionChanged(object obj, EventArgs ev
-        //    , INDEX_SRC infxConfig
-        //    , PanelSources.INDEX_PANEL indxPanelToClear
-        //    , PanelSources.INDEX_PANEL indxPanelSelected
-        //    , HHandlerQueue.StatesMachine statePars
-        //    , HHandlerQueue.StatesMachine stateItems)
-        //{
-        //    //Очистить список с источниками
-        //    getConfigItem(infxConfig, indxPanelToClear).Rows.Clear();
-        //    //Очистить список с параметрами соединения
-        //    getConfigItemProp(infxConfig, indxPanelToClear).Rows.Clear();
-
-        //    int indxItemSelected = (int)getConfigItem (infxConfig, indxPanelSelected).SelectedRows [0].Index;
-        //    //Запросить
-        //    DataAskedHost(new object[] {
-        //                            new object [] //Список параметров соединения для источника из выбранной группы (строки)
-        //                                {
-        //                                    statePars
-        //                                        //с параметрами
-        //                                        , (int)infxConfig //Индекс панели
-        //                                        , (int)indxPanelSelected //Индекс группы элементов на панели
-        //                                        , indxItemSelected // выбранная строка группы элементов
-        //                                }
-        //                            , new object [] //Список источников для выбранной строки
-        //                                {
-        //                                    (int)stateItems //Состояние для обработки
-        //                                        //с параметрами
-        //                                        , (int)infxConfig //Индекс панели
-        //                                        , (int)indxPanelSelected //Индекс группы элементов на панели
-        //                                        ,  indxItemSelected // выбранная строка группы элементов
-        //                                }
-        //                        }
-        //                    );
-        //}
-
-        ///// <summary>
-        ///// Универсальный "отправитель" запроса на получение данных (строк) для отображения
-        /////  при возникновении события 'SelectionChanged'
-        ///// </summary>
-        ///// <param name="obj">Объект, инициировавший событие 'SelectionChanged'</param>
-        ///// <param name="ev">Аргументы события</param>
-        ///// <param name="indxConfig">Индекс панели конфигурации</param>
-        ///// <param name="indxPanelGroup">Индекс группы элементов</param>
-        ///// <param name="indxPanelItem">Индекс элементов группы</param>
-        ///// <param name="stateProp">Состояние для обработки</param>
-        //private void panelConfig_dgvConfigItemSelectionChanged(object obj, EventArgs ev
-        //    , INDEX_SRC indxConfig
-        //    , PanelSources.INDEX_PANEL indxPanelGroup
-        //    , PanelSources.INDEX_PANEL indxPanelItem
-        //    , HHandlerQueue.StatesMachine stateProp)
-        //{
-        //    int indxPanelGroupSel = -1
-        //        , indxPanelItemSel = -1;
-
-        //    //Получить объект с группами
-        //    DataGridViewConfigItem cfgItem = getConfigItem (indxConfig, indxPanelGroup);
-        //    //Проверить наличие выбора
-        //    if (! (cfgItem.SelectedRows.Count == 1))
-        //        //Не выполнять без выбранной строки
-        //        return;
-        //    else
-        //        indxPanelGroupSel = cfgItem.SelectedRows[0].Index;
-
-        //    //Получить объект с элементами
-        //    cfgItem = getConfigItem(indxConfig, indxPanelItem);
-        //    //Проверить наличие выбора
-        //    if (!(cfgItem.SelectedRows.Count == 1))
-        //        //Не выполнять без выбранной строки
-        //        return;
-        //    else
-        //        indxPanelItemSel = cfgItem.SelectedRows[0].Index;
-            
-        //    //Запросить
-        //    DataAskedHost(new object[] {
-        //                            new object [] //Список источников для выбранной строки
-        //                                {
-        //                                    (int)stateProp //Состояние для обработки
-        //                                        //с параметрами
-        //                                        , (int)indxConfig //Индекс панели
-        //                                        , (int)indxPanelGroup //Индекс группы элементов на панели
-        //                                        , indxPanelGroupSel // выбранная строка группы элементов
-        //                                        , indxPanelItemSel // выбранная строка в списке элементов группы
-        //                                }
-        //                        }
-        //                    );
-        //}
-
-        ///// <summary>
-        ///// Обработчик события 'SelectionChanged' Панель источник - группы источников
-        ///// </summary>
-        ///// <param name="obj">Объект, инициировавший событие</param>
-        ///// <param name="ev">Аргументы события</param>
-        //private void panelConfig_dgvConfigItemSrcGroupSourcesSelectionChanged (object obj, EventArgs ev)
-        //{
-        //    panelConfig_dgvConfigGroupSelectionChanged(obj, ev
-        //        , INDEX_SRC.SOURCE
-        //        , PanelSources.INDEX_PANEL.SOURCES_OF_GROUP
-        //        , PanelSources.INDEX_PANEL.GROUP_SOURCES
-        //        , HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_PARS
-        //        , HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS
-        //    );
-        //}
-
-        ///// <summary>
-        ///// Обработчик события 'SelectionChanged' Панель источник - элемент в группе источников
-        ///// </summary>
-        ///// <param name="obj">Объект, инициировавший событие</param>
-        ///// <param name="ev">Аргументы события</param>
-        //private void panelConfig_dgvConfigItemSrcSourcesOfGroupSelectionChanged(object obj, EventArgs ev)
-        //{
-        //    panelConfig_dgvConfigItemSelectionChanged (obj, ev
-        //        , INDEX_SRC.SOURCE
-        //        , PanelSources.INDEX_PANEL.GROUP_SOURCES
-        //        , PanelSources.INDEX_PANEL.SOURCES_OF_GROUP
-        //        , HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_PROP
-        //    );            
-        //}
-
-        ///// <summary>
-        ///// Обработчик события 'SelectionChanged' Панель источник - группы сигналов
-        ///// </summary>
-        ///// <param name="obj">Объект, инициировавший событие</param>
-        ///// <param name="ev">Аргументы события</param>
-        //private void panelConfig_dgvConfigItemSrcGroupSignalsSelectionChanged(object obj, EventArgs ev)
-        //{
-        //    panelConfig_dgvConfigGroupSelectionChanged(obj, ev
-        //        , INDEX_SRC.SOURCE
-        //        , PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP
-        //        , PanelSources.INDEX_PANEL.GROUP_SIGNALS //??? Передать во-вне НЕИЗВЕСТНый идентификатор
-        //        , HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_PARS
-        //        , HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS
-        //    );
-        //}
-
-        ///// <summary>
-        ///// Обработчик события 'SelectionChanged' Панель источник - элемент в группе сигналов
-        ///// </summary>
-        ///// <param name="obj">Объект, инициировавший событие</param>
-        ///// <param name="ev">Аргументы события</param>
-        //private void panelConfig_dgvConfigItemSrcSignalsOfGroupSelectionChanged(object obj, EventArgs ev)
-        //{
-        //    panelConfig_dgvConfigItemSelectionChanged(obj, ev
-        //        , INDEX_SRC.SOURCE
-        //        , PanelSources.INDEX_PANEL.GROUP_SIGNALS //??? Передать во-вне НЕИЗВЕСТНый идентификатор
-        //        , PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP
-        //        , HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_PROP
-        //    );
-        //}
-
-        ///// <summary>
-        ///// Обработчик события 'SelectionChanged' Панель назначение - группы источников
-        ///// </summary>
-        ///// <param name="obj">Объект, инициировавший событие</param>
-        ///// <param name="ev">Аргументы события</param>
-        //private void panelConfig_dgvConfigItemDestGroupSourcesSelectionChanged(object obj, EventArgs ev)
-        //{
-        //    panelConfig_dgvConfigGroupSelectionChanged(obj, ev
-        //        , INDEX_SRC.DEST
-        //        , PanelSources.INDEX_PANEL.SOURCES_OF_GROUP
-        //        , PanelSources.INDEX_PANEL.GROUP_SOURCES
-        //        , HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_PARS
-        //        , HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS
-        //    );
-        //}
-
-        ///// <summary>
-        ///// Обработчик события 'SelectionChanged' Панель назначение - элемент в группе источников
-        ///// </summary>
-        ///// <param name="obj">Объект, инициировавший событие</param>
-        ///// <param name="ev">Аргументы события</param>
-        //private void panelConfig_dgvConfigItemDestSourcesOfGroupSelectionChanged(object obj, EventArgs ev)
-        //{
-        //    panelConfig_dgvConfigItemSelectionChanged(obj, ev
-        //        , INDEX_SRC.DEST
-        //        , PanelSources.INDEX_PANEL.GROUP_SOURCES
-        //        , PanelSources.INDEX_PANEL.SOURCES_OF_GROUP
-        //        , HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_PROP
-        //    );
-        //}
-
-        ///// <summary>
-        ///// Обработчик события 'SelectionChanged' Панель назначение - группы сигналов
-        ///// </summary>
-        ///// <param name="obj">Объект, инициировавший событие</param>
-        ///// <param name="ev">Аргументы события</param>
-        //private void panelConfig_dgvConfigItemDestGroupSignalsSelectionChanged(object obj, EventArgs ev)
-        //{
-        //    panelConfig_dgvConfigGroupSelectionChanged(obj, ev
-        //        , INDEX_SRC.DEST
-        //        , PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP
-        //        , PanelSources.INDEX_PANEL.GROUP_SIGNALS //??? Передать во-вне НЕИЗВЕСТНый идентификатор
-        //        , HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_PARS
-        //        , HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS
-        //    );
-        //}
-
-        ///// <summary>
-        ///// Обработчик события 'SelectionChanged' Панель назначение - элемент в группе сигналов
-        ///// </summary>
-        ///// <param name="obj">Объект, инициировавший событие</param>
-        ///// <param name="ev">Аргументы события</param>
-        //private void panelConfig_dgvConfigItemDestSignalsOfGroupSelectionChanged(object obj, EventArgs ev)
-        //{
-        //    panelConfig_dgvConfigItemSelectionChanged(obj, ev
-        //        , INDEX_SRC.DEST
-        //        , PanelSources.INDEX_PANEL.GROUP_SIGNALS //??? Передать во-вне НЕИЗВЕСТНый идентификатор
-        //        , PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP
-        //        , HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_PROP
-        //    );
-        //}
     }
 
     /// <summary>
