@@ -97,6 +97,15 @@ namespace uLoader
                         }
                         else
                             ;
+
+                        int j = -1
+                            , cntGrpSgnls = -1;
+                        foreach (GROUP_SRC grpSrc in m_arListGroupValues[(int)i].m_listGroupSrc)
+                        {
+                            cntGrpSgnls = grpSrc.m_arDescGroupSignals.GetLength (1);
+                            for (j = 0; j < cntGrpSgnls; j ++)
+                                grpSrc.m_arDescGroupSignals[1, j] = getItemSrc(i, grpSrc.m_arDescGroupSignals[0, j]).m_strShrName;
+                        }
                     }
                 else
                     ;
@@ -128,7 +137,7 @@ namespace uLoader
                     if (dictValues.ContainsKey(key) == true)
                     {
                         //Добавить группу...
-                        addGroupValues(indxNewSrc, typeNewGroup, secTarget + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + key);                        
+                        addGroupValues(indxNewSrc, typeNewGroup, dictValues[key], secTarget + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + key);                        
                     }
                     else
                         break;
@@ -157,7 +166,7 @@ namespace uLoader
             /// <param name="type">Тип группы</param>
             /// <param name="secGroup">Наименование для секции со значениями параметров группы</param>
             /// <returns>Результат выполнения</returns>
-            private int addGroupValues (INDEX_SRC indxSrc, Type type, string secGroup)
+            private int addGroupValues (INDEX_SRC indxSrc, Type type, string shrName, string secGroup)
             {
                 int iRes = 0; //Результат выполнения
                 //Индекс типа элемента группы (источник, сигнал)
@@ -190,7 +199,18 @@ namespace uLoader
                         itemSrc = new GROUP_SRC();
                         (itemSrc as GROUP_SRC).m_IDCurrentConnSett = GetSecValueOfKey(secGroup, @"SCUR");
                         (itemSrc as GROUP_SRC).m_strDLLName = GetSecValueOfKey(secGroup, @"DLL_NAME");
-                        (itemSrc as GROUP_SRC).m_arIDGroupSignals = GetSecValueOfKey(secGroup, KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS]).Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]);
+                        string []arIDGroupSignals = GetSecValueOfKey(secGroup, KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS]).Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]);
+                        if (arIDGroupSignals.Length > 0)
+                        {
+                            (itemSrc as GROUP_SRC).m_arDescGroupSignals = null;
+                            (itemSrc as GROUP_SRC).m_arDescGroupSignals = new string [2, arIDGroupSignals.Length];
+
+                            for (int j = 0; j < arIDGroupSignals.Length; j ++)
+                                (itemSrc as GROUP_SRC).m_arDescGroupSignals[0, j] = arIDGroupSignals[j];
+                        }
+                        else
+                            ;
+
                         m_arListGroupValues[(int)indxSrc].m_listGroupSrc.Add(itemSrc as GROUP_SRC);                        
                         break;
                     case INDEX_TYPE_GROUP.SIGNAL: //Добавить группу сигналов
@@ -213,7 +233,8 @@ namespace uLoader
                     && (! (itemSrc == null)))
                 {
                     //Присвоить наименование группы элементов (источников, сигналов)
-                    itemSrc.m_strID = secGroup.Split (s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET])[1];
+                    itemSrc.m_strID = secGroup.Split(s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET])[1];
+                    itemSrc.m_strShrName = shrName;
                     
                     int j = -1; //Индекс для ключа элемента группы (источник, сигнал) в секции
                     string key = string.Empty; //Ключ для элемента группы (источник, сигнал) в секции
@@ -339,17 +360,22 @@ namespace uLoader
                 return iRes;
             }
 
-            private string[] GetListGroupSources(INDEX_SRC indx)
+            private string[,] GetListGroupSources(INDEX_SRC indx)
             {
-                string[] arStrRes = new string[] { };
+                string[,] arStrRes = null;
                 int i = -1;
 
                 List<GROUP_SRC> listGroupSrc = m_arListGroupValues[(int)indx].m_listGroupSrc;
-                arStrRes = new string[listGroupSrc.Count];
+                arStrRes = new string[2, listGroupSrc.Count];
 
                 i = 0;
                 foreach (GROUP_SRC grpSrc in listGroupSrc)
-                    arStrRes[i++] = grpSrc.m_strID;
+                {
+                    arStrRes[0, i] = grpSrc.m_strID;
+                    arStrRes[1, i] = grpSrc.m_strShrName;
+
+                    i ++;
+                }
 
                 return arStrRes;
             }
@@ -399,28 +425,33 @@ namespace uLoader
                 return getObjectSrcGroupSignals(INDEX_SRC.DEST, id);
             }
             
-            public string[] ListSrcGroupSources { get { return GetListGroupSources(INDEX_SRC.SOURCE); } }
+            public string[,] ListSrcGroupSources { get { return GetListGroupSources(INDEX_SRC.SOURCE); } }
 
-            public string[] ListDestGroupSources { get { return GetListGroupSources(INDEX_SRC.DEST); } }
+            public string[,] ListDestGroupSources { get { return GetListGroupSources(INDEX_SRC.DEST); } }
 
-            private string[] GetListGroupSignals(INDEX_SRC indx)
+            private string[,] GetListGroupSignals(INDEX_SRC indx)
             {
-                string[] arStrRes = new string[] { };
+                string[,] arStrRes = null;
                 int i = -1;
 
                 List<GROUP_SIGNALS_SRC> listGroupSrc = m_arListGroupValues[(int)indx].m_listGroupSgnlsSrc;
-                arStrRes = new string[listGroupSrc.Count];
+                arStrRes = new string[2, listGroupSrc.Count];
 
                 i = 0;
                 foreach (GROUP_SIGNALS_SRC grpSrc in listGroupSrc)
-                    arStrRes[i++] = grpSrc.m_strID;
+                {
+                    arStrRes[0, i] = grpSrc.m_strID;
+                    arStrRes[1, i] = grpSrc.m_strShrName;
+
+                    i ++;
+                }
 
                 return arStrRes;
             }
 
-            public string[] ListSrcGroupSignals { get { return GetListGroupSignals(INDEX_SRC.SOURCE); } }
+            public string[,] ListSrcGroupSignals { get { return GetListGroupSignals(INDEX_SRC.SOURCE); } }
 
-            public string[] ListDestGroupSignals { get { return GetListGroupSignals(INDEX_SRC.DEST); } }
+            public string[,] ListDestGroupSignals { get { return GetListGroupSignals(INDEX_SRC.DEST); } }
 
             public string [] GetListItemsOfGroupSource (object []pars)
             {
@@ -577,7 +608,11 @@ namespace uLoader
                 while (char.IsNumber(id[lengthMaskId - 1]) == true)
                     lengthMaskId--;
                 //Получить индекс идентификатора
-                iRes = Int32.Parse(id.Substring(lengthMaskId, id.Length - lengthMaskId));
+                try { iRes = Int32.Parse(id.Substring(lengthMaskId, id.Length - lengthMaskId)); }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FileINI::GetIDIndex () - ...");
+                }
 
                 return iRes;
             }

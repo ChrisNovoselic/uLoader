@@ -105,14 +105,14 @@ namespace uLoader
                 ;
 
             List<GROUP_SIGNALS_SRC> listGroupSignals = new List<GROUP_SIGNALS_SRC>();
-            string[] arIDGroupSignals;
             foreach (GROUP_SRC itemSrc in arGroupSources)
             {
                 listGroupSignals.Clear();
-                arIDGroupSignals = (itemSrc as GROUP_SRC).m_arIDGroupSignals;
-                foreach (string id in arIDGroupSignals)
+                int cnt = (itemSrc as GROUP_SRC).m_arDescGroupSignals.GetLength (1)
+                    , j = -1;
+                for (j = 0; j < cnt; j ++)
                     foreach (GROUP_SIGNALS_SRC itemGrooupSignals in arGroupSignals)
-                        if (itemGrooupSignals.m_strID.Equals(id) == true)
+                        if (itemGrooupSignals.m_strID.Equals((itemSrc as GROUP_SRC).m_arDescGroupSignals[0, j]) == true)
                         {
                             listGroupSignals.Add(itemGrooupSignals);
                             break;
@@ -151,6 +151,12 @@ namespace uLoader
                 case StatesMachine.OBJ_SRC_GROUP_SOURCES:
                 case StatesMachine.OBJ_DEST_GROUP_SOURCES:
                 case StatesMachine.TIMER_WORK_UPDATE:
+                case StatesMachine.OBJ_SRC_GROUP_SIGNALS:
+                case StatesMachine.OBJ_DEST_GROUP_SIGNALS:
+                case StatesMachine.STATE_GROUP_SOURCES:
+                case StatesMachine.STATE_GROUP_SIGNALS:
+                case StatesMachine.STATE_CHANGED_GROUP_SOURCES:
+                case StatesMachine.STATE_CHANGED_GROUP_SIGNALS:
                 case StatesMachine.DATA_SRC_GROUP_SIGNALS:
                 case StatesMachine.DATA_DEST_GROUP_SIGNALS:
                     //Не требуют запроса
@@ -408,7 +414,10 @@ namespace uLoader
                     error = false;
                     itemQueue = Peek;
 
-                    outobj = m_listGroupSources[(int)INDEX_SRC.DEST][(int)itemQueue.Pars[0]].GetDataToPanel(itemQueue.Pars[1] as string, out error);
+                    if (! ((int)itemQueue.Pars[0] < 0))
+                        outobj = m_listGroupSources[(int)INDEX_SRC.DEST][(int)itemQueue.Pars[0]].GetDataToPanel(itemQueue.Pars[1] as string, out error);
+                    else
+                        ;
 
                     iRes = 0;
                     break;

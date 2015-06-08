@@ -81,6 +81,50 @@ namespace SrcMSTIdsql
                             + @" AND [ID] IN (" + strIds + @")"
                     ;
             }
+
+            private int getIdMain (int id_mst)
+            {
+                int iRes = -1;
+
+                foreach (SIGNALMSTIdsql sgnl in m_arSignals)
+                    if (sgnl.m_id == id_mst)
+                    {
+                        iRes = sgnl.m_idMain;
+
+                        break;
+                    }
+                    else
+                        ;
+
+                return iRes;
+            }
+
+            public override DataTable TableRecieved
+            {
+                get { return base.TableRecieved; }
+
+                set
+                {
+                    //Требуется добавить идентификаторы 'id_main'
+                    if (! (value.Columns.IndexOf (@"ID") < 0))
+                    {
+                        DataTable tblVal = value.Copy ();
+                        tblVal.Columns.Add (@"ID_MST", typeof(int));
+
+                        foreach (DataRow r in tblVal.Rows)
+                        {
+                            r[@"ID_MST"] = r[@"ID"];
+                            r[@"ID"] = getIdMain((int)r[@"ID_MST"]);
+                        }
+
+                        base.TableRecieved = tblVal;
+                    }
+                    else
+                    {
+                        base.TableRecieved = value;
+                    }
+                }
+            }
         }
 
         protected override HHandlerDbULoader.GroupSignals createGroupSignals(object[] objs)

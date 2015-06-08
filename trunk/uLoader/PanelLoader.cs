@@ -288,15 +288,24 @@ namespace uLoader
                     ;
 
                 if ((KEY_CONTROLS)arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJ] == KEY_CONTROLS.DGV_GROUP_SOURCES)                    
-                    arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_GROUP_SOURCES_SEL] = (obj as DataGridView).Rows[indxRow].Cells[0].Value;
+                    arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_GROUP_SOURCES_SEL] =
+                        //(obj as DataGridView).Rows[indxRow].Cells[0].Value
+                        m_dictGroupIds[KEY_CONTROLS.DGV_GROUP_SOURCES][indxRow]
+                        ;
                     //Для группы сигналов индекс оставить значение по умолчанию (-1)...
                 else
                     if ((KEY_CONTROLS)arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJ] == KEY_CONTROLS.DGV_GROUP_SIGNALS)
                     {
                         //Если есть "выбранная" группа сигналов (ее состояние пользователь "изменяет")
                         // , значит обязательно есть и группа источников (которой принадлежит "выбранная" группа сигналов)
-                        arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_GROUP_SOURCES_SEL] = (GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView).SelectedRows[0].Cells[0].Value;
-                        arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_GROUP_SIGNALS_SEL] = (obj as DataGridView).Rows[indxRow].Cells[0].Value;
+                        arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_GROUP_SOURCES_SEL] =
+                            //(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView).SelectedRows[0].Cells[0].Value
+                            m_dictGroupIds[KEY_CONTROLS.DGV_GROUP_SOURCES][(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView).SelectedRows[0].Index]
+                            ;
+                        arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_GROUP_SIGNALS_SEL] =
+                            //(obj as DataGridView).Rows[indxRow].Cells[0].Value
+                            m_dictGroupIds[KEY_CONTROLS.DGV_GROUP_SIGNALS][indxRow]
+                            ;
                     }
                     else
                         throw new Exception(@"PanelLoader::panelLoader_WorkItemClick () - найденный ключ [" + (obj as Control).Name + @"] не м.б. использован в этой операции...");
@@ -368,6 +377,43 @@ namespace uLoader
                 else
                     ; //Нет выбранных строк
             }
+            private Dictionary<KEY_CONTROLS, string[]> m_dictGroupIds;
+            /// <summary>
+            /// Заполнить рабочий элемент - список групп источников, сигналов
+            /// </summary>
+            /// <param name="key"></param>
+            /// <param name="rows"></param>
+            public void FillWorkItem (KEY_CONTROLS key, string [,] rows)
+            {
+                if (m_dictGroupIds == null)
+                    m_dictGroupIds = new Dictionary<KEY_CONTROLS,string[]> ();
+                else
+                    ;
+
+                int cnt = rows.GetLength (1)
+                    , j = -1;
+
+                if (m_dictGroupIds.Keys.Contains (key) == false)
+                    m_dictGroupIds.Add (key, new string [cnt]);
+                else
+                    if (! (m_dictGroupIds[key].Length == cnt))
+                        m_dictGroupIds[key] = new string[cnt];
+                    else
+                        ;
+
+                DataGridView workItem = GetWorkingItem(key) as DataGridView;
+                if (!(rows == null))
+                {
+                    j = 0;
+                    for (j = 0; j < cnt; j ++)
+                    {
+                        m_dictGroupIds[key][j] = rows[0, j];
+                        workItem.Rows.Add(new object[] { rows[1, j] });
+                    }
+                }
+                else
+                    ;
+            }
             /// <summary>
             /// Заполнить рабочий элемент - список источников 
             /// </summary>
@@ -382,9 +428,18 @@ namespace uLoader
                 (workItem as Label).Text = grpSrc.m_strDLLName;
                 //Список групп сигналов - инициирует заполнение списка сигналов группы
                 key = PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS;
+                int cnt = grpSrc.m_arDescGroupSignals.GetLength(1)
+                    , j = -1;
+                if (m_dictGroupIds.Keys.Contains (key) == false)
+                    m_dictGroupIds.Add (key, new string [cnt]);
+                else
+                    m_dictGroupIds[key] = new string[cnt];
                 workItem = GetWorkingItem(key);
-                foreach (string idGrpSgnls in grpSrc.m_arIDGroupSignals)
-                    (workItem as DataGridView).Rows.Add(new object[] { idGrpSgnls });
+                for (j = 0; j < cnt; j ++)
+                {
+                    m_dictGroupIds[key][j] = grpSrc.m_arDescGroupSignals[0, j];
+                    (workItem as DataGridView).Rows.Add(new object[] { grpSrc.m_arDescGroupSignals [1, j] });
+                }
                 //Список источников группы источников
                 key = PanelLoader.KEY_CONTROLS.CBX_SOURCE_OF_GROUP;
                 workItem = GetWorkingItem(key);
@@ -552,18 +607,46 @@ namespace uLoader
 
                 return ctrlRes;
             }
+            public string GetWorkingItemId(KEY_CONTROLS key)
+            {
+                Control ctrl = GetWorkingItem(key);
+                int indxSel = -1;
+
+                if (ctrl is DataGridView)
+                {
+                    indxSel = (ctrl as DataGridView).SelectedRows[0].Index;
+                    
+                    return m_dictGroupIds[key][indxSel];
+                }
+                else
+                    throw new Exception(@"PanelLoader::GetWorkingItemValue () - функция предназначена только для обработки объектов 'DataGridView'...");
+            }
             /// <summary>
-            /// Возратить значение
+            /// Возратить выбранное значение строки в 'DataGridView'
+            /// </summary>
+            /// <param name="key">Ключ элемента управления</param>
+            /// <returns>Значение в выбранной строке</returns>
+            public string GetWorkingItemValue(KEY_CONTROLS key)
+            {
+                Control ctrl = GetWorkingItem(key);
+
+                if (ctrl is DataGridView)
+                    return (ctrl as DataGridView).SelectedRows[0].Cells[0].Value.ToString().Trim();
+                else
+                    throw new Exception(@"PanelLoader::GetWorkingItemValue () - функция предназначена только для обработки объектов 'DataGridView'...");
+            }
+            /// <summary>
+            /// Возратить значение указанной строки в 'DataGridView'
             /// </summary>
             /// <param name="key">Ключ элемента управления</param>
             /// <param name="indxSel">Индекс выбранной строки</param>
-            /// <returns>Значение в выбранной строке</returns>
+            /// <returns>Значение в указанной строке</returns>
             public string GetWorkingItemValue(KEY_CONTROLS key, int indxSel)
             {
                 Control ctrl = GetWorkingItem(key);
 
                 if (ctrl is DataGridView)
-                    return (GetWorkingItem(key) as DataGridView).SelectedRows[0].Cells[0].Value.ToString().Trim();
+                    return (ctrl as DataGridView).Rows[indxSel].Cells[0].Value.ToString().Trim();
                 else
                     throw new Exception(@"PanelLoader::GetWorkingItemValue () - функция предназначена только для обработки объектов 'DataGridView'...");
             }

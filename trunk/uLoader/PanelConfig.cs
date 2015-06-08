@@ -402,7 +402,15 @@ namespace uLoader
             else
                 return null;
         }
-
+        private void fillConfigItem(INDEX_SRC indxConfig, PanelSources.INDEX_PANEL indxPanel, string[,] rows)
+        {
+            DataGridViewConfigItem cfgItem = getConfigItem(indxConfig, indxPanel);
+            if (!(rows == null))
+                foreach (string row in rows)
+                    cfgItem.Rows.Add(new object[] { row, @"-" });
+            else
+                ;
+        } 
         /// <summary>
         /// Заполнить значениями объект со списком групп (элементов групп) (истоников, сигналов)
         /// </summary>
@@ -418,7 +426,6 @@ namespace uLoader
             else
                 ;
         }
-
         /// <summary>
         /// Заполнить значениями объект с наименованиями параметров элементов групп (истоников, сигналов)
         /// </summary>
@@ -488,8 +495,8 @@ namespace uLoader
             switch (state)
             {
                 case (int)HHandlerQueue.StatesMachine.LIST_GROUP_SOURCES: //Заполнить на панели (источник, назаначение) - группы источников
-                    fillConfigItem(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.SOURCE] as string[]);
-                    fillConfigItem(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.DEST] as string[]);
+                    fillConfigItem(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.SOURCE] as string[,]);
+                    fillConfigItem(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.DEST] as string[,]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS: //Заполнить на панели (источник, назаначение) - элементы в группе источников
                     fillConfigItem(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);

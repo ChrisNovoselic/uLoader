@@ -18,13 +18,19 @@ namespace uLoader
     public class ITEM_SRC
     {
         /// <summary>
-        /// Наименование группы элементов
+        /// Строковый идентификатор группы элементов
         /// </summary>
         public string m_strID;
+        /// <summary>
+        /// Наименование группы элементов
+        /// </summary>
+        public string m_strShrName;
         /// <summary>
         /// Массив ключей для словаря со значениями параметров
         /// </summary>
         public string[] m_keys;
+
+        public Dictionary <string, string> m_dictAdding;
     }
     /// <summary>
     /// Параметры сигнала в группе сигналов (источник, назначение)
@@ -147,7 +153,7 @@ namespace uLoader
         /// <summary>
         /// Массив строк с наименованями "присоединенных" к группе источников групп сигналов
         /// </summary>
-        public string []m_arIDGroupSignals;        
+        public string [,]m_arDescGroupSignals;        
         /// <summary>
         /// Конструктор - основной (без парпаметров)
         /// </summary>
@@ -156,7 +162,7 @@ namespace uLoader
             m_IDCurrentConnSett = string.Empty;
             m_listConnSett = new List<ConnectionSettings> ();
             m_strDLLName = string.Empty;
-            m_arIDGroupSignals = new string [] { };
+            m_arDescGroupSignals = new string [,] { {}, {} };
         }
     };
     /// <summary>
@@ -346,6 +352,7 @@ namespace uLoader
                 this.m_mode = srcItem.m_mode;
 
                 this.m_strID = srcItem.m_strID;
+                this.m_strShrName = srcItem.m_strShrName;
 
                 _state = STATE.UNAVAILABLE;
             }
@@ -438,8 +445,8 @@ namespace uLoader
         /// <param name="listGroupSignals">Список объектов с информацией о группах сигналов</param>
         public GroupSources (GROUP_SRC srcItem, List <GROUP_SIGNALS_SRC>listGroupSignals) : base ()
         {
-            this.m_arIDGroupSignals = new string [srcItem.m_arIDGroupSignals.Length];
-            srcItem.m_arIDGroupSignals.CopyTo(this.m_arIDGroupSignals, 0);
+            this.m_arDescGroupSignals = new string [2, srcItem.m_arDescGroupSignals.GetLength(1)];
+            this.m_arDescGroupSignals = srcItem.m_arDescGroupSignals.Clone() as string [,];
 
             m_listGroupSignals = new List<GroupSignals> ();
             foreach (GROUP_SIGNALS_SRC itemGroupSignals in listGroupSignals)
@@ -454,6 +461,7 @@ namespace uLoader
                 this.m_listConnSett.Add (connSett);
 
             this.m_strID = srcItem.m_strID;
+            this.m_strShrName = srcItem.m_strShrName;
 
             this.m_IDCurrentConnSett = srcItem.m_IDCurrentConnSett;
 

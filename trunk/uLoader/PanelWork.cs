@@ -53,7 +53,10 @@ namespace uLoader
 
             initialize ();
         }
-
+        /// <summary>
+        /// Операции по инициализации
+        /// </summary>
+        /// <returns>Результат выполнения инициализации</returns>
         private int initialize ()
         {
             int iRes = 0;
@@ -66,21 +69,15 @@ namespace uLoader
 
             return iRes;
         }
-
         /// <summary>
         /// Заполнить значениями объект со списком групп (элементов групп) (истоников, сигналов)
         /// </summary>
         /// <param name="indxWork">Индекс панели конфигурации</param>
         /// <param name="indxPanel">Индекс группы элементов (элементов) на панели конфигурации</param>
         /// <param name="rows">Массив строк для заполнения</param>
-        private void fillWorkItem(INDEX_SRC indxWork, PanelLoader.KEY_CONTROLS key, string[] rows)
+        private void fillWorkItem(INDEX_SRC indxWork, PanelLoader.KEY_CONTROLS key, string[,] rows)
         {
-            DataGridView workItem = m_arLoader[(int)indxWork].GetWorkingItem(key) as DataGridView;
-            if (!(rows == null))
-                foreach (string row in rows)
-                    workItem.Rows.Add(new object[] { row });
-            else
-                ;
+            m_arLoader[(int)indxWork].FillWorkItem(key, rows);
         }
         /// <summary>
         /// Заполнить рабочий элемент - список источников 
@@ -185,8 +182,8 @@ namespace uLoader
             switch (state)
             {
                 case HHandlerQueue.StatesMachine.LIST_GROUP_SOURCES: //Группы источников (источник)
-                    fillWorkItem(INDEX_SRC.SOURCE, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.SOURCE] as string[]);
-                    fillWorkItem(INDEX_SRC.DEST, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.DEST] as string[]);
+                    fillWorkItem(INDEX_SRC.SOURCE, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.SOURCE] as string[,]);
+                    fillWorkItem(INDEX_SRC.DEST, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.DEST] as string[,]);
                     break;
                 case HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SOURCES: //Группа (объект) источников (источник)
                     //m_arCurrentSrcItems [(int)INDEX_SRC.SOURCE] = par as ITEM_SRC;
@@ -329,9 +326,9 @@ namespace uLoader
             indxDestSel = ctrl.SelectedRows.Count > 0 ? ctrl.SelectedRows[0].Index : -1;
 
             ctrl = m_arLoader[(int)INDEX_SRC.SOURCE].GetWorkingItem(PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView;
-            strSrcIDGrpSignals = ctrl.SelectedRows.Count > 0 ? ctrl.SelectedRows[0].Cells[0].Value.ToString().Trim() : string.Empty;
+            strSrcIDGrpSignals = ctrl.SelectedRows.Count > 0 ? m_arLoader[(int)INDEX_SRC.SOURCE].GetWorkingItemId(PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS) : string.Empty;
             ctrl = m_arLoader[(int)INDEX_SRC.DEST].GetWorkingItem(PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView;
-            strDestIDGrpSignals = ctrl.SelectedRows.Count > 0 ? ctrl.SelectedRows[0].Cells[0].Value.ToString().Trim() : string.Empty;
+            strDestIDGrpSignals = ctrl.SelectedRows.Count > 0 ? m_arLoader[(int)INDEX_SRC.DEST].GetWorkingItemId (PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS) : string.Empty;
 
             //Запросить данные
             DataAskedHost(new object[] {
