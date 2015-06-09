@@ -453,24 +453,29 @@ namespace uLoader
 
             public string[,] ListDestGroupSignals { get { return GetListGroupSignals(INDEX_SRC.DEST); } }
 
-            public string [] GetListItemsOfGroupSource (object []pars)
+            public string [,] GetListItemsOfGroupSource (object []pars)
             {
-                string[] arStrRes = new string[] { };
+                string[,] arStrRes = null;
                 int i = -1;
                 ITEM_SRC itemSrc = getItemSrc(pars);
 
-                arStrRes = new string[(itemSrc as GROUP_SRC).m_listConnSett.Count];
+                arStrRes = new string[2, (itemSrc as GROUP_SRC).m_listConnSett.Count];
 
                 i = 0;
                 foreach (ConnectionSettings connSett in (itemSrc as GROUP_SRC).m_listConnSett)
-                    arStrRes[i++] = connSett.name;
+                {
+                    arStrRes[0, i] = KEY_TREE_SRC[(int)INDEX_KEY_SRC.SRC_OF_GROUP] + i.ToString ();
+                    arStrRes[1, i] = connSett.name;
+
+                    i ++;
+                }
 
                 return arStrRes;
             }
 
             public string [] GetListParsOfGroupSource (object []pars)
             {
-                string[] arStrRes = new string[] { };
+                string[] arStrRes = null;
                 int i = -1;
                 ITEM_SRC itemSrc = getItemSrc(pars);
 
@@ -493,7 +498,8 @@ namespace uLoader
                 arStrRes = new string[(itemSrc as GROUP_SRC).m_keys.Length];
 
                 i = 0;
-                ConnectionSettings connSett = (itemSrc as GROUP_SRC).m_listConnSett[(int)pars[3]];
+                ConnectionSettings connSett = (itemSrc as GROUP_SRC).m_listConnSett[GetIDIndex((string)pars[3])];
+                arStrRes[i++] = connSett.id.ToString();
                 arStrRes[i++] = connSett.name;
                 arStrRes[i++] = connSett.server;
                 arStrRes[i++] = connSett.port.ToString ();
@@ -504,19 +510,24 @@ namespace uLoader
                 return arStrRes;
             }
 
-            public string[] GetListItemsOfGroupSignal(object[] pars)
+            public string[,] GetListItemsOfGroupSignal(object[] pars)
             {
-                string[] arStrRes = new string[] { };
+                string[,] arStrRes = null;
                 int i = -1;
                 ITEM_SRC itemSrc = getItemSrc (pars);                
 
                 if (! ((itemSrc as GROUP_SIGNALS_SRC).m_listSgnls == null))
                 {
-                    arStrRes = new string[(itemSrc as GROUP_SIGNALS_SRC).m_listSgnls.Count];
+                    arStrRes = new string[2, (itemSrc as GROUP_SIGNALS_SRC).m_listSgnls.Count];
 
                     i = 0;
                     foreach (SIGNAL_SRC sgnl in (itemSrc as GROUP_SIGNALS_SRC).m_listSgnls)
-                        arStrRes[i++] = sgnl.m_dictPars[@"NAME_SHR"];
+                    {
+                        arStrRes[0, i] = KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.SIGNAL_OF_GROUP] + i.ToString ();
+                        arStrRes[1, i] = sgnl.m_dictPars[@"NAME_SHR"];
+
+                        i ++;
+                    }
                 }
                 else
                     ;
@@ -548,7 +559,7 @@ namespace uLoader
                 arStrRes = new string[(itemSrc as GROUP_SIGNALS_SRC).m_keys.Length];
 
                 i = 0;
-                SIGNAL_SRC sgnl = (itemSrc as GROUP_SIGNALS_SRC).m_listSgnls[(int)pars[3]];
+                SIGNAL_SRC sgnl = (itemSrc as GROUP_SIGNALS_SRC).m_listSgnls[GetIDIndex((string)pars[3])];
                 foreach (string key in (itemSrc as GROUP_SIGNALS_SRC).m_keys)
                     arStrRes[i++] = sgnl.m_dictPars[key];
 
@@ -569,7 +580,7 @@ namespace uLoader
                         //break;
                     case 3:
                     case 4: //'GetListItemPropOfGroupSource', 4-ый параметр не используется...
-                        return getItemSrc((INDEX_SRC)pars[0], (int)pars[1], (int)pars[2]);
+                        return getItemSrc((INDEX_SRC)pars[0], (int)pars[1], (string)pars[2]);
                         //break;
                     default:
                         throw new Exception(@"FileINI::getItemSrc () - неизвестное количество параметров ...");
@@ -623,7 +634,7 @@ namespace uLoader
             /// <param name="groupType">Тип группы</param>
             /// <param name="indxSel">Индекс выбранной группы</param>
             /// <returns>Объект описания элемента группы</returns>
-            private ITEM_SRC getItemSrc(INDEX_SRC indxSrc, int groupType, int indxSel)
+            private ITEM_SRC getItemSrc(INDEX_SRC indxSrc, int groupType, string idSel)
             {
                 ITEM_SRC itemSrcRes = null;
 
@@ -632,10 +643,10 @@ namespace uLoader
                 switch (groupType)
                 {
                     case 0: //GROUP_SOURCES
-                        itemSrcRes = src.m_listGroupSrc[indxSel];
+                        itemSrcRes = src.m_listGroupSrc[GetIDIndex(idSel)];
                         break;
                     case 2: //GROUP_SIGNALS
-                        itemSrcRes = src.m_listGroupSgnlsSrc[indxSel];
+                        itemSrcRes = src.m_listGroupSgnlsSrc[GetIDIndex(idSel)];
                         break;
                     default:
                         break;

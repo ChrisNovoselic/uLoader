@@ -219,210 +219,217 @@ namespace uLoader
 
             ItemQueue itemQueue = null;
 
-            switch (state)
+            try
             {
-                case (int)StatesMachine.LIST_GROUP_SOURCES:
-                    error = false;
-                    outobj = new object [] {
-                        m_fileINI.ListSrcGroupSources
-                        , m_fileINI.ListDestGroupSources
-                    };
+                switch (state)
+                {
+                    case (int)StatesMachine.LIST_GROUP_SOURCES:
+                        error = false;
+                        outobj = new object [] {
+                            m_fileINI.ListSrcGroupSources
+                            , m_fileINI.ListDestGroupSources
+                        };
 
-                    iRes = 0;
-                    break;
-                case StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS:
-                    error = false;
-                    itemQueue = Peek;
-                    outobj =
-                        //m_fileINI.GetListItemsOfGroupSource(itemQueue.Pars.ToArray())
-                        m_fileINI.GetListItemsOfGroupSource(itemQueue.Pars.ToArray())
-                        ;
+                        iRes = 0;
+                        break;
+                    case StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS:
+                        error = false;
+                        itemQueue = Peek;
+                        outobj =
+                            //m_fileINI.GetListItemsOfGroupSource(itemQueue.Pars.ToArray())
+                            m_fileINI.GetListItemsOfGroupSource(itemQueue.Pars.ToArray())
+                            ;
 
-                    iRes = 0;
-                    break;
-                case StatesMachine.LIST_SRC_GROUP_SOURCE_PARS:
-                    error = false;
-                    itemQueue = Peek;
-                    outobj = m_fileINI.GetListParsOfGroupSource(itemQueue.Pars.ToArray());
+                        iRes = 0;
+                        break;
+                    case StatesMachine.LIST_SRC_GROUP_SOURCE_PARS:
+                        error = false;
+                        itemQueue = Peek;
+                        outobj = m_fileINI.GetListParsOfGroupSource(itemQueue.Pars.ToArray());
 
-                    iRes = 0;
-                    break;
-                case StatesMachine.LIST_SRC_GROUP_SOURCE_PROP:
-                    error = false;
-                    itemQueue = Peek;
-                    outobj = m_fileINI.GetListItemPropOfGroupSource(itemQueue.Pars.ToArray());
+                        iRes = 0;
+                        break;
+                    case StatesMachine.LIST_SRC_GROUP_SOURCE_PROP:
+                        error = false;
+                        itemQueue = Peek;
+                        outobj = m_fileINI.GetListItemPropOfGroupSource(itemQueue.Pars.ToArray());
 
-                    iRes = 0;
-                    break;
-                case StatesMachine.LIST_GROUP_SIGNALS:
-                    error = false;
-                    outobj = new object[] {
-                        m_fileINI.ListSrcGroupSignals
-                        , m_fileINI.ListDestGroupSignals
-                    };
+                        iRes = 0;
+                        break;
+                    case StatesMachine.LIST_GROUP_SIGNALS:
+                        error = false;
+                        outobj = new object[] {
+                            m_fileINI.ListSrcGroupSignals
+                            , m_fileINI.ListDestGroupSignals
+                        };
 
-                    iRes = 0;
-                    break;
-                case StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS:
-                    error = false;
-                    itemQueue = Peek;
-                    outobj = m_fileINI.GetListItemsOfGroupSignal(itemQueue.Pars.ToArray());
+                        iRes = 0;
+                        break;
+                    case StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS:
+                        error = false;
+                        itemQueue = Peek;
+                        outobj = m_fileINI.GetListItemsOfGroupSignal(itemQueue.Pars.ToArray());
 
-                    iRes = 0;
-                    break;
-                case StatesMachine.LIST_SRC_GROUP_SIGNAL_PARS:
-                    error = false;
-                    itemQueue = Peek;
-                    outobj = m_fileINI.GetListParsOfGroupSignal(itemQueue.Pars.ToArray());
+                        iRes = 0;
+                        break;
+                    case StatesMachine.LIST_SRC_GROUP_SIGNAL_PARS:
+                        error = false;
+                        itemQueue = Peek;
+                        outobj = m_fileINI.GetListParsOfGroupSignal(itemQueue.Pars.ToArray());
 
-                    iRes = 0;
-                    break;
-                case StatesMachine.LIST_SRC_GROUP_SIGNAL_PROP:
-                    error = false;
-                    itemQueue = Peek;
-                    outobj = m_fileINI.GetListItemPropOfGroupSignal(itemQueue.Pars.ToArray());
+                        iRes = 0;
+                        break;
+                    case StatesMachine.LIST_SRC_GROUP_SIGNAL_PROP:
+                        error = false;
+                        itemQueue = Peek;
+                        outobj = m_fileINI.GetListItemPropOfGroupSignal(itemQueue.Pars.ToArray());
 
-                    iRes = 0;
-                    break;
-                case StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS:
-                    error = false;
-                    itemQueue = Peek;
-                    outobj = m_fileINI.GetListItemsOfGroupSource(itemQueue.Pars.ToArray());
+                        iRes = 0;
+                        break;
+                    case StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS:
+                        error = false;
+                        itemQueue = Peek;
+                        outobj = m_fileINI.GetListItemsOfGroupSource(itemQueue.Pars.ToArray());
 
-                    iRes = 0;
-                    break;
-                case StatesMachine.LIST_DEST_GROUP_SOURCE_PARS:
-                    error = false;
-                    itemQueue = Peek;
-                    outobj = m_fileINI.GetListParsOfGroupSource(itemQueue.Pars.ToArray());
+                        iRes = 0;
+                        break;
+                    case StatesMachine.LIST_DEST_GROUP_SOURCE_PARS:
+                        error = false;
+                        itemQueue = Peek;
+                        outobj = m_fileINI.GetListParsOfGroupSource(itemQueue.Pars.ToArray());
 
-                    iRes = 0;
-                    break;
-                case StatesMachine.LIST_DEST_GROUP_SOURCE_PROP:
-                    error = false;
-                    itemQueue = Peek;
-                    outobj = m_fileINI.GetListItemPropOfGroupSource(itemQueue.Pars.ToArray());
+                        iRes = 0;
+                        break;
+                    case StatesMachine.LIST_DEST_GROUP_SOURCE_PROP:
+                        error = false;
+                        itemQueue = Peek;
+                        outobj = m_fileINI.GetListItemPropOfGroupSource(itemQueue.Pars.ToArray());
 
-                    iRes = 0;
-                    break;
-                case StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS:
-                    error = false;
-                    itemQueue = Peek;
-                    outobj = m_fileINI.GetListItemsOfGroupSignal(itemQueue.Pars.ToArray());
+                        iRes = 0;
+                        break;
+                    case StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS:
+                        error = false;
+                        itemQueue = Peek;
+                        outobj = m_fileINI.GetListItemsOfGroupSignal(itemQueue.Pars.ToArray());
 
-                    iRes = 0;
-                    break;
-                case StatesMachine.LIST_DEST_GROUP_SIGNAL_PARS:
-                    error = false;
-                    itemQueue = Peek;
-                    outobj = m_fileINI.GetListParsOfGroupSignal(itemQueue.Pars.ToArray());
+                        iRes = 0;
+                        break;
+                    case StatesMachine.LIST_DEST_GROUP_SIGNAL_PARS:
+                        error = false;
+                        itemQueue = Peek;
+                        outobj = m_fileINI.GetListParsOfGroupSignal(itemQueue.Pars.ToArray());
 
-                    iRes = 0;
-                    break;
-                case StatesMachine.LIST_DEST_GROUP_SIGNAL_PROP:
-                    error = false;
-                    itemQueue = Peek;
-                    outobj = m_fileINI.GetListItemPropOfGroupSignal(itemQueue.Pars.ToArray());
+                        iRes = 0;
+                        break;
+                    case StatesMachine.LIST_DEST_GROUP_SIGNAL_PROP:
+                        error = false;
+                        itemQueue = Peek;
+                        outobj = m_fileINI.GetListItemPropOfGroupSignal(itemQueue.Pars.ToArray());
 
-                    iRes = 0;
-                    break;
-                case StatesMachine.OBJ_SRC_GROUP_SOURCES:
-                    error = false;
-                    itemQueue = Peek;
-                    //??? 0-й параметр строковый идентификатор "выбранноой" группы источников
-                    outobj = m_fileINI.GetObjectSrcGroupSources((string)itemQueue.Pars[0]);
+                        iRes = 0;
+                        break;
+                    case StatesMachine.OBJ_SRC_GROUP_SOURCES:
+                        error = false;
+                        itemQueue = Peek;
+                        //??? 0-й параметр строковый идентификатор "выбранноой" группы источников
+                        outobj = m_fileINI.GetObjectSrcGroupSources((string)itemQueue.Pars[0]);
 
-                    iRes = 0;
-                    break;
-                case StatesMachine.OBJ_DEST_GROUP_SOURCES:
-                    error = false;
-                    itemQueue = Peek;
-                    //??? 0-й параметр индекс "выбранноой" группы источников
-                    outobj = m_fileINI.GetObjectDestGroupSources((string)itemQueue.Pars[0]);
+                        iRes = 0;
+                        break;
+                    case StatesMachine.OBJ_DEST_GROUP_SOURCES:
+                        error = false;
+                        itemQueue = Peek;
+                        //??? 0-й параметр индекс "выбранноой" группы источников
+                        outobj = m_fileINI.GetObjectDestGroupSources((string)itemQueue.Pars[0]);
 
-                    iRes = 0;
-                    break;
-                case StatesMachine.TIMER_WORK_UPDATE:
-                    error = false;
-                    outobj = m_fileINI.SecondWorkUpdate;
+                        iRes = 0;
+                        break;
+                    case StatesMachine.TIMER_WORK_UPDATE:
+                        error = false;
+                        outobj = m_fileINI.SecondWorkUpdate;
 
-                    iRes = 0;
-                    break;
-                case StatesMachine.OBJ_SRC_GROUP_SIGNALS:
-                    error = false;
-                    itemQueue = Peek;
-                    //??? 0-й параметр идентификатор "выбранноой" группы сигналов
-                    outobj = m_fileINI.GetObjectGroupSignals(itemQueue.Pars.ToArray());
+                        iRes = 0;
+                        break;
+                    case StatesMachine.OBJ_SRC_GROUP_SIGNALS:
+                        error = false;
+                        itemQueue = Peek;
+                        //??? 0-й параметр идентификатор "выбранноой" группы сигналов
+                        outobj = m_fileINI.GetObjectGroupSignals(itemQueue.Pars.ToArray());
 
-                    iRes = 0;
-                    break;
-                case StatesMachine.OBJ_DEST_GROUP_SIGNALS:
-                    error = false;
-                    itemQueue = Peek;
-                    //??? 0-й параметр идентификатор "выбранноой" группы сигналов
-                    outobj = m_fileINI.GetObjectGroupSignals(itemQueue.Pars.ToArray());
+                        iRes = 0;
+                        break;
+                    case StatesMachine.OBJ_DEST_GROUP_SIGNALS:
+                        error = false;
+                        itemQueue = Peek;
+                        //??? 0-й параметр идентификатор "выбранноой" группы сигналов
+                        outobj = m_fileINI.GetObjectGroupSignals(itemQueue.Pars.ToArray());
 
-                    iRes = 0;
-                    break;
-                case StatesMachine.STATE_GROUP_SOURCES:
-                    error = false;
-                    outobj = new object[(int)INDEX_SRC.COUNT_INDEX_SRC];
-                    for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
-                    {
-                        (outobj as object[])[(int)indxSrc] = new GroupSources.STATE[m_listGroupSources[(int)indxSrc].Count];
+                        iRes = 0;
+                        break;
+                    case StatesMachine.STATE_GROUP_SOURCES:
+                        error = false;
+                        outobj = new object[(int)INDEX_SRC.COUNT_INDEX_SRC];
+                        for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
+                        {
+                            (outobj as object[])[(int)indxSrc] = new GroupSources.STATE[m_listGroupSources[(int)indxSrc].Count];
 
-                        foreach (GroupSources grpSrc in m_listGroupSources[(int)indxSrc])
-                            ((outobj as object[])[(int)indxSrc] as GroupSources.STATE[])[m_listGroupSources[(int)indxSrc].IndexOf(grpSrc)] = grpSrc.State;
-                    }
+                            foreach (GroupSources grpSrc in m_listGroupSources[(int)indxSrc])
+                                ((outobj as object[])[(int)indxSrc] as GroupSources.STATE[])[m_listGroupSources[(int)indxSrc].IndexOf(grpSrc)] = grpSrc.State;
+                        }
 
-                    iRes = 0;
-                    break;
-                case StatesMachine.STATE_GROUP_SIGNALS:
-                    error = false;
-                    itemQueue = Peek;
-                    //??? 0-й параметр индекс "выбранноой" группы сигналов
-                    outobj = new object[(int)INDEX_SRC.COUNT_INDEX_SRC];
-                    for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
-                        if (!((int)itemQueue.Pars[(int)indxSrc] < 0))
-                            (outobj as object[])[(int)indxSrc] = m_listGroupSources[(int)indxSrc][(int)itemQueue.Pars[(int)indxSrc]].GetStateGroupSignals();
+                        iRes = 0;
+                        break;
+                    case StatesMachine.STATE_GROUP_SIGNALS:
+                        error = false;
+                        itemQueue = Peek;
+                        //??? 0-й параметр индекс "выбранноой" группы сигналов
+                        outobj = new object[(int)INDEX_SRC.COUNT_INDEX_SRC];
+                        for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
+                            if (!((int)itemQueue.Pars[(int)indxSrc] < 0))
+                                (outobj as object[])[(int)indxSrc] = m_listGroupSources[(int)indxSrc][(int)itemQueue.Pars[(int)indxSrc]].GetStateGroupSignals();
+                            else
+                                (outobj as object[])[(int)indxSrc] = new GroupSources.STATE[] { };
+
+                        iRes = 0;
+                        break;
+                    case StatesMachine.STATE_CHANGED_GROUP_SOURCES:
+                        error = false;
+                        itemQueue = Peek;
+
+                        iRes = m_listGroupSources[(int)((INDEX_SRC)itemQueue.Pars[0])][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].StateChange();
+                        break;
+                    case StatesMachine.STATE_CHANGED_GROUP_SIGNALS:
+                        error = false;
+                        itemQueue = Peek;
+
+                        iRes = m_listGroupSources[(int)((INDEX_SRC)itemQueue.Pars[0])][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].StateChange((string)itemQueue.Pars[2]);
+                        break;
+                    case StatesMachine.DATA_SRC_GROUP_SIGNALS:
+                        error = false;
+                        itemQueue = Peek;
+
+                        outobj = m_listGroupSources[(int)INDEX_SRC.SOURCE][(int)itemQueue.Pars[0]].GetDataToPanel(itemQueue.Pars[1] as string, out error);
+
+                        iRes = 0;
+                        break;
+                    case StatesMachine.DATA_DEST_GROUP_SIGNALS:
+                        error = false;
+                        itemQueue = Peek;
+
+                        if (! ((int)itemQueue.Pars[0] < 0))
+                            outobj = m_listGroupSources[(int)INDEX_SRC.DEST][(int)itemQueue.Pars[0]].GetDataToPanel(itemQueue.Pars[1] as string, out error);
                         else
-                            (outobj as object[])[(int)indxSrc] = new GroupSources.STATE[] { };
+                            ;
 
-                    iRes = 0;
-                    break;
-                case StatesMachine.STATE_CHANGED_GROUP_SOURCES:
-                    error = false;
-                    itemQueue = Peek;
-
-                    iRes = m_listGroupSources[(int)((INDEX_SRC)itemQueue.Pars[0])][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].StateChange();
-                    break;
-                case StatesMachine.STATE_CHANGED_GROUP_SIGNALS:
-                    error = false;
-                    itemQueue = Peek;
-
-                    iRes = m_listGroupSources[(int)((INDEX_SRC)itemQueue.Pars[0])][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].StateChange((string)itemQueue.Pars[2]);
-                    break;
-                case StatesMachine.DATA_SRC_GROUP_SIGNALS:
-                    error = false;
-                    itemQueue = Peek;
-
-                    outobj = m_listGroupSources[(int)INDEX_SRC.SOURCE][(int)itemQueue.Pars[0]].GetDataToPanel(itemQueue.Pars[1] as string, out error);
-
-                    iRes = 0;
-                    break;
-                case StatesMachine.DATA_DEST_GROUP_SIGNALS:
-                    error = false;
-                    itemQueue = Peek;
-
-                    if (! ((int)itemQueue.Pars[0] < 0))
-                        outobj = m_listGroupSources[(int)INDEX_SRC.DEST][(int)itemQueue.Pars[0]].GetDataToPanel(itemQueue.Pars[1] as string, out error);
-                    else
-                        ;
-
-                    iRes = 0;
-                    break;
-                default:
-                    break;
+                        iRes = 0;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            catch (Exception e)
+            {
+                Logging.Logg ().Exception (e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerQueue::StateCheckResponse (state=" + state.ToString () + @") - ...");
             }
 
             return iRes;

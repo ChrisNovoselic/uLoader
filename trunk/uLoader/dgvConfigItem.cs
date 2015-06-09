@@ -49,11 +49,6 @@ namespace uLoader
         {
             m_linkBtnAdding.Enabled = m_linkTextBoxNewItem.Text.Length > 0;
         }
-
-        public void AddRow(object []pars)
-        {
-            base.Rows.Add(pars);
-        }
     }
 
     partial class DataGridViewConfigItem

@@ -358,20 +358,20 @@ namespace uLoader
                             clearValues(INDEX_CONTROL.DGV_PARAMETER_SOURCE);
                             break;
                         case INDEX_PANEL.SOURCES_OF_GROUP:
-                            clearValues(INDEX_CONTROL.DGV_PARAMETER_SOURCE);
+                            //clearValues(INDEX_CONTROL.DGV_PARAMETER_SOURCE);
                             break;
                         case INDEX_PANEL.GROUP_SIGNALS:
                             clearValues(INDEX_PANEL.SIGNALS_OF_GROUP);
                             clearValues(INDEX_CONTROL.DGV_PARAMETER_SIGNAL);
                             break;
                         case INDEX_PANEL.SIGNALS_OF_GROUP:
-                            clearValues(INDEX_CONTROL.DGV_PARAMETER_SIGNAL);
+                            //clearValues(INDEX_CONTROL.DGV_PARAMETER_SIGNAL);
                             break;
                         default:
                             break;
                     }
 
-                    arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = obj;
+                    arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = this; //obj;
                     arPreparePars[(int)INDEX_PREPARE_PARS.KEY_EVT] = KEY_EVENT.SELECTION_CHANGED;
 
                     //Отправить сообщение "родительской" панели (для дальнейшей ретрансляции)
@@ -453,14 +453,14 @@ namespace uLoader
                         m_dictIds[indxPanel][j] = rows[0, j];
                         try
                         {
-                            ////Вариант №1
-                            //(cfgItem as DataGridView).Rows.Add(new object[] { rows[1, j], @"-" });
+                            //Вариант №1
+                            (cfgItem as DataGridView).Rows.Add(new object[] { rows[1, j], @"-" });
                             ////Вариант №2
                             //(cfgItem as DataGridView).Rows.Add(1);
                             //(cfgItem as DataGridView).Rows[j].Cells[0].Value = rows[1, j];
                             //(cfgItem as DataGridView).Rows[j].Cells[1].Value = @"-";
-                            //Вариант №3
-                            (cfgItem as DataGridViewConfigItem).AddRow(new object[] { rows[1, j], @"-" });
+                            ////Вариант №3
+                            //(cfgItem as DataGridViewConfigItem).AddRow(new object[] { rows[1, j], @"-" });
                         }
                         catch (ArgumentException e)
                         {
@@ -472,15 +472,15 @@ namespace uLoader
                     ;
             }
 
-            public void FillConfigItem(INDEX_PANEL indxPanel, string[] rows)
-            {
-                DataGridViewConfigItem cfgItem = getConfigItem(indxPanel);
-                if (! (rows == null))
-                    foreach (string row in rows)
-                        cfgItem.Rows.Add(new object[] { row, @"-" });
-                else
-                    ;
-            }
+            //public void FillConfigItem(INDEX_PANEL indxPanel, string[] rows)
+            //{
+            //    DataGridViewConfigItem cfgItem = getConfigItem(indxPanel);
+            //    if (! (rows == null))
+            //        foreach (string row in rows)
+            //            cfgItem.Rows.Add(new object[] { row, @"-" });
+            //    else
+            //        ;
+            //}
 
             private string IndexConfig
             {
@@ -560,16 +560,24 @@ namespace uLoader
             {
                 DataGridView cfgItem = getConfigItemProp(indxPanel);
 
-                if (!(rows == null))
+                try
                 {
-                    int i = 0;
-                    foreach (string val in rows)
+                    if (!(rows == null))
                     {
-                        cfgItem.Rows[i++].Cells[0].Value = val;
+                        int i = 0;
+                        foreach (string val in rows)
+                            if (i < cfgItem.RowCount)
+                                cfgItem.Rows[i++].Cells[0].Value = val;
+                            else
+                                ;
                     }
+                    else
+                        ;
                 }
-                else
-                    ;
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"PanelSources::FillConfigItemProp (indxPanel=" + indxPanel.ToString () + @") - ...");
+                }
             }
         }
 
@@ -618,11 +626,6 @@ namespace uLoader
             s_arMarkChanged[(int)INDEX_SRC.DEST] = new HMark();
 
             return iRes;
-        }
-
-        private void fillConfigItem(INDEX_SRC indxConfig, PanelSources.INDEX_PANEL indxPanel, string[,] rows)
-        {
-            (this.Controls[(int)indxConfig] as PanelSources).FillConfigItem (indxPanel, rows);
         } 
         /// <summary>
         /// Заполнить значениями объект со списком групп (элементов групп) (истоников, сигналов)
@@ -630,10 +633,14 @@ namespace uLoader
         /// <param name="indxConfig">Индекс панели конфигурации</param>
         /// <param name="indxPanel">Индекс группы элементов (элементов) на панели конфигурации</param>
         /// <param name="rows">Массив строк для заполнения</param>
-        private void fillConfigItem(INDEX_SRC indxConfig, PanelSources.INDEX_PANEL indxPanel, string[] rows)
+        private void fillConfigItem(INDEX_SRC indxConfig, PanelSources.INDEX_PANEL indxPanel, string[,] rows)
         {
             (this.Controls[(int)indxConfig] as PanelSources).FillConfigItem(indxPanel, rows);
         }
+        //private void fillConfigItem(INDEX_SRC indxConfig, PanelSources.INDEX_PANEL indxPanel, string[,] rows)
+        //{
+        //    (this.Controls[(int)indxConfig] as PanelSources).FillConfigItem(indxPanel, rows);
+        //}
         /// <summary>
         /// Заполнить значениями объект с наименованиями параметров элементов групп (истоников, сигналов)
         /// </summary>
@@ -674,7 +681,7 @@ namespace uLoader
                     fillConfigItem(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.DEST] as string[,]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS: //Заполнить на панели (источник, назаначение) - элементы в группе источников
-                    fillConfigItem(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
+                    fillConfigItem(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[,]) as string[,]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_PARS: //Заполнить на панели источник - наименования параметров элементов в группе источников
                     fillConfigItemPars(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
@@ -687,7 +694,7 @@ namespace uLoader
                     fillConfigItem(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.GROUP_SIGNALS, (par as object[])[(int)INDEX_SRC.DEST] as string[,]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS: //Заполнить на панели источник - элементы в группе сигналов
-                    fillConfigItem(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
+                    fillConfigItem(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[,]) as string[,]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_PARS: //Заполнить на панели источник - наименования параметров элементов в группе сигналов
                     fillConfigItemPars(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
@@ -696,7 +703,7 @@ namespace uLoader
                     fillConfigItemProp(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS: //Заполнить на панели (назаначение) - элементы в группе источников
-                    fillConfigItem(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
+                    fillConfigItem(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[,]) as string[,]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_PARS: //Заполнить на панели назначение - наименования параметров элементов в группе источников
                     fillConfigItemPars(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
@@ -705,7 +712,7 @@ namespace uLoader
                     fillConfigItemProp(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS: //Заполнить на панели назначение - элементы в группе сигналов
-                    fillConfigItem(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
+                    fillConfigItem(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[,]) as string[,]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_PARS: //Заполнить на панели назначение - наименования параметров элементов в группе сигналов
                     fillConfigItemPars(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
@@ -766,7 +773,7 @@ namespace uLoader
             //Событие для постановки в очередь обработки событий
             HHandlerQueue.StatesMachine state = HHandlerQueue.StatesMachine.UNKNOWN;
             //Определить панель-инициатор сообщения
-            INDEX_SRC indxConfig= (INDEX_SRC)this.Controls.GetChildIndex(pars[(int)PanelSources.INDEX_PREPARE_PARS.OBJ] as PanelSources);
+            INDEX_SRC indxConfig = (INDEX_SRC)this.Controls.GetChildIndex(pars[(int)PanelSources.INDEX_PREPARE_PARS.OBJ] as PanelSources);
 
             switch ((KEY_EVENT)pars[(int)PanelSources.INDEX_PREPARE_PARS.KEY_EVT])
             {
