@@ -332,7 +332,15 @@ namespace uLoader
                 }
             }
             
-            public DataTable m_tableData;           
+            public DataTable m_tableData;
+
+            public int Validated
+            {
+                get
+                {
+                    return 0;
+                }
+            }
 
             public GroupSignals(GROUP_SIGNALS_SRC srcItem)
                 : base()
@@ -490,7 +498,8 @@ namespace uLoader
 
             foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
             {
-                if (sendInitGroupSignals(FormMain.FileINI.GetIDIndex(itemGroupSignals.m_strID)) == 0)
+                //if (sendInitGroupSignals(FormMain.FileINI.GetIDIndex(itemGroupSignals.m_strID)) == 0)
+                if (itemGroupSignals.Validated == 0)
                     itemGroupSignals.State = STATE.STOPPED;
                 else
                     itemGroupSignals.State = STATE.UNAVAILABLE;
@@ -676,14 +685,16 @@ namespace uLoader
                     //Отправить данные для инициализации
                     sendInitSource ();
                     if (! (m_listGroupSignals[iIDGroupSignals].State == STATE.UNAVAILABLE))
-                        sendState(iIDGroupSignals, m_listGroupSignals[iIDGroupSignals].State);
+                        //sendState(iIDGroupSignals, m_listGroupSignals[iIDGroupSignals].State);
+                        sendState(iIDGroupSignals, STATE.STARTED);
                     else
                         ;
                     break;
                 case ID_DATA_ASKED_HOST.INIT_SIGNALS: //Получен запрос на обрабатываемую группу сигналов
                     sendInitGroupSignals(iIDGroupSignals);
                     if (! (m_listGroupSignals[iIDGroupSignals].State == STATE.UNAVAILABLE))
-                        sendState(iIDGroupSignals, m_listGroupSignals[iIDGroupSignals].State);
+                        //sendState(iIDGroupSignals, m_listGroupSignals[iIDGroupSignals].State);
+                        sendState(iIDGroupSignals, STATE.STARTED);
                     else
                         ;
                     break;
@@ -702,9 +713,15 @@ namespace uLoader
                     break;
                 case ID_DATA_ASKED_HOST.START:
                     iIDGroupSignals = (int)pars[1];
+
+                    //Вариант №2 (пост-установка)
+                    m_listGroupSignals[iIDGroupSignals].StateChange();
                     break;
                 case ID_DATA_ASKED_HOST.STOP:
                     iIDGroupSignals = (int)pars[1];
+
+                    //Вариант №2 (пост-установка)
+                    m_listGroupSignals[iIDGroupSignals].StateChange();
                     break;
                 case ID_DATA_ASKED_HOST.ERROR:
                     iIDGroupSignals = (int)pars[1];
@@ -766,7 +783,8 @@ namespace uLoader
         /// <returns></returns>
         public int StateChange()
         {
-            int iRes = 0;
+            int iRes = 0
+                , iId = -1;
 
             STATE newState = getNewState (State, out iRes);
 
@@ -775,10 +793,19 @@ namespace uLoader
                 //Проверить текцщее стостояние
                 if (!(grpSgnls.State == newState))
                 {
-                    //Изменить только, если "другое"
-                    grpSgnls.StateChange(newState);
+                    iId = FormMain.FileINI.GetIDIndex(grpSgnls.m_strID);
 
-                    sendState(FormMain.FileINI.GetIDIndex(grpSgnls.m_strID), grpSgnls.State);
+                    ////Вариант №1 (пред-установка)
+                    ////Изменить только, если "другое"
+                    //grpSgnls.StateChange(newState);
+                    //sendState(FormMain.FileINI.GetIDIndex(grpSgnls.m_strID), grpSgnls.State);
+
+                    //Вариант №2  (пост-установка)
+                    if (newState == STATE.STARTED)
+                        sendInitGroupSignals(iId);
+                    else
+                        ;
+                    sendState(iId, newState);
                 }
                 else
                     ;
@@ -793,12 +820,14 @@ namespace uLoader
         public int StateChange (string strId)
         {
             int iRes = 0
-                , id = FormMain.FileINI.GetIDIndex (strId);
+                , iId = FormMain.FileINI.GetIDIndex (strId);
 
             //Изменить состояние только ОДНой группы сигналов
-            GroupSignals grpSgnls = getGroupSignals(id);
+            GroupSignals grpSgnls = getGroupSignals(iId);
+            STATE newState = getNewState(grpSgnls.State, out iRes);
 
-            if (!(grpSgnls == null))
+            if ((!(grpSgnls == null))
+                && (iRes == 0))
             {
                 if ((grpSgnls.State == STATE.STOPPED) 
                     && (State == STATE.STOPPED))
@@ -814,16 +843,23 @@ namespace uLoader
                         ;
                 }
 
-                iRes = grpSgnls.StateChange();
+                ////Вариант №1 (пред-установка)
+                //iRes = grpSgnls.StateChange();
+                //sendState(id, grpSgnls.State);
 
-                sendState(id, grpSgnls.State);
+                //Вариант №2 (пост-установка)
+                if (newState == STATE.STARTED)
+                    sendInitGroupSignals(iId);
+                else
+                    ;
+                sendState(iId, newState);
             }
             else
             {
                 iRes = -1;
 
                 // не найдена группа сигналов
-                Logging.Logg().Error(@"GroupSources::StateChange (id=" + id + @") - не найдена группа сигналов...", Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Error(@"GroupSources::StateChange (id=" + iId + @") - не найдена группа сигналов...", Logging.INDEX_MESSAGE.NOT_SET);
             }
 
             return iRes;

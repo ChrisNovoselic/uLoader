@@ -377,7 +377,9 @@ namespace uLoaderCommon
             return iRes;
         }
 
-        public virtual int Initialize(int id, object[] pars)
+        public enum INDEX_INIT_PARAMETER { GROUP_SIGNALS, SIGNALS_OF_GROUP };
+
+        public virtual int Initialize(/*INDEX_INIT_PARAMETER indxPars, */int id, object[] pars)
         {
             int iRes = 0;
 
@@ -385,21 +387,25 @@ namespace uLoaderCommon
                 //Считать переданные параметры - параметрами сигналов
                 m_dictGroupSignals.Add(id, createGroupSignals (pars));
             else
-            {//Считать переданные параметры - параметрами группы сигналов
+                //Сигналы д.б. инициализированы
                 if (m_dictGroupSignals[id].Signals == null)
                     iRes = -1;
                 else
                 {
-                    lock (m_lockStateGroupSignals)
-                    {
-                        m_dictGroupSignals[id].Mode = (uLoaderCommon.MODE_WORK)pars[0];
-                        m_dictGroupSignals[id].State = GroupSignals.STATE.STOP;
-                        //m_dictGroupSignals[id].DateTimeStart = (DateTime)pars[1];
-                        m_dictGroupSignals[id].TimeSpanPeriod = TimeSpan.FromSeconds((double)pars[2]);
-                        m_dictGroupSignals[id].MSecInterval = (int)pars[3];
-                    }
+                    if (pars[0].GetType().IsArray == true)
+                        //Считать переданные параметры - параметрами сигналов
+                        m_dictGroupSignals[id] = createGroupSignals(pars);                        
+                    else
+                        //Считать переданные параметры - параметрами группы сигналов
+                        lock (m_lockStateGroupSignals)
+                        {
+                            m_dictGroupSignals[id].Mode = (uLoaderCommon.MODE_WORK)pars[0];
+                            m_dictGroupSignals[id].State = GroupSignals.STATE.STOP;
+                            //m_dictGroupSignals[id].DateTimeStart = (DateTime)pars[1];
+                            m_dictGroupSignals[id].TimeSpanPeriod = TimeSpan.FromSeconds((double)pars[2]);
+                            m_dictGroupSignals[id].MSecInterval = (int)pars[3];
+                        }
                 }
-            }
 
             return iRes;
         }
@@ -571,7 +577,7 @@ namespace uLoaderCommon
 
         public void Start(int id)
         {
-            bool bNeedStarted = ! IsStarted;            
+            int iNeedStarted = IsStarted == false ? 1 : 0;
 
             GroupSignals.STATE initState = GroupSignals.STATE.UNKNOWN;
             switch (m_dictGroupSignals[id].Mode)
@@ -588,10 +594,16 @@ namespace uLoaderCommon
             
             lock (m_lockStateGroupSignals)
             {
-                m_dictGroupSignals[id].State = initState;
+                if ((!(m_dictGroupSignals == null))
+                    && (m_dictGroupSignals.Keys.Contains(id) == true))
+                    m_dictGroupSignals[id].State = initState;
+                else
+                    iNeedStarted = -1;
             }
 
-            if (bNeedStarted == true)
+            (_iPlugin as PlugInBase).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.START, id });
+
+            if (iNeedStarted == 1)
             {
                 Start();
                 Activate(true);
@@ -611,20 +623,33 @@ namespace uLoaderCommon
 
         public void Stop(int id)
         {
-            bool bNeedStopped = true;
+            int iNeedStopped = 1;
 
             lock (m_lockStateGroupSignals)
             {
-                m_dictGroupSignals[id].State = GroupSignals.STATE.STOP;
-                m_dictGroupSignals[id].TableRecieved = new DataTable();
+                if ((!(m_dictGroupSignals == null))
+                    && (m_dictGroupSignals.Keys.Contains (id) == true))
+                {
+                    m_dictGroupSignals[id].State = GroupSignals.STATE.STOP;
+                    m_dictGroupSignals[id].TableRecieved = new DataTable();
+                }
+                else
+                    iNeedStopped = -1;
             }
 
-            bNeedStopped = ! IsStarted;
-
-            if (bNeedStopped == true)
+            if (! (iNeedStopped < 0))
             {
-                Activate(false);
-                Stop();
+                (_iPlugin as PlugInBase).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.STOP, id });
+
+                iNeedStopped = IsStarted == false ? 1 : 0;
+
+                if (iNeedStopped == 1)
+                {
+                    Activate(false);
+                    Stop();
+                }
+                else
+                    ;
             }
             else
                 ;
