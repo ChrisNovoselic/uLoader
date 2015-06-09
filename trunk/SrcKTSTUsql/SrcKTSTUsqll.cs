@@ -22,8 +22,8 @@ namespace SrcKTSTUsql
 
         private class GroupSignalsBiyskTMOra : GroupSignalsSrc
         {
-            public GroupSignalsBiyskTMOra(object[] pars)
-                : base(pars)
+            public GroupSignalsBiyskTMOra(HHandlerDbULoader parent, object[] pars)
+                : base(parent, pars)
             {
             }
 
@@ -48,7 +48,7 @@ namespace SrcKTSTUsql
 
         protected override HHandlerDbULoader.GroupSignals createGroupSignals(object[] objs)
         {
-            return new GroupSignalsBiyskTMOra(objs);
+            return new GroupSignalsBiyskTMOra(this, objs);
         }
 
         public override void ClearValues()

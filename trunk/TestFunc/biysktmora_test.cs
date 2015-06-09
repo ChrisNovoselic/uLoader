@@ -119,14 +119,16 @@ namespace TestFunc
             EvtKeyPress += new DelegateObjectFunc(biysktmora_test_EvtKeyPress);
 
             data = new SrcBiyskTMora.SrcBiyskTMora();
-            data.Initialize (new ConnectionSettings (
-                        @"OraSOTIASSO-ORD"
-                        , @"10.220.2.5"
-                        , 1521
-                        , @"ORCL"
-                        , @"arch_viewer"
-                        , @"1"
-                    ));
+            data.Initialize (new object [] {
+                                new ConnectionSettings (
+                                    @"OraSOTIASSO-ORD"
+                                    , @"10.220.2.5"
+                                    , 1521
+                                    , @"ORCL"
+                                    , @"arch_viewer"
+                                    , @"1")
+                            }
+                    );
             data.Initialize(0
                 , new object []
                 {

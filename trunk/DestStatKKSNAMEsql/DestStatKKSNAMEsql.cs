@@ -12,7 +12,9 @@ namespace DestStatKKSNAMEsql
 {
     public class DestStatKKSNAMEsql : HHandlerDbULoaderStatTMDest
     {
-        private static string m_strNameDestTable = @"ALL_PARAM_SOTIASSO_KKS";
+        private static string s_strNameDestTable = @"ALL_PARAM_SOTIASSO_KKS"
+            , s_strIdTEC = @"6"
+            , s_strID_SRV_TM = @"2";
 
         public DestStatKKSNAMEsql()
             : base()
@@ -26,7 +28,8 @@ namespace DestStatKKSNAMEsql
 
         private class GroupSignalsStatKKSNAMEsql : GroupSignalsStatTMDest
         {
-            public GroupSignalsStatKKSNAMEsql(object []pars) : base (pars)
+            public GroupSignalsStatKKSNAMEsql(HHandlerDbULoader parent, object[] pars)
+                : base(parent, pars)
             {
             }
             
@@ -68,7 +71,7 @@ namespace DestStatKKSNAMEsql
                 string strRes = string.Empty
                     , strRow = string.Empty;
 
-                strRes = @"INSERT INTO [dbo].[" + m_strNameDestTable + @"] ("
+                strRes = @"INSERT INTO [dbo].[" + s_strNameDestTable + @"] ("
                     + @"[KKS_NAME]"
                     + @",[ID_TEC]"
                     + @",[Value]"
@@ -84,13 +87,13 @@ namespace DestStatKKSNAMEsql
                     strRow = @"(";
 
                     strRow += @"'" + getIdToInsert(Int32.Parse(row[@"ID"].ToString().Trim())) + @"'" + @",";
-                    strRow += @"6" + @",";
+                    strRow += s_strIdTEC + @",";
                     strRow += ((decimal)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
                     strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(-6).ToString(@"yyyyMMdd HH:mm:ss.fff") + @"',";
                     strRow += row[@"tmdelta"] + @",";
                     strRow += @"GETDATE()" + @",";
-                    strRow += @"63" + @",";
-                    strRow += @"2";
+                    strRow += _parent.m_connSett.id + @",";
+                    strRow += s_strID_SRV_TM;
 
                     strRow += @"),";
 
@@ -106,9 +109,44 @@ namespace DestStatKKSNAMEsql
             }
         }
 
+        public override int Initialize(object[] pars)
+        {
+            int iRes = base.Initialize(pars);
+
+            string key = string.Empty
+                , val = string.Empty;
+            if (pars.Length > 1)
+            {
+                for (int i = 1; i < pars.Length; i++)
+                {
+                    if (pars[i] is string)
+                    {
+                        key = ((string)pars[i]).Split(FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE])[0];
+                        val = ((string)pars[i]).Split(FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE])[1];
+                        if (key.Equals(@"NAME_TABLE") == true)
+                            s_strNameDestTable = val;
+                        else
+                            if (key.Equals(@"ID_TEC") == true)
+                                s_strIdTEC = val;
+                            else
+                                if (key.Equals(@"ID_SRV_TM") == true)
+                                    s_strID_SRV_TM = val;
+                                else
+                                    ;
+                    }
+                    else
+                        ;
+                }
+            }
+            else
+                ;
+
+            return iRes;
+        }
+
         protected override GroupSignals createGroupSignals(object[] objs)
         {
-            return new GroupSignalsStatKKSNAMEsql(objs);
+            return new GroupSignalsStatKKSNAMEsql(this, objs);
         }
     }
 

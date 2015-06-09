@@ -24,8 +24,8 @@ namespace uLoaderCommonSrcTemplate
 
         private class GroupSignalsBiyskTMOra : GroupSignalsSrc
         {
-            public GroupSignalsBiyskTMOra(object[] pars)
-                : base(pars)
+            public GroupSignalsBiyskTMOra(HHandlerDbULoader parent, object[] pars)
+                : base(parent, pars)
             {
             }
 
@@ -50,7 +50,7 @@ namespace uLoaderCommonSrcTemplate
 
         protected override HHandlerDbULoader.GroupSignals createGroupSignals(object[] objs)
         {
-            return new GroupSignalsBiyskTMOra(objs);
+            return new GroupSignalsBiyskTMOra(this, objs);
         }
 
         public override void ClearValues()
@@ -92,8 +92,8 @@ namespace uLoaderCommonDestTemplate
 
         private class GroupSignalsTemplateDest : GroupSignalsDest
         {
-            public GroupSignalsTemplateDest(object[] pars)
-                : base(pars)
+            public GroupSignalsTemplateDest(HHandlerDbULoader parent, object[] pars)
+                : base(parent, pars)
             {
             }
 
@@ -141,7 +141,7 @@ namespace uLoaderCommonDestTemplate
 
         protected override GroupSignals createGroupSignals(object[] objs)
         {
-            return new GroupSignalsTemplateDest(objs);
+            return new GroupSignalsTemplateDest(this, objs);
         }
     }
 

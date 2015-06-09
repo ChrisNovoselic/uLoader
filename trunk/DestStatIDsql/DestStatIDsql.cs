@@ -12,7 +12,8 @@ namespace DestStatIDsql
 {
     public class DestStatIDsql : HHandlerDbULoaderStatTMDest
     {
-        private static string m_strNameDestTable = @"ALL_PARAM_SOTIASSO";
+        private static string s_strNameDestTable = @"ALL_PARAM_SOTIASSO"
+            , s_strIdTEC = @"6";
 
         public DestStatIDsql()
             : base()
@@ -26,8 +27,8 @@ namespace DestStatIDsql
 
         private class GroupSignalsStatIdsql : GroupSignalsStatTMDest
         {
-            public GroupSignalsStatIdsql(object[] pars)
-                : base(pars)
+            public GroupSignalsStatIdsql(HHandlerDbULoader parent, object[] pars)
+                : base(parent, pars)
             {
             }
             
@@ -69,7 +70,7 @@ namespace DestStatIDsql
                 string strRes = string.Empty
                     , strRow = string.Empty;
 
-                strRes = @"INSERT INTO [dbo].[" + m_strNameDestTable + @"] ("
+                strRes = @"INSERT INTO [dbo].[" + s_strNameDestTable + @"] ("
                     + @"[ID]"
                     + @",[ID_TEC]"
                     + @",[Value]"
@@ -83,7 +84,7 @@ namespace DestStatIDsql
                     strRow = @"(";
 
                     strRow += getIdToInsert(Int32.Parse(row[@"ID"].ToString().Trim())) + @",";
-                    strRow += @"6" + @",";
+                    strRow += s_strIdTEC + @",";
                     strRow += ((decimal)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
                     strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(-6).ToString(@"yyyyMMdd HH:mm:ss.fff") + @"',";
                     strRow += row[@"tmdelta"] + @",";
@@ -103,9 +104,41 @@ namespace DestStatIDsql
             }
         }
 
+        public override int Initialize(object[] pars)
+        {
+            int iRes = base.Initialize(pars);
+
+            string key = string.Empty
+                , val = string.Empty;
+            if (pars.Length > 1)
+            {
+                for (int i = 1; i < pars.Length; i ++)
+                {
+                    if (pars[i] is string)
+                    {
+                        key = ((string)pars[i]).Split (FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE])[0];
+                        val = ((string)pars[i]).Split (FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE])[1];
+                        if (key.Equals (@"NAME_TABLE") == true)
+                            s_strNameDestTable = val;
+                        else
+                            if (key.Equals (@"ID_TEC") == true)
+                                s_strIdTEC = val;
+                            else
+                                ;
+                    }
+                    else
+                        ;
+                }
+            }
+            else
+                ;
+
+            return iRes;
+        }
+
         protected override GroupSignals createGroupSignals(object[] objs)
         {
-            return new GroupSignalsStatIdsql(objs);
+            return new GroupSignalsStatIdsql(this, objs);
         }
     }
 

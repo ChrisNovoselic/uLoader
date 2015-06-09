@@ -79,9 +79,28 @@ namespace uLoader
             // панель - назначение
             setListGroupSources(INDEX_SRC.DEST, m_fileINI.AllObjectsDestGroupSources, m_fileINI.AllObjectsDestGroupSignals);
             //Установить связь между "связанными" (по конф./файлу) по "цепочке" сигналов - групп сигналов - групп источников
-            //??? временно
-            m_listGroupSources[(int)INDEX_SRC.SOURCE][0].AddDelegatePlugInOnEvtDataAskedHost((m_listGroupSources[(int)INDEX_SRC.DEST][0] as GroupSourcesDest).Clone_OnEvtDataAskedHost);            
+            setGroupsLinked ();
         }
+
+        private int setGroupsLinked ()
+        {
+            int iRes = 0;
+            
+            //??? временно
+            m_listGroupSources[(int)INDEX_SRC.SOURCE][0].AddDelegatePlugInOnEvtDataAskedHost((m_listGroupSources[(int)INDEX_SRC.DEST][0] as GroupSourcesDest).Clone_OnEvtDataAskedHost);
+            //??? постоянно
+            List<int> listIndexGroupSources = null;
+            foreach (GroupSourcesDest grpSrcDest in m_listGroupSources[(int)INDEX_SRC.DEST])
+            {
+                listIndexGroupSources = grpSrcDest.GetListIndexGroupSources();
+
+                foreach (int indxGrpSources in listIndexGroupSources)
+                    m_listGroupSources[(int)INDEX_SRC.SOURCE][indxGrpSources].AddDelegatePlugInOnEvtDataAskedHost(grpSrcDest.Clone_OnEvtDataAskedHost);
+            }
+
+            return iRes;
+        }
+
         /// <summary>
         /// Заполнить список с информацией о группах источников
         /// </summary>

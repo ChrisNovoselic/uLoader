@@ -235,14 +235,33 @@ namespace uLoader
                     //Присвоить наименование группы элементов (источников, сигналов)
                     itemSrc.m_strID = secGroup.Split(s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET])[1];
                     itemSrc.m_strShrName = shrName;
-                    
+
+                    string[] values //ЗначениЕ для элемента группы
+                        , vals; //ЗначениЕ для (1-го) параметра элемента группы
+
+                    //Присвоить "дополнительные" значения для группы
+                    if (itemSrc.m_dictAdding == null)
+                        itemSrc.m_dictAdding = new Dictionary<string,string> ();
+                    else
+                        ;
+
+                    vals = GetSecValueOfKey(secGroup, @"ADDING").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUES]);
+                    if ((vals.Length > 0)
+                        && (vals[0].Equals (string.Empty) == false))
+                    {
+
+                        foreach (string pair in vals)
+                            itemSrc.m_dictAdding.Add (pair.Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUE])[0], pair.Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUE])[1]);
+                    }
+                    else
+                        //throw new Exception (@"FileINI::addGroupValues () - ADDING - некорректные разделители...")
+                        ;
+
                     int j = -1; //Индекс для ключа элемента группы (источник, сигнал) в секции
                     string key = string.Empty; //Ключ для элемента группы (источник, сигнал) в секции
 
                     //Получить словарь значений секции
                     Dictionary<string, string> dictSecValues = getSecValues(secGroup);
-                    string[] values //ЗначениЕ для элемента группы
-                        , vals; //ЗначениЕ для 1-го параметра элемента группы
                     //ЗначениЯ для элемента группы
                     // только для источника, т.к. для сигнала ... (см. 'SIGNAL_SRC')
                     Dictionary <string, string> dictItemValues;

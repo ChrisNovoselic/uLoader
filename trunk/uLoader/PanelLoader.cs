@@ -146,13 +146,14 @@ namespace uLoader
                 ctrl.Name = KEY_CONTROLS.CBX_SOURCE_OF_GROUP.ToString();
                 (ctrl as ComboBox).DropDownStyle = ComboBoxStyle.DropDownList;
                 ctrl.Enabled = false;
+                (ctrl as ComboBox).SelectedValueChanged += new EventHandler(panelLoader_SourceOfGroupSelectedValueChanged);
                 ctrl.Dock = DockStyle.Bottom;
                 panelColumns.Controls.Add(ctrl, 0, 5);
                 panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 1);
                 //ГроупБокс для дополнительных параметров
                 ctrl = new GroupBox();
                 (ctrl as GroupBox).Text = @"Дополнительные параметры";
-                ctrl.Enabled = false;
+                //ctrl.Enabled = false;
                 ctrl.Dock = DockStyle.Fill;
                 panelColumns.Controls.Add(ctrl, 0, 6);
                 panelColumns.SetColumnSpan(ctrl, 5); panelColumns.SetRowSpan(ctrl, 2);
@@ -160,6 +161,9 @@ namespace uLoader
                 ctrl.Controls.Add(new TextBox());
                 ctrl.Controls[0].Name = KEY_CONTROLS.TBX_GROUPSOURCES_ADDING.ToString();
                 (ctrl.Controls[0] as TextBox).Multiline = true;
+                ctrl.Controls[0].Enabled = false;
+                (ctrl.Controls[0] as TextBox).ScrollBars = ScrollBars.Both;
+                ctrl.Controls[0].Leave += new EventHandler(panelLoader_GroupSourcesAddingLeave);
                 ctrl.Controls[0].Dock = DockStyle.Fill;
 
                 //Панель опроса
@@ -363,6 +367,10 @@ namespace uLoader
                             break;
                         case KEY_CONTROLS.DGV_GROUP_SIGNALS:
                             clearValues(KEY_CONTROLS.DGV_SIGNALS_OF_GROUP);
+                            if (this is PanelLoaderDest)
+                                clearValues(KEY_CONTROLS.TBX_GROUPSIGNALS_ADDING);
+                            else
+                                ;
                             break;
                         default:
                             break;
@@ -377,6 +385,18 @@ namespace uLoader
                 else
                     ; //Нет выбранных строк
             }
+
+            private void panelLoader_SourceOfGroupSelectedValueChanged(object obj, EventArgs ev)
+            {
+            }
+
+            private void panelLoader_GroupSourcesAddingLeave(object obj, EventArgs ev)
+            {
+            }
+
+            /// <summary>
+            /// Словарь идентификаторв, отображаемых элементов
+            /// </summary>
             private Dictionary<KEY_CONTROLS, string[]> m_dictGroupIds;
             /// <summary>
             /// Заполнить рабочий элемент - список групп источников, сигналов
@@ -450,6 +470,19 @@ namespace uLoader
                     (workItem as ComboBox).SelectedIndex = uLoader.FormMain.FileINI.GetIDIndex(grpSrc.m_IDCurrentConnSett);
                 else
                     ;
+
+                //Дополнительные параметры
+                //Список источников группы источников
+                if (grpSrc.m_dictAdding.Count > 0)
+                {
+                    key = PanelLoader.KEY_CONTROLS.TBX_GROUPSOURCES_ADDING;
+                    workItem = GetWorkingItem(key);
+                    foreach (KeyValuePair <string, string> pair in grpSrc.m_dictAdding)
+                        workItem.Text += pair.Key + FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE] + pair.Value + Environment.NewLine;
+                    workItem.Text = workItem.Text.Substring (0, workItem.Text.Length - Environment.NewLine.Length);
+                }
+                else
+                    ;
             }
             /// <summary>
             /// Заполнить рабочий элемент - список групп 
@@ -494,9 +527,18 @@ namespace uLoader
                         // группа сигналов == null
                         Logging.Logg().Warning(@"PanelLoader::FillWorkItem () - список сигналов == null...", Logging.INDEX_MESSAGE.NOT_SET);
 
-                    //??? Отобразить интервал опроса для режима 'CUR_INTERVAL'
+                    if (this is PanelLoaderSource)
+                    {
+                        //??? Отобразить интервал опроса для режима 'CUR_INTERVAL'
+                        key = PanelLoader.KEY_CONTROLS.TBX_CUR_PERIOD;
+                        workItem = GetWorkingItem(key);
 
-                    //Отобразить шаг опроса для режима 'CUR_INTERVAL'
+                        //Отобразить шаг опроса для режима 'CUR_INTERVAL'
+                        key = PanelLoader.KEY_CONTROLS.TBX_CUR_INTERVAL;
+                        workItem = GetWorkingItem(key);
+                    }
+                    else
+                        ;
 
                     //Отобразить дата опроса для режима 'COSTUMIZE'
 
@@ -562,8 +604,9 @@ namespace uLoader
                             {
                                 case KEY_CONTROLS.DGV_GROUP_SOURCES:
                                     //??? GetWorkingItem(KEY_CONTROLS.BUTTON_DLLNAME_GROUPSOURCES).Enabled =
-                                    //??? GetWorkingItem(KEY_CONTROLS.CBX_SOURCE_OF_GROUP).Enabled =
-                                    //???    btnCell.Enabled;
+                                    GetWorkingItem(KEY_CONTROLS.CBX_SOURCE_OF_GROUP).Enabled =
+                                    GetWorkingItem(KEY_CONTROLS.TBX_GROUPSOURCES_ADDING).Enabled =
+                                        btnCell.Enabled;
                                     break;
                                 case KEY_CONTROLS.DGV_GROUP_SIGNALS:
                                     //??? GetWorkingItem(KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS).Enabled =
@@ -665,7 +708,24 @@ namespace uLoader
                     iRes = clearValues(KEY_CONTROLS.CBX_SOURCE_OF_GROUP);
 
                     if (iRes == 0)
+                    {
                         iRes = clearValues(KEY_CONTROLS.DGV_SIGNALS_OF_GROUP);
+
+                        if (iRes == 0)
+                        {
+                            iRes = clearValues(KEY_CONTROLS.TBX_GROUPSOURCES_ADDING);
+                            
+                            if (iRes == 0)
+                                if (this is PanelLoaderDest)
+                                    iRes = clearValues(KEY_CONTROLS.TBX_GROUPSIGNALS_ADDING);
+                                else
+                                    ;
+                            else
+                                ;
+                        }
+                        else
+                            ;
+                    }
                     else
                         ;
                 }
@@ -1010,7 +1070,7 @@ namespace uLoader
                 ctrl = new GroupBox();
                 ctrl.Name = KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS.ToString() + @"-ADDING";
                 (ctrl as GroupBox).Text = @"Дополнительные параметры";
-                ctrl.Enabled = false;
+                //ctrl.Enabled = false;
                 ctrl.Dock = DockStyle.Fill;
                 panelColumns.Controls.Add(ctrl, 0, 12);
                 panelColumns.SetColumnSpan(ctrl, 1); panelColumns.SetRowSpan(ctrl, 4);
@@ -1018,6 +1078,8 @@ namespace uLoader
                 ctrl.Controls.Add(new TextBox ());
                 ctrl.Controls[0].Name = KEY_CONTROLS.TBX_GROUPSIGNALS_ADDING.ToString ();
                 (ctrl.Controls[0] as TextBox).Multiline = true;
+                (ctrl.Controls[0] as TextBox).ScrollBars = ScrollBars.Both;
+                ctrl.Controls[0].Enabled = false;
                 ctrl.Controls[0].Dock = DockStyle.Fill;
 
                 this.ResumeLayout(false);

@@ -27,8 +27,8 @@ namespace SrcMSTIdsql
 
         private class GroupSignalsMSTIdsql : GroupSignalsSrc
         {
-            public GroupSignalsMSTIdsql(object[] pars)
-                : base(pars)
+            public GroupSignalsMSTIdsql(HHandlerDbULoader parent, object[] pars)
+                : base(parent, pars)
             {
             }
 
@@ -129,7 +129,7 @@ namespace SrcMSTIdsql
 
         protected override HHandlerDbULoader.GroupSignals createGroupSignals(object[] objs)
         {
-            return new GroupSignalsMSTIdsql(objs);
+            return new GroupSignalsMSTIdsql(this, objs);
         }
 
         public override void ClearValues()

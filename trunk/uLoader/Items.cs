@@ -455,17 +455,30 @@ namespace uLoader
             this.m_keys = new string [srcItem.m_keys.Length];
             srcItem.m_keys.CopyTo(this.m_keys, 0);
 
+            //Список с объектми параметров соединения с источниками данных
             this.m_listConnSett = new List<ConnectionSettings> ();
             foreach (ConnectionSettings connSett in srcItem.m_listConnSett)
                 //??? Значения списка независимы
                 this.m_listConnSett.Add (connSett);
 
+            //Строковый идентификтор группы
             this.m_strID = srcItem.m_strID;
             this.m_strShrName = srcItem.m_strShrName;
 
+            //Идентификатор текущего источника данных
             this.m_IDCurrentConnSett = srcItem.m_IDCurrentConnSett;
 
+            //Наименование библиотеки
             this.m_strDLLName = srcItem.m_strDLLName;
+
+            //Дополнительные параметры
+            this.m_dictAdding = new Dictionary<string,string> ();
+            if ((!(srcItem.m_dictAdding == null))
+                && (srcItem.m_dictAdding.Count > 0))
+                foreach (KeyValuePair <string, string> pair in srcItem.m_dictAdding)
+                    this.m_dictAdding.Add (pair.Key, pair.Value);
+            else
+                ;
 
             m_plugIn = loadPlugIn(out _iStateDLL);
             if (!(_iStateDLL == STATE_DLL.LOADED))
@@ -473,7 +486,7 @@ namespace uLoader
             else
                 ;
 
-            sendInitConnSett();
+            //sendInitSource();
 
             foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
             {
@@ -547,11 +560,25 @@ namespace uLoader
             return plugInRes;
         }
 
-        private int sendInitConnSett ()
+        private object [] Pack ()
+        {
+            object[] arObjRes = new object[1 + m_dictAdding.Count];
+
+            arObjRes [0] = this.m_listConnSett[FormMain.FileINI.GetIDIndex(m_IDCurrentConnSett)];
+
+            string adding = string.Empty;
+            int i = 1;
+            foreach (KeyValuePair <string, string> pair in m_dictAdding)
+                arObjRes[i++] = pair.Key + FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE] + pair.Value;
+
+            return arObjRes;
+        }
+
+        private int sendInitSource ()
         {
             int iRes = 0;
 
-            PerformDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_CONN_SETT, new object[] { this.m_listConnSett[FormMain.FileINI.GetIDIndex(m_IDCurrentConnSett)] }));
+            PerformDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_SOURCE, Pack ()));
 
             return iRes;
         }
@@ -585,7 +612,7 @@ namespace uLoader
             }
 
             //Отправить данные для инициализации
-            PerformDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP, new object[] { iIDGroupSignals, arToDataHost }));
+            PerformDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_SIGNALS, new object[] { iIDGroupSignals, arToDataHost }));
 
             return iRes;
         }
@@ -645,15 +672,15 @@ namespace uLoader
 
             switch ((ID_DATA_ASKED_HOST)pars[0])
             {
-                case ID_DATA_ASKED_HOST.INIT_CONN_SETT: //Получен запрос на парметры инициализации                    
+                case ID_DATA_ASKED_HOST.INIT_SOURCE: //Получен запрос на парметры инициализации                    
                     //Отправить данные для инициализации
-                    sendInitConnSett ();
+                    sendInitSource ();
                     if (! (m_listGroupSignals[iIDGroupSignals].State == STATE.UNAVAILABLE))
                         sendState(iIDGroupSignals, m_listGroupSignals[iIDGroupSignals].State);
                     else
                         ;
                     break;
-                case ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP: //Получен запрос на обрабатываемую группу сигналов
+                case ID_DATA_ASKED_HOST.INIT_SIGNALS: //Получен запрос на обрабатываемую группу сигналов
                     sendInitGroupSignals(iIDGroupSignals);
                     if (! (m_listGroupSignals[iIDGroupSignals].State == STATE.UNAVAILABLE))
                         sendState(iIDGroupSignals, m_listGroupSignals[iIDGroupSignals].State);
@@ -672,6 +699,12 @@ namespace uLoader
                     }
                     else
                         ;
+                    break;
+                case ID_DATA_ASKED_HOST.START:
+                    iIDGroupSignals = (int)pars[1];
+                    break;
+                case ID_DATA_ASKED_HOST.STOP:
+                    iIDGroupSignals = (int)pars[1];
                     break;
                 case ID_DATA_ASKED_HOST.ERROR:
                     iIDGroupSignals = (int)pars[1];
@@ -767,6 +800,20 @@ namespace uLoader
 
             if (!(grpSgnls == null))
             {
+                if ((grpSgnls.State == STATE.STOPPED) 
+                    && (State == STATE.STOPPED))
+                {
+                    sendInitSource ();
+                }
+                else
+                {
+                    if ((grpSgnls.State == STATE.STARTED)
+                        &&(!(State == STATE.STARTED)))
+                        throw new Exception(@"GroupSources::StateChange (ID=" + strId + @") - несовместимые состояния групп источников и сигналов...");
+                    else
+                        ;
+                }
+
                 iRes = grpSgnls.StateChange();
 
                 sendState(id, grpSgnls.State);
@@ -894,6 +941,14 @@ namespace uLoader
             : base(grpSrc, listGrpSgnls)
         {
         }
+
+        public List <int> GetListIndexGroupSources ()
+        {
+            List <int> listRes = new List<int> ();
+
+            return listRes;
+        }
+
         /// <summary>
         /// Получает сообщения от библиотеки из "другого" (источника) объекта
         /// </summary>
@@ -906,9 +961,9 @@ namespace uLoader
 
             switch ((ID_DATA_ASKED_HOST)pars[0])
             {
-                case ID_DATA_ASKED_HOST.INIT_CONN_SETT: //Получен запрос на парметры инициализации
+                case ID_DATA_ASKED_HOST.INIT_SOURCE: //Получен запрос на парметры инициализации
                     break;
-                case ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP: //Получен запрос на обрабатываемую группу сигналов
+                case ID_DATA_ASKED_HOST.INIT_SIGNALS: //Получен запрос на обрабатываемую группу сигналов
                     break;
                 case ID_DATA_ASKED_HOST.TABLE_RES:
                     //pars[1] - идентификатор группы сигналов

@@ -32,6 +32,8 @@ namespace uLoaderCommon
 
         protected abstract class GroupSignals
         {
+            protected HHandlerDbULoader _parent;
+            
             public enum STATE { UNKNOWN = -1, STOP, SLEEP, TIMER, QUEUE, ACTIVE }
             private STATE m_state;
             public STATE State { get { return m_state; } set { m_state = value; } }
@@ -81,8 +83,10 @@ namespace uLoaderCommon
 
             public abstract DataTable TableRecieved { get; set; }
 
-            public GroupSignals(object[] pars)
+            public GroupSignals(HHandlerDbULoader parent, object[] pars)
             {
+                _parent = parent;
+
                 m_tmSpanPeriod = new TimeSpan((long)((int)uLoaderCommon.DATETIME.SEC_SPANPERIOD_DEFAULT * Math.Pow(10, 7)));
                 m_msecInterval = (int)uLoaderCommon.DATETIME.MSEC_INTERVAL_DEFAULT;
 
@@ -364,11 +368,11 @@ namespace uLoaderCommon
             this._iPlugin = iPlugIn;
         }
 
-        public int Initialize(ConnectionSettings connSett)
+        public virtual int Initialize(object[] pars)
         {
             int iRes = 0;
 
-            m_connSett = new ConnectionSettings(connSett);
+            m_connSett = new ConnectionSettings((pars[0] as ConnectionSettings));
 
             return iRes;
         }
@@ -885,8 +889,8 @@ namespace uLoaderCommon
             protected string m_strQuery;
             public string Query { get { return m_strQuery; } set { m_strQuery = value; } }
 
-            public GroupSignalsSrc(object[] pars)
-                : base(pars)
+            public GroupSignalsSrc(HHandlerDbULoader parent, object[] pars)
+                : base(parent, pars)
             {
                 m_iRowCountRecieved = -1;
 
@@ -1238,8 +1242,8 @@ namespace uLoaderCommon
             public DataTable TableRecievedPrev { get { return m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS]; } }
             public DataTable TableRecievedCur { get { return m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT]; } }
 
-            public GroupSignalsDest(object[] pars)
-                : base(pars)
+            public GroupSignalsDest(HHandlerDbULoader parent, object[] pars)
+                : base(parent, pars)
             {
                 m_arTableRec = new DataTable[(int)INDEX_DATATABLE_RES.COUNT_INDEX_DATATABLE_RES];
                 for (int i = 0; i < (int)INDEX_DATATABLE_RES.COUNT_INDEX_DATATABLE_RES; i++)
@@ -1395,8 +1399,8 @@ namespace uLoaderCommon
         
         protected abstract class GroupSignalsStatTMDest : GroupSignalsDest
         {
-            public GroupSignalsStatTMDest(object[] pars)
-                : base(pars)
+            public GroupSignalsStatTMDest(HHandlerDbULoader parent, object[] pars)
+                : base(parent, pars)
             {
             }
 
@@ -1580,24 +1584,24 @@ namespace uLoaderCommon
 
             switch (ev.id)
             {
-                case (int)ID_DATA_ASKED_HOST.INIT_CONN_SETT:
-                    target.Initialize(ev.par[0] as ConnectionSettings);
+                case (int)ID_DATA_ASKED_HOST.INIT_SOURCE:
+                    target.Initialize(ev.par as object []);
                     break;
-                case (int)ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP:
+                case (int)ID_DATA_ASKED_HOST.INIT_SIGNALS:
                     target.Initialize((int)(ev.par as object[])[0], (ev.par as object[])[1] as object[]);
                     break;
                 case (int)ID_DATA_ASKED_HOST.START:
-                    if (m_markDataHost.IsMarked((int)ID_DATA_ASKED_HOST.INIT_CONN_SETT) == true)
+                    if (m_markDataHost.IsMarked((int)ID_DATA_ASKED_HOST.INIT_SOURCE) == true)
                     {
                         if (target.Initialize((int)(ev.par as object[])[0], (ev.par as object[])[1] as object[]) == 0)
                         {
                             target.Start((int)(ev.par as object[])[0]);
                         }
                         else
-                            DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.INIT_SIGNALS_OF_GROUP, (int)(ev.par as object[])[0] });
+                            DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.INIT_SIGNALS, (int)(ev.par as object[])[0] });
                     }
                     else
-                        DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.INIT_CONN_SETT });
+                        DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.INIT_SOURCE });
                     break;
                 case (int)ID_DATA_ASKED_HOST.STOP:
                     target.Stop((int)(ev.par as object[])[0]);

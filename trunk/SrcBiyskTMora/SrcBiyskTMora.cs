@@ -27,7 +27,8 @@ namespace SrcBiyskTMora
 
         private class GroupSignalsBiyskTMora : GroupSignalsSrc
         {
-            public GroupSignalsBiyskTMora (object []pars) : base (pars)
+            public GroupSignalsBiyskTMora(HHandlerDbULoader parent, object[] pars)
+                : base(parent, pars)
             {
             }
 
@@ -75,7 +76,7 @@ namespace SrcBiyskTMora
 
         protected override HHandlerDbULoader.GroupSignals createGroupSignals(object[] objs)
         {
-            return new GroupSignalsBiyskTMora(objs);
+            return new GroupSignalsBiyskTMora(this, objs);
         }
 
         public override void ClearValues()
