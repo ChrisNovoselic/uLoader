@@ -240,21 +240,11 @@ namespace uLoader
                         , vals; //ЗначениЕ для (1-го) параметра элемента группы
 
                     //Присвоить "дополнительные" значения для группы
-                    if (itemSrc.m_dictAdding == null)
-                        itemSrc.m_dictAdding = new Dictionary<string,string> ();
-                    else
-                        ;
-
-                    vals = GetSecValueOfKey(secGroup, @"ADDING").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUES]);
-                    if ((vals.Length > 0)
-                        && (vals[0].Equals (string.Empty) == false))
+                    if (itemSrc is GROUP_SRC)
                     {
-
-                        foreach (string pair in vals)
-                            itemSrc.m_dictAdding.Add (pair.Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUE])[0], pair.Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUE])[1]);
+                        (itemSrc as GROUP_SRC).setAdding(GetSecValueOfKey(secGroup, @"ADDING").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUES]));
                     }
                     else
-                        //throw new Exception (@"FileINI::addGroupValues () - ADDING - некорректные разделители...")
                         ;
 
                     int j = -1; //Индекс для ключа элемента группы (источник, сигнал) в секции
@@ -308,8 +298,8 @@ namespace uLoader
                                     {
                                         case INDEX_TYPE_GROUP.SRC: //Источник
                                             //Инициализация, если элемент группы 1-ый
-                                            if ((itemSrc as GROUP_SRC).m_listConnSett == null)
-                                                (itemSrc as GROUP_SRC).m_listConnSett = new List<ConnectionSettings>();
+                                            if ((itemSrc as GROUP_SRC).m_dictConnSett == null)
+                                                (itemSrc as GROUP_SRC).m_dictConnSett = new Dictionary<string, ConnectionSettings>();
                                             else
                                                 ;
 
@@ -325,14 +315,15 @@ namespace uLoader
                                                     throw new Exception(@"FileINI::ctor () - addGroupValues () ...");
                                             }
 
-                                            (itemSrc as GROUP_SRC).m_listConnSett.Add(new ConnectionSettings(
-                                                Int32.Parse(dictItemValues[@"ID"])
-                                                , dictItemValues[@"NAME_SHR"]
-                                                , dictItemValues[@"IP"]
-                                                , Int32.Parse(dictItemValues[@"PORT"])
-                                                , dictItemValues[@"DB_NAME"]
-                                                , dictItemValues[@"UID"]
-                                                , dictItemValues[@"PSWD*"]
+                                            (itemSrc as GROUP_SRC).m_dictConnSett.Add(KEY_TREE_SRC[(int)INDEX_KEY_SRC.SRC_OF_GROUP] + (itemSrc as GROUP_SRC).m_dictConnSett.Count
+                                                , new ConnectionSettings(
+                                                    Int32.Parse(dictItemValues[@"ID"])
+                                                    , dictItemValues[@"NAME_SHR"]
+                                                    , dictItemValues[@"IP"]
+                                                    , Int32.Parse(dictItemValues[@"PORT"])
+                                                    , dictItemValues[@"DB_NAME"]
+                                                    , dictItemValues[@"UID"]
+                                                    , dictItemValues[@"PSWD*"]
                                                 ));
                                             break;
                                         case INDEX_TYPE_GROUP.SIGNAL: //Сигнал
@@ -478,13 +469,13 @@ namespace uLoader
                 int i = -1;
                 ITEM_SRC itemSrc = getItemSrc(pars);
 
-                arStrRes = new string[2, (itemSrc as GROUP_SRC).m_listConnSett.Count];
+                arStrRes = new string[2, (itemSrc as GROUP_SRC).m_dictConnSett.Count];
 
                 i = 0;
-                foreach (ConnectionSettings connSett in (itemSrc as GROUP_SRC).m_listConnSett)
+                foreach (KeyValuePair <string, ConnectionSettings> pair in (itemSrc as GROUP_SRC).m_dictConnSett)
                 {
-                    arStrRes[0, i] = KEY_TREE_SRC[(int)INDEX_KEY_SRC.SRC_OF_GROUP] + i.ToString ();
-                    arStrRes[1, i] = connSett.name;
+                    arStrRes[0, i] = pair.Key;
+                    arStrRes[1, i] = pair.Value.name;
 
                     i ++;
                 }
@@ -517,7 +508,7 @@ namespace uLoader
                 arStrRes = new string[(itemSrc as GROUP_SRC).m_keys.Length];
 
                 i = 0;
-                ConnectionSettings connSett = (itemSrc as GROUP_SRC).m_listConnSett[GetIDIndex((string)pars[3])];
+                ConnectionSettings connSett = (itemSrc as GROUP_SRC).m_dictConnSett[(string)pars[3]];
                 arStrRes[i++] = connSett.id.ToString();
                 arStrRes[i++] = connSett.name;
                 arStrRes[i++] = connSett.server;
@@ -611,7 +602,7 @@ namespace uLoader
             /// </summary>
             /// <param name="id"></param>
             /// <returns></returns>
-            public static string GetIDMasked(string id)
+            private static string getIDMasked(string id)
             {
                 string strRes = string.Empty;
                 int lengthMaskId = id.Length;
@@ -683,7 +674,7 @@ namespace uLoader
                 int iRes = -1;
                 
                 //Получить "маску" идентификатора
-                string idType = GetIDMasked(strId);
+                string idType = getIDMasked(strId);
                 //Определить тип группы по "маске" идентификатора
                 //Сравнить с "маской" групп источников
                 if (idType.Equals(KEY_TREE_SRC[(int)INDEX_KEY_SRC.GROUP_SRC]) == true)
@@ -740,7 +731,30 @@ namespace uLoader
                 }
                 //Вернуть результат
                 return itemSrcRes;
-            }         
+            }
+
+            public void UpdateParameter(int type, string strIdGroup, string par, string val)
+            {
+                if (par.Equals (@"SCUR") == true)
+                {
+                    m_arListGroupValues[(int)type].m_listGroupSrc[GetIDIndex(strIdGroup)].m_IDCurrentConnSett = val;
+                    SetSecValueOfKey(SEC_SRC_TYPES[(int)type] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
+                        , par
+                        , val);
+                }
+                else
+                    if (par.Equals (@"ADDING") == true)
+                    {
+                        //???m_arListGroupValues[type].m_listGroupSrc[GetIDIndex(strIdGroup)].m_dictAdding =
+                        SetSecValueOfKey(SEC_SRC_TYPES[(int)type] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
+                            , par
+                            , val);
+                        GROUP_SRC grpSrc = m_arListGroupValues[(int)type].m_listGroupSrc[GetIDIndex(strIdGroup)];
+                        grpSrc.setAdding(val.Split(new char[] { s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL] }));
+                    }
+                    else
+                        ;
+            }
         }
     }
 }

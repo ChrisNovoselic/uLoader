@@ -29,8 +29,10 @@ namespace uLoader
         /// Массив ключей для словаря со значениями параметров
         /// </summary>
         public string[] m_keys;
-
-        public Dictionary <string, string> m_dictAdding;
+        ///// <summary>
+        ///// Словарь для "дополнительных" параметров
+        ///// </summary>
+        //public Dictionary <string, string> m_dictAdding;
     }
     /// <summary>
     /// Параметры сигнала в группе сигналов (источник, назначение)
@@ -145,7 +147,7 @@ namespace uLoader
         /// <summary>
         /// Список объектов с параметрами соединения
         /// </summary>
-        public List<ConnectionSettings> m_listConnSett;
+        public Dictionary<string, ConnectionSettings> m_dictConnSett;
         /// <summary>
         /// Наименование библиотеки для работы с группами сигналов
         /// </summary>
@@ -153,14 +155,38 @@ namespace uLoader
         /// <summary>
         /// Массив строк с наименованями "присоединенных" к группе источников групп сигналов
         /// </summary>
-        public string [,]m_arDescGroupSignals;        
+        public string [,]m_arDescGroupSignals;
+        /// <summary>
+        /// Словарь для "дополнительных" параметров
+        /// </summary>
+        public Dictionary<string, string> m_dictAdding;
+
+        public void setAdding(string []vals)
+        {
+            if (m_dictAdding == null)
+                m_dictAdding = new Dictionary<string, string>();
+            else
+                m_dictAdding.Clear();
+
+            if ((vals.Length > 0)
+                && (vals[0].Equals(string.Empty) == false))
+            {
+
+                foreach (string pair in vals)
+                    m_dictAdding.Add(pair.Split(FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE])[0], pair.Split(FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE])[1]);
+            }
+            else
+                //throw new Exception (@"FileINI::addGroupValues () - ADDING - некорректные разделители...")
+                ;
+        }
+                
         /// <summary>
         /// Конструктор - основной (без парпаметров)
         /// </summary>
         public GROUP_SRC ()
         {
             m_IDCurrentConnSett = string.Empty;
-            m_listConnSett = new List<ConnectionSettings> ();
+            m_dictConnSett = new Dictionary<string, ConnectionSettings>();
             m_strDLLName = string.Empty;
             m_arDescGroupSignals = new string [,] { {}, {} };
         }
@@ -305,7 +331,7 @@ namespace uLoader
         /// <summary>
         /// Группа сигналов (для получения данных)
         /// </summary>
-        private class GroupSignals : GROUP_SIGNALS_SRC
+        protected class GroupSignals : GROUP_SIGNALS_SRC
         {
             private STATE _state;
             /// <summary>
@@ -425,16 +451,17 @@ namespace uLoader
         /// <summary>
         /// Список групп сигналов, принадлежащих группе источников
         /// </summary>
-        List <GroupSignals> m_listGroupSignals;
+        protected List <GroupSignals> m_listGroupSignals;
         /// <summary>
         /// Возвратить массив состояний групп сигналов для группы источников
         /// </summary>
         public STATE[] GetStateGroupSignals ()
         {
-            STATE []arRes = new STATE [m_listGroupSignals.Count];
+            STATE[] arRes = new STATE[m_listGroupSignals.Count];
 
+            int i = 0;
             foreach (GroupSignals grpSgnls in m_listGroupSignals)
-                arRes[(int)m_listGroupSignals.IndexOf(grpSgnls)] = grpSgnls.State;
+                arRes[i ++] = grpSgnls.State;
 
             return arRes;
         }
@@ -456,7 +483,7 @@ namespace uLoader
             this.m_arDescGroupSignals = new string [2, srcItem.m_arDescGroupSignals.GetLength(1)];
             this.m_arDescGroupSignals = srcItem.m_arDescGroupSignals.Clone() as string [,];
 
-            m_listGroupSignals = new List<GroupSignals> ();
+            m_listGroupSignals = new List<GroupSignals>();
             foreach (GROUP_SIGNALS_SRC itemGroupSignals in listGroupSignals)
                 m_listGroupSignals.Add(new GroupSignals(itemGroupSignals));
 
@@ -464,10 +491,9 @@ namespace uLoader
             srcItem.m_keys.CopyTo(this.m_keys, 0);
 
             //Список с объектми параметров соединения с источниками данных
-            this.m_listConnSett = new List<ConnectionSettings> ();
-            foreach (ConnectionSettings connSett in srcItem.m_listConnSett)
+            foreach (KeyValuePair <string, ConnectionSettings> pair in srcItem.m_dictConnSett)
                 //??? Значения списка независимы
-                this.m_listConnSett.Add (connSett);
+                this.m_dictConnSett.Add (pair.Key, pair.Value);
 
             //Строковый идентификтор группы
             this.m_strID = srcItem.m_strID;
@@ -573,7 +599,7 @@ namespace uLoader
         {
             object[] arObjRes = new object[1 + m_dictAdding.Count];
 
-            arObjRes [0] = this.m_listConnSett[FormMain.FileINI.GetIDIndex(m_IDCurrentConnSett)];
+            arObjRes [0] = this.m_dictConnSett[m_IDCurrentConnSett];
 
             string adding = string.Empty;
             int i = 1;
@@ -715,13 +741,13 @@ namespace uLoader
                     iIDGroupSignals = (int)pars[1];
 
                     //Вариант №2 (пост-установка)
-                    m_listGroupSignals[iIDGroupSignals].StateChange();
+                    getGroupSignals(iIDGroupSignals).StateChange();
                     break;
                 case ID_DATA_ASKED_HOST.STOP:
                     iIDGroupSignals = (int)pars[1];
 
                     //Вариант №2 (пост-установка)
-                    m_listGroupSignals[iIDGroupSignals].StateChange();
+                    getGroupSignals(iIDGroupSignals).StateChange();
                     break;
                 case ID_DATA_ASKED_HOST.ERROR:
                     iIDGroupSignals = (int)pars[1];
@@ -969,6 +995,13 @@ namespace uLoader
         {
             (m_plugIn as PlugInBase).EvtDataAskedHost += fOnEvt;
         }        
+
+        public int ContainsIndexGroupSignals (int indx)
+        {
+            int iRes = getGroupSignals (indx) == null ? -1 : 0;
+
+            return iRes;
+        }
     }
 
     public class GroupSourcesDest : GroupSources
@@ -978,9 +1011,23 @@ namespace uLoader
         {
         }
 
-        public List <int> GetListIndexGroupSources ()
+        public List <int> GetListNeededIndexGroupSignals ()
         {
             List <int> listRes = new List<int> ();
+
+            int iIdGrpSgnls = -1;
+
+            foreach (GroupSources.GroupSignals grpSgnls in m_listGroupSignals)
+            {
+                foreach (SIGNAL_SRC sgnls in grpSgnls.m_listSgnls)
+                {
+                    iIdGrpSgnls = Convert.ToInt16(sgnls.m_dictPars[@"ID_SRC"].Substring(1, 2)) - 1;
+                    if (listRes.IndexOf (iIdGrpSgnls) < 0)
+                        listRes.Add(iIdGrpSgnls);
+                    else
+                        ;
+                }
+            }
 
             return listRes;
         }
@@ -995,6 +1042,7 @@ namespace uLoader
             int iIDGroupSignals = 0; //??? д.б. указана в "запросе"
             object[] pars = (ev.par as object[])[0] as object[];
 
+            //pars[0] - идентификатор события
             switch ((ID_DATA_ASKED_HOST)pars[0])
             {
                 case ID_DATA_ASKED_HOST.INIT_SOURCE: //Получен запрос на парметры инициализации
@@ -1002,9 +1050,13 @@ namespace uLoader
                 case ID_DATA_ASKED_HOST.INIT_SIGNALS: //Получен запрос на обрабатываемую группу сигналов
                     break;
                 case ID_DATA_ASKED_HOST.TABLE_RES:
+                    //pars[0] - см. выше
                     //pars[1] - идентификатор группы сигналов
                     //pars[2] - таблица с данными для "вставки"
-                    PerformDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.TO_INSERT, new object[] { (int)pars[1], (pars[2] as DataTable).Copy() }));
+                    if (! (GetListNeededIndexGroupSignals ().IndexOf ((int)pars[1]) < 0))
+                        PerformDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.TO_INSERT, new object[] { (int)pars[1], (pars[2] as DataTable).Copy() }));
+                    else
+                        ;
                     break;
                 case ID_DATA_ASKED_HOST.ERROR:
                     iIDGroupSignals = (int)pars[1];

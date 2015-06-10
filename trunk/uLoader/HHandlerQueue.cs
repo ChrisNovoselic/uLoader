@@ -41,7 +41,10 @@ namespace uLoader
             , STATE_CHANGED_GROUP_SOURCES //Изменение состояния группы источников (источник, назначение) - инициатива пользователя
             , STATE_CHANGED_GROUP_SIGNALS //Изменение состояния группы сигналов (источник, назначение) - инициатива пользователя
             , DATA_SRC_GROUP_SIGNALS //Данные группы сигналов (источник)
-            , DATA_DEST_GROUP_SIGNALS //Дфнные группы сигналов (назначение)
+            , DATA_DEST_GROUP_SIGNALS //Данные группы сигналов (назначение)
+            , SET_IDCUR_SOURCE_OF_GROUP //Установить идентификатор текущего источника
+            , SET_TEXT_ADDING //Установить текст "дополнительных" параметров
+            ,
         }
         /// <summary>
         /// Объект для обработки файла конфигурации
@@ -86,16 +89,28 @@ namespace uLoader
         {
             int iRes = 0;
             
-            //??? временно
-            m_listGroupSources[(int)INDEX_SRC.SOURCE][0].AddDelegatePlugInOnEvtDataAskedHost((m_listGroupSources[(int)INDEX_SRC.DEST][0] as GroupSourcesDest).Clone_OnEvtDataAskedHost);
+            ////??? временно
+            //m_listGroupSources[(int)INDEX_SRC.SOURCE][0].AddDelegatePlugInOnEvtDataAskedHost((m_listGroupSources[(int)INDEX_SRC.DEST][0] as GroupSourcesDest).Clone_OnEvtDataAskedHost);
             //??? постоянно
-            List<int> listIndexGroupSources = null;
+            List<int> listNeededIndexGroupSignals = null
+                , listIndexGroupSourcesDestLinkAdded = new List<int> ();
             foreach (GroupSourcesDest grpSrcDest in m_listGroupSources[(int)INDEX_SRC.DEST])
             {
-                listIndexGroupSources = grpSrcDest.GetListIndexGroupSources();
+                listNeededIndexGroupSignals = grpSrcDest.GetListNeededIndexGroupSignals();
+                listIndexGroupSourcesDestLinkAdded.Clear ();
 
-                foreach (int indxGrpSources in listIndexGroupSources)
-                    m_listGroupSources[(int)INDEX_SRC.SOURCE][indxGrpSources].AddDelegatePlugInOnEvtDataAskedHost(grpSrcDest.Clone_OnEvtDataAskedHost);
+                foreach (int indxGrpSignals in listNeededIndexGroupSignals)
+                    foreach (GroupSources grpSrcSource in m_listGroupSources[(int)INDEX_SRC.SOURCE])
+                        if ((listIndexGroupSourcesDestLinkAdded.IndexOf(m_listGroupSources[(int)INDEX_SRC.DEST].IndexOf(grpSrcDest)) < 0)
+                            && (grpSrcSource.ContainsIndexGroupSignals(indxGrpSignals) == 0))
+                        {
+                            grpSrcSource.AddDelegatePlugInOnEvtDataAskedHost(grpSrcDest.Clone_OnEvtDataAskedHost);
+                            listIndexGroupSourcesDestLinkAdded.Add(m_listGroupSources[(int)INDEX_SRC.DEST].IndexOf(grpSrcDest));
+
+                            break;
+                        }
+                        else
+                            ;
             }
 
             return iRes;
@@ -178,6 +193,8 @@ namespace uLoader
                 case StatesMachine.STATE_CHANGED_GROUP_SIGNALS:
                 case StatesMachine.DATA_SRC_GROUP_SIGNALS:
                 case StatesMachine.DATA_DEST_GROUP_SIGNALS:
+                case StatesMachine.SET_IDCUR_SOURCE_OF_GROUP:
+                case StatesMachine.SET_TEXT_ADDING:
                     //Не требуют запроса
                     break;
                 default:
@@ -220,6 +237,10 @@ namespace uLoader
                 case StatesMachine.DATA_SRC_GROUP_SIGNALS:
                 case StatesMachine.DATA_DEST_GROUP_SIGNALS:
                     itemQueue.m_objRecieved.OnEvtDataRecievedHost(new object[] { state, obj });
+                    break;
+                case StatesMachine.SET_IDCUR_SOURCE_OF_GROUP:
+                case StatesMachine.SET_TEXT_ADDING:
+                    //Ответа не требуется
                     break;
                 default:
                     break;
@@ -439,6 +460,24 @@ namespace uLoader
                             outobj = m_listGroupSources[(int)INDEX_SRC.DEST][(int)itemQueue.Pars[0]].GetDataToPanel(itemQueue.Pars[1] as string, out error);
                         else
                             ;
+
+                        iRes = 0;
+                        break;
+                    case StatesMachine.SET_IDCUR_SOURCE_OF_GROUP:
+                        error = false;
+                        itemQueue = Peek;
+
+                        m_listGroupSources[(int)itemQueue.Pars[0]][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].m_IDCurrentConnSett = (string)itemQueue.Pars[2];
+                        m_fileINI.UpdateParameter((int)itemQueue.Pars[0], (string)itemQueue.Pars[1], @"SCUR",  (string)itemQueue.Pars[2]);
+
+                        iRes = 0;
+                        break;
+                    case StatesMachine.SET_TEXT_ADDING:
+                        error = false;
+                        itemQueue = Peek;
+
+                        (m_listGroupSources[(int)itemQueue.Pars[0]][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])] as GroupSources).setAdding(((string)itemQueue.Pars[2]).Split(new char[] { FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.PAIR_VAL] }));
+                        m_fileINI.UpdateParameter((int)itemQueue.Pars[0], (string)itemQueue.Pars[1], @"ADDING", (string)itemQueue.Pars[2]);
 
                         iRes = 0;
                         break;

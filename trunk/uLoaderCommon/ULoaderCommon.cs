@@ -623,15 +623,20 @@ namespace uLoaderCommon
 
         public void Stop(int id)
         {
-            int iNeedStopped = 1;
+            int iNeedStopped = 0;
 
             lock (m_lockStateGroupSignals)
             {
                 if ((!(m_dictGroupSignals == null))
                     && (m_dictGroupSignals.Keys.Contains (id) == true))
                 {
-                    m_dictGroupSignals[id].State = GroupSignals.STATE.STOP;
-                    m_dictGroupSignals[id].TableRecieved = new DataTable();
+                    if (m_dictGroupSignals[id].IsStarted == true)
+                    {
+                        m_dictGroupSignals[id].State = GroupSignals.STATE.STOP;
+                        m_dictGroupSignals[id].TableRecieved = new DataTable();
+                    }
+                    else
+                        ;
                 }
                 else
                     iNeedStopped = -1;
@@ -1385,7 +1390,9 @@ namespace uLoaderCommon
 
             lock (m_lockStateGroupSignals)
             {
-                if (m_dictGroupSignals[id].IsStarted == true)
+                if ((! (m_dictGroupSignals == null))
+                    && (m_dictGroupSignals.Keys.Contains(id) == true)
+                    && (m_dictGroupSignals[id].IsStarted == true))
                 {
                     m_dictGroupSignals[id].TableRecieved = tableIn.Copy();
 

@@ -128,7 +128,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="setup_biysktmora.ini">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="setup_ktstusql.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

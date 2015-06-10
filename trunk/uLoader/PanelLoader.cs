@@ -25,17 +25,18 @@ namespace uLoader
             /// <summary>
             /// Перечисление - индексы ПРЕДподготавливаемых параметров
             /// </summary>
-            public enum INDEX_PREPARE_PARS { OBJ, KEY_OBJ, KEY_EVT, ID_OBJ_GROUP_SOURCES_SEL, ID_OBJ_GROUP_SIGNALS_SEL, COUNT_INDEX_PREPARE_PARS }
+            public enum INDEX_PREPARE_PARS { OBJ, KEY_OBJ, KEY_EVT, ID_OBJ_SEL, DEPENDENCED_DATA, COUNT_INDEX_PREPARE_PARS }
 
             /// <summary>
             /// Перечисление - ключи элементов управления
             /// </summary>
-            public enum KEY_CONTROLS { DGV_GROUP_SOURCES, LABEL_DLLNAME_GROUPSOURCES, BUTTON_DLLNAME_GROUPSOURCES, CBX_SOURCE_OF_GROUP, TBX_GROUPSOURCES_ADDING
+            public enum KEY_CONTROLS { UNKNOWN = -1
+                                        , DGV_GROUP_SOURCES, LABEL_DLLNAME_GROUPSOURCES, BUTTON_DLLNAME_GROUPSOURCES, CBX_SOURCE_OF_GROUP, TBX_GROUPSOURCES_ADDING
                                         , DGV_GROUP_SIGNALS
                                         , GROUP_BOX_GROUP_SIGNALS
                                         , RBUTTON_CUR_DATETIME, TBX_CUR_PERIOD, TBX_CUR_INTERVAL
                                         , RBUTTON_COSTUMIZE, CALENDAR_COSTUMIZE, TBX_COSTUMIZE_START_TIME, TBX_COSTUMIZE_PERIOD, TBX_COSTUMIZE_INTERVAL
-                                        , TBX_GROUPSIGNALS_ADDING
+                                        //, TBX_GROUPSIGNALS_ADDING
                                         , DGV_SIGNALS_OF_GROUP
                                         , COUNT_KEY_CONTROLS
                                         ,};
@@ -251,6 +252,34 @@ namespace uLoader
                 else
                     ;
             }            
+            
+            /// <summary>
+            /// Найти целочисленный идентфикатор элемента управления
+            /// </summary>
+            /// <param name="ctrl">Элемент управления</param>
+            /// <returns></returns>
+            KEY_CONTROLS getKeyWorkingItem (Control ctrl)
+            {
+                KEY_CONTROLS keyRes = KEY_CONTROLS.UNKNOWN;
+                
+                //Цикл по всем известным целочисленным идентификаторам
+                for (KEY_CONTROLS key = 0; key < KEY_CONTROLS.COUNT_KEY_CONTROLS; key++)
+                {
+                    //Проверить совпадение переменной цикла и идентификатора элемента управления
+                    if (key.ToString().Trim().Equals((ctrl as Control).Name) == true)
+                    {
+                        //Запомнить идентификатор
+                        keyRes = key;
+                        //Прервать цикл
+                        break;
+                    }
+                    else
+                        ;
+                }
+
+                return keyRes;
+            }            
+            
             /// <summary>
             /// Подготовить параметры для передачи "родительской" панели
             ///  для последующего на их основе формирования события
@@ -266,25 +295,12 @@ namespace uLoader
                 //2 - Индекс "выделенной" строки в объекте с группами сигналов (-1 , если объект-инициатор группа источников)
                 object[] arObjRes = new object[(int)INDEX_PREPARE_PARS.COUNT_INDEX_PREPARE_PARS];
                 arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJ] = KEY_CONTROLS.COUNT_KEY_CONTROLS;
-                arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_GROUP_SOURCES_SEL] =
-                arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_GROUP_SIGNALS_SEL] =
+                arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] =
+                arObjRes[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] =
                     -1;
 
                 //Найти целочисленный идентфикатор элемента управления
-                //Цикл по всем известным целочисленным идентификаторам
-                for (KEY_CONTROLS key = 0; key < KEY_CONTROLS.COUNT_KEY_CONTROLS; key++)
-                {
-                    //Проверить совпадение переменной цикла и идентификатора элемента управления
-                    if (key.ToString().Trim().Equals((obj as Control).Name) == true)
-                    {
-                        //Запомнить идентификатор
-                        arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJ] = key;
-                        //Прервать цикл
-                        break;
-                    }
-                    else
-                        ;
-                }
+                arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJ] = getKeyWorkingItem (obj);
                 //Проверить рез-т поиска целочисленного идентфикатора
                 if ((KEY_CONTROLS)arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJ] == KEY_CONTROLS.COUNT_KEY_CONTROLS)
                     throw new Exception(@"PanelLoader::panelLoader_WorkItemClick () - не найден ключ [" + (obj as Control).Name + @"] для элемента управления...");
@@ -292,7 +308,7 @@ namespace uLoader
                     ;
 
                 if ((KEY_CONTROLS)arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJ] == KEY_CONTROLS.DGV_GROUP_SOURCES)                    
-                    arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_GROUP_SOURCES_SEL] =
+                    arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] =
                         //(obj as DataGridView).Rows[indxRow].Cells[0].Value
                         m_dictGroupIds[KEY_CONTROLS.DGV_GROUP_SOURCES][indxRow]
                         ;
@@ -302,11 +318,11 @@ namespace uLoader
                     {
                         //Если есть "выбранная" группа сигналов (ее состояние пользователь "изменяет")
                         // , значит обязательно есть и группа источников (которой принадлежит "выбранная" группа сигналов)
-                        arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_GROUP_SOURCES_SEL] =
+                        arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] =
                             //(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView).SelectedRows[0].Cells[0].Value
                             m_dictGroupIds[KEY_CONTROLS.DGV_GROUP_SOURCES][(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView).SelectedRows[0].Index]
                             ;
-                        arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_GROUP_SIGNALS_SEL] =
+                        arObjRes[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] =
                             //(obj as DataGridView).Rows[indxRow].Cells[0].Value
                             m_dictGroupIds[KEY_CONTROLS.DGV_GROUP_SIGNALS][indxRow]
                             ;
@@ -367,10 +383,9 @@ namespace uLoader
                             break;
                         case KEY_CONTROLS.DGV_GROUP_SIGNALS:
                             clearValues(KEY_CONTROLS.DGV_SIGNALS_OF_GROUP);
-                            if (this is PanelLoaderDest)
-                                clearValues(KEY_CONTROLS.TBX_GROUPSIGNALS_ADDING);
-                            else
-                                ;
+                            //if (this is PanelLoaderDest)
+                            //    clearValues(KEY_CONTROLS.TBX_GROUPSIGNALS_ADDING);
+                            //else ;
                             break;
                         default:
                             break;
@@ -388,10 +403,41 @@ namespace uLoader
 
             private void panelLoader_SourceOfGroupSelectedValueChanged(object obj, EventArgs ev)
             {
+                //Подготовить параметры для передачи "родительской" панели
+                object[] arPreparePars = new object[(int)INDEX_PREPARE_PARS.COUNT_INDEX_PREPARE_PARS];
+
+                arPreparePars[(int)INDEX_PREPARE_PARS.KEY_OBJ] = KEY_CONTROLS.CBX_SOURCE_OF_GROUP;
+                arPreparePars[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] = m_dictGroupIds[KEY_CONTROLS.DGV_GROUP_SOURCES][(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView).SelectedRows[0].Index];
+                arPreparePars[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] = m_dictGroupIds[KEY_CONTROLS.CBX_SOURCE_OF_GROUP][(obj as ComboBox).SelectedIndex];
+
+                arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = this;
+                arPreparePars[(int)INDEX_PREPARE_PARS.KEY_EVT] = KEY_EVENT.SELECTION_CHANGED;
+
+                //Отправить сообщение "родительской" панели (для дальнейшей ретрансляции)
+                DataAskedHost(arPreparePars);
             }
 
             private void panelLoader_GroupSourcesAddingLeave(object obj, EventArgs ev)
             {
+                //Подготовить параметры для передачи "родительской" панели
+                object[] arPreparePars = new object[(int)INDEX_PREPARE_PARS.COUNT_INDEX_PREPARE_PARS];
+
+                string strDepencededData = string.Empty;
+                arPreparePars[(int)INDEX_PREPARE_PARS.KEY_OBJ] = getKeyWorkingItem (obj as Control);
+                arPreparePars[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] = m_dictGroupIds[KEY_CONTROLS.DGV_GROUP_SOURCES][(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView).SelectedRows[0].Index];
+                foreach (string line in (obj as TextBox).Lines)
+                    strDepencededData += line + FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.PAIR_VAL];
+                if (strDepencededData.Length > (FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.PAIR_VAL].ToString().Length + 1))
+                    strDepencededData = strDepencededData.Substring (0, strDepencededData.Length - FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.PAIR_VAL].ToString().Length);
+                else
+                    strDepencededData = string.Empty;
+                arPreparePars[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] = strDepencededData;
+
+                arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = this;
+                arPreparePars[(int)INDEX_PREPARE_PARS.KEY_EVT] = KEY_EVENT.SELECTION_CHANGED;
+
+                ////Отправить сообщение "родительской" панели (для дальнейшей ретрансляции)
+                //DataAskedHost(arPreparePars);
             }
 
             /// <summary>
@@ -460,11 +506,19 @@ namespace uLoader
                     m_dictGroupIds[key][j] = grpSrc.m_arDescGroupSignals[0, j];
                     (workItem as DataGridView).Rows.Add(new object[] { grpSrc.m_arDescGroupSignals [1, j] });
                 }
-                //Список источников группы источников
+                //Список источников группы источников                
                 key = PanelLoader.KEY_CONTROLS.CBX_SOURCE_OF_GROUP;
                 workItem = GetWorkingItem(key);
-                foreach (ConnectionSettings connSett in grpSrc.m_listConnSett)
-                    (workItem as ComboBox).Items.Add(connSett.server);
+                if (m_dictGroupIds.ContainsKey(key) == false)
+                    m_dictGroupIds.Add(key, new string[grpSrc.m_dictConnSett.Count]);
+                else
+                    m_dictGroupIds[key] = new string[grpSrc.m_dictConnSett.Count];
+                j = 0;
+                foreach (KeyValuePair <string, ConnectionSettings> pair in grpSrc.m_dictConnSett)
+                {
+                    (workItem as ComboBox).Items.Add(pair.Value.name);
+                    m_dictGroupIds[key][j ++] = pair.Key;
+                }
                 //Выбрать текущий источник
                 if ((workItem as ComboBox).Items.Count > 0)
                     (workItem as ComboBox).SelectedIndex = uLoader.FormMain.FileINI.GetIDIndex(grpSrc.m_IDCurrentConnSett);
@@ -568,12 +622,14 @@ namespace uLoader
                 string btnCellText = string.Empty; //Текст для кнопки
                 //Индекс выбранной на текущий момент строки (объекта)
                 int indxSel = (ctrl as DataGridView).SelectedRows.Count > 0 ? (ctrl as DataGridView).SelectedRows[0].Index : -1;
+                bool bEnabled = false;
 
                 if ((!(indxSel < 0))
                 //    //&& ((ctrl as DataGridView).Rows.Count == states.Length)
                     )
                     for (int i = 0; i < states.Length; i++)
                     {
+                        bEnabled = false;
                         //Получить объект "кнопка"
                         btnCell = ((ctrl as DataGridView).Rows[i].Cells[1] as DataGridViewDisableButtonCell);
                         //Изменить доступность кнопки
@@ -588,6 +644,7 @@ namespace uLoader
                                     break;
                                 case GroupSources.STATE.STOPPED: //Прии 
                                     btnCellText = @"->";
+                                    bEnabled = true;
                                     break;
                                 default:
                                     break;
@@ -606,11 +663,11 @@ namespace uLoader
                                     //??? GetWorkingItem(KEY_CONTROLS.BUTTON_DLLNAME_GROUPSOURCES).Enabled =
                                     GetWorkingItem(KEY_CONTROLS.CBX_SOURCE_OF_GROUP).Enabled =
                                     GetWorkingItem(KEY_CONTROLS.TBX_GROUPSOURCES_ADDING).Enabled =
-                                        btnCell.Enabled;
+                                        bEnabled;
                                     break;
                                 case KEY_CONTROLS.DGV_GROUP_SIGNALS:
                                     //??? GetWorkingItem(KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS).Enabled =
-                                    //???    btnCell.Enabled;
+                                    //???    bEnabled;
                                     break;
                                 default:
                                     throw new Exception(@"PanelLoader::EnabledWorkItem () - ...");
@@ -715,13 +772,11 @@ namespace uLoader
                         {
                             iRes = clearValues(KEY_CONTROLS.TBX_GROUPSOURCES_ADDING);
                             
-                            if (iRes == 0)
-                                if (this is PanelLoaderDest)
-                                    iRes = clearValues(KEY_CONTROLS.TBX_GROUPSIGNALS_ADDING);
-                                else
-                                    ;
-                            else
-                                ;
+                            //if (iRes == 0)
+                            //    if (this is PanelLoaderDest)
+                            //        iRes = clearValues(KEY_CONTROLS.TBX_GROUPSIGNALS_ADDING);
+                            //    else ;
+                            //else ;
                         }
                         else
                             ;
@@ -1011,6 +1066,9 @@ namespace uLoader
 
                 this.SuspendLayout();
 
+                ctrl = GetWorkingItem (KEY_CONTROLS.DGV_GROUP_SIGNALS);
+                panelColumns.SetRowSpan (ctrl, 8);
+
                 //ГроупБокс управления очистки данных
                 //ГроупБокс
                 ctrl = new GroupBox();
@@ -1018,7 +1076,7 @@ namespace uLoader
                 (ctrl as GroupBox).Text = @"Удалить значения";
                 ctrl.Enabled = false;
                 ctrl.Dock = DockStyle.Fill;
-                panelColumns.Controls.Add(ctrl, 0, 4);
+                panelColumns.Controls.Add(ctrl, 0, 8);
                 panelColumns.SetColumnSpan(ctrl, 1); panelColumns.SetRowSpan(ctrl, 8);
                 //Панель для ГроупБокса
                 HPanelCommon panelGroupBox = new PanelCommonULoader(8, 4);
@@ -1066,21 +1124,21 @@ namespace uLoader
                 panelGroupBox.Controls.Add(ctrl, 0, 3);
                 panelGroupBox.SetColumnSpan(ctrl, 8); panelGroupBox.SetRowSpan(ctrl, 1);
 
-                //ГроупБокс дополнительных настроек для группы сигналов
-                ctrl = new GroupBox();
-                ctrl.Name = KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS.ToString() + @"-ADDING";
-                (ctrl as GroupBox).Text = @"Дополнительные параметры";
-                //ctrl.Enabled = false;
-                ctrl.Dock = DockStyle.Fill;
-                panelColumns.Controls.Add(ctrl, 0, 12);
-                panelColumns.SetColumnSpan(ctrl, 1); panelColumns.SetRowSpan(ctrl, 4);
-                //TextBox для редактирования дополнительных параметров
-                ctrl.Controls.Add(new TextBox ());
-                ctrl.Controls[0].Name = KEY_CONTROLS.TBX_GROUPSIGNALS_ADDING.ToString ();
-                (ctrl.Controls[0] as TextBox).Multiline = true;
-                (ctrl.Controls[0] as TextBox).ScrollBars = ScrollBars.Both;
-                ctrl.Controls[0].Enabled = false;
-                ctrl.Controls[0].Dock = DockStyle.Fill;
+                ////ГроупБокс дополнительных настроек для группы сигналов
+                //ctrl = new GroupBox();
+                //ctrl.Name = KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS.ToString() + @"-ADDING";
+                //(ctrl as GroupBox).Text = @"Дополнительные параметры";
+                ////ctrl.Enabled = false;
+                //ctrl.Dock = DockStyle.Fill;
+                //panelColumns.Controls.Add(ctrl, 0, 12);
+                //panelColumns.SetColumnSpan(ctrl, 1); panelColumns.SetRowSpan(ctrl, 4);
+                //////TextBox для редактирования дополнительных параметров
+                ////ctrl.Controls.Add(new TextBox ());
+                ////ctrl.Controls[0].Name = KEY_CONTROLS.TBX_GROUPSIGNALS_ADDING.ToString ();
+                ////(ctrl.Controls[0] as TextBox).Multiline = true;
+                ////(ctrl.Controls[0] as TextBox).ScrollBars = ScrollBars.Both;
+                ////ctrl.Controls[0].Enabled = false;
+                ////ctrl.Controls[0].Dock = DockStyle.Fill;
 
                 this.ResumeLayout(false);
                 this.PerformLayout();

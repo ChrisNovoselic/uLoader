@@ -19,7 +19,7 @@ namespace uLoader
         ///// <summary>
         ///// Перечисление - индексы ПРЕДподготавливаемых параметров
         ///// </summary>
-        //private enum INDEX_PREPARE_PARS { OBJECT, KEY_OBJECT, KEY_EVENT, ID_OBJ_GROUP_SOURCES_SEL, ID_OBJ_GROUP_SIGNALS_SEL, COUNT_INDEX_PREPARE_PARS }
+        //private enum INDEX_PREPARE_PARS { OBJECT, KEY_OBJECT, KEY_EVENT, ID_OBJ_SEL, ID_OBJ_GROUP_SIGNALS_SEL, COUNT_INDEX_PREPARE_PARS }
         /// <summary>
         /// Массив панелей (источник, назначение)
         /// </summary>
@@ -232,6 +232,8 @@ namespace uLoader
                     else
                         ;
                     break;
+                //case HHandlerQueue.StatesMachine.SET_IDCUR_SOURCE_OF_GROUP:
+                //    break;
                 default:
                     break;
             }
@@ -371,7 +373,7 @@ namespace uLoader
                             {
                                 case PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES:
                                     state = HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SOURCES;
-                                    arObjToDataHost = new object[] { new object[] { (int)state, pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SOURCES_SEL] } };
+                                    arObjToDataHost = new object[] { new object[] { (int)state, pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL] } };
                                     break;
                                 case PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS:
                                     state = HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS;
@@ -379,7 +381,30 @@ namespace uLoader
                                         new object[] {
                                             (int)state
                                             , indxWork
-                                            , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SIGNALS_SEL]
+                                            , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
+                                        }
+                                    };
+                                    break;
+                                case PanelLoader.KEY_CONTROLS.CBX_SOURCE_OF_GROUP:
+                                    state = HHandlerQueue.StatesMachine.SET_IDCUR_SOURCE_OF_GROUP;
+                                    arObjToDataHost = new object[] {
+                                        new object[] {
+                                            (int)state
+                                            , indxWork
+                                            , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL]
+                                            , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
+                                        }
+                                    };
+                                    break;
+                                case PanelLoader.KEY_CONTROLS.TBX_GROUPSOURCES_ADDING:
+                                //case PanelLoader.KEY_CONTROLS.TBX_GROUPSIGNALS_ADDING:
+                                    state = HHandlerQueue.StatesMachine.SET_TEXT_ADDING;
+                                    arObjToDataHost = new object[] {
+                                        new object[] {
+                                            (int)state
+                                            , indxWork
+                                            , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL]
+                                            , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
                                         }
                                     };
                                     break;
@@ -392,7 +417,7 @@ namespace uLoader
                             {
                                 case PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES:
                                     state = HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SOURCES;
-                                    arObjToDataHost = new object[] { new object[] { (int)state, pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SOURCES_SEL] } };
+                                    arObjToDataHost = new object[] { new object[] { (int)state, pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL] } };
                                     break;
                                 case PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS:
                                     state = HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SIGNALS;
@@ -400,7 +425,30 @@ namespace uLoader
                                         new object[] {
                                             (int)state
                                             , indxWork
-                                            , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SIGNALS_SEL]
+                                            , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
+                                        }
+                                    };
+                                    break;
+                                case PanelLoader.KEY_CONTROLS.CBX_SOURCE_OF_GROUP:
+                                    state = HHandlerQueue.StatesMachine.SET_IDCUR_SOURCE_OF_GROUP;
+                                    arObjToDataHost = new object[] {
+                                        new object[] {
+                                            (int)state
+                                            , indxWork
+                                            , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL]
+                                            , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
+                                        }
+                                    };
+                                    break;
+                                case PanelLoader.KEY_CONTROLS.TBX_GROUPSOURCES_ADDING:
+                                //case PanelLoader.KEY_CONTROLS.TBX_GROUPSIGNALS_ADDING:
+                                    state = HHandlerQueue.StatesMachine.SET_TEXT_ADDING;
+                                    arObjToDataHost = new object[] {
+                                        new object[] {
+                                            (int)state
+                                            , indxWork
+                                            , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL]
+                                            , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
                                         }
                                     };
                                     break;
@@ -449,8 +497,8 @@ namespace uLoader
                                                         {
                                                             (int)state
                                                             , indxWork
-                                                            , pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SOURCES_SEL]
-                                                            , pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_GROUP_SIGNALS_SEL]
+                                                            , pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL]
+                                                            , pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
                                                         }
                     };
                     break;
