@@ -29,7 +29,7 @@ namespace uLoaderCommonSrcTemplate
             {
             }
 
-            public class SIGNALTemplate : SIGNAL
+            protected class SIGNALTemplate : SIGNAL
             {
                 public SIGNALTemplate(int idMain)
                     : base(idMain)
@@ -37,7 +37,7 @@ namespace uLoaderCommonSrcTemplate
                 }
             }
 
-            public override GroupSignals.SIGNAL createSignal(object[] objs)
+            protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
                 return new SIGNALTemplate((int)objs[0]);
             }
@@ -105,7 +105,7 @@ namespace uLoaderCommonDestTemplate
                 }
             }
 
-            public override GroupSignals.SIGNAL createSignal(object[] objs)
+            protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
                 return new SIGNALTemplateDest((int)objs[0], (int)objs[1]);
             }

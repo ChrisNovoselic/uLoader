@@ -10,7 +10,7 @@ using uLoaderCommon;
 
 namespace DestStatKKSNAMEsql
 {
-    public class DestStatKKSNAMEsql : HHandlerDbULoaderStatTMDest
+    public class DestStatKKSNAMEsql : HHandlerDbULoaderStatTMKKSNAMEDest
     {
         private static string s_strNameDestTable = @"ALL_PARAM_SOTIASSO_KKS"
             , s_strIdTEC = @"6"
@@ -26,44 +26,11 @@ namespace DestStatKKSNAMEsql
         {
         }
 
-        private class GroupSignalsStatKKSNAMEsql : GroupSignalsStatTMDest
+        private class GroupSignalsStatKKSNAMEsql : GroupSignalsStatTMKKSNAMEDest
         {
             public GroupSignalsStatKKSNAMEsql(HHandlerDbULoader parent, object[] pars)
                 : base(parent, pars)
             {
-            }
-            
-            protected class SIGNALStatKKSNAMEsql : GroupSignalsDest.SIGNALDest
-            {
-                public string m_strStatKKSName;
-
-                public SIGNALStatKKSNAMEsql(int idMain, int idLink, string statKKSName)
-                    : base(idMain, idLink)
-                {
-                    m_strStatKKSName = statKKSName;
-                }
-            }
-
-            public override GroupSignals.SIGNAL createSignal(object[] objs)
-            {
-                return new SIGNALStatKKSNAMEsql((int)objs[0], (int)objs[1], (string)objs[4]);
-            }
-
-            protected override object getIdToInsert(int idLink)
-            {
-                string strRes = string.Empty;
-
-                foreach (SIGNALStatKKSNAMEsql sgnl in m_arSignals)
-                    if (sgnl.m_idLink == idLink)
-                    {
-                        strRes = sgnl.m_strStatKKSName;
-
-                        break;
-                    }
-                    else
-                        ;
-
-                return strRes;
             }
 
             protected override string getInsertValuesQuery(DataTable tblRes)

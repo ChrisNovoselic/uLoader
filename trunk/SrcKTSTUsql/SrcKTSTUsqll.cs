@@ -35,7 +35,7 @@ namespace SrcKTSTUsql
                 }
             }
 
-            public override GroupSignals.SIGNAL createSignal(object[] objs)
+            protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
                 return new SIGNALMSTTMsql((int)objs[0]);
             }

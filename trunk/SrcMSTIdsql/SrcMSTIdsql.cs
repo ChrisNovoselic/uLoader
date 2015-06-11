@@ -13,21 +13,21 @@ using uLoaderCommon;
 
 namespace SrcMSTIdsql
 {
-    public class SrcMSTIdsql : HHandlerDbULoaderSrc
+    public class SrcMSTIDsql : HHandlerDbULoaderSrc
     {
-        public SrcMSTIdsql()
+        public SrcMSTIDsql()
             : base()
         {
         }
 
-        public SrcMSTIdsql(IPlugIn iPlugIn)
+        public SrcMSTIDsql(IPlugIn iPlugIn)
             : base(iPlugIn)
         {
         }
 
-        private class GroupSignalsMSTIdsql : GroupSignalsSrc
+        private class GroupSignalsMSTIDsql : GroupSignalsSrc
         {
-            public GroupSignalsMSTIdsql(HHandlerDbULoader parent, object[] pars)
+            public GroupSignalsMSTIDsql(HHandlerDbULoader parent, object[] pars)
                 : base(parent, pars)
             {
             }
@@ -45,20 +45,20 @@ namespace SrcMSTIdsql
                 get { return DateTimeStart.AddHours(-6).ToString(@"yyyy/MM/dd HH:mm:ss"); }
             }
 
-            public class SIGNALMSTIdsql : SIGNAL
+            public class SIGNALMSTIDsql : SIGNAL
             {
                 public int m_id;
 
-                public SIGNALMSTIdsql(int idMain, int id)
+                public SIGNALMSTIDsql(int idMain, int id)
                     : base(idMain)
                 {
                     m_id = id;
                 }
             }
 
-            public override GroupSignals.SIGNAL createSignal(object[] objs)
+            protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
-                return new SIGNALMSTIdsql((int)objs[0], (int)objs[2]);
+                return new SIGNALMSTIDsql((int)objs[0], (int)objs[2]);
             }
 
             protected override void setQuery()
@@ -66,7 +66,7 @@ namespace SrcMSTIdsql
                 m_strQuery = string.Empty;
                 string strIds = string.Empty;
 
-                foreach (SIGNALMSTIdsql sgnl in m_arSignals)
+                foreach (SIGNALMSTIDsql sgnl in m_arSignals)
                     strIds += sgnl.m_id + @",";
                 //удалить "лишнюю" запятую
                 strIds = strIds.Substring(0, strIds.Length - 1);
@@ -86,7 +86,7 @@ namespace SrcMSTIdsql
             {
                 int iRes = -1;
 
-                foreach (SIGNALMSTIdsql sgnl in m_arSignals)
+                foreach (SIGNALMSTIDsql sgnl in m_arSignals)
                     if (sgnl.m_id == id_mst)
                     {
                         iRes = sgnl.m_idMain;
@@ -129,7 +129,7 @@ namespace SrcMSTIdsql
 
         protected override HHandlerDbULoader.GroupSignals createGroupSignals(object[] objs)
         {
-            return new GroupSignalsMSTIdsql(this, objs);
+            return new GroupSignalsMSTIDsql(this, objs);
         }
 
         public override void ClearValues()
@@ -144,7 +144,7 @@ namespace SrcMSTIdsql
         {
             _Id = 1003;
 
-            createObject(typeof(SrcMSTIdsql));
+            createObject(typeof(SrcMSTIDsql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

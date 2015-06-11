@@ -42,7 +42,7 @@ namespace SrcBiyskTMora
                 }
             }
 
-            public override GroupSignals.SIGNAL createSignal(object[] objs)
+            protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
                 return new SIGNALBiyskTMora((int)objs[0], objs[2] as string);
             }

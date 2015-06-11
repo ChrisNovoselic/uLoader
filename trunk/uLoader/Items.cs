@@ -170,11 +170,8 @@ namespace uLoader
 
             if ((vals.Length > 0)
                 && (vals[0].Equals(string.Empty) == false))
-            {
-
                 foreach (string pair in vals)
                     m_dictAdding.Add(pair.Split(FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE])[0], pair.Split(FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE])[1]);
-            }
             else
                 //throw new Exception (@"FileINI::addGroupValues () - ADDING - некорректные разделители...")
                 ;
@@ -442,6 +439,24 @@ namespace uLoader
 
                 return arObjRes;
             }
+
+            public List <int> GetListNeededIndexGroupSignals ()
+            {
+                List <int> listRes = new List<int> ();
+
+                int iIdGrpSgnls = -1;
+
+                foreach (SIGNAL_SRC sgnl in m_listSgnls)
+                {
+                    iIdGrpSgnls = Convert.ToInt16(sgnl.m_dictPars[@"ID_SRC"].Substring(1, 2)) - 1;
+                    if (listRes.IndexOf (iIdGrpSgnls) < 0)
+                        listRes.Add(iIdGrpSgnls);
+                    else
+                        ;
+                }
+
+                return listRes;
+            }
         }
         /// <summary>
         /// Вспомогательный домен приложения для загрузки/выгрузки библиотеки
@@ -702,8 +717,10 @@ namespace uLoader
         private void plugIn_OnEvtDataAskedHost  (object obj)
         {
             EventArgsDataHost ev = obj as EventArgsDataHost;
-            int iIDGroupSignals = 0; //??? д.б. указана в "запросе"
+            int iIDGroupSignals = -1; //??? д.б. указана в "запросе"
             object []pars = (ev.par as object[])[0] as object [];
+
+            iIDGroupSignals = (int)pars[1];
 
             switch ((ID_DATA_ASKED_HOST)pars[0])
             {
@@ -725,7 +742,6 @@ namespace uLoader
                         ;
                     break;
                 case ID_DATA_ASKED_HOST.TABLE_RES:
-                    iIDGroupSignals = (int)pars[1];
                     GroupSignals grpSgnls = getGroupSignals(iIDGroupSignals);
                     if ((!(grpSgnls == null))
                         && (!(pars[2] == null)))
@@ -1015,19 +1031,8 @@ namespace uLoader
         {
             List <int> listRes = new List<int> ();
 
-            int iIdGrpSgnls = -1;
-
             foreach (GroupSources.GroupSignals grpSgnls in m_listGroupSignals)
-            {
-                foreach (SIGNAL_SRC sgnls in grpSgnls.m_listSgnls)
-                {
-                    iIdGrpSgnls = Convert.ToInt16(sgnls.m_dictPars[@"ID_SRC"].Substring(1, 2)) - 1;
-                    if (listRes.IndexOf (iIdGrpSgnls) < 0)
-                        listRes.Add(iIdGrpSgnls);
-                    else
-                        ;
-                }
-            }
+                listRes.Union(grpSgnls.GetListNeededIndexGroupSignals ());
 
             return listRes;
         }
@@ -1040,6 +1045,10 @@ namespace uLoader
         {
             EventArgsDataHost ev = obj as EventArgsDataHost;
             int iIDGroupSignals = 0; //??? д.б. указана в "запросе"
+            //pars[0] - идентификатор события
+            //pars[1] - идентификатор группы сигналов
+            //pars[2] - таблица с данными для "вставки"
+            //??? pars[3] - object [] с доп./параметрами, для ретрансляции
             object[] pars = (ev.par as object[])[0] as object[];
 
             //pars[0] - идентификатор события
@@ -1050,13 +1059,28 @@ namespace uLoader
                 case ID_DATA_ASKED_HOST.INIT_SIGNALS: //Получен запрос на обрабатываемую группу сигналов
                     break;
                 case ID_DATA_ASKED_HOST.TABLE_RES:
-                    //pars[0] - см. выше
-                    //pars[1] - идентификатор группы сигналов
-                    //pars[2] - таблица с данными для "вставки"
-                    if (! (GetListNeededIndexGroupSignals ().IndexOf ((int)pars[1]) < 0))
-                        PerformDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.TO_INSERT, new object[] { (int)pars[1], (pars[2] as DataTable).Copy() }));
+                    object[] parsToSend = new object[pars.Length - 1];
+                    parsToSend[1] = (pars[2] as DataTable).Copy();
+                    if ((parsToSend.Length > 2)
+                        && (pars.Length > 3))
+                    {
+                        parsToSend[2] = new object[(pars[3] as object[]).Length];
+                        ////Вариант №1
+                        //for (int i = 0; i < (parsToSend[2] as object []).Length; i ++)
+                        //    (parsToSend[2] as object [])[i] = (pars[3] as object[])[i];
+                        //Вариант №2
+                        (pars[3] as object[]).CopyTo (parsToSend[2] as object [], 0);
+                    }
                     else
                         ;
+                    foreach (GroupSignals grpSgnls in m_listGroupSignals)
+                        if (!(grpSgnls.GetListNeededIndexGroupSignals().IndexOf((int)pars[1]) < 0))
+                        {
+                            parsToSend [0] = FormMain.FileINI.GetIDIndex(grpSgnls.m_strID);
+                            PerformDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.TO_INSERT, parsToSend));
+                        }
+                        else
+                            ;
                     break;
                 case ID_DATA_ASKED_HOST.ERROR:
                     iIDGroupSignals = (int)pars[1];

@@ -8,24 +8,19 @@ using System.Globalization;
 using HClassLibrary;
 using uLoaderCommon;
 
-namespace DestStatIDsql
+namespace DestBiTECStatIDsql
 {
-    public class DestStatIDsql : HHandlerDbULoaderStatTMIDDest
+    public class DestBiTECStatIDsql : HHandlerDbULoaderStatTMIDDest
     {
         private static string s_strNameDestTable = @"ALL_PARAM_SOTIASSO"
             , s_strIdTEC = @"6";
-        /// <summary>
-        /// Конструктор - вспомогательный (статическая сборка)
-        /// </summary>
-        public DestStatIDsql()
+
+        public DestBiTECStatIDsql()
             : base()
         {
         }
-        /// <summary>
-        /// Конструктор - основной (динамическая загрузка)
-        /// </summary>
-        /// <param name="iPlugIn">Объект для связи с "родительским" приложением</param>
-        public DestStatIDsql(IPlugIn iPlugIn)
+
+        public DestBiTECStatIDsql(IPlugIn iPlugIn)
             : base(iPlugIn)
         {
         }
@@ -35,6 +30,11 @@ namespace DestStatIDsql
             public GroupSignalsStatIDsql(HHandlerDbULoader parent, object[] pars)
                 : base(parent, pars)
             {
+            }
+
+            protected override DataTable getTableIns(ref DataTable table)
+            {
+                return new TableInsTMDelta().Result(table, TableRecievedPrev, Signals);
             }
 
             protected override string getInsertValuesQuery(DataTable tblRes)
@@ -123,7 +123,7 @@ namespace DestStatIDsql
         {
             _Id = 2001;
 
-            createObject(typeof(DestStatIDsql));
+            createObject(typeof(DestBiTECStatIDsql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

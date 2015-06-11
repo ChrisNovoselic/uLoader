@@ -8,33 +8,34 @@ using System.Globalization;
 using HClassLibrary;
 using uLoaderCommon;
 
-namespace DestStatIDsql
+namespace DestBiTECStatKKSNAMEsql
 {
-    public class DestStatIDsql : HHandlerDbULoaderStatTMIDDest
+    public class DestBiTECStatKKSNAMEsql : HHandlerDbULoaderStatTMKKSNAMEDest
     {
-        private static string s_strNameDestTable = @"ALL_PARAM_SOTIASSO"
-            , s_strIdTEC = @"6";
-        /// <summary>
-        /// Конструктор - вспомогательный (статическая сборка)
-        /// </summary>
-        public DestStatIDsql()
+        private static string s_strNameDestTable = @"ALL_PARAM_SOTIASSO_KKS"
+            , s_strIdTEC = @"6"
+            , s_strID_SRV_TM = @"2";
+
+        public DestBiTECStatKKSNAMEsql()
             : base()
         {
         }
-        /// <summary>
-        /// Конструктор - основной (динамическая загрузка)
-        /// </summary>
-        /// <param name="iPlugIn">Объект для связи с "родительским" приложением</param>
-        public DestStatIDsql(IPlugIn iPlugIn)
+
+        public DestBiTECStatKKSNAMEsql(IPlugIn iPlugIn)
             : base(iPlugIn)
         {
         }
 
-        private class GroupSignalsStatIDsql : GroupSignalsStatTMIDDest
+        private class GroupSignalsStatKKSNAMEsql : GroupSignalsStatTMKKSNAMEDest
         {
-            public GroupSignalsStatIDsql(HHandlerDbULoader parent, object[] pars)
+            public GroupSignalsStatKKSNAMEsql(HHandlerDbULoader parent, object[] pars)
                 : base(parent, pars)
             {
+            }
+
+            protected override DataTable getTableIns(ref DataTable table)
+            {
+                return new TableInsTMDelta ().Result (table, TableRecievedPrev, Signals);
             }
 
             protected override string getInsertValuesQuery(DataTable tblRes)
@@ -43,24 +44,28 @@ namespace DestStatIDsql
                     , strRow = string.Empty;
 
                 strRes = @"INSERT INTO [dbo].[" + s_strNameDestTable + @"] ("
-                    + @"[ID]"
+                    + @"[KKS_NAME]"
                     + @",[ID_TEC]"
                     + @",[Value]"
                     + @",[last_changed_at]"
                     + @",[tmdelta]"
                     + @",[INSERT_DATETIME]"
+                    + @",[ID_SOURCE]"
+                    + @",[ID_SRV_TM]"
                         + @") VALUES";
 
                 foreach (DataRow row in tblRes.Rows)
                 {
                     strRow = @"(";
 
-                    strRow += getIdToInsert(Int32.Parse(row[@"ID"].ToString().Trim())) + @",";
+                    strRow += @"'" + getIdToInsert(Int32.Parse(row[@"ID"].ToString().Trim())) + @"'" + @",";
                     strRow += s_strIdTEC + @",";
                     strRow += ((decimal)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
                     strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(-6).ToString(@"yyyyMMdd HH:mm:ss.fff") + @"',";
                     strRow += row[@"tmdelta"] + @",";
-                    strRow += @"GETDATE()";
+                    strRow += @"GETDATE()" + @",";
+                    strRow += _parent.m_connSett.id + @",";
+                    strRow += s_strID_SRV_TM;
 
                     strRow += @"),";
 
@@ -84,19 +89,22 @@ namespace DestStatIDsql
                 , val = string.Empty;
             if (pars.Length > 1)
             {
-                for (int i = 1; i < pars.Length; i ++)
+                for (int i = 1; i < pars.Length; i++)
                 {
                     if (pars[i] is string)
                     {
-                        key = ((string)pars[i]).Split (FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE])[0];
-                        val = ((string)pars[i]).Split (FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE])[1];
-                        if (key.Equals (@"NAME_TABLE") == true)
+                        key = ((string)pars[i]).Split(FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE])[0];
+                        val = ((string)pars[i]).Split(FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE])[1];
+                        if (key.Equals(@"NAME_TABLE") == true)
                             s_strNameDestTable = val;
                         else
-                            if (key.Equals (@"ID_TEC") == true)
+                            if (key.Equals(@"ID_TEC") == true)
                                 s_strIdTEC = val;
                             else
-                                ;
+                                if (key.Equals(@"ID_SRV_TM") == true)
+                                    s_strID_SRV_TM = val;
+                                else
+                                    ;
                     }
                     else
                         ;
@@ -110,7 +118,7 @@ namespace DestStatIDsql
 
         protected override GroupSignals createGroupSignals(object[] objs)
         {
-            return new GroupSignalsStatIDsql(this, objs);
+            return new GroupSignalsStatKKSNAMEsql(this, objs);
         }
     }
 
@@ -121,9 +129,9 @@ namespace DestStatIDsql
         public PlugIn()
             : base()
         {
-            _Id = 2001;
+            _Id = 2002;
 
-            createObject(typeof(DestStatIDsql));
+            createObject(typeof(DestBiTECStatKKSNAMEsql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)
