@@ -97,13 +97,17 @@ namespace uLoader
             foreach (GroupSourcesDest grpSrcDest in m_listGroupSources[(int)INDEX_SRC.DEST])
             {
                 listNeededIndexGroupSignals = grpSrcDest.GetListNeededIndexGroupSignals();
-                listIndexGroupSourcesDestLinkAdded.Clear ();
 
-                foreach (int indxGrpSignals in listNeededIndexGroupSignals)
-                    foreach (GroupSources grpSrcSource in m_listGroupSources[(int)INDEX_SRC.SOURCE])
+                foreach (GroupSources grpSrcSource in m_listGroupSources[(int)INDEX_SRC.SOURCE])
+                {
+                    listIndexGroupSourcesDestLinkAdded.Clear();
+
+                    foreach (int indxGrpSignals in listNeededIndexGroupSignals)
                         if ((listIndexGroupSourcesDestLinkAdded.IndexOf(m_listGroupSources[(int)INDEX_SRC.DEST].IndexOf(grpSrcDest)) < 0)
                             && (grpSrcSource.ContainsIndexGroupSignals(indxGrpSignals) == 0))
                         {
+                            Logging.Logg().Debug(@"HHandlerQueue::SetGroupLinked() - Source=" + grpSrcSource.m_strShrName + @", Dest=" + grpSrcDest.m_strShrName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+
                             grpSrcSource.AddDelegatePlugInOnEvtDataAskedHost(grpSrcDest.Clone_OnEvtDataAskedHost);
                             listIndexGroupSourcesDestLinkAdded.Add(m_listGroupSources[(int)INDEX_SRC.DEST].IndexOf(grpSrcDest));
 
@@ -111,6 +115,7 @@ namespace uLoader
                         }
                         else
                             ;
+                }
             }
 
             return iRes;
@@ -468,7 +473,7 @@ namespace uLoader
                         itemQueue = Peek;
 
                         m_listGroupSources[(int)itemQueue.Pars[0]][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].m_IDCurrentConnSett = (string)itemQueue.Pars[2];
-                        m_fileINI.UpdateParameter((int)itemQueue.Pars[0], (string)itemQueue.Pars[1], @"SCUR",  (string)itemQueue.Pars[2]);
+                        m_fileINI.UpdateParameter((int)itemQueue.Pars[0], (string)itemQueue.Pars[1], @"SCUR", (string)itemQueue.Pars[2]);
 
                         iRes = 0;
                         break;

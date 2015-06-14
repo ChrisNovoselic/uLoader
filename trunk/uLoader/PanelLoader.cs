@@ -436,8 +436,8 @@ namespace uLoader
                 arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = this;
                 arPreparePars[(int)INDEX_PREPARE_PARS.KEY_EVT] = KEY_EVENT.SELECTION_CHANGED;
 
-                ////Отправить сообщение "родительской" панели (для дальнейшей ретрансляции)
-                //DataAskedHost(arPreparePars);
+                //Отправить сообщение "родительской" панели (для дальнейшей ретрансляции)
+                DataAskedHost(arPreparePars);
             }
 
             /// <summary>

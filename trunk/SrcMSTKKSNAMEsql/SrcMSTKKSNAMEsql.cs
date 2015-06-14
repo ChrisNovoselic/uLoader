@@ -13,7 +13,7 @@ using uLoaderCommon;
 
 namespace SrcMSTKKSNAMEsql
 {
-    public class SrcMSTKKSNAMEsql : HHandlerDbULoaderSrc
+    public class SrcMSTKKSNAMEsql : HHandlerDbULoaderMSTTMSrc
     {
         public SrcMSTKKSNAMEsql()
             : base()
@@ -25,24 +25,11 @@ namespace SrcMSTKKSNAMEsql
         {
         }
 
-        private class GroupSignalsMSTKKSNAMEsql : GroupSignalsSrc
+        private class GroupSignalsMSTKKSNAMEsql : GroupSignalsMSTTMSrc
         {
             public GroupSignalsMSTKKSNAMEsql(HHandlerDbULoader parent, object[] pars)
                 : base(parent, pars)
             {
-            }
-
-            //Строки для условия "по дате/времени"
-            // начало
-            protected override string DateTimeStartFormat
-            {
-                get { return DateTimeStart.AddHours(-6).AddSeconds(-1 * (int)TimeSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss"); }
-            }
-            // окончание
-            protected override string DateTimeCurIntervalEndFormat
-            {
-                //get { return DateTimeStart.AddHours(-6).AddSeconds((int)TimeSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss"); }
-                get { return DateTimeStart.AddHours(-6).ToString(@"yyyy/MM/dd HH:mm:ss"); }
             }
 
             public class SIGNALMSTKKSNAMEsql : SIGNAL
@@ -110,10 +97,13 @@ namespace SrcMSTKKSNAMEsql
                     {
                         DataTable tblVal = value.Copy ();
                         tblVal.Columns.Add (@"KKSNAME_MST", typeof(int));
+                        //tblVal.Columns.Add(@"ID_MST", typeof(int));
 
                         foreach (DataRow r in tblVal.Rows)
                         {
                             r[@"KKSNAME_MST"] = r[@"ID"];
+                            //r[@"ID_MST"] = getIdMST((string)r[@"KKSNAME_MST"]);
+
                             r[@"ID"] = getIdMain((string)r[@"KKSNAME_MST"]);
                         }
 

@@ -12,8 +12,8 @@ namespace DestBiTECStatIDsql
 {
     public class DestBiTECStatIDsql : HHandlerDbULoaderStatTMIDDest
     {
-        private static string s_strNameDestTable = @"ALL_PARAM_SOTIASSO"
-            , s_strIdTEC = @"6";
+        //private static string s_strNameDestTable = @"ALL_PARAM_SOTIASSO"
+        //    , s_strIdTEC = @"6";
 
         public DestBiTECStatIDsql()
             : base()
@@ -42,7 +42,7 @@ namespace DestBiTECStatIDsql
                 string strRes = string.Empty
                     , strRow = string.Empty;
 
-                strRes = @"INSERT INTO [dbo].[" + s_strNameDestTable + @"] ("
+                strRes = @"INSERT INTO [dbo].[" + (_parent as HHandlerDbULoaderDest).m_strNameTable + @"] ("
                     + @"[ID]"
                     + @",[ID_TEC]"
                     + @",[Value]"
@@ -56,7 +56,7 @@ namespace DestBiTECStatIDsql
                     strRow = @"(";
 
                     strRow += getIdToInsert(Int32.Parse(row[@"ID"].ToString().Trim())) + @",";
-                    strRow += s_strIdTEC + @",";
+                    strRow += (_parent as HHandlerDbULoaderStatTMDest).m_strIdTEC + @",";
                     strRow += ((decimal)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
                     strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(-6).ToString(@"yyyyMMdd HH:mm:ss.fff") + @"',";
                     strRow += row[@"tmdelta"] + @",";
@@ -74,38 +74,6 @@ namespace DestBiTECStatIDsql
                     strRes
                     ;
             }
-        }
-
-        public override int Initialize(object[] pars)
-        {
-            int iRes = base.Initialize(pars);
-
-            string key = string.Empty
-                , val = string.Empty;
-            if (pars.Length > 1)
-            {
-                for (int i = 1; i < pars.Length; i ++)
-                {
-                    if (pars[i] is string)
-                    {
-                        key = ((string)pars[i]).Split (FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE])[0];
-                        val = ((string)pars[i]).Split (FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE])[1];
-                        if (key.Equals (@"NAME_TABLE") == true)
-                            s_strNameDestTable = val;
-                        else
-                            if (key.Equals (@"ID_TEC") == true)
-                                s_strIdTEC = val;
-                            else
-                                ;
-                    }
-                    else
-                        ;
-                }
-            }
-            else
-                ;
-
-            return iRes;
         }
 
         protected override GroupSignals createGroupSignals(object[] objs)

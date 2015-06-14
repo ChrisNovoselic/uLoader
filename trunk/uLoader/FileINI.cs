@@ -735,6 +735,8 @@ namespace uLoader
 
             public void UpdateParameter(int type, string strIdGroup, string par, string val)
             {
+                Logging.Logg().Debug(@"FileINI::UpdateParameter (ID=" + strIdGroup + @", par=" + par + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+
                 if (par.Equals (@"SCUR") == true)
                 {
                     m_arListGroupValues[(int)type].m_listGroupSrc[GetIDIndex(strIdGroup)].m_IDCurrentConnSett = val;

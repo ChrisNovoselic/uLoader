@@ -1029,10 +1029,21 @@ namespace uLoader
 
         public List <int> GetListNeededIndexGroupSignals ()
         {
-            List <int> listRes = new List<int> ();
+            List <int> listRes = new List<int> ()
+                , listGrpSgnls = new List<int> ();
 
             foreach (GroupSources.GroupSignals grpSgnls in m_listGroupSignals)
-                listRes.Union(grpSgnls.GetListNeededIndexGroupSignals ());
+            {
+                ////Вариант №1
+                //listRes.Union(grpSgnls.GetListNeededIndexGroupSignals());
+                //Вариант №2
+                listGrpSgnls = grpSgnls.GetListNeededIndexGroupSignals();
+                foreach (int id in listGrpSgnls)
+                    if (listRes.IndexOf(id) < 0)
+                        listRes.Add(id);
+                    else
+                        ;
+            }
 
             return listRes;
         }
@@ -1043,6 +1054,8 @@ namespace uLoader
         /// <param name="obj"></param>
         public void Clone_OnEvtDataAskedHost(object obj)
         {
+            Logging.Logg().Debug(@"GroupSources::Clone_OnEvtDataAskedHost () - NANE=" + m_strShrName + @"...", Logging.INDEX_MESSAGE.NOT_SET);
+
             EventArgsDataHost ev = obj as EventArgsDataHost;
             int iIDGroupSignals = 0; //??? д.б. указана в "запросе"
             //pars[0] - идентификатор события
@@ -1078,6 +1091,8 @@ namespace uLoader
                         {
                             parsToSend [0] = FormMain.FileINI.GetIDIndex(grpSgnls.m_strID);
                             PerformDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.TO_INSERT, parsToSend));
+
+                            //Logging.Logg().Debug(@"GroupSources::Clone_OnEvtDataAskedHost () - NANE=" + m_strShrName + @", для [ID=" + parsToSend[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
                         }
                         else
                             ;

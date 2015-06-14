@@ -145,7 +145,7 @@ namespace uLoaderCommonDestTemplate
         }
     }
 
-    public class PlugIn : PlugInULoaderDest
+    public class PlugIn : uLoaderCommon.PlugInULoaderDest
     {
         public PlugIn()
             : base()
