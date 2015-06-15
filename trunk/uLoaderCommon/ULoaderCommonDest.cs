@@ -62,6 +62,8 @@ namespace uLoaderCommon
                 }
             }
 
+            protected volatile bool m_bCompareTableRec;
+            //private Queue <DataTable> m_queueTableRec;
             private DataTable[] m_arTableRec;
             public override DataTable TableRecieved
             {
@@ -69,7 +71,7 @@ namespace uLoaderCommon
                 {
                     lock (this)
                     {
-                        return m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT];
+                        return /*m_queueTableRec.Peek ();*/ m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT];
                     }
                 }
 
@@ -77,13 +79,20 @@ namespace uLoaderCommon
                 {
                     lock (this)
                     {
+                        ////Вариант №0
+                        //m_queueTableRec.Enqueue (value.Copy ());
                         //Вариант №1
-                        if (m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Rows.Count > 0)
-                            m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS] = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Copy();
+                        if (m_bCompareTableRec == true)
+                        {
+                            if (m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Rows.Count > 0)
+                                m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS] = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Copy();
+                            else
+                                ;
+                            m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT] = value.Copy();
+                            m_bCompareTableRec = false;
+                        }
                         else
                             ;
-                        m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT] = value.Copy();
-
                         ////Вариант №2
                         //if (value.Rows.Count > 0)
                         //{
@@ -116,15 +125,36 @@ namespace uLoaderCommon
             }
 
             //Для 'GetInsertQuery'
-            public DataTable TableRecievedPrev { get { return m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS]; } }
-            public DataTable TableRecievedCur { get { return m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT]; } }
+            public DataTable TableRecievedPrev { get { return /*m_queueTableRec.ElementAt (1);*/ m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS]; } }
+            public DataTable TableRecievedCur { get { return /*m_queueTableRec.Peek ();*/ m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT]; } }
+
+            public override STATE State
+            {
+                get { return base.State; }
+
+                set
+                {
+                    base.State = value;
+
+                    if ((value == STATE.STOP)
+                        || (value == STATE.UNKNOWN))
+                        m_bCompareTableRec = true;
+                    else
+                        ;
+                }
+            }
 
             public GroupSignalsDest(HHandlerDbULoader parent, object[] pars)
                 : base(parent, pars)
             {
+                ////Вариант - очередь
+                //m_queueTableRec = new Queue<DataTable> ();
+                //Вариант - массив
                 m_arTableRec = new DataTable[(int)INDEX_DATATABLE_RES.COUNT_INDEX_DATATABLE_RES];
                 for (int i = 0; i < (int)INDEX_DATATABLE_RES.COUNT_INDEX_DATATABLE_RES; i++)
                     m_arTableRec[i] = new DataTable();
+
+                m_bCompareTableRec = true;
             }
 
             protected abstract DataTable getTableIns(ref DataTable table);
@@ -307,8 +337,18 @@ namespace uLoaderCommon
 
             protected override DataTable getTableRes()
             {
-                DataTable tblDiff = clearDupValues(TableRecievedPrev.Copy(), TableRecieved.Copy())
-                    , tblRes = getTableIns(ref tblDiff);
+                DataTable tblDiff
+                    , tblRes = new DataTable ();
+
+                if (m_bCompareTableRec == false)
+                {
+                    tblDiff = clearDupValues(TableRecievedPrev.Copy(), TableRecieved.Copy());
+                    tblRes = getTableIns(ref tblDiff);
+
+                    m_bCompareTableRec = true;
+                }
+                else
+                    ;
 
                 return tblRes;
             }
@@ -331,6 +371,7 @@ namespace uLoaderCommon
                         , rowPrev = null;
                     int idSgnl = -1
                         , tmDelta = -1;
+                    bool bConsoleDebug = false;
 
                     m_tblPrevRecieved = tblPrev.Copy();
 
@@ -390,7 +431,10 @@ namespace uLoaderCommon
                                                     rowAdd[col.ColumnName] = rowPrev[col.ColumnName];
                                             }
 
-                                            //Console.WriteLine(@"Установлен для ID=" + idSgnl + @", DATETIME=" + ((DateTime)rowAdd[@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff") + @" tmdelta=" + rowAdd[@"tmdelta"]);
+                                            if (bConsoleDebug == true)
+                                                Console.WriteLine(@"Установлен для ID=" + idSgnl + @", DATETIME=" + ((DateTime)rowAdd[@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff") + @" tmdelta=" + rowAdd[@"tmdelta"]);
+                                            else
+                                                ;
                                         }
                                         else
                                             ;
@@ -400,13 +444,19 @@ namespace uLoaderCommon
                                         //Определить смещение "соседних" значений сигнала
                                         long iTMDelta = (((DateTime)arSelIns[i][@"DATETIME"]).Ticks - ((DateTime)arSelIns[i - 1][@"DATETIME"]).Ticks) / TimeSpan.TicksPerMillisecond;
                                         rowPrev[@"tmdelta"] = (int)iTMDelta;
-                                        //Console.WriteLine(@", tmdelta=" + rowPrev[@"tmdelta"]);
+                                        if (bConsoleDebug == true)
+                                            Console.WriteLine(@", tmdelta=" + rowPrev[@"tmdelta"]);
+                                        else
+                                            ;
                                     }
 
-                                    //if (!(rowCur == null))
-                                    //    Console.Write(@"ID=" + rowCur[@"ID"] + @", DATETIME=" + ((DateTime)rowCur[@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
-                                    //else
-                                    //    Console.Write(@"ID=" + arSelIns[i][@"ID"] + @", DATETIME=" + ((DateTime)arSelIns[i][@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
+                                    if (bConsoleDebug == true)
+                                        if (!(rowCur == null))
+                                            Console.Write(@"ID=" + rowCur[@"ID"] + @", DATETIME=" + ((DateTime)rowCur[@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
+                                        else
+                                            Console.Write(@"ID=" + arSelIns[i][@"ID"] + @", DATETIME=" + ((DateTime)arSelIns[i][@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
+                                    else
+                                        ;
 
                                     rowPrev = rowCur;
                                 }
@@ -414,9 +464,12 @@ namespace uLoaderCommon
                                 ; //arSelIns == null
 
                             //Корректировать вывод
-                            if (arSelIns.Length > 0)
-                                Console.WriteLine();
-                            else ;
+                            if (bConsoleDebug == true)
+                                if (arSelIns.Length > 0)
+                                    Console.WriteLine();
+                                else ;
+                            else
+                                ;
                         } //Цикл по сигналам...
                     }
                     else
@@ -507,6 +560,11 @@ namespace uLoaderCommon
                     else
                         ;
 
+                if (iRes < 0)
+                    throw new Exception(@"GroupSignlasStatTMIDDest::getIdToInsert (idLink=" + idLink + @") - ...");
+                else
+                    ;
+
                 return iRes;
             }
         }
@@ -587,6 +645,11 @@ namespace uLoaderCommon
                     }
                     else
                         ;
+
+                if (strRes.Equals (string.Empty) == true)
+                    throw new Exception(@"GroupSignlasStatTMKKSNAMEDest::getIdToInsert (idLink=" + idLink + @") - ...");
+                else
+                    ;
 
                 return strRes;
             }

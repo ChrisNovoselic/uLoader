@@ -537,11 +537,23 @@ namespace uLoader
 
             //sendInitSource();
 
+            int idGrpSgnls = -1;
             foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
             {
                 //if (sendInitGroupSignals(FormMain.FileINI.GetIDIndex(itemGroupSignals.m_strID)) == 0)
                 if (itemGroupSignals.Validated == 0)
+                {
                     itemGroupSignals.State = STATE.STOPPED;
+
+                    if (itemGroupSignals.m_iAutoStart == 1)
+                    {
+                        idGrpSgnls = FormMain.FileINI.GetIDIndex(itemGroupSignals.m_strID);
+                        sendInitGroupSignals (idGrpSgnls);
+                        sendState(idGrpSgnls, STATE.STARTED);
+                    }
+                    else
+                        ;
+                }
                 else
                     itemGroupSignals.State = STATE.UNAVAILABLE;
             }
@@ -721,13 +733,14 @@ namespace uLoader
             object []pars = (ev.par as object[])[0] as object [];
 
             iIDGroupSignals = (int)pars[1];
+            GroupSignals grpSgnls = getGroupSignals(iIDGroupSignals);
 
             switch ((ID_DATA_ASKED_HOST)pars[0])
             {
                 case ID_DATA_ASKED_HOST.INIT_SOURCE: //Получен запрос на парметры инициализации                    
                     //Отправить данные для инициализации
                     sendInitSource ();
-                    if (! (m_listGroupSignals[iIDGroupSignals].State == STATE.UNAVAILABLE))
+                    if (!(grpSgnls.State == STATE.UNAVAILABLE))
                         //sendState(iIDGroupSignals, m_listGroupSignals[iIDGroupSignals].State);
                         sendState(iIDGroupSignals, STATE.STARTED);
                     else
@@ -735,14 +748,13 @@ namespace uLoader
                     break;
                 case ID_DATA_ASKED_HOST.INIT_SIGNALS: //Получен запрос на обрабатываемую группу сигналов
                     sendInitGroupSignals(iIDGroupSignals);
-                    if (! (m_listGroupSignals[iIDGroupSignals].State == STATE.UNAVAILABLE))
+                    if (!(grpSgnls.State == STATE.UNAVAILABLE))
                         //sendState(iIDGroupSignals, m_listGroupSignals[iIDGroupSignals].State);
                         sendState(iIDGroupSignals, STATE.STARTED);
                     else
                         ;
                     break;
                 case ID_DATA_ASKED_HOST.TABLE_RES:
-                    GroupSignals grpSgnls = getGroupSignals(iIDGroupSignals);
                     if ((!(grpSgnls == null))
                         && (!(pars[2] == null)))
                     {
@@ -1054,7 +1066,7 @@ namespace uLoader
         /// <param name="obj"></param>
         public void Clone_OnEvtDataAskedHost(object obj)
         {
-            Logging.Logg().Debug(@"GroupSources::Clone_OnEvtDataAskedHost () - NANE=" + m_strShrName + @"...", Logging.INDEX_MESSAGE.NOT_SET);
+            Logging.Logg().Debug(@"GroupSources::Clone_OnEvtDataAskedHost () - NAME=" + m_strShrName + @"...", Logging.INDEX_MESSAGE.NOT_SET);
 
             EventArgsDataHost ev = obj as EventArgsDataHost;
             int iIDGroupSignals = 0; //??? д.б. указана в "запросе"
@@ -1092,7 +1104,7 @@ namespace uLoader
                             parsToSend [0] = FormMain.FileINI.GetIDIndex(grpSgnls.m_strID);
                             PerformDataAskedHost(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.TO_INSERT, parsToSend));
 
-                            //Logging.Logg().Debug(@"GroupSources::Clone_OnEvtDataAskedHost () - NANE=" + m_strShrName + @", для [ID=" + parsToSend[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
+                            Logging.Logg().Debug(@"GroupSources::Clone_OnEvtDataAskedHost () - NAME=" + m_strShrName + @", от [ID=" + (int)pars[1] + @"] для [ID=" + parsToSend[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
                         }
                         else
                             ;

@@ -36,7 +36,7 @@ namespace uLoaderCommon
             
             public enum STATE { UNKNOWN = -1, STOP, SLEEP, TIMER, QUEUE, ACTIVE }
             private STATE m_state;
-            public STATE State { get { return m_state; } set { m_state = value; } }
+            public virtual STATE State { get { return m_state; } set { m_state = value; } }
 
             public bool IsStarted
             {
@@ -446,10 +446,15 @@ namespace uLoaderCommon
             
             lock (m_lockQueue)
             {
-                m_queueIdGroupSignals.Enqueue(key);
+                if (! (m_semaQueue == null))
+                {
+                    m_queueIdGroupSignals.Enqueue(key);
 
-                if (m_queueIdGroupSignals.Count == 1)
-                    m_semaQueue.Release(1);
+                    if (m_queueIdGroupSignals.Count == 1)
+                        m_semaQueue.Release(1);
+                    else
+                        ;
+                }
                 else
                     ;
             }
@@ -802,7 +807,7 @@ namespace uLoaderCommon
                             DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.INIT_SIGNALS, (int)(ev.par as object[])[0] });
                     }
                     else
-                        DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.INIT_SOURCE });
+                        DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.INIT_SOURCE, (int)(ev.par as object[])[0] });
                     break;
                 case (int)ID_DATA_ASKED_HOST.STOP:
                     target.Stop((int)(ev.par as object[])[0]);

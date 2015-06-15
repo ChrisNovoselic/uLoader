@@ -242,7 +242,7 @@ namespace uLoader
                     //Присвоить "дополнительные" значения для группы
                     if (itemSrc is GROUP_SRC)
                     {
-                        (itemSrc as GROUP_SRC).setAdding(GetSecValueOfKey(secGroup, @"ADDING").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUES]));
+                        (itemSrc as GROUP_SRC).setAdding(GetSecValueOfKey(secGroup, @"ADDING").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]));
                     }
                     else
                         ;
