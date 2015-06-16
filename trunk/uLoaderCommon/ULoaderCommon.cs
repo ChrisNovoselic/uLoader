@@ -567,18 +567,21 @@ namespace uLoaderCommon
         {
             bool bReq = true;
 
-            if (m_dictIdListeners.ContainsKey(id) == false)
-                m_dictIdListeners.Add(id, new int[] { -1 });
-            else
-                if (!(m_dictIdListeners[id][indx] < 0))
-                    bReq = false;
+            lock (m_lockStateGroupSignals)
+            {
+                if (m_dictIdListeners.ContainsKey(id) == false)
+                    m_dictIdListeners.Add(id, new int[] { -1 });
+                else
+                    if (!(m_dictIdListeners[id][indx] < 0))
+                        bReq = false;
+                    else
+                        ;
+
+                if (bReq == true)
+                    base.register(id, indx, connSett, name);
                 else
                     ;
-
-            if (bReq == true)
-                base.register(id, indx, connSett, name);
-            else
-                ;
+            }
         }
 
         public override void Start()

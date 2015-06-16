@@ -63,7 +63,8 @@ namespace uLoaderCommon
             }
 
             protected volatile bool m_bCompareTableRec;
-            //private Queue <DataTable> m_queueTableRec;
+            protected Queue <DataTable> m_queueTableRec;
+            public bool IsQueue { get { return m_queueTableRec.Count > 0; } }
             private DataTable[] m_arTableRec;
             public override DataTable TableRecieved
             {
@@ -92,13 +93,13 @@ namespace uLoaderCommon
                                 m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS] = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Copy();
                             else
                                 ;
-                            m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT] = value.Copy();
+                            m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT] = value;
                             m_bCompareTableRec = false;
 
                             cntCur = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Rows.Count;
                         }
                         else
-                            ;
+                            m_queueTableRec.Enqueue(value);
                         ////Вариант №2
                         //if (value.Rows.Count > 0)
                         //{
@@ -153,7 +154,10 @@ namespace uLoaderCommon
 
                     if ((value == STATE.STOP)
                         || (value == STATE.UNKNOWN))
+                    {
                         m_bCompareTableRec = true;
+                        m_queueTableRec.Clear();
+                    }
                     else
                         ;
                 }
@@ -170,6 +174,7 @@ namespace uLoaderCommon
                     m_arTableRec[i] = new DataTable();
 
                 m_bCompareTableRec = true;
+                m_queueTableRec = new Queue<DataTable>();
             }
 
             protected abstract DataTable getTableIns(ref DataTable table);
@@ -184,9 +189,15 @@ namespace uLoaderCommon
 
                 DataTable tblRes = getTableRes();
 
-                if ((!(tblRes == null))
-                    && (tblRes.Rows.Count > 0))
-                    strRes = getInsertValuesQuery(tblRes);
+                if (!(tblRes == null))
+                {
+                    if (tblRes.Rows.Count > 0)
+                        strRes = getInsertValuesQuery(tblRes);
+                    else
+                        ;
+
+                    Logging.Logg().Debug(@"Строк для вставки [ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HHandlerDbULoaderDest).m_IdGroupSignalsCurrent + @"]: " + tblRes.Rows.Count, Logging.INDEX_MESSAGE.NOT_SET);
+                }
                 else
                     ;
 
@@ -214,17 +225,17 @@ namespace uLoaderCommon
                     if (!(m_IdGroupSignalsCurrent < 0))
                         GetCurrentTimeRequest(DbInterface.DB_TSQL_INTERFACE_TYPE.MSSQL, m_dictIdListeners[m_IdGroupSignalsCurrent][0]);
                     else
-                        throw new Exception(@"statdidsql::StateRequest () - state=" + state.ToString() + @"...");
+                        throw new Exception(@"HHandlerDbULoaderDest::StateRequest () - state=" + state.ToString() + @"...");
                     break;
                 case StatesMachine.Values:
                     break;
                 case StatesMachine.Insert:
                     string query = (m_dictGroupSignals[m_IdGroupSignalsCurrent] as GroupSignalsDest).GetInsertValuesQuery();
 
-                    Logging.Logg().Error(@"statidsql::StateRequest () ::" + ((StatesMachine)state).ToString() + @" - "
-                            + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"] "
-                            + @"query=" + query + @"..."
-                            , Logging.INDEX_MESSAGE.NOT_SET);
+                    //Logging.Logg().Debug(@"HHandlerDbULoaderDest:StateRequest () ::" + ((StatesMachine)state).ToString() + @" - "
+                    //        + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"] "
+                    //        + @"query=" + query + @"..."
+                    //        , Logging.INDEX_MESSAGE.NOT_SET);
 
                     if (query.Equals(string.Empty) == false)
                         Request(m_dictIdListeners[m_IdGroupSignalsCurrent][0], query);
@@ -298,12 +309,21 @@ namespace uLoaderCommon
                     m_dictGroupSignals[id].TableRecieved = tableIn.Copy();
 
                     push(id);
+
+                    if ((m_dictGroupSignals[id] as GroupSignalsDest).IsQueue == true)
+                    {
+                        push(id);
+
+                        Logging.Logg().Warning(@"HHandlerDbULoader::Insert () - ENQUEUE! ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @", от [ID_SOURCE=" + pars[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
+                    }
+                    else
+                        ;
                 }
                 else
                     ;
             }
 
-            Logging.Logg().Debug(@"HHandlerDbULoader::Insert () - key=" + id + @", от [ID_SOURCE=" + pars[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
+            Logging.Logg().Debug(@"HHandlerDbULoader::Insert () - ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @", от [ID_SOURCE=" + pars[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
 
             return iRes;
         }
@@ -354,6 +374,19 @@ namespace uLoaderCommon
             {
                 DataTable tblDiff
                     , tblRes = new DataTable ();
+
+                if (m_bCompareTableRec == true)
+                    if (IsQueue == true)
+                    {
+                        //m_bCompareTableRec = false
+                        TableRecieved = m_queueTableRec.Dequeue().Copy();
+
+                        Logging.Logg().Warning(@"HHandlerDbULoader::Insert () - DEQUEUE! [ID=" + ((_parent as HHandlerDbULoaderStatTMDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HHandlerDbULoaderStatTMDest).m_IdGroupSignalsCurrent + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
+                    }
+                    else
+                        ;
+                else
+                    ;
 
                 if (m_bCompareTableRec == false)
                 {

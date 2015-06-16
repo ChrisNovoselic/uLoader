@@ -293,7 +293,7 @@ namespace uLoaderCommon
                     else
                         ;
 
-                    Logging.Logg().Debug(@"HHandlerDbULoaderSrc::StateRequest (::Values) - Query=" + Query, Logging.INDEX_MESSAGE.NOT_SET);
+                    //Logging.Logg().Debug(@"HHandlerDbULoaderSrc::StateRequest (::Values) - Query=" + Query, Logging.INDEX_MESSAGE.NOT_SET);
 
                     //try
                     //{
