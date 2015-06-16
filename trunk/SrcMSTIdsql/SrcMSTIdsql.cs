@@ -18,11 +18,15 @@ namespace SrcMSTIdsql
         public SrcMSTIDsql()
             : base()
         {
+            //Нет возможности опросить источники с "одинаковыми" [ID]. 16.06.2015
+            throw new NotImplementedException();
         }
 
         public SrcMSTIDsql(IPlugIn iPlugIn)
             : base(iPlugIn)
         {
+            //Нет возможности опросить источники с "одинаковыми" [ID]. 16.06.2015
+            throw new NotImplementedException ();
         }
 
         private class GroupSignalsMSTIDsql : GroupSignalsMSTTMSrc

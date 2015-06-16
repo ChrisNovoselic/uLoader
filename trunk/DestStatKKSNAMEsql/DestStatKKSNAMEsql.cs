@@ -26,7 +26,7 @@ namespace DestStatKKSNAMEsql
         {
         }
 
-        private class GroupSignalsStatKKSNAMEsql : GroupSignalsStatTMKKSNAMEDest
+        private class GroupSignalsStatKKSNAMEsql : HHandlerDbULoaderStatTMMSTDest.GroupSignalsStatTMMSTDest
         {
             public GroupSignalsStatKKSNAMEsql(HHandlerDbULoader parent, object[] pars)
                 : base(parent, pars)
@@ -53,20 +53,25 @@ namespace DestStatKKSNAMEsql
 
                 foreach (DataRow row in tblRes.Rows)
                 {
-                    strRow = @"(";
+                    if (((int)getIdToInsert(Int32.Parse(row[@"ID"].ToString().Trim()))) == 0)
+                    {
+                        strRow = @"(";
 
-                    strRow += @"'" + getIdToInsert(Int32.Parse(row[@"ID"].ToString().Trim())) + @"'" + @",";
-                    strRow += (_parent as HHandlerDbULoaderStatTMDest).m_strIdTEC + @",";
-                    strRow += ((double)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
-                    strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(0).ToString(@"yyyyMMdd HH:mm:ss.fff") + @"',";
-                    strRow += row[@"tmdelta"] + @",";
-                    strRow += @"GETDATE()" + @",";
-                    strRow += (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).m_strIdSource + @",";
-                    strRow += (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).m_strIdSrvTM;
+                        strRow += @"'" + row[@"KKSNAME_MST"] + @"'" + @",";
+                        strRow += (_parent as HHandlerDbULoaderStatTMDest).m_strIdTEC + @",";
+                        strRow += ((double)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
+                        strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(0).ToString(@"yyyyMMdd HH:mm:ss.fff") + @"',";
+                        strRow += row[@"tmdelta"] + @",";
+                        strRow += @"GETDATE()" + @",";
+                        strRow += (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).m_strIdSource + @",";
+                        strRow += (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).m_strIdSrvTM;
 
-                    strRow += @"),";
+                        strRow += @"),";
 
-                    strRes += strRow;
+                        strRes += strRow;
+                    }
+                    else
+                        ; // не найдено соответствие с Id источника
                 }
                 //Лишняя ','
                 strRes = strRes.Substring(0, strRes.Length - 1);

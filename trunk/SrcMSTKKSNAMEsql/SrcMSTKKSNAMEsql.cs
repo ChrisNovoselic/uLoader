@@ -45,7 +45,7 @@ namespace SrcMSTKKSNAMEsql
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
-                return new SIGNALMSTKKSNAMEsql((int)objs[0], (string)objs[3]);
+                return new SIGNALMSTKKSNAMEsql((int)objs[0], (string)objs[2]);
             }
 
             protected override void setQuery()
@@ -54,18 +54,29 @@ namespace SrcMSTKKSNAMEsql
                 string strIds = string.Empty;
 
                 foreach (SIGNALMSTKKSNAMEsql sgnl in m_arSignals)
-                    strIds += sgnl.m_kks_name + @",";
+                    strIds += @"'" + sgnl.m_kks_name + @"',";
                 //удалить "лишнюю" запятую
                 strIds = strIds.Substring(0, strIds.Length - 1);
 
-                m_strQuery = @"SELECT [KKS_NAME] as [ID], 1 AS [ID_TEC],"
-                    + @" CASE WHEN ([Value] > -0.1 AND [Value] < 0.1) THEN 0 ELSE [Value] END AS [VALUE],"
-                    + @" [last_changed_at] as [DATETIME],[tmdelta]"
-                    + @" FROM [dbo].[v_STATISTICS_real_his_KKS]"
-                        + @" WHERE"
-                        + @" [last_changed_at] >='" + DateTimeStartFormat + @"'"
+                m_strQuery =
+                    ////Вариант №1
+                    //@"SELECT [KKS_NAME] as [ID], 1 AS [ID_TEC],"
+                    //+ @" CASE WHEN ([Value] > -0.1 AND [Value] < 0.1) THEN 0 ELSE [Value] END AS [VALUE],"
+                    //+ @" [last_changed_at] as [DATETIME],[tmdelta]"
+                    //+ @" FROM [dbo].[v_STATISTICS_real_his_KKS]"
+                    //    + @" WHERE"
+                    //    + @" [last_changed_at] >='" + DateTimeStartFormat + @"'"
+                    //    + @" AND [last_changed_at] <'" + DateTimeCurIntervalEndFormat + @"'"
+                    //        + @" AND [KKS_NAME] IN (" + strIds + @")"
+                    //Вариант №2
+                    @"SELECT [PARAM].[NAME] as [ID], [PARAM].[ID] as [ID_MST]"
+                        + @",CASE WHEN ([Value] > -0.1 AND [Value] < 0.1) THEN 0 ELSE [Value] END AS [VALUE]"
+                        + @",[last_changed_at] as [DATETIME],[tmdelta]"
+                        + @" FROM [v_STATISTICS_real_his] as [DATA]"
+                        + @" INNER JOIN (SELECT [NAME], [ID] FROM [reals_rv] WHERE [NAME] IN (" + strIds + @")) AS [PARAM] ON [PARAM].[ID] = [DATA].[ID]"
+                        + @" WHERE [DATA].[ID] IN (SELECT [id] FROM [reals_rv] WHERE [NAME] IN (" + strIds + @"))"
+                        + @" AND [last_changed_at] >='" + DateTimeStartFormat + @"'"
                         + @" AND [last_changed_at] <'" + DateTimeCurIntervalEndFormat + @"'"
-                            + @" AND [KKS_NAME] IN (" + strIds + @")"
                     ;
             }
 
@@ -96,7 +107,7 @@ namespace SrcMSTKKSNAMEsql
                     if (! (value.Columns.IndexOf (@"ID") < 0))
                     {
                         DataTable tblVal = value.Copy ();
-                        tblVal.Columns.Add (@"KKSNAME_MST", typeof(int));
+                        tblVal.Columns.Add (@"KKSNAME_MST", typeof(string));
                         //tblVal.Columns.Add(@"ID_MST", typeof(int));
 
                         foreach (DataRow r in tblVal.Rows)

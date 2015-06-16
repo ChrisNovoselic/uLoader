@@ -42,7 +42,7 @@ namespace uLoaderCommon
             return iRes;
         }
 
-        protected abstract class GroupSignalsDest : GroupSignals
+        public abstract class GroupSignalsDest : GroupSignals
         {
             public enum INDEX_DATATABLE_RES
             {
@@ -77,6 +77,10 @@ namespace uLoaderCommon
 
                 set
                 {
+                    int cntPrev = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Rows.Count
+                        , cntCur = cntPrev;
+                    string msg = string.Empty;
+
                     lock (this)
                     {
                         ////Вариант №0
@@ -90,6 +94,8 @@ namespace uLoaderCommon
                                 ;
                             m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT] = value.Copy();
                             m_bCompareTableRec = false;
+
+                            cntCur = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Rows.Count;
                         }
                         else
                             ;
@@ -120,6 +126,15 @@ namespace uLoaderCommon
                         //}
                         //else
                         //    ;
+
+                        msg = @"HHandlerDbULoader::TableRecieved.set - "
+                            + @"[ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id
+                            + @", key=" + (_parent as HHandlerDbULoaderDest).m_IdGroupSignalsCurrent + @"] "
+                            + @"строк_было=" + cntPrev
+                            + @", строк_стало=" + cntCur
+                            + @" ...";
+                        Console.WriteLine(msg);
+                        //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
                     }
                 }
             }
@@ -328,7 +343,7 @@ namespace uLoaderCommon
             return iRes;
         }
 
-        protected abstract class GroupSignalsStatTMDest : GroupSignalsDest
+        public abstract class GroupSignalsStatTMDest : GroupSignalsDest
         {
             public GroupSignalsStatTMDest(HHandlerDbULoader parent, object[] pars)
                 : base(parent, pars)
@@ -507,6 +522,54 @@ namespace uLoaderCommon
 
                     return rowRes;
                 }
+            }
+        }
+    }
+
+    public abstract class HHandlerDbULoaderStatTMMSTDest : HHandlerDbULoaderStatTMDest
+    {
+        public HHandlerDbULoaderStatTMMSTDest()
+            : base()
+        {
+        }
+
+        public HHandlerDbULoaderStatTMMSTDest(IPlugIn iPlugIn)
+            : base(iPlugIn)
+        {
+        }
+
+        public abstract class GroupSignalsStatTMMSTDest : GroupSignalsStatTMDest
+        {
+            public GroupSignalsStatTMMSTDest(HHandlerDbULoader parent, object[] pars)
+                : base(parent, pars)
+            {
+            }
+
+            protected override GroupSignals.SIGNAL createSignal(object[] objs)
+            {
+                return new SIGNALDest((int)objs[0], (int)objs[1]);
+            }
+
+            protected override object getIdToInsert(int idLink)
+            {
+                int iRes = -1;
+
+                foreach (SIGNALDest sgnl in m_arSignals)
+                    if (sgnl.m_idLink == idLink)
+                    {
+                        iRes = 0;
+
+                        break;
+                    }
+                    else
+                        ;
+
+                if (iRes < 0)
+                    throw new Exception(@"GroupSignlasStatTMIDDest::getIdToInsert (idLink=" + idLink + @") - ...");
+                else
+                    ;
+
+                return iRes;
             }
         }
     }

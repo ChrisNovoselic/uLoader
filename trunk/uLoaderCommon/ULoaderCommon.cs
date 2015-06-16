@@ -30,7 +30,7 @@ namespace uLoaderCommon
     {
         protected IPlugIn _iPlugin;
 
-        protected abstract class GroupSignals
+        public abstract class GroupSignals
         {
             protected HHandlerDbULoader _parent;
             
@@ -195,12 +195,15 @@ namespace uLoaderCommon
 
                 List<int> listIndxToDelete = new List<int>();
                 DataRow[] arDup = null;
+                bool bQuote = !tblDup.Columns[@"ID"].DataType.IsPrimitive;
+                string strSel = string.Empty;
 
                 foreach (DataRow r in tblDup.Rows)
                 {
                     if (listIndxToDelete.IndexOf (tblDup.Rows.IndexOf(r)) < 0)
                     {
-                        arDup = (tblDup as DataTable).Select(@"ID=" + r[@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)r[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
+                        strSel = @"ID=" + (bQuote == true ? @"'" : string.Empty) + r[@"ID"] + (bQuote == true ? @"'" : string.Empty) + @" AND " + @"DATETIME='" + ((DateTime)r[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'";
+                        arDup = (tblDup as DataTable).Select(strSel);
                         if (arDup.Length > 1)
                             for (int i = 1; i < arDup.Length; i ++)
                                 listIndxToDelete.Add(tblDup.Rows.IndexOf(arDup[i]));
