@@ -62,9 +62,30 @@ namespace uLoaderCommon
                 }
             }
 
+            protected int dequeue()
+            {
+                int iRes = 0;
+
+                lock (this)
+                {
+                    if (m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Rows.Count > 0)
+                        m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS] = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Copy();
+                    else
+                        ;
+
+                    m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT] = m_queueTableRec.Dequeue();
+
+                    m_bCompareTableRec = false;
+                }
+
+                Logging.Logg().Warning(@"HHandlerDbULoaderDest::dequeue - " + @"DEQUEUE!" + @" [ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HHandlerDbULoaderDest).m_IdGroupSignalsCurrent + @"] queue.Count=" + m_queueTableRec.Count + @"...", Logging.INDEX_MESSAGE.NOT_SET);
+
+                return iRes;
+            }
+
             protected volatile bool m_bCompareTableRec;
             //protected Stack <DataTable> m_stackTableRec;
-            protected Queue<DataTable> m_queueTableRec;
+            private Queue<DataTable> m_queueTableRec;
             public bool IsQueue { get { return m_queueTableRec.Count > 0; } }
             private DataTable[] m_arTableRec;
             public override DataTable TableRecieved
@@ -94,7 +115,21 @@ namespace uLoaderCommon
                                 m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS] = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Copy();
                             else
                                 ;
-                            m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT] = value;
+
+                            if (m_queueTableRec.Count == 0)
+                            {
+                                m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT] = value;
+
+                                msg = @"Ok";
+                            }
+                            else
+                            {
+                                m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT] = m_queueTableRec.Dequeue();
+                                m_queueTableRec.Enqueue(value);
+
+                                msg = @"DEQUEUE..ENQUEUE!";
+                            }
+
                             m_bCompareTableRec = false;
 
                             cntCur = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Rows.Count;
@@ -104,7 +139,7 @@ namespace uLoaderCommon
                             m_queueTableRec.Enqueue (value);
                             //m_stackTableRec.Push (value);
 
-                            Logging.Logg().Warning(@"HHandlerDbULoaderDest::TableRecieved.set - ENQUEUE! [ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HHandlerDbULoaderDest).m_IdGroupSignalsCurrent + @"] queue.Count=" + m_queueTableRec.Count + @"...", Logging.INDEX_MESSAGE.NOT_SET);
+                            msg = @"ENQUEUE!";
                         }
                         ////Вариант №2
                         //if (value.Rows.Count > 0)
@@ -133,16 +168,18 @@ namespace uLoaderCommon
                         //}
                         //else
                         //    ;
-
-                        msg = @"HHandlerDbULoaderDest.GroupSignalsDest::TableRecieved.set - "
-                            + @"[ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id
-                            + @", key=" + (_parent as HHandlerDbULoaderDest).m_IdGroupSignalsCurrent + @"] "
-                            + @"строк_было=" + cntPrev
-                            + @", строк_стало=" + cntCur
-                            + @" ...";
-                        Console.WriteLine(msg);
-                        //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
                     }
+
+                    Logging.Logg().Warning(@"HHandlerDbULoaderDest::TableRecieved.set - " + msg + @" [ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HHandlerDbULoaderDest).m_IdGroupSignalsCurrent + @"] queue.Count=" + m_queueTableRec.Count + @"...", Logging.INDEX_MESSAGE.NOT_SET);
+
+                    msg = @"HHandlerDbULoaderDest.GroupSignalsDest::TableRecieved.set - "
+                        + @"[ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id
+                        + @", key=" + (_parent as HHandlerDbULoaderDest).m_IdGroupSignalsCurrent + @"] "
+                        + @"строк_было=" + cntPrev
+                        + @", строк_стало=" + cntCur
+                        + @" ...";
+                    Console.WriteLine(msg);
+                    //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
 
@@ -273,7 +310,7 @@ namespace uLoaderCommon
                 case StatesMachine.Values:
                     Logging.Logg().Action(@"statidsql::StateResponse () ::" + ((StatesMachine)state).ToString() + @" - "
                         + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"] "
-                        + @"Ok! ...", Logging.INDEX_MESSAGE.NOT_SET);
+                        + @"Ok ...", Logging.INDEX_MESSAGE.NOT_SET);
                     break;
                 case StatesMachine.Insert:
                     break;
@@ -383,17 +420,9 @@ namespace uLoaderCommon
                 DataTable tblDiff
                     , tblRes = new DataTable ();
 
-                Logging.Logg().Warning(@"HHandlerDbULoaderStatTMDest.GroupSignalsStatTMDest::Insert () - getTableRes! [ID=" + ((_parent as HHandlerDbULoaderStatTMDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HHandlerDbULoaderStatTMDest).m_IdGroupSignalsCurrent + @"] m_bCompareTableRec=" + m_bCompareTableRec + @", queue.Count=" + m_queueTableRec.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
-
                 if (m_bCompareTableRec == true)
                     if (IsQueue == true)
-                    {
-                        //m_bCompareTableRec = false
-                        TableRecieved = m_queueTableRec.Dequeue ().Copy();
-                        //TableRecieved = m_stackTableRec.Pop ().Copy ();
-
-                        Logging.Logg().Warning(@"HHandlerDbULoaderStatTMDest.GroupSignalsStatTMDest::Insert () - DEQUEUE! [ID=" + ((_parent as HHandlerDbULoaderStatTMDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HHandlerDbULoaderStatTMDest).m_IdGroupSignalsCurrent + @"] queue.Count=" + m_queueTableRec.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
-                    }
+                        dequeue();
                     else
                         ;
                 else
