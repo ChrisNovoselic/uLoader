@@ -347,7 +347,11 @@ namespace uLoaderCommon
         private Thread m_threadQueue;
         private Queue<int> m_queueIdGroupSignals;
         private int threadQueueIsWorking;
-        private Semaphore m_semaQueue;
+        private
+            //Semaphore m_semaQueue
+            AutoResetEvent m_autoResetEvtQueue
+            //ManualResetEvent m_mnlResetEvtQueue
+            ;
 
         protected string[] m_arAddingKeys;
         protected Dictionary<string, string> m_dictAdding;
@@ -365,7 +369,10 @@ namespace uLoaderCommon
             m_lockQueue = new object();
             m_queueIdGroupSignals = new Queue<int>();
             threadQueueIsWorking = -1;
-            m_semaQueue = null; //Создание при "старте"
+            //m_semaQueue
+            m_autoResetEvtQueue
+            //m_mnlResetEvtQueue
+                = null; //Создание при "старте"
 
             m_dictAdding = new Dictionary<string, string>();
             m_arAddingKeys = new string [] {};
@@ -415,8 +422,11 @@ namespace uLoaderCommon
             int iRes = 0;
 
             if (m_dictGroupSignals.Keys.Contains(id) == false)
-                //Считать переданные параметры - параметрами сигналов
+            {//Считать переданные параметры - параметрами сигналов                
                 m_dictGroupSignals.Add(id, createGroupSignals (pars));
+
+                Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - добавить группу сигналов [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+            }
             else
                 //Сигналы д.б. инициализированы
                 if (m_dictGroupSignals[id].Signals == null)
@@ -424,10 +434,14 @@ namespace uLoaderCommon
                 else
                 {
                     if (pars[0].GetType().IsArray == true)
+                    {
                         //Считать переданные параметры - параметрами сигналов
-                        m_dictGroupSignals[id] = createGroupSignals(pars);                        
+                        m_dictGroupSignals[id] = createGroupSignals(pars);
+
+                        Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - ПЕРЕсоздать группу сигналов [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+                    }
                     else
-                        //Считать переданные параметры - параметрами группы сигналов
+                    {//Считать переданные параметры - параметрами группы сигналов
                         lock (m_lockStateGroupSignals)
                         {
                             m_dictGroupSignals[id].Mode = (uLoaderCommon.MODE_WORK)pars[0];
@@ -436,6 +450,9 @@ namespace uLoaderCommon
                             m_dictGroupSignals[id].TimeSpanPeriod = TimeSpan.FromSeconds((double)pars[2]);
                             m_dictGroupSignals[id].MSecInterval = (int)pars[3];
                         }
+
+                        Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - параметры группы сигналов [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+                    }
                 }
 
             return iRes;
@@ -449,12 +466,16 @@ namespace uLoaderCommon
             
             lock (m_lockQueue)
             {
-                if (! (m_semaQueue == null))
+                if (!(m_autoResetEvtQueue == null))
                 {
                     m_queueIdGroupSignals.Enqueue(key);
 
-                    if (m_queueIdGroupSignals.Count == 1)
-                        m_semaQueue.Release(1);
+                    bool bSet = m_autoResetEvtQueue.WaitOne(0);
+
+                    //if (m_queueIdGroupSignals.Count == 1)
+                    if (bSet == false)
+                        //m_semaQueue.Release(1);
+                        m_autoResetEvtQueue.Set();
                     else
                         ;
                 }
@@ -476,7 +497,8 @@ namespace uLoaderCommon
             {
                 bRes = false;
                 //Ожидать когда появятся объекты для обработки
-                bRes = m_semaQueue.WaitOne();
+                //bRes = m_semaQueue.WaitOne();
+                bRes = m_autoResetEvtQueue.WaitOne();
 
                 while (true)
                 {
@@ -542,7 +564,8 @@ namespace uLoaderCommon
             if (bRes == true)
                 try
                 {
-                    m_semaQueue.Release(1);
+                    //m_semaQueue.Release(1);
+                    m_autoResetEvtQueue.Reset();
                 }
                 catch (Exception e)
                 { //System.Threading.SemaphoreFullException
@@ -559,29 +582,29 @@ namespace uLoaderCommon
 
         public override void StartDbInterfaces()
         {
-            foreach (int id in m_dictGroupSignals.Keys)
-                register(id, 0, m_connSett, string.Empty);
+            lock (m_lockStateGroupSignals)
+            {
+                foreach (int id in m_dictGroupSignals.Keys)
+                    register(id, 0, m_connSett, string.Empty);
+            }
         }
 
         protected override void register(int id, int indx, ConnectionSettings connSett, string name)
         {
             bool bReq = true;
 
-            lock (m_lockStateGroupSignals)
-            {
-                if (m_dictIdListeners.ContainsKey(id) == false)
-                    m_dictIdListeners.Add(id, new int[] { -1 });
-                else
-                    if (!(m_dictIdListeners[id][indx] < 0))
-                        bReq = false;
-                    else
-                        ;
-
-                if (bReq == true)
-                    base.register(id, indx, connSett, name);
+            if (m_dictIdListeners.ContainsKey(id) == false)
+                m_dictIdListeners.Add(id, new int[] { -1 });
+            else
+                if (!(m_dictIdListeners[id][indx] < 0))
+                    bReq = false;
                 else
                     ;
-            }
+
+            if (bReq == true)
+                base.register(id, indx, connSett, name);
+            else
+                ;
         }
 
         public override void Start()
@@ -614,6 +637,8 @@ namespace uLoaderCommon
 
                 if ((bRes == true) && (base.IsStarted == false))
                     throw new Exception (@"HHandlerDbULoader::IsStarted.get - несовпадение признака 'Старт' с базовым классом...");
+                else
+                    ;
 
                 return bRes;
             }
@@ -621,9 +646,20 @@ namespace uLoaderCommon
 
         public void Start(int id)
         {
-            int iNeedStarted = IsStarted == false ? 1 : 0;
-
+            Logging.Logg().Debug(@"HHandlerDbULoader::Start (ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            
+            int iNeedStarted = -1;
             GroupSignals.STATE initState = GroupSignals.STATE.UNKNOWN;
+
+            try
+            {
+                iNeedStarted = IsStarted == false ? 1 : 0;
+            }
+            catch (Exception e)
+            {
+                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader::Start (ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @") - ...");
+            }
+
             switch (m_dictGroupSignals[id].Mode)
             {
                 case MODE_WORK.CUR_INTERVAL:
@@ -645,6 +681,8 @@ namespace uLoaderCommon
                     iNeedStarted = -1;
             }
 
+            Logging.Logg().Debug(@"HHandlerDbULoader::Start (ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @") - iNeedStarted=" + iNeedStarted + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+
             (_iPlugin as PlugInBase).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.START, id });
 
             if (iNeedStarted == 1)
@@ -655,12 +693,15 @@ namespace uLoaderCommon
             else
                 ;
 
-            register(id, 0, m_connSett, string.Empty);
+            lock (m_lockStateGroupSignals)
+            {
+                register(id, 0, m_connSett, string.Empty);
+            }
         }
 
         public override void Stop()
         {
-            Logging.Logg().Debug(@"HHandlerDbULoader::Stop () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            Logging.Logg().Debug(@"HHandlerDbULoader::Stop (ID=" + (_iPlugin as PlugInBase)._Id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
             stopThreadQueue();
 
@@ -692,7 +733,14 @@ namespace uLoaderCommon
             {
                 (_iPlugin as PlugInBase).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.STOP, id });
 
-                iNeedStopped = IsStarted == false ? 1 : 0;
+                try
+                {
+                    iNeedStopped = IsStarted == false ? 1 : 0;
+                }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader::Stop (ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @") - ...");
+                }
 
                 if (iNeedStopped == 1)
                 {
@@ -721,13 +769,14 @@ namespace uLoaderCommon
                 m_threadQueue.CurrentUICulture =
                     ProgramBase.ss_MainCultureInfo;
 
-                m_semaQueue = new Semaphore(1, 1);
+                //m_semaQueue = new Semaphore(1, 1);
+                //m_semaQueue.WaitOne();
+                m_autoResetEvtQueue = new AutoResetEvent (false);
+                //m_mnlResetEvtQueue = new ManualResetEvent (false);
 
                 //InitializeSyncState();
                 //Установить в "несигнальное" состояние
                 m_waitHandleState[(int)INDEX_WAITHANDLE_REASON.SUCCESS].WaitOne(System.Threading.Timeout.Infinite);
-
-                m_semaQueue.WaitOne();
 
                 try { m_threadQueue.Start(); }
                 catch (Exception e)
@@ -753,7 +802,11 @@ namespace uLoaderCommon
             if ((!(m_threadQueue == null)) && (m_threadQueue.IsAlive == true))
             {
                 //Выход из потоковой функции
-                try { m_semaQueue.Release(1); }
+                try
+                {
+                    //m_semaQueue.Release(1);
+                    m_autoResetEvtQueue.Set();
+                }
                 catch (Exception e)
                 {
                     Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, "HHandlerDbULoader::stopThreadQueue () - m_semaQueue.Release(1)");
@@ -767,7 +820,8 @@ namespace uLoaderCommon
                 else
                     ;
 
-                m_semaQueue = null;                
+                //m_semaQueue = null;                
+                m_autoResetEvtQueue = null;
                 m_queueIdGroupSignals.Clear();
                 m_threadQueue = null;
             }

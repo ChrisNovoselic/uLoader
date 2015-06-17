@@ -63,7 +63,8 @@ namespace uLoaderCommon
             }
 
             protected volatile bool m_bCompareTableRec;
-            protected Queue <DataTable> m_queueTableRec;
+            //protected Stack <DataTable> m_stackTableRec;
+            protected Queue<DataTable> m_queueTableRec;
             public bool IsQueue { get { return m_queueTableRec.Count > 0; } }
             private DataTable[] m_arTableRec;
             public override DataTable TableRecieved
@@ -99,7 +100,12 @@ namespace uLoaderCommon
                             cntCur = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Rows.Count;
                         }
                         else
-                            m_queueTableRec.Enqueue(value);
+                        {
+                            m_queueTableRec.Enqueue (value);
+                            //m_stackTableRec.Push (value);
+
+                            Logging.Logg().Warning(@"HHandlerDbULoaderDest::TableRecieved.set - ENQUEUE! [ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HHandlerDbULoaderDest).m_IdGroupSignalsCurrent + @"] queue.Count=" + m_queueTableRec.Count + @"...", Logging.INDEX_MESSAGE.NOT_SET);
+                        }
                         ////Вариант №2
                         //if (value.Rows.Count > 0)
                         //{
@@ -128,7 +134,7 @@ namespace uLoaderCommon
                         //else
                         //    ;
 
-                        msg = @"HHandlerDbULoader::TableRecieved.set - "
+                        msg = @"HHandlerDbULoaderDest.GroupSignalsDest::TableRecieved.set - "
                             + @"[ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id
                             + @", key=" + (_parent as HHandlerDbULoaderDest).m_IdGroupSignalsCurrent + @"] "
                             + @"строк_было=" + cntPrev
@@ -155,7 +161,7 @@ namespace uLoaderCommon
                     if ((value == STATE.STOP)
                         || (value == STATE.UNKNOWN))
                     {
-                        m_bCompareTableRec = true;
+                        m_bCompareTableRec = true;                        
                         m_queueTableRec.Clear();
                     }
                     else
@@ -175,6 +181,7 @@ namespace uLoaderCommon
 
                 m_bCompareTableRec = true;
                 m_queueTableRec = new Queue<DataTable>();
+                //m_stackTableRec = new Stack<DataTable>();
             }
 
             protected abstract DataTable getTableIns(ref DataTable table);
@@ -299,6 +306,7 @@ namespace uLoaderCommon
         public virtual int Insert(int id, DataTable tableIn, object []pars)
         {
             int iRes = 0;
+            string msg = string.Empty;
 
             lock (m_lockStateGroupSignals)
             {
@@ -309,12 +317,12 @@ namespace uLoaderCommon
                     m_dictGroupSignals[id].TableRecieved = tableIn.Copy();
 
                     push(id);
+                    msg = @"PUSH";
 
                     if ((m_dictGroupSignals[id] as GroupSignalsDest).IsQueue == true)
                     {
                         push(id);
-
-                        Logging.Logg().Warning(@"HHandlerDbULoader::Insert () - ENQUEUE! ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @", от [ID_SOURCE=" + pars[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
+                        msg += @"..PUSH!";
                     }
                     else
                         ;
@@ -323,7 +331,7 @@ namespace uLoaderCommon
                     ;
             }
 
-            Logging.Logg().Debug(@"HHandlerDbULoader::Insert () - ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @", от [ID_SOURCE=" + pars[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
+            Logging.Logg().Debug(@"HHandlerDbULoaderDest::Insert () - " + msg + @" ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @", от [ID_SOURCE=" + pars[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
 
             return iRes;
         }
@@ -375,13 +383,16 @@ namespace uLoaderCommon
                 DataTable tblDiff
                     , tblRes = new DataTable ();
 
+                Logging.Logg().Warning(@"HHandlerDbULoaderStatTMDest.GroupSignalsStatTMDest::Insert () - getTableRes! [ID=" + ((_parent as HHandlerDbULoaderStatTMDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HHandlerDbULoaderStatTMDest).m_IdGroupSignalsCurrent + @"] m_bCompareTableRec=" + m_bCompareTableRec + @", queue.Count=" + m_queueTableRec.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+
                 if (m_bCompareTableRec == true)
                     if (IsQueue == true)
                     {
                         //m_bCompareTableRec = false
-                        TableRecieved = m_queueTableRec.Dequeue().Copy();
+                        TableRecieved = m_queueTableRec.Dequeue ().Copy();
+                        //TableRecieved = m_stackTableRec.Pop ().Copy ();
 
-                        Logging.Logg().Warning(@"HHandlerDbULoader::Insert () - DEQUEUE! [ID=" + ((_parent as HHandlerDbULoaderStatTMDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HHandlerDbULoaderStatTMDest).m_IdGroupSignalsCurrent + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
+                        Logging.Logg().Warning(@"HHandlerDbULoaderStatTMDest.GroupSignalsStatTMDest::Insert () - DEQUEUE! [ID=" + ((_parent as HHandlerDbULoaderStatTMDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HHandlerDbULoaderStatTMDest).m_IdGroupSignalsCurrent + @"] queue.Count=" + m_queueTableRec.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
                     else
                         ;
