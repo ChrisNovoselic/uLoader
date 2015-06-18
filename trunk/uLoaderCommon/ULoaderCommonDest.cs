@@ -66,15 +66,18 @@ namespace uLoaderCommon
             {
                 int iRes = 0;
 
+                //Проверка признака сравнения текущей и предыдущих таблиц + наличия очереди перед вызовом
                 lock (this)
                 {
+                    //Пустую таблицу НЕ копировать, чтобы предотвратить потерю информацию в предыдущей
+                    // , пустая таблица - признак перехода через границу интервала опроса
                     if (m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Rows.Count > 0)
                         m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS] = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Copy();
                     else
                         ;
-
+                    //
                     m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT] = m_queueTableRec.Dequeue();
-
+                    //Установить признак сравнения текущей и предыдущих таблиц - НЕ обработаны
                     m_bCompareTableRec = false;
                 }
 
@@ -82,10 +85,18 @@ namespace uLoaderCommon
 
                 return iRes;
             }
-
+            /// <summary>
+            /// Признак выполнения сравнения текущей и предыдущей тблиц
+            /// </summary>
             protected volatile bool m_bCompareTableRec;
             //protected Stack <DataTable> m_stackTableRec;
+            /// <summary>
+            /// Очередь необработанных таблиц результата от источника
+            /// </summary>
             private Queue<DataTable> m_queueTableRec;
+            /// <summary>
+            /// Признак наличия необработанных таблиц результата от источника
+            /// </summary>
             public bool IsQueue { get { return m_queueTableRec.Count > 0; } }
             private DataTable[] m_arTableRec;
             public override DataTable TableRecieved
@@ -111,34 +122,38 @@ namespace uLoaderCommon
                         //Вариант №1
                         if (m_bCompareTableRec == true)
                         {
+                            // см. выше - 'dequeue'
                             if (m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Rows.Count > 0)
                                 m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS] = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Copy();
                             else
                                 ;
-
-                            if (m_queueTableRec.Count == 0)
-                            {
+                            //Проверить наличие очереди
+                            if (IsQueue == false)
+                            {//При отсутствии очереди присвоить значение
                                 m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT] = value;
-
+                                //Сообщение в лог
                                 msg = @"Ok";
                             }
                             else
-                            {
+                            {//При наличии очереди, присвоить значение текущей таблицы элементом очереди
+                                //, элемент очереди - удалить
                                 m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT] = m_queueTableRec.Dequeue();
+                                // добавить элемент в очередь
                                 m_queueTableRec.Enqueue(value);
-
+                                //Сообщение в лог
                                 msg = @"DEQUEUE..ENQUEUE!";
                             }
-
+                            //Установить признак сравнения текущей и предыдущих таблиц - НЕ обработаны
                             m_bCompareTableRec = false;
 
                             cntCur = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Rows.Count;
                         }
                         else
                         {
+                            // добавить элемент в очередь
                             m_queueTableRec.Enqueue (value);
                             //m_stackTableRec.Push (value);
-
+                            //Сообщение в лог
                             msg = @"ENQUEUE!";
                         }
                         ////Вариант №2
@@ -183,10 +198,15 @@ namespace uLoaderCommon
                 }
             }
 
-            //Для 'GetInsertQuery'
-            public DataTable TableRecievedPrev { get { return /*m_queueTableRec.ElementAt (1);*/ m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS]; } }
-            public DataTable TableRecievedCur { get { return /*m_queueTableRec.Peek ();*/ m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT]; } }
+            /// <summary>
+            /// Таблица с результатами - предыдущая (обработанная, для использования в вызове 'GetInsertQuery')
+            /// </summary>
+            protected DataTable TableRecievedPrev { get { return /*m_queueTableRec.ElementAt (1);*/ m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS]; } }
+            //public DataTable TableRecievedCur { get { return /*m_queueTableRec.Peek ();*/ m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT]; } }
 
+            /// <summary>
+            /// Состояние группы сигналов
+            /// </summary>
             public override STATE State
             {
                 get { return base.State; }
@@ -195,6 +215,7 @@ namespace uLoaderCommon
                 {
                     base.State = value;
 
+                    //При установке состояния 'STOP' - очистить (сбросить) очередь
                     if ((value == STATE.STOP)
                         || (value == STATE.UNKNOWN))
                     {
@@ -205,7 +226,11 @@ namespace uLoaderCommon
                         ;
                 }
             }
-
+            /// <summary>
+            /// Конструктор - основной (с параметрами)
+            /// </summary>
+            /// <param name="parent">Объект-владелец (для последующего обращения к его членам-данным)</param>
+            /// <param name="pars">Параметры группы сигналов</param>
             public GroupSignalsDest(HHandlerDbULoader parent, object[] pars)
                 : base(parent, pars)
             {
@@ -220,13 +245,28 @@ namespace uLoaderCommon
                 m_queueTableRec = new Queue<DataTable>();
                 //m_stackTableRec = new Stack<DataTable>();
             }
-
+            /// <summary>
+            /// Получить таблицу для вставки значений в целевую БД
+            /// </summary>
+            /// <param name="table">Ссылка на таблицу</param>
+            /// <returns>Таблица для вставки</returns>
             protected abstract DataTable getTableIns(ref DataTable table);
-
+            /// <summary>
+            /// Получить идентификатор
+            /// </summary>
+            /// <param name="idLink">Идентификатор, устанавливающий связь</param>
+            /// <returns>Идентификатор для поля в таблице для вставки</returns>
             protected abstract object getIdToInsert(int idLink);
-
+            /// <summary>
+            /// Получить строку с запросом на вставку значений
+            /// </summary>
+            /// <param name="tblRes">Таблица, использующуюся для формирования строки запроса</param>
+            /// <returns>Строка с запросом на вставку значений</returns>
             protected abstract string getInsertValuesQuery(DataTable tblRes);
-
+            /// <summary>
+            /// Получить строку с запросом на вставку значений
+            /// </summary>
+            /// <returns>Строка с запросом на вставку значений</returns>
             public string GetInsertValuesQuery()
             {
                 string strRes = string.Empty;
@@ -419,8 +459,9 @@ namespace uLoaderCommon
             {
                 DataTable tblDiff
                     , tblRes = new DataTable ();
-
+                //Проверить признак сравнения текущей и предыдущих таблиц
                 if (m_bCompareTableRec == true)
+                    //Проверить наличие очереди
                     if (IsQueue == true)
                         dequeue();
                     else

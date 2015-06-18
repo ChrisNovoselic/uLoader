@@ -9,35 +9,70 @@ using HClassLibrary;
 
 namespace uLoaderCommon
 {
+    /// <summary>
+    /// Перечисление (дата/время) константы по умолчанию
+    /// </summary>
     public enum DATETIME
     {
-        SEC_SPANPERIOD_DEFAULT = 60
-        , MSEC_INTERVAL_DEFAULT = 6666
-        , MSEC_INTERVAL_TIMER_ACTIVATE = 66
+        /// <summary>
+        /// Период (секунды) опроса группы сигналов
+        /// </summary>
+        SEC_SPANPERIOD_DEFAULT = 60,
+        /// <summary>
+        /// Интервал (милисекунды) опроса группы сигналов
+        /// </summary>
+        MSEC_INTERVAL_DEFAULT = 6666,
+        /// <summary>
+        /// Интервал (милисекунды) проверки времени - до активации опроса группы сигналов
+        /// </summary>
+        MSEC_INTERVAL_TIMER_ACTIVATE = 66
     }
     /// <summary>
     /// Перечисление для типов опроса
     /// </summary>
     public enum MODE_WORK
     {
-        UNKNOWN = -1
-        , CUR_INTERVAL // по текущему интервалу
-        , COSTUMIZE // выборочно (история)
-            , COUNT_MODE_WORK
+        UNKNOWN = -1,
+        /// <summary>
+        /// по текущему интервалу
+        /// </summary>
+        CUR_INTERVAL,
+        /// <summary>
+        /// выборочно (история)
+        /// </summary>
+        COSTUMIZE, 
+            COUNT_MODE_WORK
     }
-
+    /// <summary>
+    /// Класс - базовый для описания целевого объекта для загрузки/вагрузки данных
+    /// </summary>
     public abstract class HHandlerDbULoader : HHandlerDb
     {
+        /// <summary>
+        /// Ссылка на объект "связи" с клиентом
+        /// </summary>
         protected IPlugIn _iPlugin;
-
+        /// <summary>
+        /// Класс - базовый для описания группы сигналов
+        /// </summary>
         public abstract class GroupSignals
         {
+            /// <summary>
+            /// Сылка на объект владельца текущего объекта
+            /// </summary>
             protected HHandlerDbULoader _parent;
-            
+            /// <summary>
+            /// Перечисление возможных слстояний для группы сигналов
+            /// </summary>
             public enum STATE { UNKNOWN = -1, STOP, SLEEP, TIMER, QUEUE, ACTIVE }
             private STATE m_state;
+            /// <summary>
+            /// Состояние группы сигналов
+            /// </summary>
             public virtual STATE State { get { return m_state; } set { m_state = value; } }
-
+            /// <summary>
+            /// Признак
+            /// </summary>
             public bool IsStarted
             {
                 get
@@ -63,30 +98,45 @@ namespace uLoaderCommon
             /// Интервал (милисекунды) между опросами значений
             /// </summary>
             public long MSecInterval { get { return m_msecInterval; } set { m_msecInterval = value; } }
-            private long m_msecRemaindToActivate;
-            public long MSecRemaindToActivate { get { return m_msecRemaindToActivate; } set { m_msecRemaindToActivate = value; } }
-
+            
+            /// <summary>
+            /// Класс для объекта СИГНАЛ
+            /// </summary>
             public class SIGNAL
             {
+                /// <summary>
+                /// Идентификатор сигнала, уникальный в границах приложения
+                /// </summary>
                 public int m_idMain;
-                //public string m_NameTable;
-
+                /// <summary>
+                /// Конструктор - основной (с параметром)
+                /// </summary>
+                /// <param name="idMain">Идентификатор сигнала, уникальный в границах приложения</param>
                 public SIGNAL(int idMain)
                 {
                     this.m_idMain = idMain;
-                    //this.m_NameTable = table;
                 }
             }
 
             protected SIGNAL[] m_arSignals;
+            /// <summary>
+            /// Массив сигналов в группе
+            /// </summary>
             public SIGNAL[] Signals { get { return m_arSignals; } }
-
+            /// <summary>
+            /// Таблица результата
+            /// </summary>
             public abstract DataTable TableRecieved { get; set; }
-
+            /// <summary>
+            /// Конструктор - основной (с параметрами)
+            /// </summary>
+            /// <param name="parent">Объект-владелец (для последующего обращения к его членам-данным)</param>
+            /// <param name="pars">Параметры группы сигналов</param>
             public GroupSignals(HHandlerDbULoader parent, object[] pars)
             {
+                //Владелей объекта
                 _parent = parent;
-
+                //Значения по умолчанию
                 m_tmSpanPeriod = new TimeSpan((long)((int)uLoaderCommon.DATETIME.SEC_SPANPERIOD_DEFAULT * Math.Pow(10, 7)));
                 m_msecInterval = (int)uLoaderCommon.DATETIME.MSEC_INTERVAL_DEFAULT;
 
@@ -101,13 +151,24 @@ namespace uLoaderCommon
                 else
                     ;
             }
-
+            /// <summary>
+            /// Создать объект сигнала
+            /// </summary>
+            /// <param name="objs">Массив параметров для передачи в конструктор объекта сигнала</param>
+            /// <returns>Созданный объект</returns>
             protected abstract SIGNAL createSignal(object []objs);
-
+            /// <summary>
+            /// Определить нове значение для состояния
+            /// </summary>
+            /// <param name="mode">Режим работы группы сигналов</param>
+            /// <param name="prevState">Предыдущее значение состояния</param>
+            /// <returns>Новое состояние</returns>
             public static STATE NewState(uLoaderCommon.MODE_WORK mode, STATE prevState)
             {
                 GroupSignals.STATE stateRes = GroupSignals.STATE.UNKNOWN;
+                //Проверить режим работы
                 if (mode == uLoaderCommon.MODE_WORK.CUR_INTERVAL)
+                    // для режима "текущий интервал"
                     switch (prevState)
                     {
                         case STATE.ACTIVE:
@@ -120,6 +181,7 @@ namespace uLoaderCommon
                     }
                 else
                     if (mode == uLoaderCommon.MODE_WORK.COSTUMIZE)
+                        // для режима "выборочно"    
                         stateRes = GroupSignals.STATE.SLEEP;
                     else
                         //??? throw new Exception
@@ -188,23 +250,35 @@ namespace uLoaderCommon
 
                 return tblRes;
             }
-
+            /// <summary>
+            /// Удалить дублированные записи из таблицы
+            /// </summary>
+            /// <param name="tblDup">Таблица, содержащая дублирующие записи</param>
+            /// <returns>Таблица без дублирующих записей</returns>
             public static DataTable clearDupValues(DataTable tblDup)
             {
                 DataTable tblRes = tblDup.Clone();
-
+                //Список индексов строк для удаления
                 List<int> listIndxToDelete = new List<int>();
+                //Массив дублированных строк
                 DataRow[] arDup = null;
+                //Признак наличия кавычек для значений в поле [ID]
                 bool bQuote = !tblDup.Columns[@"ID"].DataType.IsPrimitive;
+                //Строка запроса для поиска дублирующих записей
                 string strSel = string.Empty;
 
                 foreach (DataRow r in tblDup.Rows)
                 {
+                    //Проверить наличие индекса строки в уже найденных (как дублированные)
                     if (listIndxToDelete.IndexOf (tblDup.Rows.IndexOf(r)) < 0)
                     {
+                        //Сформировать строку запроса
                         strSel = @"ID=" + (bQuote == true ? @"'" : string.Empty) + r[@"ID"] + (bQuote == true ? @"'" : string.Empty) + @" AND " + @"DATETIME='" + ((DateTime)r[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'";
                         arDup = (tblDup as DataTable).Select(strSel);
+                        //Проверить наличие дублирующих записей
                         if (arDup.Length > 1)
+                            //Добавить индексы всех найденных дублирующих строк в список для удаления
+                            // , КРОМЕ 1-ой!
                             for (int i = 1; i < arDup.Length; i ++)
                                 listIndxToDelete.Add(tblDup.Rows.IndexOf(arDup[i]));
                         else
@@ -213,21 +287,26 @@ namespace uLoaderCommon
                             else
                                 ;
 
+                        //Добавить строку в таблицу-результат
                         tblRes.ImportRow(arDup[0]);                            
                     }
                     else
                         ;
                 }
-
+                //Принять внесенные изменения в таблицу-результат
                 tblRes.AcceptChanges();
 
                 return tblRes;
             }
         }
-
+        /// <summary>
+        /// Словарь с группами сигналов
+        /// </summary>
         protected Dictionary<int, GroupSignals> m_dictGroupSignals;
-
-        private GroupSignals.STATE State
+        /// <summary>
+        /// Состояние текущей (обрабатываемой) группы сигналов
+        /// </summary>
+        protected virtual GroupSignals.STATE State
         {
             get
             {
@@ -245,7 +324,9 @@ namespace uLoaderCommon
                     throw new Exception(@"ULoaderCommon::State.set ...");
             }
         }
-
+        /// <summary>
+        /// Режим работы текущей (обрабатываемой) группы сигналов
+        /// </summary>
         private MODE_WORK Mode
         {
             get
@@ -258,7 +339,9 @@ namespace uLoaderCommon
             
             /*set { m_dictGroupSignals[m_IdGroupSignalsCurrent].Mode = value; }*/
         }
-
+        /// <summary>
+        /// Период времени опроса текущей (обрабатываемой) группы сигналов
+        /// </summary>
         protected TimeSpan TimeSpanPeriod
         {
             get
@@ -282,26 +365,9 @@ namespace uLoaderCommon
                     throw new Exception(@"ULoaderCommon::MSecInterval.get ...");
             }
         }
-
-        protected long MSecRemaindToActivate
-        {
-            get
-            {
-                if (!(m_IdGroupSignalsCurrent < 0))
-                    return m_dictGroupSignals[m_IdGroupSignalsCurrent].MSecRemaindToActivate;
-                else
-                    throw new Exception(@"ULoaderCommon::MSecRemaindToActivate.get ...");
-            }
-
-            set
-            {
-                if (!(m_IdGroupSignalsCurrent < 0))
-                    m_dictGroupSignals[m_IdGroupSignalsCurrent].MSecRemaindToActivate = value;
-                else
-                    throw new Exception(@"ULoaderCommon::MSecRemaindToActivate.set ...");
-            }
-        }
-
+        /// <summary>
+        /// Таблица результата обрабатываемой группы сигналов
+        /// </summary>
         public DataTable TableRecieved
         {
             get
@@ -337,27 +403,58 @@ namespace uLoaderCommon
                     throw new Exception(@"ULoaderCommon::TableResults.set ...");
             }
         }
-
-        protected DateTime m_dtServer;        
-        public ConnectionSettings m_connSett;        
+        /// <summary>
+        /// Дата/время - результат запроса к источнику данных
+        /// </summary>
+        protected DateTime m_dtServer;
+        /// <summary>
+        /// Параметры соединения с источником данных
+        /// </summary>
+        protected ConnectionSettings m_connSett;        
+        /// <summary>
+        /// Целочисленный идентификатор группы сигналов
+        ///  , ключ для словаря с группами сигналов
+        ///  , уникальный в границах приложения, передается из-вне (файл конфигурации)
+        /// </summary>
         protected int m_IdGroupSignalsCurrent;
-
+        /// <summary>
+        /// Объект для синхронизации изменения состояний групп сигналов
+        /// </summary>
         protected object m_lockStateGroupSignals;
-        private object m_lockQueue;        
+        /// <summary>
+        /// Объект для синхронизации изменения очереди событий
+        /// </summary>
+        private object m_lockQueue;
+        /// <summary>
+        /// Объект потока очереди обработки событий
+        /// </summary>
         private Thread m_threadQueue;
+        /// <summary>
+        /// Очередь для обработки с идентификаторами групп сигналов
+        /// </summary>
         private Queue<int> m_queueIdGroupSignals;
+        /// <summary>
+        /// Признак состояния потока очереди обработки событий
+        /// </summary>
         private int threadQueueIsWorking;
+        /// <summary>
+        /// Объект синхронизации организации обработки событий в очереди обработки событий
+        /// </summary>
         private
             //Semaphore m_semaQueue
             AutoResetEvent m_autoResetEvtQueue
             //ManualResetEvent m_mnlResetEvtQueue
             ;
-
-        protected string[] m_arAddingKeys;
+        /// <summary>
+        /// Словарь дополнительных параметров (передаются из-вне)
+        /// </summary>
         protected Dictionary<string, string> m_dictAdding;
-
+        /// <summary>
+        /// Конструктор - основной (без параметров) для создания объекта при "прямой" сборке приложения
+        /// </summary>
         public HHandlerDbULoader()
         {
+            //Время источника данных "по умолчанию"
             m_dtServer = DateTime.MinValue;            
 
             m_IdGroupSignalsCurrent = -1;
@@ -375,27 +472,35 @@ namespace uLoaderCommon
                 = null; //Создание при "старте"
 
             m_dictAdding = new Dictionary<string, string>();
-            m_arAddingKeys = new string [] {};
         }
-
+        /// <summary>
+        /// Конструктор - дополнительный для создания объекта при динамическом подключении библиотеки к приложению
+        /// </summary>
+        /// <param name="iPlugIn"></param>
         public HHandlerDbULoader(IPlugIn iPlugIn)
             : this()
         {
             this._iPlugin = iPlugIn;
         }
-
+        /// <summary>
+        /// Инициализация данных объекта
+        /// </summary>
+        /// <param name="pars">Массив параметров для инициализации</param>
+        /// <returns>Признак выполнения</returns>
         public virtual int Initialize(object[] pars)
         {
             int iRes = 0;
-
+            //Значения параметров соединения с источником данных
             m_connSett = new ConnectionSettings((pars[0] as ConnectionSettings));
-
+            //Очистить словарь с доп./параметрами
             m_dictAdding.Clear();
-
+            
             string key = string.Empty
                 , val = string.Empty;
+            //Проверить наличие дополнительных параметров
             if (pars.Length > 1)
             {
+                //Сохранить переданные из-вне параметры
                 for (int i = 1; i < pars.Length; i ++)
                 {
                     if (pars[i] is string)
@@ -414,9 +519,12 @@ namespace uLoaderCommon
 
             return iRes;
         }
-
-        public enum INDEX_INIT_PARAMETER { GROUP_SIGNALS, SIGNALS_OF_GROUP };
-
+        /// <summary>
+        /// Инициализация группы сигналов
+        /// </summary>
+        /// <param name="id">Идентификатор группы сигналов</param>
+        /// <param name="pars">Параметры группы сигналов для инициализации</param>
+        /// <returns></returns>
         public virtual int Initialize(/*INDEX_INIT_PARAMETER indxPars, */int id, object[] pars)
         {
             int iRes = 0;
@@ -457,9 +565,16 @@ namespace uLoaderCommon
 
             return iRes;
         }
-
+        /// <summary>
+        /// Создать объект - группа сигналов
+        /// </summary>
+        /// <param name="objs">Массив параметров для создания группы сигналов (параметры сигналов)</param>
+        /// <returns></returns>
         protected abstract GroupSignals createGroupSignals(object []objs);
-
+        /// <summary>
+        /// Добавить в очередь обработки событий группу сигналов
+        /// </summary>
+        /// <param name="key">Идентификатор группы сигналов</param>
         protected void push(int key)
         {
             Logging.Logg().Debug(@"HHandlerDbULoader::enqueue () - [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + key + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -469,11 +584,12 @@ namespace uLoaderCommon
                 if (!(m_autoResetEvtQueue == null))
                 {
                     m_queueIdGroupSignals.Enqueue(key);
-
+                    //Проверить активность потока очереди обработки событий
                     bool bSet = m_autoResetEvtQueue.WaitOne(0);
 
                     //if (m_queueIdGroupSignals.Count == 1)
                     if (bSet == false)
+                        //Активировать поток очереди обработки событий
                         //m_semaQueue.Release(1);
                         m_autoResetEvtQueue.Set();
                     else
@@ -542,7 +658,6 @@ namespace uLoaderCommon
                     lock (m_lockStateGroupSignals)
                     {
                         State = newState;
-                        MSecRemaindToActivate = MSecInterval; //(long)TimeSpanPeriod.TotalMilliseconds;
                     }
 
                     ((PlugInBase)_iPlugin).DataAskedHost(getDataAskedHost ());
@@ -574,12 +689,17 @@ namespace uLoaderCommon
             else
                 ;
         }
-
+        /// <summary>
+        /// Возвратить массив объектов для передачи клиенту
+        /// </summary>
+        /// <returns></returns>
         protected virtual object [] getDataAskedHost ()
         {
             return new object[] { ID_DATA_ASKED_HOST.TABLE_RES, m_IdGroupSignalsCurrent, TableRecieved, null };
         }
-
+        /// <summary>
+        /// Старт потоков для обмена данными с источниками информации
+        /// </summary>
         public override void StartDbInterfaces()
         {
             lock (m_lockStateGroupSignals)
@@ -588,7 +708,13 @@ namespace uLoaderCommon
                     register(id, 0, m_connSett, string.Empty);
             }
         }
-
+        /// <summary>
+        /// Регистрация источника информации
+        /// </summary>
+        /// <param name="id">Ключ в словаре с идентификаторами соединений</param>
+        /// <param name="indx">Индекс в массиве - элементе словаря с идентификаторами соединений</param>
+        /// <param name="connSett">Параметры соединения с источником информации</param>
+        /// <param name="name">Наименование соединения</param>
         protected override void register(int id, int indx, ConnectionSettings connSett, string name)
         {
             bool bReq = true;
@@ -606,7 +732,9 @@ namespace uLoaderCommon
             else
                 ;
         }
-
+        /// <summary>
+        /// Старт объекта и всех зависимых потоков
+        /// </summary>
         public override void Start()
         {
             base.Start();
@@ -615,7 +743,9 @@ namespace uLoaderCommon
 
             startThreadQueue();            
         }
-
+        /// <summary>
+        /// Признак выполнения объекта и всех зависимых потоков
+        /// </summary>
         public override bool IsStarted
         {
             get
@@ -643,14 +773,17 @@ namespace uLoaderCommon
                 return bRes;
             }
         }
-
+        /// <summary>
+        /// Старт группы сигналов с указанным идентификаторм
+        /// </summary>
+        /// <param name="id">Идентификатор группы сигналов</param>
         public void Start(int id)
         {
             Logging.Logg().Debug(@"HHandlerDbULoader::Start (ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
             
-            int iNeedStarted = -1;
-            GroupSignals.STATE initState = GroupSignals.STATE.UNKNOWN;
-
+            int iNeedStarted = -1; //Признак необходимости запуска "родительского" объекта
+            GroupSignals.STATE initState = GroupSignals.STATE.UNKNOWN; //Новое состояние группы сигналов при старте
+            //Установить признак необходимости запуска "родительского" объекта
             try
             {
                 iNeedStarted = IsStarted == false ? 1 : 0;
@@ -659,7 +792,7 @@ namespace uLoaderCommon
             {
                 Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader::Start (ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @") - ...");
             }
-
+            //Новое состояние в зависимости от режима группы сигналов
             switch (m_dictGroupSignals[id].Mode)
             {
                 case MODE_WORK.CUR_INTERVAL:
@@ -671,7 +804,7 @@ namespace uLoaderCommon
                 default:
                     break;
             }
-            
+            //Изменить состояние
             lock (m_lockStateGroupSignals)
             {
                 if ((!(m_dictGroupSignals == null))
@@ -682,35 +815,42 @@ namespace uLoaderCommon
             }
 
             Logging.Logg().Debug(@"HHandlerDbULoader::Start (ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @") - iNeedStarted=" + iNeedStarted + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
-
+            //Подтвердить клиенту изменение состояние
             (_iPlugin as PlugInBase).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.START, id });
-
+            //Проврить признак необходимости запуска "родительского" объекта
             if (iNeedStarted == 1)
             {
+                //Запустиь объект и все зависимые потоки
                 Start();
+                //Активировать объект
                 Activate(true);
             }
             else
                 ;
-
+            //Регистрация источника дфнных и установка с ним соединения
             lock (m_lockStateGroupSignals)
             {
                 register(id, 0, m_connSett, string.Empty);
             }
         }
-
+        /// <summary>
+        /// Остановить объект и все зависимые потоки
+        /// </summary>
         public override void Stop()
         {
             Logging.Logg().Debug(@"HHandlerDbULoader::Stop (ID=" + (_iPlugin as PlugInBase)._Id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
             stopThreadQueue();
-
+            //Вызвать "базовый" метод
             base.Stop();
         }
-
+        /// <summary>
+        /// Остановить группу сигналов по указанному идентификатору
+        /// </summary>
+        /// <param name="id">Идентификатор группы сигналов</param>
         public void Stop(int id)
         {
-            int iNeedStopped = 0;
+            int iNeedStopped = 0; //Признак необходимости останова "родительского" объекта
 
             lock (m_lockStateGroupSignals)
             {
@@ -728,11 +868,12 @@ namespace uLoaderCommon
                 else
                     iNeedStopped = -1;
             }
-
+            //Проверить возможность останова объекта
             if (! (iNeedStopped < 0))
             {
+                //Подтвердить клиенту останов группы сигналов
                 (_iPlugin as PlugInBase).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.STOP, id });
-
+                //Установить необходимость останова "родительского" объекта
                 try
                 {
                     iNeedStopped = IsStarted == false ? 1 : 0;
@@ -741,7 +882,7 @@ namespace uLoaderCommon
                 {
                     Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader::Stop (ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @") - ...");
                 }
-
+                //Проверить необходимость останова "родительского" для группы сигнала объекта
                 if (iNeedStopped == 1)
                 {
                     Activate(false);
@@ -753,7 +894,10 @@ namespace uLoaderCommon
             else
                 ;
         }
-
+        /// <summary>
+        /// Запустить поток обработки очереди событий
+        /// </summary>
+        /// <returns>Результат запуска потока</returns>
         private int startThreadQueue()
         {
             int iRes = 0;
@@ -789,7 +933,10 @@ namespace uLoaderCommon
 
             return iRes;
         }
-
+        /// <summary>
+        /// Остановить поток обработки очереди событий
+        /// </summary>
+        /// <returns></returns>
         private int stopThreadQueue()
         {
             int iRes = 0;
@@ -829,44 +976,62 @@ namespace uLoaderCommon
 
             return iRes;
         }
-
+        /// <summary>
+        /// Проверить наличие ответа на запрос к источнику данных
+        /// </summary>
+        /// <param name="state">Состояние</param>
+        /// <param name="error">Признак ошибки</param>
+        /// <param name="table">Таблица - результат запроса</param>
+        /// <returns>Результат проверки наличия ответа на запрос</returns>
         protected override int StateCheckResponse(int state, out bool error, out object table)
         {
             return response(out error, out table);
         }
     }
-
+    /// <summary>
+    /// Класс для связи клиента - загрузчика библиотеки и целевого объекта в библиотеке
+    /// </summary>
     public class PlugInULoader : PlugInBase
     {
+        /// <summary>
+        /// Конструктор - основной (без параметров)
+        /// </summary>
         public PlugInULoader()
             : base()
         {
         }
-
+        /// <summary>
+        /// Обработчик запросов от клиента
+        /// </summary>
+        /// <param name="obj"></param>
         public override void OnEvtDataRecievedHost(object obj)
         {
-            EventArgsDataHost ev = obj as EventArgsDataHost;
-            HHandlerDbULoader target = _object as HHandlerDbULoader;
+            EventArgsDataHost ev = obj as EventArgsDataHost; //Переданные значения из-вне
+            HHandlerDbULoader target = _object as HHandlerDbULoader; //Целевой объект
 
             switch (ev.id)
             {
-                case (int)ID_DATA_ASKED_HOST.INIT_SOURCE:
+                case (int)ID_DATA_ASKED_HOST.INIT_SOURCE: //Приняты параметры для инициализации целевого объекта
                     target.Initialize(ev.par as object []);
                     break;
-                case (int)ID_DATA_ASKED_HOST.INIT_SIGNALS:
+                case (int)ID_DATA_ASKED_HOST.INIT_SIGNALS: //Приняты параметры инициализации группы сигналов
+                    //Инициализация группы сигналов по идентифактору [0]
                     target.Initialize((int)(ev.par as object[])[0], (ev.par as object[])[1] as object[]);
                     break;
-                case (int)ID_DATA_ASKED_HOST.START:
+                case (int)ID_DATA_ASKED_HOST.START: //Принята команда на запуск группы сигналов
+                    //Проверить признак получения целевым объектом параметоров для инициализации
                     if (m_markDataHost.IsMarked((int)ID_DATA_ASKED_HOST.INIT_SOURCE) == true)
                     {
+                        //Инициализация группы сигналов по идентифактору [0]
                         if (target.Initialize((int)(ev.par as object[])[0], (ev.par as object[])[1] as object[]) == 0)
-                        {
+                            //Запустить на выполнение группу сигналов
                             target.Start((int)(ev.par as object[])[0]);
-                        }
                         else
+                            //Отправить запрос клиенту для получения параметров инициализации для группы сигналов
                             DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.INIT_SIGNALS, (int)(ev.par as object[])[0] });
                     }
                     else
+                        //Отправить запрос клиенту для получения целевым объектом параметоров для инициализации
                         DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.INIT_SOURCE, (int)(ev.par as object[])[0] });
                     break;
                 case (int)ID_DATA_ASKED_HOST.STOP:
@@ -875,7 +1040,7 @@ namespace uLoaderCommon
                 default:
                     break;
             }
-
+            //Вызвать метод "базового" объекта
             base.OnEvtDataRecievedHost(obj);
         }
     }
