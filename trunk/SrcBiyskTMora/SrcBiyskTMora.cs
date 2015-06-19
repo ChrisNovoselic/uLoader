@@ -13,7 +13,7 @@ using uLoaderCommon;
 
 namespace SrcBiyskTMora
 {
-    public class SrcBiyskTMora : HHandlerDbULoaderSrc //HHandlerDbULoader
+    public class SrcBiyskTMora : HHandlerDbULoaderDatetimeSrc
     {
         public SrcBiyskTMora()
             : base()
@@ -25,26 +25,11 @@ namespace SrcBiyskTMora
         {
         }
 
-        private class GroupSignalsBiyskTMora : GroupSignalsSrc
+        private class GroupSignalsBiyskTMora : GroupSignalsDatetimeSrc
         {
             public GroupSignalsBiyskTMora(HHandlerDbULoader parent, object[] pars)
                 : base(parent, pars)
             {
-            }
-
-            private class SIGNALBiyskTMora : SIGNAL
-            {
-                public string m_NameTable;
-
-                public SIGNALBiyskTMora(int idMain, string nameTable) : base (idMain)
-                {
-                    this.m_NameTable = nameTable;
-                }
-            }
-
-            protected override GroupSignals.SIGNAL createSignal(object[] objs)
-            {
-                return new SIGNALBiyskTMora((int)objs[0], objs[2] as string);
             }
 
             protected override void setQuery()
@@ -54,7 +39,7 @@ namespace SrcBiyskTMora
                 string strUnion = @" UNION ";
 
                 //Формировать зпрос
-                foreach (GroupSignalsBiyskTMora.SIGNALBiyskTMora s in m_arSignals)
+                foreach (GroupSignalsBiyskTMora.SIGNALBiyskTMoraSrc s in m_arSignals)
                 {
                     m_strQuery += @"SELECT " + s.m_idMain + @" as ID, VALUE, QUALITY, DATETIME FROM ARCH_SIGNALS." + s.m_NameTable
                         + @" WHERE"
@@ -71,6 +56,11 @@ namespace SrcBiyskTMora
 
                 //Logging.Logg().Debug(@"GroupSignalsBiystTMOra::setQuery() - m_strQuery=" + m_strQuery + @"]..."
                 //        , Logging.INDEX_MESSAGE.NOT_SET);
+            }
+
+            protected override GroupSignals.SIGNAL createSignal(object[] objs)
+            {
+                return new SIGNALBiyskTMoraSrc((int)objs[0], objs[2] as string);
             }
         }
 

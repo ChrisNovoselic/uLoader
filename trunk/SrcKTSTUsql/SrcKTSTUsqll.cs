@@ -8,7 +8,7 @@ using uLoaderCommon;
 
 namespace SrcKTSTUsql
 {
-    public class SrcKTSTUsql : HHandlerDbULoaderSrc
+    public class SrcKTSTUsql : HHandlerDbULoaderDatetimeSrc
     {
         public SrcKTSTUsql()
             : base()
@@ -20,24 +20,16 @@ namespace SrcKTSTUsql
         {
         }
 
-        private class GroupSignalsBiyskTMOra : GroupSignalsSrc
+        private class GroupSignalsKTSTUsql : GroupSignalsDatetimeSrc
         {
-            public GroupSignalsBiyskTMOra(HHandlerDbULoader parent, object[] pars)
+            public GroupSignalsKTSTUsql(HHandlerDbULoader parent, object[] pars)
                 : base(parent, pars)
             {
             }
 
-            public class SIGNALMSTTMsql : SIGNAL
-            {
-                public SIGNALMSTTMsql(int idMain)
-                    : base(idMain)
-                {
-                }
-            }
-
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
-                return new SIGNALMSTTMsql((int)objs[0]);
+                return new SIGNALKTSTUsql((int)objs[0]);
             }
 
             protected override void setQuery()
@@ -48,7 +40,7 @@ namespace SrcKTSTUsql
 
         protected override HHandlerDbULoader.GroupSignals createGroupSignals(object[] objs)
         {
-            return new GroupSignalsBiyskTMOra(this, objs);
+            return new GroupSignalsKTSTUsql(this, objs);
         }
 
         public override void ClearValues()

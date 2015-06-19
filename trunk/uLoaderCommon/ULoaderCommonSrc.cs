@@ -145,58 +145,39 @@ namespace uLoaderCommon
             else
                 ;
         }
-
-        public override int Initialize(int id, object[] pars)
-        {
-            int iRes = base.Initialize(id, pars);
-
-            if (m_dictGroupSignals.Keys.Contains(id) == true)
-                (m_dictGroupSignals[id] as GroupSignalsSrc).SetDelegateActualizeDateTimeStart(actualizeDateTimeStart);
-            else
-                ;
-
-            return iRes;
-        }
         /// <summary>
         /// Класс для описания группы сигналов источника
         /// </summary>
         protected abstract class GroupSignalsSrc : GroupSignals
         {
-            private DateTime m_dtStart;
-            public DateTime DateTimeStart { get { return m_dtStart; } set { m_dtStart = value; } }
+            protected class SIGNALBiyskTMoraSrc : SIGNAL
+            {
+                public string m_NameTable;
 
-            /// <summary>
-            /// Строка для условия "по дате/времени"
-            ///  - начало
-            /// </summary>
-            protected virtual string DateTimeStartFormat
-            {
-                get { return DateTimeStart.ToString(@"yyyyMMdd HHmmss"); }
-            }
-            /// <summary>
-            /// Строка для условия "по дате/времени"
-            ///  - окончание
-            /// </summary>
-            protected virtual string DateTimeCurIntervalEndFormat
-            {
-                get { return DateTimeStart.AddSeconds((int)TimeSpanPeriod.TotalSeconds).ToString(@"yyyyMMdd HHmmss"); }
-            }
-
-            private event IntDelegateFunc EvtActualizeDateTimeStart;
-            /// <summary>
-            /// Установить метод для актуализации начальной даты/времени для опроса
-            /// </summary>
-            /// <param name="fActualize">Функция-делегат для актуализации начальной даты/времени для опроса</param>
-            public void SetDelegateActualizeDateTimeStart(IntDelegateFunc fActualize)
-            {
-                if (EvtActualizeDateTimeStart == null)
+                public SIGNALBiyskTMoraSrc(int idMain, string nameTable)
+                    : base(idMain)
                 {
-                    m_iRowCountRecieved = -1;
-
-                    EvtActualizeDateTimeStart += fActualize;
+                    this.m_NameTable = nameTable;
                 }
-                else
-                    ;
+            }
+
+            protected class SIGNALMSTKKSNAMEsql : SIGNAL
+            {
+                public string m_kks_name;
+
+                public SIGNALMSTKKSNAMEsql(int idMain, string kks_name)
+                    : base(idMain)
+                {
+                    m_kks_name = kks_name;
+                }
+            }
+
+            public class SIGNALKTSTUsql : SIGNAL
+            {
+                public SIGNALKTSTUsql(int idMain)
+                    : base(idMain)
+                {
+                }
             }
 
             private long m_msecRemaindToActivate;
@@ -221,23 +202,10 @@ namespace uLoaderCommon
 
                 set
                 {
-                    //Только при 1-ом запросе
-                    if ((m_iRowCountRecieved < 0)
-                        //  или при повторении количества строк в таблице-результате
-                        || (m_iRowCountRecieved == value))
-                        //Проверить наличие перехода на очередную дату/время начала опроса
-                        if (EvtActualizeDateTimeStart() == 1)
-                            //Обновить содержание запроса с актуализированным временем начала опроса
-                            setQuery();
-                        else
-                            ;
+                    if (isUpdateQuery (value) == true)
+                        setQuery ();
                     else
                         ;
-
-                    //Logging.Logg().Debug(@"GroupSignalsBiystTMOra::RowCountRecieved.set [" + m_iRowCountRecieved + @", newValue=" + value + @"]"
-                    //    + @" iActualizeDateTimeStart=" + iActualizeDateTimeStart
-                    //    + @"..."
-                    //    , Logging.INDEX_MESSAGE.NOT_SET);
 
                     m_iRowCountRecieved = value;
                 }
@@ -257,10 +225,11 @@ namespace uLoaderCommon
                 : base(parent, pars)
             {
                 m_iRowCountRecieved = -1;
+            }
 
-                //Инициализация "временнЫх" значений
-                // конкретные значения м.б. получены при "старте" 
-                m_dtStart = DateTime.MinValue;
+            protected virtual bool isUpdateQuery (int cntRec)
+            {
+                return true;
             }
 
             protected abstract void setQuery();
@@ -277,61 +246,6 @@ namespace uLoaderCommon
             AddState((int)StatesMachine.Values);
 
             return iRes;
-        }
-        /// <summary>
-        /// Актулизировать дату/время начала опроса
-        /// </summary>
-        /// <returns>Признак изменения даты/времени начала опроса</returns>
-        protected int actualizeDateTimeStart()
-        {
-            int iRes = 0;
-            //Проверить признак 1-го запуска
-            if (DateTimeStart == DateTime.MinValue)
-            {
-                DateTimeStart = m_dtServer.AddMilliseconds(-1 * (m_dtServer.Second * 1000 + m_dtServer.Millisecond));
-                iRes = 1;
-            }
-            else
-                //Проверить необходимость изменения даты/времени
-                if ((m_dtServer - DateTimeStart.AddSeconds(TimeSpanPeriod.TotalSeconds)).TotalMilliseconds > MSecInterval)
-                {
-                    //Переход на очередной интервал
-                    DateTimeStart = DateTimeStart.AddSeconds(TimeSpanPeriod.TotalSeconds);
-                    //Установить признак перехода
-                    iRes = 1;
-                }
-                else
-                    ;
-
-            Logging.Logg().Debug(@"HHandlerDbULoader::actualizeDateTimeStart () - "
-                                + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"]"
-                                + @", m_dtServer=" + m_dtServer.ToString(@"dd.MM.yyyy HH:mm.ss.fff")
-                                + @", DateTimeStart=" + DateTimeStart.ToString(@"dd.MM.yyyy HH:mm.ss.fff")
-                                + @", iRes=" + iRes
-                                + @"...", Logging.INDEX_MESSAGE.NOT_SET);
-
-            return iRes;
-        }
-        /// <summary>
-        /// Дата/время начала опроса для текущей (обрабатываемой) группы
-        /// </summary>
-        protected DateTime DateTimeStart
-        {
-            get
-            {
-                if (!(m_IdGroupSignalsCurrent < 0))
-                    return (m_dictGroupSignals[m_IdGroupSignalsCurrent] as GroupSignalsSrc).DateTimeStart;
-                else
-                    throw new Exception(@"ULoaderCommon::DateTimeStart.get ...");
-            }
-
-            set
-            {
-                if (!(m_IdGroupSignalsCurrent < 0))
-                    (m_dictGroupSignals[m_IdGroupSignalsCurrent] as GroupSignalsSrc).DateTimeStart = value;
-                else
-                    throw new Exception(@"ULoaderCommon::DateTimeStart.set ...");
-            }
         }
         /// <summary>
         /// Изменить состояние - интциировать очередной запрос
@@ -529,7 +443,145 @@ namespace uLoaderCommon
         }
     }
 
-    public abstract class HHandlerDbULoaderMSTTMSrc : HHandlerDbULoaderSrc
+    public abstract class HHandlerDbULoaderDatetimeSrc : HHandlerDbULoaderSrc
+    {
+        public HHandlerDbULoaderDatetimeSrc()
+            : base()
+        {
+        }
+
+        public HHandlerDbULoaderDatetimeSrc(IPlugIn iPlugIn)
+            : base(iPlugIn)
+        {
+        }
+
+        /// <summary>
+        /// Класс для описания группы сигналов источника
+        /// </summary>
+        protected abstract class GroupSignalsDatetimeSrc : GroupSignalsSrc
+        {
+            private DateTime m_dtStart;
+            public DateTime DateTimeStart { get { return m_dtStart; } set { m_dtStart = value; } }
+
+            public GroupSignalsDatetimeSrc(HHandlerDbULoader parent, object[] pars)
+                : base(parent, pars)
+            {
+                //Инициализация "временнЫх" значений
+                // конкретные значения м.б. получены при "старте" 
+                m_dtStart = DateTime.MinValue;
+            }
+
+            /// <summary>
+            /// Строка для условия "по дате/времени"
+            ///  - начало
+            /// </summary>
+            protected virtual string DateTimeStartFormat
+            {
+                get { return DateTimeStart.ToString(@"yyyyMMdd HHmmss"); }
+            }
+            /// <summary>
+            /// Строка для условия "по дате/времени"
+            ///  - окончание
+            /// </summary>
+            protected virtual string DateTimeCurIntervalEndFormat
+            {
+                get { return DateTimeStart.AddSeconds((int)TimeSpanPeriod.TotalSeconds).ToString(@"yyyyMMdd HHmmss"); }
+            }
+
+            protected override bool isUpdateQuery (int cntRec)
+            {
+                return ((RowCountRecieved < 0) || (RowCountRecieved == cntRec)) && ((!(EvtActualizeDateTimeStart == null)) && (EvtActualizeDateTimeStart() == 1));
+            }
+
+            private event IntDelegateFunc EvtActualizeDateTimeStart;
+            /// <summary>
+            /// Установить метод для актуализации начальной даты/времени для опроса
+            /// </summary>
+            /// <param name="fActualize">Функция-делегат для актуализации начальной даты/времени для опроса</param>
+            public void SetDelegateActualizeDateTimeStart(IntDelegateFunc fActualize)
+            {
+                if (EvtActualizeDateTimeStart == null)
+                {
+                    RowCountRecieved = -1;
+
+                    EvtActualizeDateTimeStart += fActualize;
+                }
+                else
+                    ;
+            }
+        }
+
+        public override int Initialize(int id, object[] pars)
+        {
+            int iRes = base.Initialize(id, pars);
+
+            if (m_dictGroupSignals.Keys.Contains(id) == true)
+                (m_dictGroupSignals[id] as GroupSignalsDatetimeSrc).SetDelegateActualizeDateTimeStart(actualizeDateTimeStart);
+            else
+                ;
+
+            return iRes;
+        }
+
+        /// <summary>
+        /// Дата/время начала опроса для текущей (обрабатываемой) группы
+        /// </summary>
+        protected DateTime DateTimeStart
+        {
+            get
+            {
+                if (!(m_IdGroupSignalsCurrent < 0))
+                    return (m_dictGroupSignals[m_IdGroupSignalsCurrent] as GroupSignalsDatetimeSrc).DateTimeStart;
+                else
+                    throw new Exception(@"ULoaderCommon::DateTimeStart.get ...");
+            }
+
+            set
+            {
+                if (!(m_IdGroupSignalsCurrent < 0))
+                    (m_dictGroupSignals[m_IdGroupSignalsCurrent] as GroupSignalsDatetimeSrc).DateTimeStart = value;
+                else
+                    throw new Exception(@"ULoaderCommon::DateTimeStart.set ...");
+            }
+        }
+
+        /// <summary>
+        /// Актулизировать дату/время начала опроса
+        /// </summary>
+        /// <returns>Признак изменения даты/времени начала опроса</returns>
+        protected int actualizeDateTimeStart()
+        {
+            int iRes = 0;
+            //Проверить признак 1-го запуска
+            if (DateTimeStart == DateTime.MinValue)
+            {
+                DateTimeStart = m_dtServer.AddMilliseconds(-1 * (m_dtServer.Second * 1000 + m_dtServer.Millisecond));
+                iRes = 1;
+            }
+            else
+                //Проверить необходимость изменения даты/времени
+                if ((m_dtServer - DateTimeStart.AddSeconds(TimeSpanPeriod.TotalSeconds)).TotalMilliseconds > MSecInterval)
+                {
+                    //Переход на очередной интервал
+                    DateTimeStart = DateTimeStart.AddSeconds(TimeSpanPeriod.TotalSeconds);
+                    //Установить признак перехода
+                    iRes = 1;
+                }
+                else
+                    ;
+
+            Logging.Logg().Debug(@"HHandlerDbULoader::actualizeDateTimeStart () - "
+                                + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"]"
+                                + @", m_dtServer=" + m_dtServer.ToString(@"dd.MM.yyyy HH:mm.ss.fff")
+                                + @", DateTimeStart=" + DateTimeStart.ToString(@"dd.MM.yyyy HH:mm.ss.fff")
+                                + @", iRes=" + iRes
+                                + @"...", Logging.INDEX_MESSAGE.NOT_SET);
+
+            return iRes;
+        }
+    }
+
+    public abstract class HHandlerDbULoaderMSTTMSrc : HHandlerDbULoaderDatetimeSrc
     {
         public int m_iCurIntervalShift;
 
@@ -552,7 +604,7 @@ namespace uLoaderCommon
             return iRes;
         }
 
-        protected abstract class GroupSignalsMSTTMSrc : GroupSignalsSrc
+        protected abstract class GroupSignalsMSTTMSrc : GroupSignalsDatetimeSrc
         {
             public GroupSignalsMSTTMSrc(HHandlerDbULoader parent, object[] pars)
                 : base(parent, pars)

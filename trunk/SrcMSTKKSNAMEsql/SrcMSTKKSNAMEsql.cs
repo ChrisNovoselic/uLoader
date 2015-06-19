@@ -32,17 +32,6 @@ namespace SrcMSTKKSNAMEsql
             {
             }
 
-            public class SIGNALMSTKKSNAMEsql : SIGNAL
-            {
-                public string m_kks_name;
-
-                public SIGNALMSTKKSNAMEsql(int idMain, string kks_name)
-                    : base(idMain)
-                {
-                    m_kks_name = kks_name;
-                }
-            }
-
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
                 return new SIGNALMSTKKSNAMEsql((int)objs[0], (string)objs[2]);
