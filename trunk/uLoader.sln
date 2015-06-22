@@ -36,6 +36,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DestBiTECStatKKSNAMEsql", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SrcBiyskTMLastora", "SrcBiyskTMLastora\SrcBiyskTMLastora.csproj", "{907A1164-E7C9-40E4-BFE0-E14A557B828C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SrcBiyskDiscrLastora", "SrcBiyskDiscrLastora\SrcBiyskDiscrLastora.csproj", "{EE2093CA-AFE0-4513-8542-B56F3D418EF9}"
+EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = uLoader.vsmdi
@@ -189,6 +191,16 @@ Global
 		{907A1164-E7C9-40E4-BFE0-E14A557B828C}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{907A1164-E7C9-40E4-BFE0-E14A557B828C}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{907A1164-E7C9-40E4-BFE0-E14A557B828C}.Release|x86.ActiveCfg = Release|Any CPU
+		{EE2093CA-AFE0-4513-8542-B56F3D418EF9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE2093CA-AFE0-4513-8542-B56F3D418EF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE2093CA-AFE0-4513-8542-B56F3D418EF9}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{EE2093CA-AFE0-4513-8542-B56F3D418EF9}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{EE2093CA-AFE0-4513-8542-B56F3D418EF9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EE2093CA-AFE0-4513-8542-B56F3D418EF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE2093CA-AFE0-4513-8542-B56F3D418EF9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE2093CA-AFE0-4513-8542-B56F3D418EF9}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{EE2093CA-AFE0-4513-8542-B56F3D418EF9}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{EE2093CA-AFE0-4513-8542-B56F3D418EF9}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

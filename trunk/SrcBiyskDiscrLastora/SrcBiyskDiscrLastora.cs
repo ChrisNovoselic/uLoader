@@ -11,46 +11,68 @@ using System.Threading;
 using HClassLibrary;
 using uLoaderCommon;
 
-namespace SrcBiyskTMLastora
+namespace SrcBiyskDiscrLastora
 {
-    public class SrcBiyskTMLastora : HHandlerDbULoaderSrc
+    public class SrcBiyskDiscrLastora : HHandlerDbULoaderSrc
     {
-        public SrcBiyskTMLastora()
+        public SrcBiyskDiscrLastora()
             : base()
         {
         }
 
-        public SrcBiyskTMLastora(IPlugIn iPlugIn)
+        public SrcBiyskDiscrLastora(IPlugIn iPlugIn)
             : base(iPlugIn)
         {
         }
 
-        private class GroupSignalsBiyskTMLastora : GroupSignalsSrc
+        private class GroupSignalsBiyskDiscrLastora : GroupSignalsSrc
         {
-            public GroupSignalsBiyskTMLastora(HHandlerDbULoader parent, object[] pars)
+            public GroupSignalsBiyskDiscrLastora(HHandlerDbULoader parent, object[] pars)
                 : base(parent, pars)
             {
+                m_strQuery = string.Empty;
+
+                string strUnion = @",";
+
+                if (m_arSignals.Length > 0)
+                {
+                    m_strQuery += @"SELECT TAGNAME as ID, VALUE, QUALITY, DATETIME FROM ARCH_SIGNALS.ARCHIVE_TS WHERE TAGNAME IN (";
+
+                    //Формировать зпрос
+                    foreach (GroupSignalsSrc.SIGNALBiyskTMoraSrc s in m_arSignals)
+                    {
+                        m_strQuery += @"'" + s.m_NameTable + @"'" + strUnion;
+                    }
+
+                    //Удалить "лишний" UNION
+                    m_strQuery = m_strQuery.Substring(0, m_strQuery.Length - strUnion.Length);
+
+                    m_strQuery += @")";
+                }
+                else
+                    ;
             }
 
             protected override void setQuery()
             {
-                m_strQuery = string.Empty;
+                ;
+            }
 
-                string strUnion = @" UNION ALL ";
+            protected object getIdMain(string tag)
+            {
+                int iRes = -1;
 
-                //Формировать зпрос
-                foreach (GroupSignalsSrc.SIGNALBiyskTMoraSrc s in m_arSignals)
-                {
-                    m_strQuery += @"SELECT " + s.m_idMain + @" as ID, VALUE, QUALITY, DATETIME FROM ARCH_SIGNALS." + s.m_NameTable
-                        + @" WHERE"
-                        + @" DATETIME > " + @"to_timestamp('" + (_parent as SrcBiyskTMLastora).m_dtServer.AddMinutes(-1).ToString(@"yyyyMMdd HHmmss") + @"', 'yyyymmdd hh24missFF9')" //@" SYSTIMESTAMP - interval '1' minute"
-                        //+ @" ORDER BY DATETIME DESC"
-                        + strUnion
-                    ;
-                }
+                foreach (SIGNAL s in m_arSignals)
+                    if ((s as SIGNALBiyskTMoraSrc).m_NameTable.Equals(tag) == true)
+                    {
+                        iRes = s.m_idMain;
 
-                //Удалить "лишний" UNION
-                m_strQuery = m_strQuery.Substring(0, m_strQuery.Length - strUnion.Length);
+                        break;
+                    }
+                    else
+                        ;
+
+                return iRes;
             }
 
             public override DataTable TableRecieved
@@ -66,17 +88,19 @@ namespace SrcBiyskTMLastora
                     if (!(value.Columns.IndexOf(@"ID") < 0))
                     {
                         DataTable tblVal = value.Clone();
+                        tblVal.Columns.Remove (@"ID");
+                        tblVal.Columns.Add(@"ID", typeof(Int32));
 
                         tblVal.Columns.Add(@"CNT", typeof(Int32));
 
                         foreach (SIGNAL s in m_arSignals)
                         {
-                            arSel = value.Select(@"ID=" + s.m_idMain, @"DATETIME DESC");
+                            arSel = value.Select(@"ID='" + (s as SIGNALBiyskTMoraSrc).m_NameTable + @"'", @"DATETIME DESC");
 
                             if (arSel.Length > 0)
                             {
                                 rowAdd = tblVal.Rows.Add();
-                                rowAdd[@"ID"] = arSel[0][@"ID"];
+                                rowAdd[@"ID"] = getIdMain (arSel[0][@"ID"].ToString());
                                 rowAdd[@"VALUE"] = arSel[0][@"VALUE"];
                                 rowAdd[@"DATETIME"] = arSel[0][@"DATETIME"];
                                 rowAdd[@"CNT"] = arSel.Length;
@@ -105,7 +129,7 @@ namespace SrcBiyskTMLastora
 
         protected override HHandlerDbULoader.GroupSignals createGroupSignals(object[] objs)
         {
-            return new GroupSignalsBiyskTMLastora(this, objs);
+            return new GroupSignalsBiyskDiscrLastora(this, objs);
         }
 
         public override void ClearValues()
@@ -119,9 +143,9 @@ namespace SrcBiyskTMLastora
         public PlugIn()
             : base()
         {
-            _Id = 1005;
+            _Id = 1006;
 
-            createObject(typeof(SrcBiyskTMLastora));
+            createObject(typeof(SrcBiyskDiscrLastora));
         }
 
         public override void OnEvtDataRecievedHost(object obj)
