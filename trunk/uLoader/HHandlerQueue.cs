@@ -33,7 +33,9 @@ namespace uLoader
             , LIST_DEST_GROUP_SIGNAL_PROP //Список параметров сигналов в группе сигналов (назначение)
             , OBJ_SRC_GROUP_SOURCES //Объект группы источников (источник)
             , OBJ_DEST_GROUP_SOURCES //Объект группы источников (назначение)
+            , OBJ_SRC_GROUP_SIGNALS_PARS //Объект с параметрами группы сигналов (источник)
             , OBJ_SRC_GROUP_SIGNALS //Объект группы сигналов (источник)
+            , OBJ_DEST_GROUP_SIGNALS_PARS //Объект с параметрами группы сигналов (назначение)
             , OBJ_DEST_GROUP_SIGNALS //Объект группы сигналов (назначение)
             , TIMER_WORK_UPDATE //Период обновления панели "Работа"
             , STATE_GROUP_SOURCES //Состояние группы источников (источник, назначение)
@@ -147,11 +149,11 @@ namespace uLoader
             foreach (GROUP_SRC itemSrc in arGroupSources)
             {
                 listGroupSignals.Clear();
-                int cnt = (itemSrc as GROUP_SRC).m_arDescGroupSignals.GetLength (1)
+                int cnt = (itemSrc as GROUP_SRC).m_listGroupSignalsPars.Count
                     , j = -1;
                 for (j = 0; j < cnt; j ++)
                     foreach (GROUP_SIGNALS_SRC itemGrooupSignals in arGroupSignals)
-                        if (itemGrooupSignals.m_strID.Equals((itemSrc as GROUP_SRC).m_arDescGroupSignals[0, j]) == true)
+                        if (itemGrooupSignals.m_strID.Equals((itemSrc as GROUP_SRC).m_listGroupSignalsPars[j].m_strId) == true)
                         {
                             listGroupSignals.Add(itemGrooupSignals);
                             break;
@@ -190,7 +192,9 @@ namespace uLoader
                 case StatesMachine.OBJ_SRC_GROUP_SOURCES:
                 case StatesMachine.OBJ_DEST_GROUP_SOURCES:
                 case StatesMachine.TIMER_WORK_UPDATE:
+                case StatesMachine.OBJ_SRC_GROUP_SIGNALS_PARS:
                 case StatesMachine.OBJ_SRC_GROUP_SIGNALS:
+                case StatesMachine.OBJ_DEST_GROUP_SIGNALS_PARS:
                 case StatesMachine.OBJ_DEST_GROUP_SIGNALS:
                 case StatesMachine.STATE_GROUP_SOURCES:
                 case StatesMachine.STATE_GROUP_SIGNALS:
@@ -233,7 +237,9 @@ namespace uLoader
                 case StatesMachine.OBJ_SRC_GROUP_SOURCES:                
                 case StatesMachine.OBJ_DEST_GROUP_SOURCES:
                 case StatesMachine.TIMER_WORK_UPDATE:
+                case StatesMachine.OBJ_SRC_GROUP_SIGNALS_PARS:
                 case StatesMachine.OBJ_SRC_GROUP_SIGNALS:
+                case StatesMachine.OBJ_DEST_GROUP_SIGNALS_PARS:
                 case StatesMachine.OBJ_DEST_GROUP_SIGNALS:
                 case StatesMachine.STATE_GROUP_SOURCES:
                 case StatesMachine.STATE_GROUP_SIGNALS:
@@ -395,11 +401,27 @@ namespace uLoader
 
                         iRes = 0;
                         break;
+                    case StatesMachine.OBJ_SRC_GROUP_SIGNALS_PARS:
+                        error = false;
+                        itemQueue = Peek;
+                        //??? 0-й параметр идентификатор "выбранноой" группы сигналов
+                        outobj = m_fileINI.GetObjectGroupSignalsPars(itemQueue.Pars.ToArray());
+
+                        iRes = 0;
+                        break;
                     case StatesMachine.OBJ_SRC_GROUP_SIGNALS:
                         error = false;
                         itemQueue = Peek;
                         //??? 0-й параметр идентификатор "выбранноой" группы сигналов
                         outobj = m_fileINI.GetObjectGroupSignals(itemQueue.Pars.ToArray());
+
+                        iRes = 0;
+                        break;
+                    case StatesMachine.OBJ_DEST_GROUP_SIGNALS_PARS:
+                        error = false;
+                        itemQueue = Peek;
+                        //??? 0-й параметр идентификатор "выбранноой" группы сигналов
+                        outobj = m_fileINI.GetObjectGroupSignalsPars(itemQueue.Pars.ToArray());
 
                         iRes = 0;
                         break;

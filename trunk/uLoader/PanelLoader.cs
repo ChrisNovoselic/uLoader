@@ -494,7 +494,7 @@ namespace uLoader
                 (workItem as Label).Text = grpSrc.m_strDLLName;
                 //Список групп сигналов - инициирует заполнение списка сигналов группы
                 key = PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS;
-                int cnt = grpSrc.m_arDescGroupSignals.GetLength(1)
+                int cnt = grpSrc.m_listGroupSignalsPars.Count
                     , j = -1;
                 if (m_dictGroupIds.Keys.Contains (key) == false)
                     m_dictGroupIds.Add (key, new string [cnt]);
@@ -503,8 +503,8 @@ namespace uLoader
                 workItem = GetWorkingItem(key);
                 for (j = 0; j < cnt; j ++)
                 {
-                    m_dictGroupIds[key][j] = grpSrc.m_arDescGroupSignals[0, j];
-                    (workItem as DataGridView).Rows.Add(new object[] { grpSrc.m_arDescGroupSignals [1, j] });
+                    m_dictGroupIds[key][j] = grpSrc.m_listGroupSignalsPars[j].m_strId;
+                    (workItem as DataGridView).Rows.Add(new object[] { grpSrc.m_listGroupSignalsPars [j].m_strShrName });
                 }
                 //Список источников группы источников                
                 key = PanelLoader.KEY_CONTROLS.CBX_SOURCE_OF_GROUP;
@@ -539,22 +539,42 @@ namespace uLoader
                     ;
             }
             /// <summary>
-            /// Заполнить рабочий элемент - список групп 
-            ///  + параметры режима опроса
+            /// Заполнить рабочий элемент - список сигналов группы
             /// </summary>
-            /// <param name="grpSrc">Объект с данными для заполнения</param>
+            /// <param name="grpSrs"></param>
             public virtual void FillWorkItem(GROUP_SIGNALS_SRC grpSrc)
             {
                 Control workItem;
                 PanelLoader.KEY_CONTROLS key;
 
-                if (!(grpSrc == null))
+                //Список сигналов группы
+                key = PanelLoader.KEY_CONTROLS.DGV_SIGNALS_OF_GROUP;
+                workItem = GetWorkingItem(key);
+
+                if (!(grpSrc.m_listSgnls == null))
+                    foreach (SIGNAL_SRC sgnl in grpSrc.m_listSgnls)
+                        (workItem as DataGridView).Rows.Add(new object[] { sgnl.m_arSPars[grpSrc.m_listSKeys.IndexOf(@"NAME_SHR")] });
+                else
+                    // группа сигналов == null
+                    Logging.Logg().Warning(@"PanelLoader::FillWorkItem () - список сигналов == null...", Logging.INDEX_MESSAGE.NOT_SET);
+            }
+            /// <summary>
+            /// Заполнить рабочий элемент - список групп 
+            ///  + параметры режима опроса
+            /// </summary>
+            /// <param name="grpSrc">Объект с данными для заполнения</param>
+            public virtual void FillWorkItem(GROUP_SIGNALS_PARS grpSgnlsPars)
+            {
+                Control workItem;
+                PanelLoader.KEY_CONTROLS key;
+
+                if (!(grpSgnlsPars == null))
                 {
                     //Отобразить активный режим
                     // только, если панель - источник
                     if (this is PanelLoaderSource)
                     {
-                        switch (grpSrc.m_mode)
+                        switch (grpSgnlsPars.m_mode)
                         {
                             case MODE_WORK.CUR_INTERVAL:
                                 key = PanelLoader.KEY_CONTROLS.RBUTTON_CUR_DATETIME;
@@ -570,16 +590,6 @@ namespace uLoader
                     }
                     else
                         ;
-                    //Список сигналов группы
-                    key = PanelLoader.KEY_CONTROLS.DGV_SIGNALS_OF_GROUP;
-                    workItem = GetWorkingItem(key);
-
-                    if (!(grpSrc.m_listSgnls == null))
-                        foreach (SIGNAL_SRC sgnl in grpSrc.m_listSgnls)
-                            (workItem as DataGridView).Rows.Add(new object[] { sgnl.m_dictPars[@"NAME_SHR"] });
-                    else
-                        // группа сигналов == null
-                        Logging.Logg().Warning(@"PanelLoader::FillWorkItem () - список сигналов == null...", Logging.INDEX_MESSAGE.NOT_SET);
 
                     if (this is PanelLoaderSource)
                     {

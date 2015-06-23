@@ -98,6 +98,15 @@ namespace uLoader
             m_arLoader[(int)indxWork].FillWorkItem(grpSrc);
         }
         /// <summary>
+        /// Заполнить рабочий элемент - список групп 
+        /// </summary>
+        /// <param name="indxWork">Индекс панели</param>
+        /// <param name="grpSrc">Объект с данными для заполнения</param>
+        private void fillWorkItem(INDEX_SRC indxWork, GROUP_SIGNALS_PARS grpSrc)
+        {
+            m_arLoader[(int)indxWork].FillWorkItem(grpSrc);
+        }
+        /// <summary>
         /// "Включение"/"отключение" элементов интерфейса в зависимости от состояния
         /// </summary>
         /// <param name="indxWork">Индекс панели</param>
@@ -198,10 +207,21 @@ namespace uLoader
                     startTimerUpdate ();
                     activeTimerUpdate (true);
                     break;
+                case HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS_PARS: //Объект с параметрами группы сигналов (источник)
+                    //???
+                    //fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SIGNALS_SRC);
+                    fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SIGNALS_PARS);
+                    break;
                 case HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS: //Объект группы сигналов (источник)
                     fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SIGNALS_SRC);
                     break;
+                case HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SIGNALS_PARS: //Объект с параметрами группы сигналов (назначение)
+                    //???
+                    //fillWorkItem(INDEX_SRC.DEST, par as GROUP_SIGNALS_SRC);
+                    fillWorkItem(INDEX_SRC.DEST, par as GROUP_SIGNALS_PARS);
+                    break;
                 case HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SIGNALS: //Объект группы сигналов (назначение)
+                    //???
                     fillWorkItem(INDEX_SRC.DEST, par as GROUP_SIGNALS_SRC);
                     break;
                 case HHandlerQueue.StatesMachine.STATE_GROUP_SOURCES: //Состояние группы источников (источник, назначение)
@@ -376,10 +396,16 @@ namespace uLoader
                                     arObjToDataHost = new object[] { new object[] { (int)state, pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL] } };
                                     break;
                                 case PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS:
-                                    state = HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS;
+                                    state = HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS_PARS;
                                     arObjToDataHost = new object[] {
                                         new object[] {
                                             (int)state
+                                            , indxWork
+                                            , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL]
+                                            , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
+                                        }
+                                        , new object[] {
+                                            (int)HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS
                                             , indxWork
                                             , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
                                         }
@@ -420,10 +446,16 @@ namespace uLoader
                                     arObjToDataHost = new object[] { new object[] { (int)state, pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL] } };
                                     break;
                                 case PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS:
-                                    state = HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SIGNALS;
+                                    state = HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SIGNALS_PARS;
                                     arObjToDataHost = new object[] {
                                         new object[] {
                                             (int)state
+                                            , indxWork
+                                            , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL]
+                                            , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
+                                        }
+                                        , new object[] {
+                                            (int)HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SIGNALS
                                             , indxWork
                                             , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
                                         }

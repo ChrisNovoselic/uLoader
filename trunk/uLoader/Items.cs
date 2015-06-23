@@ -26,36 +26,44 @@ namespace uLoader
         /// </summary>
         public string m_strShrName;
         /// <summary>
-        /// Массив ключей для словаря со значениями параметров
+        /// Массив ключей для словаря со значениями параметров соединения (сигналов)
         /// </summary>
-        public string[] m_keys;
-        ///// <summary>
-        ///// Словарь для "дополнительных" параметров
-        ///// </summary>
-        //public Dictionary <string, string> m_dictAdding;
+        public List<string> m_listSKeys;
+        /// <summary>
+        /// Массив ключей для словаря со значениями параметров групп сигналов
+        /// </summary>
+        public string[] m_GSgnlsKeys;
     }
     /// <summary>
     /// Параметры сигнала в группе сигналов (источник, назначение)
     /// </summary>            
     public class SIGNAL_SRC
     {
-        //Ключами для словаря являются 'ITEM_SRC.m_keys'
-        public Dictionary<string, string> m_dictPars;
+        //Ключами для словаря являются 'ITEM_SRC.m_SKeys'
+        public string[] m_arSPars;
 
         public SIGNAL_SRC()
         {
-            m_dictPars = new Dictionary<string, string>();
+            m_arSPars = new string[] {};
         }
     };
     /// <summary>
-    /// Параметры группы сигналов (источник, назначение)
+    /// Класс для параметров группы сигналов
     /// </summary>
-    public class GROUP_SIGNALS_SRC : ITEM_SRC
+    public class GROUP_SIGNALS_PARS
     {
         /// <summary>
-        /// Список сигналов в группе
+        /// Строковый идентификатор группы сигналов
         /// </summary>
-        public List<SIGNAL_SRC> m_listSgnls;
+        public string m_strId;
+        /// <summary>
+        /// Наименование краткое группы сигналов
+        /// </summary>
+        public string m_strShrName;
+        /// <summary>
+        /// Признак возможности включения режима "выборочно"
+        /// </summary>
+        public bool m_bCostumizeEnabled;
         /// <summary>
         /// Признак автоматического запуска опроса
         /// </summary>
@@ -71,17 +79,48 @@ namespace uLoader
         /// <summary>
         /// Конструктор - основной (без параметров)
         /// </summary>
-        public GROUP_SIGNALS_SRC()
+        public GROUP_SIGNALS_PARS ()
         {
             //Режим работы по умолчанию - текущий интервал
             m_mode = MODE_WORK.CUR_INTERVAL;
+            m_iAutoStart = -1;
+            m_bCostumizeEnabled = false;
             m_arWorkIntervals = new DATETIME_WORK[(int)MODE_WORK.COUNT_MODE_WORK];
-            for (int i = 0; i < (int)MODE_WORK.COUNT_MODE_WORK; i ++)
+            for (int i = 0; i < (int)MODE_WORK.COUNT_MODE_WORK; i++)
                 m_arWorkIntervals[i] = new DATETIME_WORK();
 
-            m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_dtStart = DateTime.Now;
-            //Выровнять по текущей минуте
-            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart.AddMilliseconds (-1 * m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_dtStart.Second * 1000 + m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_dtStart.Millisecond);
+            //Дата/время начала опроса (режим: тек./дата/время)
+            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart = DateTime.Now;
+            // округлить по текущей минуте
+            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart.AddMilliseconds(-1 * m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart.Second * 1000 + m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart.Millisecond);
+            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod = TimeSpan.FromSeconds((int)DATETIME.SEC_SPANPERIOD_DEFAULT);
+            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval = (int)DATETIME.MSEC_INTERVAL_DEFAULT;
+
+            //Дата/время начала опроса (режим: выборочно)
+            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart = DateTime.Now;
+            // округлить по прошедшему часу
+            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.AddHours(-1);
+            // округлить по 0-ой минуте
+            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.AddMinutes(-1 * m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.Minute);
+            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.AddMilliseconds(-1 * m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.Second * 1000 + m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.Millisecond);
+            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriod = TimeSpan.FromHours(1);
+            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_iInterval = 60;
+        }
+    }
+    /// <summary>
+    /// Параметры группы сигналов (источник, назначение)
+    /// </summary>
+    public class GROUP_SIGNALS_SRC : ITEM_SRC
+    {
+        /// <summary>
+        /// Список сигналов в группе
+        /// </summary>
+        public List<SIGNAL_SRC> m_listSgnls;        
+        /// <summary>
+        /// Конструктор - основной (без параметров)
+        /// </summary>
+        public GROUP_SIGNALS_SRC()
+        {
         }
     };
     /// <summary>
@@ -153,9 +192,9 @@ namespace uLoader
         /// </summary>
         public string m_strDLLName;
         /// <summary>
-        /// Массив строк с наименованями "присоединенных" к группе источников групп сигналов
+        /// Список с параметрами "присоединенных" к группе источников групп сигналов
         /// </summary>
-        public string [,]m_arDescGroupSignals;
+        public List <GROUP_SIGNALS_PARS> m_listGroupSignalsPars;
         /// <summary>
         /// Словарь для "дополнительных" параметров
         /// </summary>
@@ -185,7 +224,7 @@ namespace uLoader
             m_IDCurrentConnSett = string.Empty;
             m_dictConnSett = new Dictionary<string, ConnectionSettings>();
             m_strDLLName = string.Empty;
-            m_arDescGroupSignals = new string [,] { {}, {} };
+            m_listGroupSignalsPars = new List <GROUP_SIGNALS_PARS> ();
         }
     };
     /// <summary>
@@ -365,22 +404,25 @@ namespace uLoader
                 }
             }
 
-            public GroupSignals(GROUP_SIGNALS_SRC srcItem)
+            //public GROUP_SIGNALS_PARS m_pars;
+
+            public GroupSignals(GROUP_SIGNALS_SRC srcItem/*, GROUP_SIGNALS_PARS srcPars*/)
                 : base()
             {
-                this.m_arWorkIntervals = new DATETIME_WORK[srcItem.m_arWorkIntervals.Length];
-                //??? Значения массивов независимы
-                srcItem.m_arWorkIntervals.CopyTo(this.m_arWorkIntervals, 0);
+                //this.m_arWorkIntervals = new DATETIME_WORK[srcItem.m_arWorkIntervals.Length];
+                ////??? Значения массивов независимы
+                //srcItem.m_arWorkIntervals.CopyTo(this.m_arWorkIntervals, 0);
 
-                this.m_iAutoStart = srcItem.m_iAutoStart;
+                //this.m_iAutoStart = srcItem.m_iAutoStart;
 
-                this.m_keys = new string[srcItem.m_keys.Length];
-                srcItem.m_keys.CopyTo(this.m_keys, 0);
+                this.m_listSKeys = new List<string> ();
+                foreach (string skey in srcItem.m_listSKeys)
+                    this.m_listSKeys.Add (skey);
 
                 //??? Значения списка независимы
                 this.m_listSgnls = srcItem.m_listSgnls;
 
-                this.m_mode = srcItem.m_mode;
+                //this.m_mode = srcItem.m_mode;
 
                 this.m_strID = srcItem.m_strID;
                 this.m_strShrName = srcItem.m_strShrName;
@@ -428,13 +470,13 @@ namespace uLoader
 
                 for (i = 0; i < arObjRes.Length; i ++)
                 {
-                    arObjRes[i] = new object[m_keys.Length];
+                    arObjRes[i] = new object[m_listSKeys.Count];
 
-                    for (j = 0; j < m_keys.Length; j++)
-                        if (Int32.TryParse(m_listSgnls[i].m_dictPars[m_keys[j]].ToString().Trim(), out iVal) == true)
+                    for (j = 0; j < m_listSKeys.Count; j++)
+                        if (Int32.TryParse(m_listSgnls[i].m_arSPars[j].Trim(), out iVal) == true)
                             (arObjRes[i] as object [])[j] = iVal;
                         else
-                            (arObjRes[i] as object[])[j] = m_listSgnls[i].m_dictPars[m_keys[j]];
+                            (arObjRes[i] as object[])[j] = m_listSgnls[i].m_arSPars[j];
                 }                
 
                 return arObjRes;
@@ -448,7 +490,7 @@ namespace uLoader
 
                 foreach (SIGNAL_SRC sgnl in m_listSgnls)
                 {
-                    iIdGrpSgnls = Convert.ToInt16(sgnl.m_dictPars[@"ID_SRC"].Substring(1, 2)) - 1;
+                    iIdGrpSgnls = Convert.ToInt16(sgnl.m_arSPars[m_listSKeys.IndexOf (@"ID_SRC")].Substring(1, 2)) - 1;
                     if (listRes.IndexOf (iIdGrpSgnls) < 0)
                         listRes.Add(iIdGrpSgnls);
                     else
@@ -495,15 +537,17 @@ namespace uLoader
         /// <param name="listGroupSignals">Список объектов с информацией о группах сигналов</param>
         public GroupSources (GROUP_SRC srcItem, List <GROUP_SIGNALS_SRC>listGroupSignals) : base ()
         {
-            this.m_arDescGroupSignals = new string [2, srcItem.m_arDescGroupSignals.GetLength(1)];
-            this.m_arDescGroupSignals = srcItem.m_arDescGroupSignals.Clone() as string [,];
+            this.m_listGroupSignalsPars = new List <GROUP_SIGNALS_PARS> ();
+            foreach (GROUP_SIGNALS_PARS pars in srcItem.m_listGroupSignalsPars)
+                this.m_listGroupSignalsPars.Add (pars);
 
             m_listGroupSignals = new List<GroupSignals>();
             foreach (GROUP_SIGNALS_SRC itemGroupSignals in listGroupSignals)
                 m_listGroupSignals.Add(new GroupSignals(itemGroupSignals));
 
-            this.m_keys = new string [srcItem.m_keys.Length];
-            srcItem.m_keys.CopyTo(this.m_keys, 0);
+            this.m_listSKeys = new List<string> ();
+            foreach (string skey in srcItem.m_listSKeys)
+                this.m_listSKeys.Add (skey);
 
             //Список с объектми параметров соединения с источниками данных
             foreach (KeyValuePair <string, ConnectionSettings> pair in srcItem.m_dictConnSett)
@@ -538,6 +582,7 @@ namespace uLoader
             //sendInitSource();
 
             int idGrpSgnls = -1;
+            GROUP_SIGNALS_PARS grpSgnlsPars;
             foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
             {
                 //if (sendInitGroupSignals(FormMain.FileINI.GetIDIndex(itemGroupSignals.m_strID)) == 0)
@@ -545,9 +590,11 @@ namespace uLoader
                 {
                     itemGroupSignals.State = STATE.STOPPED;
 
-                    if (itemGroupSignals.m_iAutoStart == 1)
+                    idGrpSgnls = FormMain.FileINI.GetIDIndex(itemGroupSignals.m_strID);
+
+                    grpSgnlsPars = getGroupSignalsPars(idGrpSgnls);
+                    if (grpSgnlsPars.m_iAutoStart == 1)
                     {
-                        idGrpSgnls = FormMain.FileINI.GetIDIndex(itemGroupSignals.m_strID);
                         sendInitGroupSignals (idGrpSgnls);
                         sendState(idGrpSgnls, STATE.STARTED);
                     }
@@ -696,7 +743,8 @@ namespace uLoader
                     break;
             }
 
-            GroupSignals grpSgnls = getGroupSignals (iIDGroupSignals);
+            //GroupSignals grpSgnls = getGroupSignals (iIDGroupSignals);
+            GROUP_SIGNALS_PARS grpSgnlsPars = getGroupSignalsPars (iIDGroupSignals);
             object []arDataAskedHost = null;
 
             if (idToSend == ID_DATA_ASKED_HOST.START)
@@ -705,10 +753,10 @@ namespace uLoader
                         iIDGroupSignals
                         , new object[]
                         {
-                            grpSgnls.m_mode
-                            , grpSgnls.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart
-                            , grpSgnls.m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.TotalSeconds
-                            , grpSgnls.m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_iInterval
+                            grpSgnlsPars.m_mode
+                            , grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart
+                            , grpSgnlsPars.m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.TotalSeconds
+                            , grpSgnlsPars.m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_iInterval
                         }
                     };
             else
@@ -792,6 +840,22 @@ namespace uLoader
             }
 
             Logging.Logg().Debug(@"GroupSources::plugIn_OnEvtDataAskedHost (id=" + grpSgnls.m_strID + @") - " + msgDebugLog + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+        }
+        private GROUP_SIGNALS_PARS getGroupSignalsPars(int id)
+        {
+            GROUP_SIGNALS_PARS grpSgnlsRes = null;
+
+            foreach (GROUP_SIGNALS_PARS grpSgnlsPars in m_listGroupSignalsPars)
+                if (uLoader.FormMain.FileINI.GetIDIndex(grpSgnlsPars.m_strId) == id)
+                {
+                    grpSgnlsRes = grpSgnlsPars;
+
+                    break;
+                }
+                else
+                    ;
+
+            return grpSgnlsRes;
         }
         /// <summary>
         /// Возвратить группу сигналов по целочисленному идентификатору
@@ -982,11 +1046,11 @@ namespace uLoader
 
                             foreach (SIGNAL_SRC sgnl in grpSgnls.m_listSgnls)
                             {
-                                arSel = tblRec.Select(@"ID=" + sgnl.m_dictPars[strNameFieldID], @"DATETIME DESC");
+                                arSel = tblRec.Select(@"ID=" + sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf (strNameFieldID)], @"DATETIME DESC");
                                 if (arSel.Length > 0)
-                                    arObjToRow = new object[] { sgnl.m_dictPars[@"NAME_SHR"], arSel[0][@"VALUE"], ((DateTime)arSel[0][@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"), arSel.Length };
+                                    arObjToRow = new object[] { sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf (@"NAME_SHR")], arSel[0][@"VALUE"], ((DateTime)arSel[0][@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"), arSel.Length };
                                 else
-                                    arObjToRow = new object[] { sgnl.m_dictPars[@"NAME_SHR"], string.Empty, string.Empty, string.Empty };
+                                    arObjToRow = new object[] { sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf (@"NAME_SHR")], string.Empty, string.Empty, string.Empty };
 
                                 tblToPanel.Rows.Add(arObjToRow);
                             }
