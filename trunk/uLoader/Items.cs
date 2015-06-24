@@ -818,7 +818,7 @@ namespace uLoader
                     grpSgnls.StateChange();
                     //Установить/разорвать взаимосвязь между группами источников (при необходимости)
                     if (this is GroupSourcesDest)
-                        (this as GroupSourcesDest).PerformDataAskedHostQueue(new EventArgsDataHost((int)pars[0], new object[] { this, null }));
+                        (this as GroupSourcesDest).PerformDataAskedHostQueue(new EventArgsDataHost((int)pars[0], new object[] { iIDGroupSignals }));
                     else
                         ;
 
@@ -1082,38 +1082,84 @@ namespace uLoader
             return iRes;
         }
         /// <summary>
-        /// 
+        /// Добавить обработчик событий от присоединенной библиотеки
         /// </summary>
+        /// <param name="indxGrpSrcDest">Индекс группы источников (газначения) - не используется</param>
         /// <param name="fOnEvt">Функция обработки</param>
         public void AddDelegatePlugInOnEvtDataAskedHost (int indxGrpSrcDest, DelegateObjectFunc fOnEvt)
         {
             (m_plugIn as PlugInBase).EvtDataAskedHost += fOnEvt;
-        }        
-
+        }
+        /// <summary>
+        /// Удалить обработчик событий от присоединенной библиотеки
+        /// </summary>
+        /// <param name="indxGrpSrcDest">Индекс группы источников (газначения) - не используется</param>
+        /// <param name="fOnEvt">Функция обработки</param>
+        public void RemoveDelegatePlugInOnEvtDataAskedHost(int indxGrpSrcDest, DelegateObjectFunc fOnEvt)
+        {
+            (m_plugIn as PlugInBase).EvtDataAskedHost -= fOnEvt;
+        }
+        /// <summary>
+        /// Получить признак наличия группы сигналов среди списка присоединенных групп сигналов
+        /// </summary>
+        /// <param name="indx">Индекс (целочисленный идентификатор) группв сигналов</param>
+        /// <returns>Признак наличия идентификатора группы сигналов</returns>
         public int ContainsIndexGroupSignals (int indx)
         {
-            int iRes = getGroupSignals (indx) == null ? -1 : 0;
-
-            return iRes;
+            return getGroupSignals(indx) == null ? -1 : 0;
         }
     }
 
     public class GroupSourcesDest : GroupSources
     {
         /// <summary>
+        /// Словарь с ключами - индексами групп источников
+        ///  значениями - списками индексов групп сигналов
+        ///  , подписчиками на таблицы результатов
+        /// </summary>
+        Dictionary<int, List<int>> m_dictLinkedIndexGroupSources;
+        /// <summary>
         /// Событие для обмена данными с очередью обработки событий
         /// </summary>
         public event DelegateObjectFunc EvtDataAskedHostQueue;
-
+        /// <summary>
+        /// Конструктор - основной (с параметрами)
+        /// </summary>
+        /// <param name="grpSrc">Объект группы источников из файла конфигурации</param>
+        /// <param name="listGrpSgnls">Список объектов групп сигналов из файла конфигурации</param>
         public GroupSourcesDest(GROUP_SRC grpSrc, List<GROUP_SIGNALS_SRC> listGrpSgnls)
             : base(grpSrc, listGrpSgnls)
         {
-        }
+            m_dictLinkedIndexGroupSources = new Dictionary<int, List<int>>();
 
+            List<int> listNeededIndexGroupSources = GetListNeededIndexGroupSources();
+            foreach (int indx in listNeededIndexGroupSources)
+                m_dictLinkedIndexGroupSources.Add(indx, new List<int>());
+        }
+        /// <summary>
+        /// Класс для описания группы сигналов назначения
+        /// </summary>
         protected class GroupSignalsDest : GroupSignals
         {
+            /// <summary>
+            /// Конструктор - основной (с параметрами)
+            /// </summary>
+            /// <param name="grpSgnls">Объект группы сигналов из файла конфигурации</param>
             public GroupSignalsDest (GROUP_SIGNALS_SRC grpSgnls) : base (grpSgnls)
             {
+            }
+            /// <summary>
+            /// Получить список индексов групп источников
+            ///  , являющимися источниками значений для группы сигналов
+            /// </summary>
+            /// <returns></returns>
+            public List<int> GetListNeededIndexGroupSources()
+            {
+                throw new NotImplementedException();
+                
+                List<int> listRes = new List<int>();
+
+                return listRes;
             }
 
             /// <summary>
@@ -1138,10 +1184,16 @@ namespace uLoader
                 return listRes;
             }
         }
-
+        /// <summary>
+        /// Создать группу сигналов
+        /// </summary>
+        /// <param name="grpSgnls">Объект группы сигналов из файла конфигурации</param>
+        /// <returns>Объект группы сигналов</returns>
         protected new virtual GroupSignals createGroupSignals(GROUP_SIGNALS_SRC grpSgnls)
         {
-            return createGroupSignals(typeof(GroupSignalsDest), grpSgnls) as GroupSignals;
+            GroupSignals grpSgnlsRes = createGroupSignals(typeof(GroupSignalsDest), grpSgnls) as GroupSignals;
+
+            return grpSgnlsRes;
         }
 
         /// <summary>
@@ -1168,7 +1220,12 @@ namespace uLoader
 
             return listRes;
         }
-
+        /// <summary>
+        /// Получить список индексов групп источников
+        ///  , являющимися источниками значений для указанной группы сигналов (назначения)
+        /// </summary>
+        /// <param name="id">Целочисленный идентификатор (индекс) группы сигналов</param>
+        /// <returns>Список индексов групп источников</returns>
         public List<int> GetListNeededIndexGroupSources(int id)
         {
             List<int> listRes = new List<int>();
@@ -1178,7 +1235,11 @@ namespace uLoader
 
             return listRes;
         }
-
+        /// <summary>
+        /// Получить список индексов групп источников
+        ///  , являющимися источниками значений для группы источников (назначения)
+        /// </summary>
+        /// <returns>Список индексов групп источников</returns>
         public List<int> GetListNeededIndexGroupSources()
         {
             List<int> listRes = new List<int>()
@@ -1266,21 +1327,50 @@ namespace uLoader
         /// <param name="ev">Аргумент при передаче сообщения</param>
         public void PerformDataAskedHostQueue (EventArgsDataHost ev)
         {
-            //В 1-ом параметре пердан индекс группы сигналов
-            List<int> listNeededIndexGroupSources = GetListNeededIndexGroupSources((int)(ev.par as object[])[1]);
-            (ev.par as object[])[1] = new List <int> ();
-            foreach (int indx in listNeededIndexGroupSources)
-                if (m_listLinkedIndexGroupSopurces.IndexOf (indx) < 0)
+            //В 0-ом параметре пердан индекс группы сигналов
+            int indxGrpSgnls = (int)(ev.par as object[])[0];
+
+            List<int> listNeededIndexGroupSources = GetListNeededIndexGroupSources(indxGrpSgnls);
+            bool bEvtDataAskedHostQueue = false;
+
+            lock (this)
+            {
+                foreach (int indx in listNeededIndexGroupSources)
                 {
-                    ((ev.par as object[])[1] as List <int>).Add (indx);
+                    bEvtDataAskedHostQueue = false;
+
+                    if (m_dictLinkedIndexGroupSources.ContainsKey(indx) == true)
+                        if ((ID_DATA_ASKED_HOST)ev.id == ID_DATA_ASKED_HOST.START)
+                        {
+                            m_dictLinkedIndexGroupSources[indx].Add(indxGrpSgnls);
+
+                            if (m_dictLinkedIndexGroupSources[indx].Count == 1)
+                                bEvtDataAskedHostQueue = true;
+                            else
+                                ;
+                        }
+                        else
+                            if ((ID_DATA_ASKED_HOST)ev.id == ID_DATA_ASKED_HOST.STOP)
+                            {
+                                m_dictLinkedIndexGroupSources[indx].RemoveAt(indxGrpSgnls);
+
+                                if (m_dictLinkedIndexGroupSources[indx].Count == 0)
+                                    bEvtDataAskedHostQueue = true;
+                                else
+                                    ;
+                            }
+                            else
+                                ;
+                    else
+                        ;
+
+                    if (bEvtDataAskedHostQueue == true)
+                        //Передать для добавления обработчика событий
+                        EvtDataAskedHostQueue(new EventArgsDataHost(ev.id, new object[] { this, indx }));
+                    else
+                        ;
                 }
-                else
-                    ;
-            //Передать
-            if (((ev.par as object[])[1] as List<int>).Count > 0)
-                EvtDataAskedHostQueue (ev);
-            else
-                ;
+            }
         }
     }
 }

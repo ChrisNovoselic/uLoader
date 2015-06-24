@@ -95,11 +95,12 @@ namespace uLoader
 
             GroupSourcesDest grpSrcDest = pars[0] as GroupSourcesDest;
 
-            List<int> listNeededIndexGroupSources = pars[1] as List <int>;
+            int indxNeededGroupSources = (int)pars[1];
 
             foreach (GroupSources grpSrcSource in m_listGroupSources[(int)INDEX_SRC.SOURCE])
             {
-                if (! (listNeededIndexGroupSources.IndexOf (FormMain.FileINI.GetIDIndex(grpSrcSource.m_strID)) < 0))
+                if (FormMain.FileINI.GetIDIndex(grpSrcSource.m_strID) == indxNeededGroupSources)
+                {
                     if ((ID_DATA_ASKED_HOST)ev.id == ID_DATA_ASKED_HOST.START)
                         grpSrcSource.AddDelegatePlugInOnEvtDataAskedHost(FormMain.FileINI.GetIDIndex(grpSrcDest.m_strID), grpSrcDest.Clone_OnEvtDataAskedHost);
                     else
@@ -107,6 +108,9 @@ namespace uLoader
                             grpSrcSource.RemoveDelegatePlugInOnEvtDataAskedHost(FormMain.FileINI.GetIDIndex(grpSrcDest.m_strID), grpSrcDest.Clone_OnEvtDataAskedHost);
                         else
                             ;
+
+                    break;
+                }
                 else
                     ;
             }
