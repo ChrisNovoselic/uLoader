@@ -612,9 +612,19 @@ namespace uLoaderCommon
             while (!(threadQueueIsWorking < 0))
             {
                 bRes = false;
-                //Ожидать когда появятся объекты для обработки
-                //bRes = m_semaQueue.WaitOne();
-                bRes = m_autoResetEvtQueue.WaitOne();
+
+                //Проверить наличие объектов для обработки
+                lock (m_lockQueue)
+                {
+                    bRes = m_queueIdGroupSignals.Count > 0;
+                }
+
+                if (bRes == false)
+                    //Ожидать когда появятся объекты для обработки
+                    //bRes = m_semaQueue.WaitOne();
+                    bRes = m_autoResetEvtQueue.WaitOne();
+                else
+                    ; //Начать обработку немедленно
 
                 while (true)
                 {
@@ -741,7 +751,9 @@ namespace uLoaderCommon
 
             StartDbInterfaces();
 
-            startThreadQueue();            
+            startThreadQueue();
+
+            Logging.Logg().Debug(@"HHandlerDbULoader::Start (ID=" + (_iPlugin as PlugInBase)._Id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);            
         }
         /// <summary>
         /// Признак выполнения объекта и всех зависимых потоков

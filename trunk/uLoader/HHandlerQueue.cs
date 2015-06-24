@@ -83,44 +83,33 @@ namespace uLoader
             setListGroupSources(INDEX_SRC.SOURCE, m_fileINI.AllObjectsSrcGroupSources, m_fileINI.AllObjectsSrcGroupSignals);
             // панель - назначение
             setListGroupSources(INDEX_SRC.DEST, m_fileINI.AllObjectsDestGroupSources, m_fileINI.AllObjectsDestGroupSignals);
-            //Установить связь между "связанными" (по конф./файлу) по "цепочке" сигналов - групп сигналов - групп источников
-            setGroupsLinked ();
         }
-
-        private int setGroupsLinked ()
+        /// <summary>
+        /// Обработчик события '' для установления взаимосвязи между "связанными" (по конф./файлу) по "цепочке" сигналов - групп сигналов - групп источников
+        /// </summary>
+        /// <param name="par">Параметры для установления соответствия</param>
+        private void onEvtDataAskedHostQueue_GroupSourcesDest(object par)
         {
-            int iRes = 0;
-            
-            ////??? временно
-            //m_listGroupSources[(int)INDEX_SRC.SOURCE][0].AddDelegatePlugInOnEvtDataAskedHost((m_listGroupSources[(int)INDEX_SRC.DEST][0] as GroupSourcesDest).Clone_OnEvtDataAskedHost);
-            //??? постоянно
-            List<int> listNeededIndexGroupSignals = null
-                , listIndexGroupSourcesDestLinkAdded = new List<int> ();
-            foreach (GroupSourcesDest grpSrcDest in m_listGroupSources[(int)INDEX_SRC.DEST])
+            EventArgsDataHost ev = par as EventArgsDataHost;
+            object []pars = ev.par as object [];
+
+            GroupSourcesDest grpSrcDest = pars[0] as GroupSourcesDest;
+
+            List<int> listNeededIndexGroupSources = pars[1] as List <int>;
+
+            foreach (GroupSources grpSrcSource in m_listGroupSources[(int)INDEX_SRC.SOURCE])
             {
-                listNeededIndexGroupSignals = grpSrcDest.GetListNeededIndexGroupSignals();
-
-                foreach (GroupSources grpSrcSource in m_listGroupSources[(int)INDEX_SRC.SOURCE])
-                {
-                    listIndexGroupSourcesDestLinkAdded.Clear();
-
-                    foreach (int indxGrpSignals in listNeededIndexGroupSignals)
-                        if ((listIndexGroupSourcesDestLinkAdded.IndexOf(m_listGroupSources[(int)INDEX_SRC.DEST].IndexOf(grpSrcDest)) < 0)
-                            && (grpSrcSource.ContainsIndexGroupSignals(indxGrpSignals) == 0))
-                        {
-                            Logging.Logg().Debug(@"HHandlerQueue::SetGroupLinked() - Source=" + grpSrcSource.m_strShrName + @", Dest=" + grpSrcDest.m_strShrName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
-
-                            grpSrcSource.AddDelegatePlugInOnEvtDataAskedHost(grpSrcDest.Clone_OnEvtDataAskedHost);
-                            listIndexGroupSourcesDestLinkAdded.Add(m_listGroupSources[(int)INDEX_SRC.DEST].IndexOf(grpSrcDest));
-
-                            break;
-                        }
+                if (! (listNeededIndexGroupSources.IndexOf (FormMain.FileINI.GetIDIndex(grpSrcSource.m_strID)) < 0))
+                    if ((ID_DATA_ASKED_HOST)ev.id == ID_DATA_ASKED_HOST.START)
+                        grpSrcSource.AddDelegatePlugInOnEvtDataAskedHost(FormMain.FileINI.GetIDIndex(grpSrcDest.m_strID), grpSrcDest.Clone_OnEvtDataAskedHost);
+                    else
+                        if ((ID_DATA_ASKED_HOST)ev.id == ID_DATA_ASKED_HOST.STOP)
+                            grpSrcSource.RemoveDelegatePlugInOnEvtDataAskedHost(FormMain.FileINI.GetIDIndex(grpSrcDest.m_strID), grpSrcDest.Clone_OnEvtDataAskedHost);
                         else
                             ;
-                }
+                else
+                    ;
             }
-
-            return iRes;
         }
 
         /// <summary>
@@ -146,6 +135,7 @@ namespace uLoader
                 ;
 
             List<GROUP_SIGNALS_SRC> listGroupSignals = new List<GROUP_SIGNALS_SRC>();
+            GroupSources grpSrc;
             foreach (GROUP_SRC itemSrc in arGroupSources)
             {
                 listGroupSignals.Clear();
@@ -161,8 +151,17 @@ namespace uLoader
                         else
                             ;
 
-                //m_listGroupSources[(int)indxSrc].Add(new GroupSources(itemSrc, listGroupSignals));
-                m_listGroupSources[(int)indxSrc].Add(Activator.CreateInstance(typeObjGroupSources, new object[] { itemSrc, listGroupSignals }) as GroupSources);                
+                ////Вариант №1
+                //grpSrc = new GroupSources(itemSrc, listGroupSignals);
+                //Вариант №2
+                grpSrc = Activator.CreateInstance(typeObjGroupSources, new object[] { itemSrc, listGroupSignals }) as GroupSources;
+                if (indxSrc == INDEX_SRC.DEST)
+                    (grpSrc as GroupSourcesDest).EvtDataAskedHostQueue += new DelegateObjectFunc(onEvtDataAskedHostQueue_GroupSourcesDest);
+                else
+                    ;
+
+                m_listGroupSources[(int)indxSrc].Add(grpSrc);
+                                
             }
 
             return iRes;
