@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 using System.Reflection; //Assembly
 using System.IO;
@@ -1155,9 +1153,21 @@ namespace uLoader
             /// <returns></returns>
             public List<int> GetListNeededIndexGroupSources()
             {
-                throw new NotImplementedException();
-                
                 List<int> listRes = new List<int>();
+
+                int indxGroupSrc = -1
+                    , iPosGroupSrc = m_listSKeys.IndexOf (@"ID_GROUP_SOURCES");
+                //Поиск индексов групп источников
+                foreach (SIGNAL_SRC sgnl in m_listSgnls)
+                {
+                    //Получить индекс группы источников
+                    indxGroupSrc = FormMain.FileINI.GetIDIndex(sgnl.m_arSPars[iPosGroupSrc]);
+
+                    if (listRes.IndexOf (indxGroupSrc) < 0)
+                        listRes.Add(indxGroupSrc);
+                    else
+                        ;
+                }
 
                 return listRes;
             }
@@ -1189,7 +1199,7 @@ namespace uLoader
         /// </summary>
         /// <param name="grpSgnls">Объект группы сигналов из файла конфигурации</param>
         /// <returns>Объект группы сигналов</returns>
-        protected new virtual GroupSignals createGroupSignals(GROUP_SIGNALS_SRC grpSgnls)
+        protected override GroupSignals createGroupSignals(GROUP_SIGNALS_SRC grpSgnls)
         {
             GroupSignals grpSgnlsRes = createGroupSignals(typeof(GroupSignalsDest), grpSgnls) as GroupSignals;
 
