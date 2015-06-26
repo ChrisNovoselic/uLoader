@@ -590,7 +590,7 @@ namespace uLoaderCommon
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
-                return new SIGNALDest((int)objs[0], (int)objs[1]);
+                return new SIGNALDest((int)objs[0], (int)objs[2]);
             }
 
             protected override object getIdToInsert(int idLink)
@@ -649,7 +649,7 @@ namespace uLoaderCommon
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
-                return new SIGNALStatIDsql((int)objs[0], (int)objs[1], (int)objs[3]);
+                return new SIGNALStatIDsql((int)objs[0], (int)objs[2], (int)objs[4]);
             }
 
             protected override object getIdToInsert(int idLink)
@@ -735,7 +735,7 @@ namespace uLoaderCommon
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
-                return new SIGNALStatKKSNAMEsql((int)objs[0], (int)objs[1], (string)objs[4]);
+                return new SIGNALStatKKSNAMEsql((int)objs[0], (int)objs[2], (string)objs[5]);
             }
 
             protected override object getIdToInsert(int idLink)

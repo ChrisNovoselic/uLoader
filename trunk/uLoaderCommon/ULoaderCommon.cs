@@ -528,39 +528,48 @@ namespace uLoaderCommon
         {
             int iRes = 0;
 
-            if (m_dictGroupSignals.Keys.Contains(id) == false)
-            {//Считать переданные параметры - параметрами сигналов                
-                m_dictGroupSignals.Add(id, createGroupSignals (pars));
+            try
+            {
+                if (m_dictGroupSignals.Keys.Contains(id) == false)
+                {//Считать переданные параметры - параметрами сигналов                
+                    m_dictGroupSignals.Add(id, createGroupSignals (pars));
 
-                Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - добавить группу сигналов [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
-            }
-            else
-                //Сигналы д.б. инициализированы
-                if (m_dictGroupSignals[id].Signals == null)
-                    iRes = -1;
-                else
-                {
-                    if (pars[0].GetType().IsArray == true)
-                    {
-                        //Считать переданные параметры - параметрами сигналов
-                        m_dictGroupSignals[id] = createGroupSignals(pars);
-
-                        Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - ПЕРЕсоздать группу сигналов [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
-                    }
-                    else
-                    {//Считать переданные параметры - параметрами группы сигналов
-                        lock (m_lockStateGroupSignals)
-                        {
-                            m_dictGroupSignals[id].Mode = (uLoaderCommon.MODE_WORK)pars[0];
-                            m_dictGroupSignals[id].State = GroupSignals.STATE.STOP;
-                            //m_dictGroupSignals[id].DateTimeStart = (DateTime)pars[1];
-                            m_dictGroupSignals[id].TimeSpanPeriod = TimeSpan.FromSeconds((double)pars[2]);
-                            m_dictGroupSignals[id].MSecInterval = (int)pars[3];
-                        }
-
-                        Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - параметры группы сигналов [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
-                    }
+                    Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - добавить группу сигналов [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
+                else
+                    //Сигналы д.б. инициализированы
+                    if (m_dictGroupSignals[id].Signals == null)
+                        iRes = -1;
+                    else
+                    {
+                        if (pars[0].GetType().IsArray == true)
+                        {
+                            //Считать переданные параметры - параметрами сигналов
+                            m_dictGroupSignals[id] = createGroupSignals(pars);
+
+                            Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - ПЕРЕсоздать группу сигналов [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+                        }
+                        else
+                        {//Считать переданные параметры - параметрами группы сигналов
+                            lock (m_lockStateGroupSignals)
+                            {
+                                m_dictGroupSignals[id].Mode = (uLoaderCommon.MODE_WORK)pars[0];
+                                m_dictGroupSignals[id].State = GroupSignals.STATE.STOP;
+                                //m_dictGroupSignals[id].DateTimeStart = (DateTime)pars[1];
+                                m_dictGroupSignals[id].TimeSpanPeriod = TimeSpan.FromSeconds((double)pars[2]);
+                                m_dictGroupSignals[id].MSecInterval = (int)pars[3];
+                            }
+
+                            Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - параметры группы сигналов [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+                        }
+                    }
+            }
+            catch (Exception e)
+            {
+                Logging.Logg().Exception (e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader::Initialize () - ...");
+
+                iRes = -1;
+            }
 
             return iRes;
         }
@@ -1027,7 +1036,11 @@ namespace uLoaderCommon
                     break;
                 case (int)ID_DATA_ASKED_HOST.INIT_SIGNALS: //Приняты параметры инициализации группы сигналов
                     //Инициализация группы сигналов по идентифактору [0]
-                    target.Initialize((int)(ev.par as object[])[0], (ev.par as object[])[1] as object[]);
+                    if (! (target.Initialize((int)(ev.par as object[])[0], (ev.par as object[])[1] as object[]) == 0))
+                        //??? ошибка
+                        ;
+                    else
+                        ;
                     break;
                 case (int)ID_DATA_ASKED_HOST.START: //Принята команда на запуск группы сигналов
                     //Проверить признак получения целевым объектом параметоров для инициализации
