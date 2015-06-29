@@ -89,7 +89,7 @@ namespace DestBiTECStatIDsql
         public PlugIn()
             : base()
         {
-            _Id = 2001;
+            _Id = 2003;
 
             createObject(typeof(DestBiTECStatIDsql));
         }

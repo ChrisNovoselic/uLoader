@@ -585,13 +585,16 @@ namespace uLoaderCommon
         /// <param name="key">Идентификатор группы сигналов</param>
         protected void push(int key)
         {
-            Logging.Logg().Debug(@"HHandlerDbULoader::enqueue () - [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + key + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
-            
+            string msgDebug = @"HHandlerDbULoader::enqueue () - [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + key + @"] - queue.Count=";
+
             lock (m_lockQueue)
             {
                 if (!(m_autoResetEvtQueue == null))
                 {
                     m_queueIdGroupSignals.Enqueue(key);
+
+                    msgDebug += m_queueIdGroupSignals.Count;
+
                     //Проверить активность потока очереди обработки событий
                     bool bSet = m_autoResetEvtQueue.WaitOne(0);
 
@@ -606,6 +609,8 @@ namespace uLoaderCommon
                 else
                     ;
             }
+
+            Logging.Logg().Debug(msgDebug + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
         }        
 
         protected abstract int addAllStates ();

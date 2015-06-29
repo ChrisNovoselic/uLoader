@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("DestBiTECStatKKSNAMEsql")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("WORKGROUP")]
+[assembly: AssemblyCompany("ZAO ITC")]
 [assembly: AssemblyProduct("DestBiTECStatKKSNAMEsql")]
-[assembly: AssemblyCopyright("Copyright © WORKGROUP 2015")]
+[assembly: AssemblyCopyright("Copyright © ZAO ITC 2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

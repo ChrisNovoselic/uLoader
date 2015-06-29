@@ -94,7 +94,7 @@ namespace DestBiTECStatKKSNAMEsql
         public PlugIn()
             : base()
         {
-            _Id = 2002;
+            _Id = 2004;
 
             createObject(typeof(DestBiTECStatKKSNAMEsql));
         }

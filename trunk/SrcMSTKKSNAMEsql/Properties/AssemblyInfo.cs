@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("SrcMSTKKSNAMEsql")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("WORKGROUP")]
+[assembly: AssemblyCompany("ZAO ITC")]
 [assembly: AssemblyProduct("SrcMSTKKSNAMEsql")]
-[assembly: AssemblyCopyright("Copyright © WORKGROUP 2015")]
+[assembly: AssemblyCopyright("Copyright © ZAO ITC 2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
