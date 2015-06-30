@@ -60,6 +60,7 @@ namespace SrcBiyskTMora
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
+                //ID_MAIN, TAG
                 return new SIGNALBiyskTMoraSrc((int)objs[0], objs[2] as string);
             }
         }

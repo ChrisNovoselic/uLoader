@@ -29,6 +29,7 @@ namespace SrcKTSTUsql
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
+                //ID_MAIN
                 return new SIGNALKTSTUsql((int)objs[0]);
             }
 

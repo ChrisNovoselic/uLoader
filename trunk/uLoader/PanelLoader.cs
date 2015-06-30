@@ -572,7 +572,7 @@ namespace uLoader
                     // только, если панель - источник
                     if (this is PanelLoaderSource)
                     {
-                        switch (grpSgnlsPars.m_mode)
+                        switch ((grpSgnlsPars as GROUP_SIGNALS_SRC_PARS).m_mode)
                         {
                             case MODE_WORK.CUR_INTERVAL:
                                 key = PanelLoader.KEY_CONTROLS.RBUTTON_CUR_DATETIME;

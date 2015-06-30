@@ -34,6 +34,7 @@ namespace SrcMSTKKSNAMEsql
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
+                //ID_MAIN, KKSNAME
                 return new SIGNALMSTKKSNAMEsql((int)objs[0], (string)objs[2]);
             }
 

@@ -130,11 +130,11 @@ namespace uLoaderCommon
                         m_queueTableRec.Enqueue (value);
                     }
 
-                    Logging.Logg().Debug(@"HHandlerDbULoaderDest::TableRecieved.set - " + @"ENQUEUE!"
-                        + @" [ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HHandlerDbULoaderDest).m_IdGroupSignalsCurrent
-                        + @"] queue.Count=" + m_queueTableRec.Count
-                        + @"..."
-                        , Logging.INDEX_MESSAGE.NOT_SET);
+                    //Logging.Logg().Debug(@"HHandlerDbULoaderDest::TableRecieved.set - " + @"ENQUEUE!"
+                    //    + @" [ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HHandlerDbULoaderDest).m_IdGroupSignalsCurrent
+                    //    + @"] queue.Count=" + m_queueTableRec.Count
+                    //    + @"..."
+                    //    , Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
 
@@ -320,7 +320,7 @@ namespace uLoaderCommon
         public virtual int Insert(int id, DataTable tableIn, object []pars)
         {
             int iRes = 0;
-            string msg = string.Empty;
+            //string msg = string.Empty;
 
             lock (m_lockStateGroupSignals)
             {
@@ -331,12 +331,12 @@ namespace uLoaderCommon
                     m_dictGroupSignals[id].TableRecieved = tableIn.Copy();
 
                     push(id);
-                    msg = @"PUSH";
+                    //msg = @"PUSH";
 
                     if ((m_dictGroupSignals[id] as GroupSignalsDest).IsQueue == true)
                     {
                         push(id);
-                        msg += @"..PUSH!";
+                        //msg += @"..PUSH!";
                     }
                     else
                         ;
@@ -345,7 +345,7 @@ namespace uLoaderCommon
                     ;
             }
 
-            Logging.Logg().Debug(@"HHandlerDbULoaderDest::Insert () - " + msg + @" ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @", от [ID_SOURCE=" + pars[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
+            //Logging.Logg().Debug(@"HHandlerDbULoaderDest::Insert () - " + msg + @" ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @", от [ID_SOURCE=" + pars[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
 
             return iRes;
         }
@@ -590,7 +590,8 @@ namespace uLoaderCommon
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
-                return new SIGNALDest((int)objs[0], (int)objs[2]);
+                //ID_MAIN, ID_SRC_SGNL
+                return new SIGNALDest((int)objs[0], (int)objs[1]);
             }
 
             protected override object getIdToInsert(int idLink)
@@ -649,7 +650,8 @@ namespace uLoaderCommon
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
-                return new SIGNALStatIDsql((int)objs[0], (int)objs[2], (int)objs[4]);
+                //ID_MAIN, ID_SRC_SGNL, ID_STAT
+                return new SIGNALStatIDsql((int)objs[0], (int)objs[1], (int)objs[3]);
             }
 
             protected override object getIdToInsert(int idLink)
@@ -735,7 +737,8 @@ namespace uLoaderCommon
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
-                return new SIGNALStatKKSNAMEsql((int)objs[0], (int)objs[2], (string)objs[5]);
+                //ID_MAIN, ID_SRC_SGNL, KKSNAME_STAT
+                return new SIGNALStatKKSNAMEsql((int)objs[0], (int)objs[1], (string)objs[4]);
             }
 
             protected override object getIdToInsert(int idLink)

@@ -61,15 +61,11 @@ namespace uLoader
         /// <summary>
         /// Признак возможности включения режима "выборочно"
         /// </summary>
-        public bool m_bCostumizeEnabled;
+        public bool m_bToolsEnabled;
         /// <summary>
         /// Признак автоматического запуска опроса
         /// </summary>
         public int m_iAutoStart;
-        /// <summary>
-        /// Признак текущего режима работы
-        /// </summary>
-        public MODE_WORK m_mode;
         /// <summary>
         /// Массив параметров для всех (== COUNT_MODE_WORK) режимов работы
         /// </summary>
@@ -79,20 +75,10 @@ namespace uLoader
         /// </summary>
         public GROUP_SIGNALS_PARS ()
         {
-            //Режим работы по умолчанию - текущий интервал
-            m_mode = MODE_WORK.CUR_INTERVAL;
             m_iAutoStart = -1;
-            m_bCostumizeEnabled = false;
+            m_bToolsEnabled = false;
             m_arWorkIntervals = new DATETIME_WORK[(int)MODE_WORK.COUNT_MODE_WORK];
-            for (int i = 0; i < (int)MODE_WORK.COUNT_MODE_WORK; i++)
-                m_arWorkIntervals[i] = new DATETIME_WORK();
-
-            //Дата/время начала опроса (режим: тек./дата/время)
-            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart = DateTime.Now;
-            // округлить по текущей минуте
-            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart.AddMilliseconds(-1 * m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart.Second * 1000 + m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart.Millisecond);
-            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod = TimeSpan.FromSeconds((int)DATETIME.SEC_SPANPERIOD_DEFAULT);
-            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval = (int)DATETIME.MSEC_INTERVAL_DEFAULT;
+            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE] = new DATETIME_WORK();
 
             //Дата/время начала опроса (режим: выборочно)
             m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart = DateTime.Now;
@@ -103,6 +89,50 @@ namespace uLoader
             m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.AddMilliseconds(-1 * m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.Second * 1000 + m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.Millisecond);
             m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriod = TimeSpan.FromHours(1);
             m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_iInterval = 60;
+        }
+    }
+    /// <summary>
+    /// Класс для параметров группы сигналов (источник)
+    /// </summary>
+    public class GROUP_SIGNALS_SRC_PARS : GROUP_SIGNALS_PARS
+    {
+        /// <summary>
+        /// Признак текущего режима работы
+        /// </summary>
+        public MODE_WORK m_mode;
+        /// <summary>
+        /// Конструктор - основной (без параметров)
+        /// </summary>
+        public GROUP_SIGNALS_SRC_PARS ()
+        {
+            //Режим работы по умолчанию - текущий интервал
+            m_mode = MODE_WORK.CUR_INTERVAL;
+
+            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL] = new DATETIME_WORK();
+            //Дата/время начала опроса (режим: тек./дата/время)
+            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart = DateTime.Now;
+            // округлить по текущей минуте
+            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart.AddMilliseconds(-1 * m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart.Second * 1000 + m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart.Millisecond);
+            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod = TimeSpan.FromSeconds((int)DATETIME.SEC_SPANPERIOD_DEFAULT);
+            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval = (int)DATETIME.MSEC_INTERVAL_DEFAULT;
+        }
+    }
+    /// <summary>
+    /// Класс для параметров группы сигналов (назначение)
+    /// </summary>
+    public class GROUP_SIGNALS_DEST_PARS : GROUP_SIGNALS_PARS
+    {
+        /// <summary>
+        /// Строковый идентификатор группы источников
+        ///  к которой прикреплена группа сигналов-источник
+        ///  для текущей группы сигналов
+        /// </summary>
+        public string m_idGrpSrcs;
+        /// <summary>
+        /// Конструктор - основной (без параметров)
+        /// </summary>
+        public GROUP_SIGNALS_DEST_PARS ()
+        {
         }
     }
     /// <summary>
@@ -739,22 +769,43 @@ namespace uLoader
             object []arDataAskedHost = null;
 
             if (idToSend == ID_DATA_ASKED_HOST.START)
-                arDataAskedHost = new object[]
-                    {
-                        iIDGroupSignals
-                        , new object[]
+                //Проверить признак группы сигналов: источник или назначение
+                //if (! (grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL] == null))
+                if (grpSgnlsPars is GROUP_SIGNALS_SRC_PARS)
+                    arDataAskedHost = new object[]
                         {
-                            grpSgnlsPars.m_mode
-                            , grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart
-                            , grpSgnlsPars.m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.TotalSeconds
-                            , grpSgnlsPars.m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_iInterval
-                        }
-                    };
+                            iIDGroupSignals
+                            , new object[]
+                            {
+                                (grpSgnlsPars as GROUP_SIGNALS_SRC_PARS).m_mode
+                                , grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart
+                                , TimeSpan.FromSeconds(grpSgnlsPars.m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.TotalSeconds)
+                                , grpSgnlsPars.m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_iInterval
+                            }
+                        };
+                else
+                    if (grpSgnlsPars is GROUP_SIGNALS_DEST_PARS)
+                        arDataAskedHost = new object[]
+                            {
+                                iIDGroupSignals
+                                , new object[]
+                                {
+                                    MODE_WORK.ON_REQUEST
+                                    , DateTime.MinValue
+                                    , TimeSpan.Zero
+                                    , -1
+                                }
+                            };
+                    else
+                        ;
             else
-                arDataAskedHost = new object[]
-                    {
-                        iIDGroupSignals
-                    };
+                if (idToSend == ID_DATA_ASKED_HOST.STOP)
+                    arDataAskedHost = new object[]
+                        {
+                            iIDGroupSignals
+                        };
+                else
+                    ; //
 
             PerformDataAskedHostPlugIn(new EventArgsDataHost((int)idToSend, arDataAskedHost));
 
@@ -805,7 +856,14 @@ namespace uLoader
                     {
                         msgDebugLog = @"получено строк=" + (pars[2] as DataTable).Rows.Count;
 
-                        grpSgnls.m_tableData = (pars[2] as DataTable).Copy();
+                        try
+                        {
+                            grpSgnls.m_tableData = (pars[2] as DataTable).Copy();
+                        }
+                        catch (Exception e)
+                        {
+                            Logging.Logg ().Exception (e, Logging.INDEX_MESSAGE.NOT_SET, @"GroupSources::plugIn_OnEvtDataAskedHost (id=" + m_strID + @", key=" + grpSgnls.m_strID + @") - ...");
+                        }
                     }
                     else
                         ;
@@ -832,7 +890,12 @@ namespace uLoader
 
             Logging.Logg().Debug(@"GroupSources::plugIn_OnEvtDataAskedHost (id=" + m_strID + @", key=" + grpSgnls.m_strID + @") - " + msgDebugLog + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
-        private GROUP_SIGNALS_PARS getGroupSignalsPars(int id)
+        /// <summary>
+        /// Возвратить параметры группы сигналов по целочисленному идентификатору
+        /// </summary>
+        /// <param name="id">Целочисленный идентификатор (целочисленное окончание строкового идентификатора)</param>
+        /// <returns>Объект параметров группы сигналов</returns>
+        protected GROUP_SIGNALS_PARS getGroupSignalsPars(int id)
         {
             GROUP_SIGNALS_PARS grpSgnlsRes = null;
 
@@ -1146,31 +1209,31 @@ namespace uLoader
             public GroupSignalsDest (GROUP_SIGNALS_SRC grpSgnls) : base (grpSgnls)
             {
             }
-            /// <summary>
-            /// Получить список индексов групп источников
-            ///  , являющимися источниками значений для группы сигналов
-            /// </summary>
-            /// <returns></returns>
-            public List<int> GetListNeededIndexGroupSources()
-            {
-                List<int> listRes = new List<int>();
+            ///// <summary>
+            ///// Получить список индексов групп источников
+            /////  , являющимися источниками значений для группы сигналов
+            ///// </summary>
+            ///// <returns></returns>
+            //public List<int> GetListNeededIndexGroupSources()
+            //{
+            //    List<int> listRes = new List<int>();
 
-                int indxGroupSrc = -1
-                    , iPosGroupSrc = m_listSKeys.IndexOf (@"ID_GROUP_SOURCES");
-                //Поиск индексов групп источников
-                foreach (SIGNAL_SRC sgnl in m_listSgnls)
-                {
-                    //Получить индекс группы источников
-                    indxGroupSrc = FormMain.FileINI.GetIDIndex(sgnl.m_arSPars[iPosGroupSrc]);
+            //    int indxGroupSrc = -1
+            //        , iPosGroupSrc = m_listSKeys.IndexOf (@"ID_GROUP_SOURCES");
+            //    //Поиск индексов групп источников
+            //    foreach (SIGNAL_SRC sgnl in m_listSgnls)
+            //    {
+            //        //Получить индекс группы источников
+            //        indxGroupSrc = FormMain.FileINI.GetIDIndex(sgnl.m_arSPars[iPosGroupSrc]);
 
-                    if (listRes.IndexOf (indxGroupSrc) < 0)
-                        listRes.Add(indxGroupSrc);
-                    else
-                        ;
-                }
+            //        if (listRes.IndexOf (indxGroupSrc) < 0)
+            //            listRes.Add(indxGroupSrc);
+            //        else
+            //            ;
+            //    }
 
-                return listRes;
-            }
+            //    return listRes;
+            //}
 
             /// <summary>
             /// Получить список индексов групп сигналов, использующихся в качестве источников
@@ -1240,8 +1303,9 @@ namespace uLoader
         {
             List<int> listRes = new List<int>();
             GroupSourcesDest.GroupSignalsDest grpSgnls = getGroupSignals(id) as GroupSignalsDest;
+            GROUP_SIGNALS_DEST_PARS grpSgnlsPars = getGroupSignalsPars(id) as GROUP_SIGNALS_DEST_PARS;
 
-            listRes = grpSgnls.GetListNeededIndexGroupSources();
+            listRes = new List <int> () { FormMain.FileINI.GetIDIndex (grpSgnlsPars.m_idGrpSrcs) };
 
             return listRes;
         }
@@ -1260,7 +1324,7 @@ namespace uLoader
                 ////Вариант №1
                 //listRes.Union(grpSgnls.GetListNeededIndexGroupSignals());
                 //Вариант №2
-                listGrpSrcs = grpSgnls.GetListNeededIndexGroupSources();
+                listGrpSrcs = GetListNeededIndexGroupSources(FormMain.FileINI.GetIDIndex (grpSgnls.m_strID));
                 foreach (int id in listGrpSrcs)
                     if (listRes.IndexOf(id) < 0)
                         listRes.Add(id);

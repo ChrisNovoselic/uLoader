@@ -31,15 +31,19 @@ namespace uLoaderCommon
     /// </summary>
     public enum MODE_WORK
     {
-        UNKNOWN = -1,
+        UNKNOWN = -2,
+        /// <summary>
+        /// по требованию (для назначения)
+        /// </summary>
+        ON_REQUEST = -1,
         /// <summary>
         /// по текущему интервалу
-        /// </summary>
+        /// </summary>        
         CUR_INTERVAL,
         /// <summary>
         /// выборочно (история)
         /// </summary>
-        COSTUMIZE, 
+        COSTUMIZE,        
             COUNT_MODE_WORK
     }
     /// <summary>
@@ -183,8 +187,12 @@ namespace uLoaderCommon
                         // для режима "выборочно"    
                         stateRes = GroupSignals.STATE.SLEEP;
                     else
-                        //??? throw new Exception
-                        ;
+                        if (mode == uLoaderCommon.MODE_WORK.ON_REQUEST)
+                            // для режима "по требованию"    
+                            stateRes = GroupSignals.STATE.SLEEP;
+                        else
+                            //??? throw new Exception
+                            ;
 
                 return stateRes;
             }
@@ -556,7 +564,7 @@ namespace uLoaderCommon
                                 m_dictGroupSignals[id].Mode = (uLoaderCommon.MODE_WORK)pars[0];
                                 m_dictGroupSignals[id].State = GroupSignals.STATE.STOP;
                                 //m_dictGroupSignals[id].DateTimeStart = (DateTime)pars[1];
-                                m_dictGroupSignals[id].TimeSpanPeriod = TimeSpan.FromSeconds((double)pars[2]);
+                                m_dictGroupSignals[id].TimeSpanPeriod = (TimeSpan)pars[2];
                                 m_dictGroupSignals[id].MSecInterval = (int)pars[3];
                             }
 
@@ -591,26 +599,37 @@ namespace uLoaderCommon
             {
                 if (!(m_autoResetEvtQueue == null))
                 {
-                    m_queueIdGroupSignals.Enqueue(key);
+                    try
+                    {
+                        m_queueIdGroupSignals.Enqueue(key);
 
-                    msgDebug += m_queueIdGroupSignals.Count;
+                        msgDebug += m_queueIdGroupSignals.Count;
 
-                    //Проверить активность потока очереди обработки событий
-                    bool bSet = m_autoResetEvtQueue.WaitOne(0);
+                        //Проверить активность потока очереди обработки событий
+                        bool bSet = m_autoResetEvtQueue.WaitOne(0);
 
-                    //if (m_queueIdGroupSignals.Count == 1)
-                    if (bSet == false)
-                        //Активировать поток очереди обработки событий
-                        //m_semaQueue.Release(1);
-                        m_autoResetEvtQueue.Set();
-                    else
-                        ;
+                        //if (m_queueIdGroupSignals.Count == 1)
+                        if (bSet == false)
+                            //Активировать поток очереди обработки событий
+                            //m_semaQueue.Release(1);
+                            m_autoResetEvtQueue.Set();
+                        else
+                            ;
+                    }
+                    catch (Exception e)
+                    {
+                        Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, msgDebug + @" ...");
+                        msgDebug = string.Empty;
+                    }
                 }
                 else
                     ;
             }
 
-            Logging.Logg().Debug(msgDebug + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+            if (msgDebug.Equals (string.Empty) == false)
+                Logging.Logg().Debug(msgDebug + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+            else
+                ;
         }        
 
         protected abstract int addAllStates ();
@@ -824,6 +843,7 @@ namespace uLoaderCommon
                     initState = GroupSignals.STATE.TIMER;
                     break;
                 case MODE_WORK.COSTUMIZE:
+                case MODE_WORK.ON_REQUEST: // для состояния 'UNKNOWN' (для группы сигналов назначения)
                     initState = GroupSignals.STATE.SLEEP;
                     break;
                 default:
