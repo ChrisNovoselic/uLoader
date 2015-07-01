@@ -819,76 +819,80 @@ namespace uLoader
         private void plugIn_OnEvtDataAskedHost  (object obj)
         {
             EventArgsDataHost ev = obj as EventArgsDataHost;
+            GroupSignals grpSgnls = null;
             int iIDGroupSignals = -1; //??? д.б. указана в "запросе"
-            object []pars = (ev.par as object[])[0] as object [];
-
-            iIDGroupSignals = (int)pars[1];
-            GroupSignals grpSgnls = getGroupSignals(iIDGroupSignals);
-
-            string msgDebugLog = string.Empty;
-
-            switch ((ID_DATA_ASKED_HOST)pars[0])
+            object []pars = null;
+            
+            try
             {
-                case ID_DATA_ASKED_HOST.INIT_SOURCE: //Получен запрос на парметры инициализации                    
-                    //Отправить данные для инициализации
-                    sendInitSource ();
-                    if (!(grpSgnls.State == STATE.UNAVAILABLE))
-                        //sendState(iIDGroupSignals, m_listGroupSignals[iIDGroupSignals].State);
-                        sendState(iIDGroupSignals, STATE.STARTED);
-                    else
-                        ;
+                pars = (ev.par as object[])[0] as object [];
 
-                    msgDebugLog = @"отправлен: " + ((ID_DATA_ASKED_HOST)pars[0]).ToString ();
-                    break;
-                case ID_DATA_ASKED_HOST.INIT_SIGNALS: //Получен запрос на обрабатываемую группу сигналов
-                    sendInitGroupSignals(iIDGroupSignals);
-                    if (!(grpSgnls.State == STATE.UNAVAILABLE))
-                        //sendState(iIDGroupSignals, m_listGroupSignals[iIDGroupSignals].State);
-                        sendState(iIDGroupSignals, STATE.STARTED);
-                    else
-                        ;
+                iIDGroupSignals = (int)pars[1];
+                grpSgnls = getGroupSignals(iIDGroupSignals);
 
-                    msgDebugLog = @"отправлен: " + ((ID_DATA_ASKED_HOST)pars[0]).ToString();
-                    break;
-                case ID_DATA_ASKED_HOST.TABLE_RES:
-                    if ((!(grpSgnls == null))
-                        && (!(pars[2] == null)))
-                    {
-                        msgDebugLog = @"получено строк=" + (pars[2] as DataTable).Rows.Count;
+                string msgDebugLog = string.Empty;
 
-                        try
+                switch ((ID_DATA_ASKED_HOST)pars[0])
+                {
+                    case ID_DATA_ASKED_HOST.INIT_SOURCE: //Получен запрос на парметры инициализации                    
+                        //Отправить данные для инициализации
+                        sendInitSource ();
+                        if (!(grpSgnls.State == STATE.UNAVAILABLE))
+                            //sendState(iIDGroupSignals, m_listGroupSignals[iIDGroupSignals].State);
+                            sendState(iIDGroupSignals, STATE.STARTED);
+                        else
+                            ;
+
+                        msgDebugLog = @"отправлен: " + ((ID_DATA_ASKED_HOST)pars[0]).ToString ();
+                        break;
+                    case ID_DATA_ASKED_HOST.INIT_SIGNALS: //Получен запрос на обрабатываемую группу сигналов
+                        sendInitGroupSignals(iIDGroupSignals);
+                        if (!(grpSgnls.State == STATE.UNAVAILABLE))
+                            //sendState(iIDGroupSignals, m_listGroupSignals[iIDGroupSignals].State);
+                            sendState(iIDGroupSignals, STATE.STARTED);
+                        else
+                            ;
+
+                        msgDebugLog = @"отправлен: " + ((ID_DATA_ASKED_HOST)pars[0]).ToString();
+                        break;
+                    case ID_DATA_ASKED_HOST.TABLE_RES:
+                        if ((!(grpSgnls == null))
+                            && (!(pars[2] == null)))
                         {
+                            msgDebugLog = @"получено строк=" + (pars[2] as DataTable).Rows.Count;
+
                             grpSgnls.m_tableData = (pars[2] as DataTable).Copy();
+                        
                         }
-                        catch (Exception e)
-                        {
-                            Logging.Logg ().Exception (e, Logging.INDEX_MESSAGE.NOT_SET, @"GroupSources::plugIn_OnEvtDataAskedHost (id=" + m_strID + @", key=" + grpSgnls.m_strID + @") - ...");
-                        }
-                    }
-                    else
-                        ;
-                    break;
-                case ID_DATA_ASKED_HOST.START:
-                case ID_DATA_ASKED_HOST.STOP:
-                    //Вариант №2 (пост-установка)
-                    grpSgnls.StateChange();
-                    //Установить/разорвать взаимосвязь между группами источников (при необходимости)
-                    if (this is GroupSourcesDest)
-                        (this as GroupSourcesDest).PerformDataAskedHostQueue(new EventArgsDataHost((int)pars[0], new object[] { iIDGroupSignals }));
-                    else
-                        ;
+                        else
+                            ;
+                        break;
+                    case ID_DATA_ASKED_HOST.START:
+                    case ID_DATA_ASKED_HOST.STOP:
+                        //Вариант №2 (пост-установка)
+                        grpSgnls.StateChange();
+                        //Установить/разорвать взаимосвязь между группами источников (при необходимости)
+                        if (this is GroupSourcesDest)
+                            (this as GroupSourcesDest).PerformDataAskedHostQueue(new EventArgsDataHost((int)pars[0], new object[] { iIDGroupSignals }));
+                        else
+                            ;
 
-                    msgDebugLog = @"получено подтверждение: " + ((ID_DATA_ASKED_HOST)pars[0]).ToString();
-                    break;
-                case ID_DATA_ASKED_HOST.ERROR:
-                    //???
-                    msgDebugLog = @"получена ошибка: ???";
-                    break;
-                default:
-                    break;
+                        msgDebugLog = @"получено подтверждение: " + ((ID_DATA_ASKED_HOST)pars[0]).ToString();
+                        break;
+                    case ID_DATA_ASKED_HOST.ERROR:
+                        //???
+                        msgDebugLog = @"получена ошибка: ???";
+                        break;
+                    default:
+                        break;
+                }
+
+                Logging.Logg().Debug(@"GroupSources::plugIn_OnEvtDataAskedHost (id=" + m_strID + @", key=" + grpSgnls.m_strID + @") - " + msgDebugLog + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
-
-            Logging.Logg().Debug(@"GroupSources::plugIn_OnEvtDataAskedHost (id=" + m_strID + @", key=" + grpSgnls.m_strID + @") - " + msgDebugLog + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+            catch (Exception e)
+            {
+                Logging.Logg ().Exception (e, Logging.INDEX_MESSAGE.NOT_SET, @"GroupSources::plugIn_OnEvtDataAskedHost (id=" + m_strID + @", key=" + grpSgnls.m_strID + @") - ...");
+            }
         }
         /// <summary>
         /// Возвратить параметры группы сигналов по целочисленному идентификатору
