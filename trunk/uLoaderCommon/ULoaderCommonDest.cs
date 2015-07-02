@@ -89,7 +89,8 @@ namespace uLoaderCommon
 
                 string msg = @"HHandlerDbULoaderDest.GroupSignalsDest::dequeue () - DEQUEUE!"
                         + @" [ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HHandlerDbULoaderDest).m_IdGroupSignalsCurrent
-                        + @"] queue.Count=" + m_queueTableRec.Count
+                        + @"] queue.Count=" + (_parent as HHandlerDbULoaderDest).QueueCount
+                        + @", queueTableRec.Count=" + m_queueTableRec.Count
                         + @", строк_было=" + cntPrev
                         + @", строк_стало=" + cntCur
                         ;
@@ -320,7 +321,7 @@ namespace uLoaderCommon
         public virtual int Insert(int id, DataTable tableIn, object []pars)
         {
             int iRes = 0;
-            //string msg = string.Empty;
+            ////string msg = string.Empty;
 
             lock (m_lockStateGroupSignals)
             {
@@ -331,21 +332,21 @@ namespace uLoaderCommon
                     m_dictGroupSignals[id].TableRecieved = tableIn.Copy();
 
                     push(id);
-                    //msg = @"PUSH";
+                    ////msg = @"PUSH";
 
-                    if ((m_dictGroupSignals[id] as GroupSignalsDest).IsQueue == true)
-                    {
-                        push(id);
-                        //msg += @"..PUSH!";
-                    }
-                    else
-                        ;
+                    //if ((m_dictGroupSignals[id] as GroupSignalsDest).IsQueue == true)
+                    //{
+                    //    push(id);
+                    //    //msg += @"..PUSH!";
+                    //}
+                    //else
+                    //    ;
                 }
                 else
                     ;
             }
 
-            //Logging.Logg().Debug(@"HHandlerDbULoaderDest::Insert () - " + msg + @" ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @", от [ID_SOURCE=" + pars[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
+            ////Logging.Logg().Debug(@"HHandlerDbULoaderDest::Insert () - " + msg + @" ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @", от [ID_SOURCE=" + pars[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
 
             return iRes;
         }

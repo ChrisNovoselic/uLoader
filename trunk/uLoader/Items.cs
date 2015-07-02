@@ -1405,7 +1405,7 @@ namespace uLoader
         /// <param name="ev">Аргумент при передаче сообщения</param>
         public void PerformDataAskedHostQueue (EventArgsDataHost ev)
         {
-            //В 0-ом параметре пердан индекс группы сигналов
+            //В 0-ом параметре пердан индекс (???идентификатор) группы сигналов
             int indxGrpSgnls = (int)(ev.par as object[])[0];
 
             List<int> listNeededIndexGroupSources = GetListNeededIndexGroupSources(indxGrpSgnls);
@@ -1430,7 +1430,7 @@ namespace uLoader
                         else
                             if ((ID_DATA_ASKED_HOST)ev.id == ID_DATA_ASKED_HOST.STOP)
                             {
-                                m_dictLinkedIndexGroupSources[indx].RemoveAt(indxGrpSgnls);
+                                m_dictLinkedIndexGroupSources[indx].Remove(indxGrpSgnls);
 
                                 if (m_dictLinkedIndexGroupSources[indx].Count == 0)
                                     bEvtDataAskedHostQueue = true;

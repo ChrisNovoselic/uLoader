@@ -437,6 +437,20 @@ namespace uLoaderCommon
         /// </summary>
         private Thread m_threadQueue;
         /// <summary>
+        /// Длина очереди обработки
+        /// </summary>
+        public int QueueCount {
+            get
+            {
+                int iRes = -1;
+                
+                //lock (this) { iRes = m_queueIdGroupSignals.Count; }
+                iRes = m_queueIdGroupSignals.Count;
+                
+                return iRes;
+            }
+        }
+        /// <summary>
         /// Очередь для обработки с идентификаторами групп сигналов
         /// </summary>
         private Queue<int> m_queueIdGroupSignals;
@@ -601,9 +615,11 @@ namespace uLoaderCommon
                 {
                     try
                     {
+                        m_queueIdGroupSignals.Count (delegate(int i1) { return i1 == key; });
+                        
                         m_queueIdGroupSignals.Enqueue(key);
 
-                        msgDebug += m_queueIdGroupSignals.Count;
+                        msgDebug += QueueCount;
 
                         //Проверить активность потока очереди обработки событий
                         bool bSet = m_autoResetEvtQueue.WaitOne(0);
@@ -648,7 +664,7 @@ namespace uLoaderCommon
                 //Проверить наличие объектов для обработки
                 lock (m_lockQueue)
                 {
-                    bRes = m_queueIdGroupSignals.Count > 0;
+                    bRes = QueueCount > 0;
                 }
 
                 if (bRes == false)
@@ -662,7 +678,7 @@ namespace uLoaderCommon
                 {
                     lock (m_lockQueue)
                     {
-                        if (m_queueIdGroupSignals.Count == 0)
+                        if (QueueCount == 0)
                             //Прервать, если обработаны все объекты
                             break;
                         else
