@@ -310,6 +310,8 @@ namespace uLoaderCommon
         {
             int iRes = 0;
             DataTable table = obj as DataTable;
+            //string msg = @"HHandlerDbULoaderDest::StateResponse () ::" + ((StatesMachine)state).ToString() + @" - "
+            //    + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"] ";
 
             try
             {
@@ -317,13 +319,10 @@ namespace uLoaderCommon
                 {
                     case (int)StatesMachine.CurrentTime:
                         m_dtServer = (DateTime)(table as DataTable).Rows[0][0];
-                        //string msg = @"SrcBiyskTMora::StateResponse () ::" + ((StatesMachine)state).ToString() + @" - "
-                        //    + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"] "
-                        //    + @"DATETIME=" + m_dtServer.ToString(@"dd.MM.yyyy HH.mm.ss.fff") + @"...";
-                        //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
-                        //Console.WriteLine (msg);
+                        //msg =+ @"DATETIME=" + m_dtServer.ToString(@"dd.MM.yyyy HH.mm.ss.fff") + @"...";                        
                         break;
                     case (int)StatesMachine.Values:
+                        //msg =+ @"Ok ...";
                         RowCountRecieved = table.Rows.Count;
                         Logging.Logg().Debug(@"Получено строк [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"]: " + (table as DataTable).Rows.Count, Logging.INDEX_MESSAGE.NOT_SET);
                         if (TableRecieved == null)
@@ -368,6 +367,9 @@ namespace uLoaderCommon
             {
                 Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader::StateResponse (::" + ((StatesMachine)state).ToString () + @") - ...");
             }
+
+            //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
+            //Console.WriteLine (msg);
 
             return iRes;
         }
@@ -422,6 +424,11 @@ namespace uLoaderCommon
                 ;
 
             Console.WriteLine(msgErr);
+        }
+
+        protected override bool isPush(int curCount)
+        {
+            return curCount == 0;
         }
 
         protected override object[] getDataAskedHost()

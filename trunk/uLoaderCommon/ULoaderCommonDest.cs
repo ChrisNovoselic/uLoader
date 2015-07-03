@@ -11,6 +11,8 @@ namespace uLoaderCommon
 {
     public abstract class HHandlerDbULoaderDest : HHandlerDbULoader
     {
+        private const int MAX_QUEUECOUNT_OF_KEY = 16;
+
         public string m_strNameTable;
 
         enum StatesMachine
@@ -105,10 +107,11 @@ namespace uLoaderCommon
             /// х таблиц результата от источника
             /// </summary>
             private Queue<DataTable> m_queueTableRec;
-            /// <summary>
-            /// Признак наличия необработанных таблиц результата от источника
-            /// </summary>
-            public bool IsQueue { get { return m_queueTableRec.Count > 1; } }
+            ///// <summary>
+            ///// Признак наличия необработанных таблиц результата от источника
+            ///// </summary>
+            //public bool IsQueueTableRec { get { return m_queueTableRec.Count > 1; } }
+            public int QueueCountTableRec { get { return m_queueTableRec.Count; } }
             private DataTable[] m_arTableRec;
             //private DataTable m_tableRecPrev;
             public override DataTable TableRecieved
@@ -274,21 +277,19 @@ namespace uLoaderCommon
         protected override int StateResponse(int state, object obj)
         {
             int iRes = 0;
+            string msg = string.Empty;
 
             switch ((StatesMachine)state)
             {
                 case StatesMachine.CurrentTime:
                     m_dtServer = (DateTime)(obj as DataTable).Rows[0][0];
-                    //string msg = @"statidsql::StateResponse () ::" + ((StatesMachine)state).ToString() + @" - "
+                    //msg = @"HHandlerDbULoaderDest::StateResponse () ::" + ((StatesMachine)state).ToString() + @" - "
                     //    + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"] "
                     //    + @"DATETIME=" + m_dtServer.ToString(@"dd.MM.yyyy HH.mm.ss.fff") + @"...";
                     //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
                     //Console.WriteLine (msg);
                     break;
-                case StatesMachine.Values:
-                    Logging.Logg().Action(@"statidsql::StateResponse () ::" + ((StatesMachine)state).ToString() + @" - "
-                        + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"] "
-                        + @"Ok ...", Logging.INDEX_MESSAGE.NOT_SET);
+                case StatesMachine.Values:                    
                     break;
                 case StatesMachine.Insert:
                     break;
@@ -320,7 +321,8 @@ namespace uLoaderCommon
         /// <returns>Результат постановки в очередьь обработки событий</returns>
         public virtual int Insert(int id, DataTable tableIn, object []pars)
         {
-            int iRes = 0;
+            int iRes = 0
+                , keyQueueCount = -1;
             ////string msg = string.Empty;
 
             lock (m_lockStateGroupSignals)
@@ -331,16 +333,17 @@ namespace uLoaderCommon
                 {
                     m_dictGroupSignals[id].TableRecieved = tableIn.Copy();
 
-                    push(id);
-                    ////msg = @"PUSH";
+                    keyQueueCount = push(id);
+                    //msg = @"PUSH";
 
-                    //if ((m_dictGroupSignals[id] as GroupSignalsDest).IsQueue == true)
-                    //{
-                    //    push(id);
-                    //    //msg += @"..PUSH!";
-                    //}
-                    //else
-                    //    ;
+                    //if ((m_dictGroupSignals[id] as GroupSignalsDest).IsQueueTableRec == true)
+                    if (keyQueueCount < (m_dictGroupSignals[id] as GroupSignalsDest).QueueCountTableRec)
+                    {
+                        push(id);
+                        //msg += @"..PUSH!";
+                    }
+                    else
+                        ;
                 }
                 else
                     ;
@@ -360,6 +363,11 @@ namespace uLoaderCommon
             AddState((int)StatesMachine.Insert);
 
             return iRes;
+        }
+
+        protected override bool isPush(int curCount)
+        {
+            return curCount < MAX_QUEUECOUNT_OF_KEY;
         }
     }
 

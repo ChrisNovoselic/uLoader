@@ -602,50 +602,65 @@ namespace uLoaderCommon
         /// <returns></returns>
         protected abstract GroupSignals createGroupSignals(object []objs);
         /// <summary>
+        /// Проверить требуется ли поставить идентификатор в очередь обработки
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        protected abstract bool isPush (int curCount);
+        /// <summary>
         /// Добавить в очередь обработки событий группу сигналов
         /// </summary>
         /// <param name="key">Идентификатор группы сигналов</param>
-        protected void push(int key)
+        /// <returns>Количество событий в очереди для указанной группы</returns>
+        protected int push(int key)
         {
+            int iRes = -1;
+            
             string msgDebug = @"HHandlerDbULoader::enqueue () - [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + key + @"] - queue.Count=";
+            int keyQueueCount = -1;
 
             lock (m_lockQueue)
             {
-                if (!(m_autoResetEvtQueue == null))
-                {
-                    try
-                    {
-                        m_queueIdGroupSignals.Count (delegate(int i1) { return i1 == key; });
-                        
-                        m_queueIdGroupSignals.Enqueue(key);
+                keyQueueCount = m_queueIdGroupSignals.Count (delegate(int i1) { return i1 == key; });
 
-                        msgDebug += QueueCount;
+                msgDebug += QueueCount;
+                msgDebug += @"(" + (iRes = keyQueueCount) + @")";
 
-                        //Проверить активность потока очереди обработки событий
-                        bool bSet = m_autoResetEvtQueue.WaitOne(0);
+                if (isPush (keyQueueCount) == true)
+                    if (!(m_autoResetEvtQueue == null))
+                        try
+                        {                        
+                            m_queueIdGroupSignals.Enqueue(key);
+                            iRes ++;                        
 
-                        //if (m_queueIdGroupSignals.Count == 1)
-                        if (bSet == false)
-                            //Активировать поток очереди обработки событий
-                            //m_semaQueue.Release(1);
-                            m_autoResetEvtQueue.Set();
-                        else
-                            ;
-                    }
-                    catch (Exception e)
-                    {
-                        Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, msgDebug + @" ...");
-                        msgDebug = string.Empty;
-                    }
-                }
+                            //Проверить активность потока очереди обработки событий
+                            bool bSet = m_autoResetEvtQueue.WaitOne(0);
+
+                            //if (m_queueIdGroupSignals.Count == 1)
+                            if (bSet == false)
+                                //Активировать поток очереди обработки событий
+                                //m_semaQueue.Release(1);
+                                m_autoResetEvtQueue.Set();
+                            else
+                                ;
+                        }
+                        catch (Exception e)
+                        {
+                            Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, msgDebug + @" ...");
+                            msgDebug = string.Empty;
+                        }
+                    else
+                        ;
                 else
-                    ;
+                    msgDebug += @"-ПРОПУСК!";
             }
 
             if (msgDebug.Equals (string.Empty) == false)
                 Logging.Logg().Debug(msgDebug + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
             else
                 ;
+
+            return iRes;
         }        
 
         protected abstract int addAllStates ();
