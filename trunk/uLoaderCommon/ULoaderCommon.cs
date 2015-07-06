@@ -1069,12 +1069,17 @@ namespace uLoaderCommon
             }
         }
 
-        public HDbULoader(PlugInBase plugIn)
+        public HDbULoader()
+            : base()
+        {
+        }
+
+        public HDbULoader(IPlugIn plugIn)
             : base(plugIn)
         {
         }
         
-        HHandlerDb m_handlerDb;
+        protected HHandlerDb m_handlerDb;
 
         /// <summary>
         /// Признак выполнения объекта и всех зависимых потоков
@@ -1134,7 +1139,7 @@ namespace uLoaderCommon
         public override void OnEvtDataRecievedHost(object obj)
         {
             EventArgsDataHost ev = obj as EventArgsDataHost; //Переданные значения из-вне
-            HHandlerDbULoader target = _object as HHandlerDbULoader; //Целевой объект
+            HULoader target = _object as HULoader; //Целевой объект
 
             switch (ev.id)
             {

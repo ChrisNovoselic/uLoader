@@ -219,7 +219,7 @@ namespace uLoaderCommon
             /// </summary>
             /// <param name="parent">Объект-владелей группы сигналов источника</param>
             /// <param name="pars">Параметры для инициализации группы сигналов источника</param>
-            public GroupSignalsSrc(HHandlerDbULoader parent, object[] pars)
+            public GroupSignalsSrc(HDbULoader parent, object[] pars)
                 : base(parent, pars)
             {
                 m_iRowCountRecieved = -1;
@@ -240,8 +240,8 @@ namespace uLoaderCommon
         {
             int iRes = 0;
 
-            AddState((int)StatesMachine.CurrentTime);
-            AddState((int)StatesMachine.Values);
+            m_handlerDb.AddState((int)StatesMachine.CurrentTime);
+            m_handlerDb.AddState((int)StatesMachine.Values);
 
             return iRes;
         }
@@ -250,18 +250,18 @@ namespace uLoaderCommon
         /// </summary>
         public void ChangeState()
         {
-            ClearStates();
+            m_handlerDb.ClearStates();
 
             addAllStates();
 
-            Run(@"HHandlerDbULoader::ChangeState ()");
+            m_handlerDb.Run(@"HHandlerDbULoader::ChangeState ()");
         }
         //Количество строк в таблице-результате для текущей (обрабатываемой) группы
         private int RowCountRecieved { get { return (m_dictGroupSignals[m_IdGroupSignalsCurrent] as GroupSignalsSrc).RowCountRecieved; } set { (m_dictGroupSignals[m_IdGroupSignalsCurrent] as GroupSignalsSrc).RowCountRecieved = value; } }
         //Строка запроса для текущей (обрабатываемой) группы
         private string Query { get { return (m_dictGroupSignals[m_IdGroupSignalsCurrent] as GroupSignalsSrc).Query; } }
 
-        class HHandlerDbULoaderSrc : HHandlerDbULoader
+        abstract class HHandlerDbULoaderSrc : HHandlerDbULoader
         {
             protected override int StateRequest(int state)
             {
@@ -270,7 +270,7 @@ namespace uLoaderCommon
                 switch (state)
                 {
                     case (int)StatesMachine.CurrentTime:
-                        if (!(m_IdGroupSignalsCurrent < 0))
+                        if (!((_parent as HULoader).m_IdGroupSignalsCurrent < 0))
                             GetCurrentTimeRequest(DbTSQLInterface.getTypeDB(m_connSett.port), m_dictIdListeners[m_IdGroupSignalsCurrent][0]);
                         else
                             throw new Exception(@"HHandlerDbULoader::StateRequest (::CurrentTime) - ...");
@@ -288,7 +288,7 @@ namespace uLoaderCommon
                         //    iActualizeDatetimeStart = actualizeDatetimeStart ();
                         //    if (iActualizeDatetimeStart == 1)
                         //    {//Дата/время "старта" изменено
-                        //ClearValues();
+                        //          ClearValues();
 
                         //        setQuery(DateTimeStart);
                         //    }
@@ -464,7 +464,7 @@ namespace uLoaderCommon
             private DateTime m_dtStart;
             public DateTime DateTimeStart { get { return m_dtStart; } set { m_dtStart = value; } }
 
-            public GroupSignalsDatetimeSrc(HHandlerDbULoader parent, object[] pars)
+            public GroupSignalsDatetimeSrc(HDbULoader parent, object[] pars)
                 : base(parent, pars)
             {
                 //Инициализация "временнЫх" значений
@@ -607,7 +607,7 @@ namespace uLoaderCommon
 
         protected abstract class GroupSignalsMSTTMSrc : GroupSignalsDatetimeSrc
         {
-            public GroupSignalsMSTTMSrc(HHandlerDbULoader parent, object[] pars)
+            public GroupSignalsMSTTMSrc(HDbULoader parent, object[] pars)
                 : base(parent, pars)
             {
             }
@@ -616,7 +616,7 @@ namespace uLoaderCommon
             // начало
             protected override string DateTimeStartFormat
             {
-                get { return DateTimeStart.AddHours(-6).AddSeconds((_parent as HHandlerDbULoaderMSTTMSrc).m_iCurIntervalShift * (int)TimeSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss"); }
+                get { return DateTimeStart.AddHours(-6).AddSeconds((_parent as HDbULoaderMSTTMSrc).m_iCurIntervalShift * (int)TimeSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss"); }
             }
             // окончание
             protected override string DateTimeCurIntervalEndFormat
