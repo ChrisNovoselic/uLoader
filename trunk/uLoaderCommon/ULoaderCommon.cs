@@ -852,7 +852,7 @@ namespace uLoaderCommon
         /// Старт группы сигналов с указанным идентификаторм
         /// </summary>
         /// <param name="id">Идентификатор группы сигналов</param>
-        public void Start(int id)
+        public virtual void Start(int id)
         {
             Logging.Logg().Debug(@"HHandlerDbULoader::Start (ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
             
@@ -924,7 +924,7 @@ namespace uLoaderCommon
         /// Остановить группу сигналов по указанному идентификатору
         /// </summary>
         /// <param name="id">Идентификатор группы сигналов</param>
-        public void Stop(int id)
+        public virtual void Stop(int id)
         {
             int iNeedStopped = 0; //Признак необходимости останова "родительского" объекта
 
