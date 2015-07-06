@@ -46,11 +46,10 @@ namespace uLoaderCommon
         COSTUMIZE,        
             COUNT_MODE_WORK
     }
-
     /// <summary>
     /// Класс - базовый для описания целевого объекта для загрузки/вагрузки данных
     /// </summary>
-    public abstract class HULoader
+    public abstract class HHandlerDbULoader : HHandlerDb
     {
         /// <summary>
         /// Ссылка на объект "связи" с клиентом
@@ -64,7 +63,7 @@ namespace uLoaderCommon
             /// <summary>
             /// Сылка на объект владельца текущего объекта
             /// </summary>
-            protected HULoader _parent;
+            protected HHandlerDbULoader _parent;
             /// <summary>
             /// Перечисление возможных слстояний для группы сигналов
             /// </summary>
@@ -136,7 +135,7 @@ namespace uLoaderCommon
             /// </summary>
             /// <param name="parent">Объект-владелец (для последующего обращения к его членам-данным)</param>
             /// <param name="pars">Параметры группы сигналов</param>
-            public GroupSignals(HULoader parent, object[] pars)
+            public GroupSignals(HHandlerDbULoader parent, object[] pars)
             {
                 //Владелей объекта
                 _parent = parent;
@@ -474,7 +473,7 @@ namespace uLoaderCommon
         /// <summary>
         /// Конструктор - основной (без параметров) для создания объекта при "прямой" сборке приложения
         /// </summary>
-        public HULoader()
+        public HHandlerDbULoader()
         {
             //Время источника данных "по умолчанию"
             m_dtServer = DateTime.MinValue;            
@@ -499,7 +498,7 @@ namespace uLoaderCommon
         /// Конструктор - дополнительный для создания объекта при динамическом подключении библиотеки к приложению
         /// </summary>
         /// <param name="iPlugIn"></param>
-        public HULoader(IPlugIn iPlugIn)
+        public HHandlerDbULoader(IPlugIn iPlugIn)
             : this()
         {
             this._iPlugin = iPlugIn;
@@ -771,11 +770,58 @@ namespace uLoaderCommon
         {
             return new object[] { ID_DATA_ASKED_HOST.TABLE_RES, m_IdGroupSignalsCurrent, TableRecieved, null };
         }
-        
+        /// <summary>
+        /// Старт потоков для обмена данными с источниками информации
+        /// </summary>
+        public override void StartDbInterfaces()
+        {
+            lock (m_lockStateGroupSignals)
+            {
+                foreach (int id in m_dictGroupSignals.Keys)
+                    register(id, 0, m_connSett, string.Empty);
+            }
+        }
+        /// <summary>
+        /// Регистрация источника информации
+        /// </summary>
+        /// <param name="id">Ключ в словаре с идентификаторами соединений</param>
+        /// <param name="indx">Индекс в массиве - элементе словаря с идентификаторами соединений</param>
+        /// <param name="connSett">Параметры соединения с источником информации</param>
+        /// <param name="name">Наименование соединения</param>
+        protected override void register(int id, int indx, ConnectionSettings connSett, string name)
+        {
+            bool bReq = true;
+
+            if (m_dictIdListeners.ContainsKey(id) == false)
+                m_dictIdListeners.Add(id, new int[] { -1 });
+            else
+                if (!(m_dictIdListeners[id][indx] < 0))
+                    bReq = false;
+                else
+                    ;
+
+            if (bReq == true)
+                base.register(id, indx, connSett, name);
+            else
+                ;
+        }
+        /// <summary>
+        /// Старт объекта и всех зависимых потоков
+        /// </summary>
+        public override void Start()
+        {
+            base.Start();
+
+            StartDbInterfaces();
+
+            startThreadQueue();
+
+            Logging.Logg().Debug(@"HHandlerDbULoader::Start (ID=" + (_iPlugin as PlugInBase)._Id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);            
+        }
         /// <summary>
         /// Признак выполнения объекта и всех зависимых потоков
         /// </summary>
-        public virtual bool IsStarted
+        public override bool IsStarted
         {
             get
             {
@@ -794,17 +840,14 @@ namespace uLoaderCommon
                             ;
                 }
 
+                if ((bRes == true) && (base.IsStarted == false))
+                    throw new Exception (@"HHandlerDbULoader::IsStarted.get - несовпадение признака 'Старт' с базовым классом...");
+                else
+                    ;
+
                 return bRes;
             }
         }
-
-        public virtual void Start()
-        {
-            startThreadQueue();
-
-            Logging.Logg().Debug(@"HULoader::Start (ID=" + (_iPlugin as PlugInBase)._Id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
-        }
-        
         /// <summary>
         /// Старт группы сигналов с указанным идентификаторм
         /// </summary>
@@ -856,7 +899,7 @@ namespace uLoaderCommon
                 //Запустиь объект и все зависимые потоки
                 Start();
                 //Активировать объект
-                m_handlerDb.Activate(true);
+                Activate(true);
             }
             else
                 ;
@@ -869,11 +912,13 @@ namespace uLoaderCommon
         /// <summary>
         /// Остановить объект и все зависимые потоки
         /// </summary>
-        public virtual void Stop()
+        public override void Stop()
         {
             Logging.Logg().Debug(@"HHandlerDbULoader::Stop (ID=" + (_iPlugin as PlugInBase)._Id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
             stopThreadQueue();
+            //Вызвать "базовый" метод
+            base.Stop();
         }
         /// <summary>
         /// Остановить группу сигналов по указанному идентификатору
@@ -1007,119 +1052,18 @@ namespace uLoaderCommon
 
             return iRes;
         }
-        
-    }
-    
-    public abstract class HDbULoader : HULoader
-    {
-        protected HHandlerDb m_handlerDb;
-
-        protected abstract class HHandlerDbULoader : HHandlerDb
-        {
-            /// <summary>
-            /// Старт потоков для обмена данными с источниками информации
-            /// </summary>
-            public override void StartDbInterfaces()
-            {
-                lock (m_lockStateGroupSignals)
-                {
-                    foreach (int id in m_dictGroupSignals.Keys)
-                        register(id, 0, m_connSett, string.Empty);
-                }
-            }
-            /// <summary>
-            /// Регистрация источника информации
-            /// </summary>
-            /// <param name="id">Ключ в словаре с идентификаторами соединений</param>
-            /// <param name="indx">Индекс в массиве - элементе словаря с идентификаторами соединений</param>
-            /// <param name="connSett">Параметры соединения с источником информации</param>
-            /// <param name="name">Наименование соединения</param>
-            protected override void register(int id, int indx, ConnectionSettings connSett, string name)
-            {
-                bool bReq = true;
-
-                if (m_dictIdListeners.ContainsKey(id) == false)
-                    m_dictIdListeners.Add(id, new int[] { -1 });
-                else
-                    if (!(m_dictIdListeners[id][indx] < 0))
-                        bReq = false;
-                    else
-                        ;
-
-                if (bReq == true)
-                    base.register(id, indx, connSett, name);
-                else
-                    ;
-            }
-            /// <summary>
-            /// Старт объекта и всех зависимых потоков
-            /// </summary>
-            public override void Start()
-            {
-                base.Start();
-            }
-            /// <summary>
-            /// Проверить наличие ответа на запрос к источнику данных
-            /// </summary>
-            /// <param name="state">Состояние</param>
-            /// <param name="error">Признак ошибки</param>
-            /// <param name="table">Таблица - результат запроса</param>
-            /// <returns>Результат проверки наличия ответа на запрос</returns>
-            protected override int StateCheckResponse(int state, out bool error, out object table)
-            {
-                return response(out error, out table);
-            }
-        }
-
-        public HDbULoader()
-            : base()
-        {
-        }
-
-        public HDbULoader(IPlugIn plugIn)
-            : base(plugIn)
-        {
-        }
-
         /// <summary>
-        /// Признак выполнения объекта и всех зависимых потоков
+        /// Проверить наличие ответа на запрос к источнику данных
         /// </summary>
-        public override bool IsStarted
+        /// <param name="state">Состояние</param>
+        /// <param name="error">Признак ошибки</param>
+        /// <param name="table">Таблица - результат запроса</param>
+        /// <returns>Результат проверки наличия ответа на запрос</returns>
+        protected override int StateCheckResponse(int state, out bool error, out object table)
         {
-            get
-            {
-                bool bRes = base.IsStarted;
-
-                if ((bRes == true) && (m_handlerDb.IsStarted == false))
-                    throw new Exception(@"HHandlerDbULoader::IsStarted.get - несовпадение признака 'Старт' в классе интерфейса обращения к БД...");
-                else
-                    ;
-
-                return bRes;
-            }
-        }
-
-        public override void Start()
-        {
-            base.Start ();
-
-            if (!(DbTSQLInterface.getTypeDB(m_connSett.port) == DbInterface.DB_TSQL_INTERFACE_TYPE.UNKNOWN))
-                m_handlerDb.StartDbInterfaces();
-            else
-                ;
-        }
-
-        /// <summary>
-        /// Остановить объект и все зависимые потоки
-        /// </summary>
-        public override void Stop()
-        {
-            m_handlerDb.Stop();
-
-            base.Stop ();
+            return response(out error, out table);
         }
     }
-    
     /// <summary>
     /// Класс для связи клиента - загрузчика библиотеки и целевого объекта в библиотеке
     /// </summary>
@@ -1139,7 +1083,7 @@ namespace uLoaderCommon
         public override void OnEvtDataRecievedHost(object obj)
         {
             EventArgsDataHost ev = obj as EventArgsDataHost; //Переданные значения из-вне
-            HULoader target = _object as HULoader; //Целевой объект
+            HHandlerDbULoader target = _object as HHandlerDbULoader; //Целевой объект
 
             switch (ev.id)
             {

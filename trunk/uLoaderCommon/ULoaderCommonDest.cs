@@ -9,7 +9,7 @@ using HClassLibrary;
 
 namespace uLoaderCommon
 {
-    public abstract class HDbULoaderDest : HDbULoader
+    public abstract class HHandlerDbULoaderDest : HHandlerDbULoader
     {
         private const int MAX_QUEUECOUNT_OF_KEY = 16;
 
@@ -25,12 +25,12 @@ namespace uLoaderCommon
                 , Insert
         }
 
-        public HDbULoaderDest()
+        public HHandlerDbULoaderDest()
             : base()
         {
         }
 
-        public HDbULoaderDest(IPlugIn iPlugIn)
+        public HHandlerDbULoaderDest(IPlugIn iPlugIn)
             : base(iPlugIn)
         {
         }
@@ -42,87 +42,6 @@ namespace uLoaderCommon
             m_strNameTable = m_dictAdding[@"NAME_TABLE"];
 
             return iRes;
-        }
-
-        protected class HHandlerBbULoaderDest : HHandlerDbULoader
-        {
-            public override void ClearValues()
-            {
-                //TableResults = new DataTable ();
-            }
-
-            protected override int StateRequest(int state)
-            {
-                int iRes = 0;
-
-                switch ((StatesMachine)state)
-                {
-                    case StatesMachine.CurrentTime:
-                        if (!(m_IdGroupSignalsCurrent < 0))
-                            GetCurrentTimeRequest(DbInterface.DB_TSQL_INTERFACE_TYPE.MSSQL, m_dictIdListeners[m_IdGroupSignalsCurrent][0]);
-                        else
-                            throw new Exception(@"HHandlerDbULoaderDest::StateRequest () - state=" + state.ToString() + @"...");
-                        break;
-                    case StatesMachine.Values:
-                        break;
-                    case StatesMachine.Insert:
-                        string query = (m_dictGroupSignals[m_IdGroupSignalsCurrent] as GroupSignalsDest).GetInsertValuesQuery();
-
-                        //Logging.Logg().Debug(@"HHandlerDbULoaderDest:StateRequest () ::" + ((StatesMachine)state).ToString() + @" - "
-                        //        + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"] "
-                        //        + @"query=" + query + @"..."
-                        //        , Logging.INDEX_MESSAGE.NOT_SET);
-
-                        if (query.Equals(string.Empty) == false)
-                            Request(m_dictIdListeners[m_IdGroupSignalsCurrent][0], query);
-                        else
-                            ;
-                        break;
-                    default:
-                        break;
-                }
-
-                return iRes;
-            }
-
-            protected override int StateResponse(int state, object obj)
-            {
-                int iRes = 0;
-                string msg = string.Empty;
-
-                switch ((StatesMachine)state)
-                {
-                    case StatesMachine.CurrentTime:
-                        m_dtServer = (DateTime)(obj as DataTable).Rows[0][0];
-                        //msg = @"HHandlerDbULoaderDest::StateResponse () ::" + ((StatesMachine)state).ToString() + @" - "
-                        //    + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"] "
-                        //    + @"DATETIME=" + m_dtServer.ToString(@"dd.MM.yyyy HH.mm.ss.fff") + @"...";
-                        //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
-                        //Console.WriteLine (msg);
-                        break;
-                    case StatesMachine.Values:
-                        break;
-                    case StatesMachine.Insert:
-                        break;
-                    default:
-                        break;
-                }
-
-                return iRes;
-            }
-
-            protected override void StateErrors(int state, int req, int res)
-            {
-                Logging.Logg().Error(@"HHandlerDbULoaderDest::StateErrors (state=" + ((StatesMachine)state).ToString() + @", req=" + req + @", res=" + res + @") - "
-                    + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"]"
-                    + @"..."
-                    , Logging.INDEX_MESSAGE.NOT_SET);
-            }
-
-            protected override void StateWarnings(int state, int req, int res)
-            {
-                Logging.Logg().Warning(@"HHandlerDbULoaderDest::StateWarnings (state" + ((StatesMachine)state).ToString() + @", req=" + req + @", res=" + res + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
-            }
         }
 
         public abstract class GroupSignalsDest : GroupSignals
@@ -254,7 +173,7 @@ namespace uLoaderCommon
             /// </summary>
             /// <param name="parent">Объект-владелец (для последующего обращения к его членам-данным)</param>
             /// <param name="pars">Параметры группы сигналов</param>
-            public GroupSignalsDest(HULoader parent, object[] pars)
+            public GroupSignalsDest(HHandlerDbULoader parent, object[] pars)
                 : base(parent, pars)
             {
                 ////Вариант - очередь
@@ -302,7 +221,7 @@ namespace uLoaderCommon
                     else
                         ;
 
-                    Logging.Logg().Debug(@"Строк для вставки [ID=" + ((_parent as HDbULoaderDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HDbULoaderDest).m_IdGroupSignalsCurrent + @"]: " + tblRes.Rows.Count, Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Debug(@"Строк для вставки [ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HHandlerDbULoaderDest).m_IdGroupSignalsCurrent + @"]: " + tblRes.Rows.Count, Logging.INDEX_MESSAGE.NOT_SET);
                 }
                 else
                     ;
@@ -316,6 +235,83 @@ namespace uLoaderCommon
             protected abstract DataTable getTableRes();
         }
 
+        public override void ClearValues()
+        {
+            //TableResults = new DataTable ();
+        }
+
+        protected override int StateRequest(int state)
+        {
+            int iRes = 0;
+
+            switch ((StatesMachine)state)
+            {
+                case StatesMachine.CurrentTime:
+                    if (!(m_IdGroupSignalsCurrent < 0))
+                        GetCurrentTimeRequest(DbInterface.DB_TSQL_INTERFACE_TYPE.MSSQL, m_dictIdListeners[m_IdGroupSignalsCurrent][0]);
+                    else
+                        throw new Exception(@"HHandlerDbULoaderDest::StateRequest () - state=" + state.ToString() + @"...");
+                    break;
+                case StatesMachine.Values:
+                    break;
+                case StatesMachine.Insert:
+                    string query = (m_dictGroupSignals[m_IdGroupSignalsCurrent] as GroupSignalsDest).GetInsertValuesQuery();
+
+                    //Logging.Logg().Debug(@"HHandlerDbULoaderDest:StateRequest () ::" + ((StatesMachine)state).ToString() + @" - "
+                    //        + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"] "
+                    //        + @"query=" + query + @"..."
+                    //        , Logging.INDEX_MESSAGE.NOT_SET);
+
+                    if (query.Equals(string.Empty) == false)
+                        Request(m_dictIdListeners[m_IdGroupSignalsCurrent][0], query);
+                    else
+                        ;
+                    break;
+                default:
+                    break;
+            }
+
+            return iRes;
+        }
+
+        protected override int StateResponse(int state, object obj)
+        {
+            int iRes = 0;
+            string msg = string.Empty;
+
+            switch ((StatesMachine)state)
+            {
+                case StatesMachine.CurrentTime:
+                    m_dtServer = (DateTime)(obj as DataTable).Rows[0][0];
+                    //msg = @"HHandlerDbULoaderDest::StateResponse () ::" + ((StatesMachine)state).ToString() + @" - "
+                    //    + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"] "
+                    //    + @"DATETIME=" + m_dtServer.ToString(@"dd.MM.yyyy HH.mm.ss.fff") + @"...";
+                    //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
+                    //Console.WriteLine (msg);
+                    break;
+                case StatesMachine.Values:                    
+                    break;
+                case StatesMachine.Insert:
+                    break;
+                default:
+                    break;
+            }
+
+            return iRes;
+        }
+
+        protected override void StateErrors(int state, int req, int res)
+        {
+            Logging.Logg().Error(@"HHandlerDbULoaderDest::StateErrors (state=" + ((StatesMachine)state).ToString() + @", req=" + req + @", res=" + res + @") - "
+                + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"]"
+                + @"..."
+                , Logging.INDEX_MESSAGE.NOT_SET);
+        }
+
+        protected override void StateWarnings(int state, int req, int res)
+        {
+            Logging.Logg().Warning(@"HHandlerDbULoaderDest::StateWarnings (state" + ((StatesMachine)state).ToString() + @", req=" + req + @", res=" + res + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+        }
         /// <summary>
         /// Постановка в очередь обработки событий вставку записей из таблицы
         /// </summary>
@@ -362,9 +358,9 @@ namespace uLoaderCommon
         {
             int iRes = 0;
 
-            m_handlerDb.AddState((int)StatesMachine.CurrentTime);
+            AddState((int)StatesMachine.CurrentTime);
             //AddState((int)StatesMachine.Values);
-            m_handlerDb.AddState((int)StatesMachine.Insert);
+            AddState((int)StatesMachine.Insert);
 
             return iRes;
         }
@@ -375,16 +371,16 @@ namespace uLoaderCommon
         }
     }
 
-    public abstract class HDbULoaderStatTMDest : HDbULoaderDest
+    public abstract class HHandlerDbULoaderStatTMDest : HHandlerDbULoaderDest
     {
         public string m_strIdTEC;
 
-        public HDbULoaderStatTMDest()
+        public HHandlerDbULoaderStatTMDest()
             : base()
         {
         }
 
-        public HDbULoaderStatTMDest(IPlugIn iPlugIn)
+        public HHandlerDbULoaderStatTMDest(IPlugIn iPlugIn)
             : base(iPlugIn)
         {
         }
@@ -400,7 +396,7 @@ namespace uLoaderCommon
 
         public abstract class GroupSignalsStatTMDest : GroupSignalsDest
         {
-            public GroupSignalsStatTMDest(HULoader parent, object[] pars)
+            public GroupSignalsStatTMDest(HHandlerDbULoader parent, object[] pars)
                 : base(parent, pars)
             {
             }            
@@ -456,7 +452,7 @@ namespace uLoaderCommon
                         {
                             try
                             {
-                                idSgnl = (arSignals[s] as HDbULoaderDest.GroupSignalsDest.SIGNALDest).m_idLink;
+                                idSgnl = (arSignals[s] as HHandlerDbULoaderDest.GroupSignalsDest.SIGNALDest).m_idLink;
 
                                 //arSelIns = (tblCur as DataTable).Select(string.Empty, @"ID, DATETIME");
                                 arSelIns = (tblCur as DataTable).Select(@"ID=" + idSgnl, @"DATETIME");
@@ -582,21 +578,21 @@ namespace uLoaderCommon
         }
     }
 
-    public abstract class HDbULoaderStatTMMSTDest : HDbULoaderStatTMDest
+    public abstract class HHandlerDbULoaderStatTMMSTDest : HHandlerDbULoaderStatTMDest
     {
-        public HDbULoaderStatTMMSTDest()
+        public HHandlerDbULoaderStatTMMSTDest()
             : base()
         {
         }
 
-        public HDbULoaderStatTMMSTDest(IPlugIn iPlugIn)
+        public HHandlerDbULoaderStatTMMSTDest(IPlugIn iPlugIn)
             : base(iPlugIn)
         {
         }
 
         public abstract class GroupSignalsStatTMMSTDest : GroupSignalsStatTMDest
         {
-            public GroupSignalsStatTMMSTDest(HULoader parent, object[] pars)
+            public GroupSignalsStatTMMSTDest(HHandlerDbULoader parent, object[] pars)
                 : base(parent, pars)
             {
             }
@@ -631,21 +627,21 @@ namespace uLoaderCommon
         }
     }
 
-    public abstract class HDbULoaderStatTMIDDest : HDbULoaderStatTMDest
+    public abstract class HHandlerDbULoaderStatTMIDDest : HHandlerDbULoaderStatTMDest
     {
-        public HDbULoaderStatTMIDDest()
+        public HHandlerDbULoaderStatTMIDDest()
             : base()
         {
         }
 
-        public HDbULoaderStatTMIDDest(IPlugIn iPlugIn)
+        public HHandlerDbULoaderStatTMIDDest(IPlugIn iPlugIn)
             : base(iPlugIn)
         {
         }
 
         protected abstract class GroupSignalsStatTMIDDest : GroupSignalsStatTMDest
         {
-            public GroupSignalsStatTMIDDest(HDbULoader parent, object[] pars)
+            public GroupSignalsStatTMIDDest(HHandlerDbULoader parent, object[] pars)
                 : base(parent, pars)
             {
             }
@@ -691,17 +687,17 @@ namespace uLoaderCommon
         }
     }
 
-    public abstract class HDbULoaderStatTMKKSNAMEDest : HDbULoaderStatTMDest
+    public abstract class HHandlerDbULoaderStatTMKKSNAMEDest : HHandlerDbULoaderStatTMDest
     {
         public string m_strIdSource
             , m_strIdSrvTM;
 
-        public HDbULoaderStatTMKKSNAMEDest()
+        public HHandlerDbULoaderStatTMKKSNAMEDest()
             : base()
         {
         }
 
-        public HDbULoaderStatTMKKSNAMEDest(IPlugIn iPlugIn)
+        public HHandlerDbULoaderStatTMKKSNAMEDest(IPlugIn iPlugIn)
             : base(iPlugIn)
         {
         }
@@ -732,7 +728,7 @@ namespace uLoaderCommon
 
         protected abstract class GroupSignalsStatTMKKSNAMEDest : GroupSignalsStatTMDest
         {
-            public GroupSignalsStatTMKKSNAMEDest(HDbULoader parent, object[] pars)
+            public GroupSignalsStatTMKKSNAMEDest(HHandlerDbULoader parent, object[] pars)
                 : base(parent, pars)
             {
             }

@@ -7,7 +7,7 @@ using System.Data;
 using HClassLibrary;
 
 namespace TestFunc
-{    
+{
     class Program
     {
         static void Main(string[] args)

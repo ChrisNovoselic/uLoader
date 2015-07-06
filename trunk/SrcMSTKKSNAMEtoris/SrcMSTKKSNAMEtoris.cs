@@ -89,7 +89,7 @@ namespace SrcMSTKKSNAMEtoris
             }
         }
 
-        protected override HULoader.GroupSignals createGroupSignals(object[] objs)
+        protected override HHandlerDbULoaderMSTTMSrc.GroupSignals createGroupSignals(object[] objs)
         {
             return new GroupSignalsMSTKKSNAMEtoris(this, objs);
         }
