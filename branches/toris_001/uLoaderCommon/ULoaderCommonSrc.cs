@@ -84,7 +84,11 @@ namespace uLoaderCommon
 
             base.Stop();
         }
-
+        /// <summary>
+        /// Запустить таймер
+        ///  для активации групп сигналов
+        /// </summary>
+        /// <returns></returns>
         private int startTimerActivate()
         {
             int iRes = 0;
@@ -95,7 +99,10 @@ namespace uLoaderCommon
 
             return iRes;
         }
-
+        /// <summary>
+        /// Остановить таймер активации групп сигналов
+        /// </summary>
+        /// <returns></returns>
         private int stopTimerActivate()
         {
             int iRes = 0;
@@ -111,7 +118,11 @@ namespace uLoaderCommon
 
             return iRes;
         }
-
+        /// <summary>
+        /// Функция обратного вызова таймера
+        ///  для активации группы сигналов
+        /// </summary>
+        /// <param name="obj">аргумент...</param>
         private void fTimerActivate(object obj)
         {
             lock (m_lockStateGroupSignals)
