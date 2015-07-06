@@ -9,7 +9,7 @@ using HClassLibrary;
 
 namespace uLoaderCommon
 {
-    public abstract class HHandlerDbULoaderDest : HHandlerDbULoader
+    public abstract class HDbULoaderDest : HDbULoader
     {
         private const int MAX_QUEUECOUNT_OF_KEY = 16;
 
@@ -25,12 +25,12 @@ namespace uLoaderCommon
                 , Insert
         }
 
-        public HHandlerDbULoaderDest()
+        public HDbULoaderDest()
             : base()
         {
         }
 
-        public HHandlerDbULoaderDest(IPlugIn iPlugIn)
+        public HDbULoaderDest(IPlugIn iPlugIn)
             : base(iPlugIn)
         {
         }
@@ -173,7 +173,7 @@ namespace uLoaderCommon
             /// </summary>
             /// <param name="parent">Объект-владелец (для последующего обращения к его членам-данным)</param>
             /// <param name="pars">Параметры группы сигналов</param>
-            public GroupSignalsDest(HHandlerDbULoader parent, object[] pars)
+            public GroupSignalsDest(HULoader parent, object[] pars)
                 : base(parent, pars)
             {
                 ////Вариант - очередь
@@ -371,16 +371,16 @@ namespace uLoaderCommon
         }
     }
 
-    public abstract class HHandlerDbULoaderStatTMDest : HHandlerDbULoaderDest
+    public abstract class HDbULoaderStatTMDest : HDbULoaderDest
     {
         public string m_strIdTEC;
 
-        public HHandlerDbULoaderStatTMDest()
+        public HDbULoaderStatTMDest()
             : base()
         {
         }
 
-        public HHandlerDbULoaderStatTMDest(IPlugIn iPlugIn)
+        public HDbULoaderStatTMDest(IPlugIn iPlugIn)
             : base(iPlugIn)
         {
         }
@@ -396,7 +396,7 @@ namespace uLoaderCommon
 
         public abstract class GroupSignalsStatTMDest : GroupSignalsDest
         {
-            public GroupSignalsStatTMDest(HHandlerDbULoader parent, object[] pars)
+            public GroupSignalsStatTMDest(HULoader parent, object[] pars)
                 : base(parent, pars)
             {
             }            
@@ -578,21 +578,21 @@ namespace uLoaderCommon
         }
     }
 
-    public abstract class HHandlerDbULoaderStatTMMSTDest : HHandlerDbULoaderStatTMDest
+    public abstract class HDbULoaderStatTMMSTDest : HDbULoaderStatTMDest
     {
-        public HHandlerDbULoaderStatTMMSTDest()
+        public HDbULoaderStatTMMSTDest()
             : base()
         {
         }
 
-        public HHandlerDbULoaderStatTMMSTDest(IPlugIn iPlugIn)
+        public HDbULoaderStatTMMSTDest(IPlugIn iPlugIn)
             : base(iPlugIn)
         {
         }
 
         public abstract class GroupSignalsStatTMMSTDest : GroupSignalsStatTMDest
         {
-            public GroupSignalsStatTMMSTDest(HHandlerDbULoader parent, object[] pars)
+            public GroupSignalsStatTMMSTDest(HULoader parent, object[] pars)
                 : base(parent, pars)
             {
             }
@@ -627,14 +627,14 @@ namespace uLoaderCommon
         }
     }
 
-    public abstract class HHandlerDbULoaderStatTMIDDest : HHandlerDbULoaderStatTMDest
+    public abstract class HDbULoaderStatTMIDDest : HDbULoaderStatTMDest
     {
-        public HHandlerDbULoaderStatTMIDDest()
+        public HDbULoaderStatTMIDDest()
             : base()
         {
         }
 
-        public HHandlerDbULoaderStatTMIDDest(IPlugIn iPlugIn)
+        public HDbULoaderStatTMIDDest(IPlugIn iPlugIn)
             : base(iPlugIn)
         {
         }
@@ -687,17 +687,17 @@ namespace uLoaderCommon
         }
     }
 
-    public abstract class HHandlerDbULoaderStatTMKKSNAMEDest : HHandlerDbULoaderStatTMDest
+    public abstract class HDbULoaderStatTMKKSNAMEDest : HDbULoaderStatTMDest
     {
         public string m_strIdSource
             , m_strIdSrvTM;
 
-        public HHandlerDbULoaderStatTMKKSNAMEDest()
+        public HDbULoaderStatTMKKSNAMEDest()
             : base()
         {
         }
 
-        public HHandlerDbULoaderStatTMKKSNAMEDest(IPlugIn iPlugIn)
+        public HDbULoaderStatTMKKSNAMEDest(IPlugIn iPlugIn)
             : base(iPlugIn)
         {
         }
