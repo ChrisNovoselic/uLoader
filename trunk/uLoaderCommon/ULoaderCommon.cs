@@ -856,7 +856,7 @@ namespace uLoaderCommon
                 //Запустиь объект и все зависимые потоки
                 Start();
                 //Активировать объект
-                Activate(true);
+                m_handlerDb.Activate(true);
             }
             else
                 ;
@@ -1012,6 +1012,8 @@ namespace uLoaderCommon
     
     public abstract class HDbULoader : HULoader
     {
+        protected HHandlerDb m_handlerDb;
+
         protected abstract class HHandlerDbULoader : HHandlerDb
         {
             /// <summary>
@@ -1078,8 +1080,6 @@ namespace uLoaderCommon
             : base(plugIn)
         {
         }
-        
-        protected HHandlerDb m_handlerDb;
 
         /// <summary>
         /// Признак выполнения объекта и всех зависимых потоков
