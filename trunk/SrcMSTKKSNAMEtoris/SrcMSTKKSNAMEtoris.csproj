@@ -8,8 +8,8 @@
     <ProjectGuid>{0CFB2E91-E5F2-4B31-B677-934E946762E9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SrcMSTKKSNAMEsql</RootNamespace>
-    <AssemblyName>SrcMSTKKSNAMEsql</AssemblyName>
+    <RootNamespace>SrcMSTKKSNAMEtoris</RootNamespace>
+    <AssemblyName>SrcMSTKKSNAMEtoris</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -44,8 +44,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DbTorISInterface.cs" />
-    <Compile Include="DbTorISSources.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SrcMSTKKSNAMEtoris.cs" />
   </ItemGroup>

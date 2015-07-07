@@ -104,7 +104,10 @@ namespace uLoader
                         {
                             cntGrpSgnls = grpSrc.m_listGroupSignalsPars.Count;
                             for (j = 0; j < cntGrpSgnls; j ++)
-                                grpSrc.m_listGroupSignalsPars[j].m_strShrName = getItemSrc(i, grpSrc.m_listGroupSignalsPars[j].m_strId).m_strShrName;
+                                if (grpSrc.m_listGroupSignalsPars[j].m_strId.Equals (string.Empty) == false)
+                                    grpSrc.m_listGroupSignalsPars[j].m_strShrName = getItemSrc(i, grpSrc.m_listGroupSignalsPars[j].m_strId).m_strShrName;
+                                else
+                                    ;
                         }
                     }
                 else
@@ -230,19 +233,24 @@ namespace uLoader
 
                                 parsGrpSgnls = Activator.CreateInstance(typeGrpSgnls) as GROUP_SIGNALS_PARS; //new GROUP_SIGNALS_PARS ();
                                 parsGrpSgnls.m_strId = vals[pars.IndexOf(@"ID")]; //ID
-                                //parsGrpSgnls.m_mode = MODE_WORK.CUR_INTERVAL;
-                                parsGrpSgnls.m_iAutoStart = Int32.Parse(vals[pars.IndexOf(@"AUTO_START")]); //AUTO_START
-                                parsGrpSgnls.m_bToolsEnabled = bool.Parse(vals[pars.IndexOf(@"TOOLS_ENABLED")]); //TOOLS_ENABLED
-                                if (parsGrpSgnls is GROUP_SIGNALS_SRC_PARS)
+                                
+                                if (vals.Length == pars.Count)
                                 {
-                                    parsGrpSgnls.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod = TimeSpan.FromSeconds(Int32.Parse(vals[pars.IndexOf(@"CUR_INTERVAL_PERIOD")])); //CUR_INTERVAL_PERIOD                                
-                                    parsGrpSgnls.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval = Int32.Parse(vals[pars.IndexOf(@"CUR_INTERVAL_VALUE")]); //CUR_INTERVAL_VALUE
+                                    parsGrpSgnls.m_iAutoStart = Int32.Parse(vals[pars.IndexOf(@"AUTO_START")]); //AUTO_START
+                                    parsGrpSgnls.m_bToolsEnabled = bool.Parse(vals[pars.IndexOf(@"TOOLS_ENABLED")]); //TOOLS_ENABLED
+                                    if (parsGrpSgnls is GROUP_SIGNALS_SRC_PARS)
+                                    {
+                                        parsGrpSgnls.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod = TimeSpan.FromSeconds(Int32.Parse(vals[pars.IndexOf(@"CUR_INTERVAL_PERIOD")])); //CUR_INTERVAL_PERIOD                                
+                                        parsGrpSgnls.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval = Int32.Parse(vals[pars.IndexOf(@"CUR_INTERVAL_VALUE")]); //CUR_INTERVAL_VALUE
+                                    }
+                                    else
+                                        if (parsGrpSgnls is GROUP_SIGNALS_DEST_PARS)
+                                            (parsGrpSgnls as GROUP_SIGNALS_DEST_PARS).m_idGrpSrcs = vals[pars.IndexOf(@"ID_GS")];
+                                        else
+                                            ;
                                 }
                                 else
-                                    if (parsGrpSgnls is GROUP_SIGNALS_DEST_PARS)
-                                        (parsGrpSgnls as GROUP_SIGNALS_DEST_PARS).m_idGrpSrcs = vals[pars.IndexOf(@"ID_GS")];
-                                    else
-                                        ;
+                                    Logging.Logg().Error(@"FileINI::addGroupValues () - не установлены параметры для [" + secGroup + @", " + key + @"] - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                                 (itemSrc as GROUP_SRC).m_listGroupSignalsPars.Add(parsGrpSgnls);
                             }

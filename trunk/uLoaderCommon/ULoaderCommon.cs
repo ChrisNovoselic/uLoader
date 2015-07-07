@@ -806,15 +806,22 @@ namespace uLoaderCommon
                 ;
         }
         /// <summary>
+        /// Старт зависимых потоков
+        /// </summary>
+        protected virtual void startThreadDepended ()
+        {
+            StartDbInterfaces();
+
+            startThreadQueue();
+        }
+        /// <summary>
         /// Старт объекта и всех зависимых потоков
         /// </summary>
         public override void Start()
         {
             base.Start();
 
-            StartDbInterfaces();
-
-            startThreadQueue();
+            startThreadDepended ();
 
             Logging.Logg().Debug(@"HHandlerDbULoader::Start (ID=" + (_iPlugin as PlugInBase)._Id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);            
         }
@@ -974,7 +981,7 @@ namespace uLoaderCommon
         /// Запустить поток обработки очереди событий
         /// </summary>
         /// <returns>Результат запуска потока</returns>
-        private int startThreadQueue()
+        protected int startThreadQueue()
         {
             int iRes = 0;
 

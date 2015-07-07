@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // Управление общими сведениями о сборке осуществляется с помощью 
 // набора атрибутов. Измените значения этих атрибутов, чтобы изменить сведения,
 // связанные со сборкой.
-[assembly: AssemblyTitle("SrcMSTKKSNAMEsql")]
+[assembly: AssemblyTitle("SrcMSTKKSNAMEtoris")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("ZAO ITC")]
-[assembly: AssemblyProduct("SrcMSTKKSNAMEsql")]
+[assembly: AssemblyProduct("SrcMSTKKSNAMEtoris")]
 [assembly: AssemblyCopyright("Copyright © ZAO ITC 2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

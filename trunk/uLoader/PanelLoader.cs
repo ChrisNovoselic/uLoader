@@ -392,8 +392,11 @@ namespace uLoader
                     arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = this;
                     arPreparePars[(int)INDEX_PREPARE_PARS.KEY_EVT] = KEY_EVENT.SELECTION_CHANGED;
 
-                    //Отправить сообщение "родительской" панели (для дальнейшей ретрансляции)
-                    DataAskedHost(arPreparePars);
+                    if (arPreparePars[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA].Equals(string.Empty) == false)
+                        //Отправить сообщение "родительской" панели (для дальнейшей ретрансляции)
+                        DataAskedHost(arPreparePars);
+                    else
+                        ;
                 }
                 else
                     ; //Нет выбранных строк
@@ -411,8 +414,11 @@ namespace uLoader
                 arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = this;
                 arPreparePars[(int)INDEX_PREPARE_PARS.KEY_EVT] = KEY_EVENT.SELECTION_CHANGED;
 
-                //Отправить сообщение "родительской" панели (для дальнейшей ретрансляции)
-                DataAskedHost(arPreparePars);
+                if (arPreparePars[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA].Equals (string.Empty) == false)
+                    //Отправить сообщение "родительской" панели (для дальнейшей ретрансляции)
+                    DataAskedHost(arPreparePars);
+                else
+                    ;
             }
 
             private void panelLoader_GroupSourcesAddingLeave(object obj, EventArgs ev)
@@ -429,13 +435,19 @@ namespace uLoader
                     strDepencededData = strDepencededData.Substring (0, strDepencededData.Length - FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.PAIR_VAL].ToString().Length);
                 else
                     strDepencededData = string.Empty;
-                arPreparePars[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] = strDepencededData;
 
-                arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = this;
-                arPreparePars[(int)INDEX_PREPARE_PARS.KEY_EVT] = KEY_EVENT.SELECTION_CHANGED;
+                if (strDepencededData.Equals (string.Empty) == false)
+                {
+                    arPreparePars[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] = strDepencededData;
 
-                //Отправить сообщение "родительской" панели (для дальнейшей ретрансляции)
-                DataAskedHost(arPreparePars);
+                    arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = this;
+                    arPreparePars[(int)INDEX_PREPARE_PARS.KEY_EVT] = KEY_EVENT.SELECTION_CHANGED;
+
+                    //Отправить сообщение "родительской" панели (для дальнейшей ретрансляции)
+                    DataAskedHost(arPreparePars);
+                }
+                else
+                    ;
             }
 
             /// <summary>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data; //DataTable
 
 using TORISLib;
@@ -30,10 +31,30 @@ namespace SrcMSTKKSNAMEtoris
             {
             }
 
+            public event DelegateObjectFunc EvtAdviseItem;
+            public event DelegateStringFunc EvtUnadviseItem;
+
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
                 //ID_MAIN, KKSNAME
                 return new SIGNALMSTKKSNAMEsql((int)objs[0], (string)objs[2]);
+            }
+
+            public void AdviseItems (int grpKey)
+            {
+                object[] parsToEvt = new object[] { grpKey, string.Empty };
+
+                foreach (SIGNALMSTKKSNAMEsql sgnl in m_arSignals)
+                {
+                    parsToEvt [1] = sgnl.m_kks_name;
+                    EvtAdviseItem(parsToEvt);
+                }
+            }
+
+            public void UnadviseItems()
+            {
+                foreach (SIGNALMSTKKSNAMEsql sgnl in m_arSignals)
+                    EvtUnadviseItem(sgnl.m_kks_name);
             }
 
             protected override void setQuery()
@@ -87,73 +108,26 @@ namespace SrcMSTKKSNAMEtoris
                     }
                 }
             }
-
-            private void sendVar(string valueAddr)
-            {
-                //long error = 0;
-                //string errorStr;
-
-                //if (!torisConnected)
-                //    return;
-                //if (AddrIsAdvised(valueAddr))
-                //    return;
-
-                //MainForm.log.LogToFile("Подписка на сигнал " + valueAddr, true, true, true);
-
-                //lock (lockingValuesAdvised)
-                //{
-                //    error = torisData.AdviseItems(valueAddr);
-
-                //    if (error != 0)
-                //    {
-                //        switch (error)
-                //        {
-                //            case 1: errorStr = "ETORIS_NOTCONFIG"; break;
-                //            case 2: errorStr = "ETORIS_INVALIDITEM"; break;
-                //            case 3: errorStr = "ETORIS_INVALIDATTR"; break;
-                //            case 4: errorStr = "ETORIS_INVALIDTYPE"; break;
-                //            case 5: errorStr = "ETORIS_INVALIDHANDLE"; break;
-                //            case 6: errorStr = "ETORIS_NOTREGISTER"; break;
-                //            case 7: errorStr = "ETORIS_ALREADYADVISED"; break;
-                //            case 8: errorStr = "ETORIS_INVALIDITEMTYPE"; break;
-                //            case 9: errorStr = "ETORIS_SHUTDOWN"; break;
-                //            default: errorStr = "Неизвестная ошибка " + error.ToString(); break;
-                //        }
-
-                //        MainForm.log.LogToFile("Ошибка подписки на сигнал " + valueAddr + ": " + errorStr, true, true, true);
-                //        return;
-                //    }
-
-                //    torisValuesAddrAdvised.Add(valueAddr);
-                //}
-
-                //int quality, status;
-                //int type = 3;
-                //object value;
-                //double timestamp;
-
-                //error = torisData.ReadItem(valueAddr, ref type, out value, out timestamp, out quality, out status);
-                //if (error != 0)
-                //{
-                //    MainForm.log.LogToFile("Ошибка вызова ReadItem для " + valueAddr + ": " + error.ToString(), true, true, true);
-                //    return;
-                //}
-
-                //TorisRelationship_ItemNewValue(valueAddr, type, value, timestamp, quality, status);
-            }
         }
 
         protected override HHandlerDbULoaderMSTTMSrc.GroupSignals createGroupSignals(object[] objs)
         {
-            return new GroupSignalsMSTKKSNAMEtoris(this, objs);
+            GroupSignalsMSTKKSNAMEtoris grpRes = new GroupSignalsMSTKKSNAMEtoris(this, objs);
+
+            grpRes.EvtAdviseItem += new DelegateObjectFunc(groupSignals_OnEvtAdviseItem);
+            grpRes.EvtUnadviseItem += new DelegateStringFunc(groupSignals_OnEvtUnadviseItem);
+            
+            return grpRes;
         }
 
         public override void ClearValues()
         {
         }
 
-        private void start ()
+        public override void Start()
         {
+            base.Start();
+
             try
             {
                 m_torIsData.Connect();
@@ -167,13 +141,20 @@ namespace SrcMSTKKSNAMEtoris
             }
         }
 
-        private void stop ()
+        public override void Start(int key)
+        {
+            base.Start(key);
+
+            ((GroupSignalsMSTKKSNAMEtoris)m_dictGroupSignals[key]).AdviseItems(key);
+        }
+
+        public new void Stop()
         {
             try
             {
                 m_torIsData.ItemNewValue -= torIsData_ItemNewValue;
                 m_torIsData.ChangeStatus -= torIsData_ChangeStatus;
-                
+
                 m_torIsData.Disconnect();
 
                 m_torIsData = null;
@@ -182,36 +163,160 @@ namespace SrcMSTKKSNAMEtoris
             {
                 Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"SrcMSTKKSNAMEtoris::stop () - ...");
             }
-        }
 
-        public override void Start()
-        {
-            base.Start();
-
-            start ();
-        }
-
-        public override void Start(int key)
-        {
-            base.Start(key);
-
-            //???
-            ;
-        }
-
-        public override void Stop()
-        {
-            stop ();
-
-            base.Stop();
+            ((HHandler)this).Stop();
         }
 
         public override void Stop(int key)
         {
+            if (IsStarted == true)
+            {
+                if (m_dictGroupSignals.ContainsKey (key) == true)
+                    ((GroupSignalsMSTKKSNAMEtoris)m_dictGroupSignals[key]).UnadviseItems();
+                else
+                    ;
+
+                base.Stop(key);
+            }
+            else
+                ;
+        }
+        /// <summary>
+        /// Старт зависимых потоков
+        /// </summary>
+        protected new void startThreadDepended()
+        {
+            startThreadQueue();
+        }
+        /// <summary>
+        /// Регистрация источника информации
+        /// </summary>
+        /// <param name="id">Ключ в словаре с идентификаторами соединений</param>
+        /// <param name="indx">Индекс в массиве - элементе словаря с идентификаторами соединений</param>
+        /// <param name="connSett">Параметры соединения с источником информации</param>
+        /// <param name="name">Наименование соединения</param>
+        protected new void register(int id, int indx, ConnectionSettings connSett, string name)
+        {
             //???
             ;
+        }
 
-            base.Stop(key);
+        private object lockAdvisedItems;
+        private Dictionary <string, int> m_dictSignalsAdvised;
+
+        private void groupSignals_OnEvtAdviseItem (object pars)
+        {
+            long err = -1;
+            int idGrpSgnls = (int) (pars as object [])[0];
+            string kks_name = (string) (pars as object [])[1]
+                , strErr = string.Empty
+                , strIds = @" [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + idGrpSgnls + @"]: ";
+
+            if (IsStarted == false)
+                return;
+            else
+                ;
+
+            if (lockAdvisedItems == null)
+                lockAdvisedItems = new object ();
+            else
+                ;
+
+            if (m_dictSignalsAdvised == null)
+                m_dictSignalsAdvised = new Dictionary<string,int> ();
+            else
+                ;
+
+            lock (lockAdvisedItems)
+            {
+                if (m_dictSignalsAdvised.ContainsKey(kks_name) == true)
+                    return;
+                else
+                    ;
+
+                err = m_torIsData.AdviseItems(kks_name);
+
+                if (! (err == 0))
+                {
+                    switch (err)
+                    {
+                        case 1: strErr = "ETORIS_NOTCONFIG"; break;
+                        case 2: strErr = "ETORIS_INVALIDITEM"; break;
+                        case 3: strErr = "ETORIS_INVALIDATTR"; break;
+                        case 4: strErr = "ETORIS_INVALIDTYPE"; break;
+                        case 5: strErr = "ETORIS_INVALIDHANDLE"; break;
+                        case 6: strErr = "ETORIS_NOTREGISTER"; break;
+                        case 7: strErr = "ETORIS_ALREADYADVISED"; break;
+                        case 8: strErr = "ETORIS_INVALIDITEMTYPE"; break;
+                        case 9: strErr = "ETORIS_SHUTDOWN"; break;
+                        default: strErr = "Неизвестная ошибка " + strErr.ToString(); break;
+                    }
+
+                    Logging.Logg().Error(@"Ошибка подписки на сигнал" + strIds + kks_name + " - " + strErr, Logging.INDEX_MESSAGE.NOT_SET);
+                    return;
+                }
+                else
+                    ;
+
+                m_dictSignalsAdvised.Add(kks_name, idGrpSgnls);
+            }
+
+            Logging.Logg ().Action (@"Подписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);
+
+            int quality, status;
+            int type = 3;
+            object value;
+            double timestamp;
+
+            err = m_torIsData.ReadItem(kks_name, ref type, out value, out timestamp, out quality, out status);
+            if (! (err == 0))
+            {
+                Logging.Logg().Error(@"Ошибка вызова ReadItem для" + strIds + kks_name + " - " + err.ToString(), Logging.INDEX_MESSAGE.NOT_SET);
+                return;
+            }
+            else
+                ;
+
+            torIsData_ItemNewValue (kks_name, type, value, timestamp, quality, status);
+        }
+
+        private void groupSignals_OnEvtUnadviseItem(string kks_name)
+        {
+            int err = -1
+                , idGrpSgnls = -1;
+            string strErr = string.Empty
+                , strIds = string.Empty;
+
+            lock (lockAdvisedItems)
+            {
+                if (m_dictSignalsAdvised.ContainsKey(kks_name) == true)
+                    return;
+                else
+                    ;
+
+                idGrpSgnls = m_dictSignalsAdvised[kks_name];
+                strIds = @" [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + idGrpSgnls + @"]: ";
+
+                err = m_torIsData.UnadviseItem(kks_name);
+
+                if (! (err == 0))
+                {
+                    switch (err)
+                    {
+                        default:
+                            break;
+                    }
+
+                    Logging.Logg().Error(@"Ошибка отписки на сигнал" + strIds + kks_name + " - " + strErr, Logging.INDEX_MESSAGE.NOT_SET);
+                    return;
+                }
+                else
+                    ;
+
+                m_dictSignalsAdvised.Remove(kks_name);
+
+                Logging.Logg().Action(@"Отписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);
+            }
         }
 
         private void torIsData_ItemNewValue(string kksname, int type, object value, double timestamp, int quality, int status)
@@ -293,7 +398,7 @@ namespace SrcMSTKKSNAMEtoris
         public PlugIn()
             : base()
         {
-            _Id = 1004;
+            _Id = 1005;
 
             createObject(typeof(SrcMSTKKSNAMEtoris));
         }
