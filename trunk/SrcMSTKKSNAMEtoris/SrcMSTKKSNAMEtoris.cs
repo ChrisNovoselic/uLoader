@@ -11,6 +11,12 @@ namespace SrcMSTKKSNAMEtoris
 {
     public class SrcMSTKKSNAMEtoris : HHandlerDbULoaderMSTTMSrc
     {
+        enum StatesMachine
+        {
+            Values
+            ,
+        }
+        
         TORISLib.TorISData m_torIsData;
 
         public SrcMSTKKSNAMEtoris()
@@ -26,6 +32,8 @@ namespace SrcMSTKKSNAMEtoris
 
         private class GroupSignalsMSTKKSNAMEtoris : GroupSignalsMSTTMSrc
         {
+            DataTable m_tableTorIs;
+
             public GroupSignalsMSTKKSNAMEtoris(HHandlerDbULoader parent, object[] pars)
                 : base(parent, pars)
             {
@@ -120,6 +128,15 @@ namespace SrcMSTKKSNAMEtoris
             return grpRes;
         }
 
+        protected new int addAllStates()
+        {
+            int iRes = 0;
+            
+            AddState((int)StatesMachine.Values);
+
+            return iRes;
+        }
+
         public override void ClearValues()
         {
         }
@@ -145,7 +162,10 @@ namespace SrcMSTKKSNAMEtoris
         {
             base.Start(key);
 
-            ((GroupSignalsMSTKKSNAMEtoris)m_dictGroupSignals[key]).AdviseItems(key);
+            lock (lockAdvisedItems)
+            {
+                ((GroupSignalsMSTKKSNAMEtoris)m_dictGroupSignals[key]).AdviseItems(key);
+            }
         }
 
         public new void Stop()
@@ -171,10 +191,13 @@ namespace SrcMSTKKSNAMEtoris
         {
             if (IsStarted == true)
             {
-                if (m_dictGroupSignals.ContainsKey (key) == true)
-                    ((GroupSignalsMSTKKSNAMEtoris)m_dictGroupSignals[key]).UnadviseItems();
-                else
-                    ;
+                lock (lockAdvisedItems)
+                {
+                    if (m_dictGroupSignals.ContainsKey (key) == true)
+                        ((GroupSignalsMSTKKSNAMEtoris)m_dictGroupSignals[key]).UnadviseItems();
+                    else
+                        ;
+                }
 
                 base.Stop(key);
             }
@@ -203,7 +226,10 @@ namespace SrcMSTKKSNAMEtoris
 
         private object lockAdvisedItems;
         private Dictionary <string, int> m_dictSignalsAdvised;
-
+        /// <summary>
+        /// Подписаться на сигнал
+        /// </summary>
+        /// <param name="pars">Параметр (массив: идентификатор группы сигналов + KKS_NAME сигнала)</param>
         private void groupSignals_OnEvtAdviseItem (object pars)
         {
             long err = -1;
@@ -287,36 +313,33 @@ namespace SrcMSTKKSNAMEtoris
             string strErr = string.Empty
                 , strIds = string.Empty;
 
-            lock (lockAdvisedItems)
+            if (m_dictSignalsAdvised.ContainsKey(kks_name) == true)
+                return;
+            else
+                ;
+
+            idGrpSgnls = m_dictSignalsAdvised[kks_name];
+            strIds = @" [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + idGrpSgnls + @"]: ";
+
+            err = m_torIsData.UnadviseItem(kks_name);
+
+            if (! (err == 0))
             {
-                if (m_dictSignalsAdvised.ContainsKey(kks_name) == true)
-                    return;
-                else
-                    ;
-
-                idGrpSgnls = m_dictSignalsAdvised[kks_name];
-                strIds = @" [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + idGrpSgnls + @"]: ";
-
-                err = m_torIsData.UnadviseItem(kks_name);
-
-                if (! (err == 0))
+                switch (err)
                 {
-                    switch (err)
-                    {
-                        default:
-                            break;
-                    }
-
-                    Logging.Logg().Error(@"Ошибка отписки на сигнал" + strIds + kks_name + " - " + strErr, Logging.INDEX_MESSAGE.NOT_SET);
-                    return;
+                    default:
+                        break;
                 }
-                else
-                    ;
 
-                m_dictSignalsAdvised.Remove(kks_name);
-
-                Logging.Logg().Action(@"Отписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Error(@"Ошибка отписки на сигнал" + strIds + kks_name + " - " + strErr, Logging.INDEX_MESSAGE.NOT_SET);
+                return;
             }
+            else
+                ;
+
+            m_dictSignalsAdvised.Remove(kks_name);
+
+            Logging.Logg().Action(@"Отписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);
         }
 
         private void torIsData_ItemNewValue(string kksname, int type, object value, double timestamp, int quality, int status)
@@ -390,6 +413,78 @@ namespace SrcMSTKKSNAMEtoris
                 default: //Неизвестный статус
                     break;
             }
+        }
+
+        /// <summary>
+        /// Проверить наличие ответа на запрос к источнику данных
+        /// </summary>
+        /// <param name="state">Состояние</param>
+        /// <param name="error">Признак ошибки</param>
+        /// <param name="table">Таблица - результат запроса</param>
+        /// <returns>Результат проверки наличия ответа на запрос</returns>
+        protected new int StateCheckResponse(int state, out bool error, out object table)
+        {
+            int iRes = 0;
+            error = false;
+
+            table = TableRecieved.Copy ();            
+
+            return iRes;
+        }
+
+        protected new int StateRequest(int state)
+        {
+            int iRes = 0;
+
+            switch (state)
+            {
+                case (int)StatesMachine.Values:
+                    //Запрос на выборку данных не требуется
+                    ClearValues ();
+                    break;
+                default:
+                    break;
+            }
+
+            return iRes;
+        }
+
+        protected new int StateResponse(int state, object obj)
+        {
+            int iRes = 0;
+            DataTable table = obj as DataTable;
+            //string msg = @"HHandlerDbULoaderDest::StateResponse () ::" + ((StatesMachine)state).ToString() + @" - "
+            //    + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"] ";
+
+            try
+            {
+                switch (state)
+                {
+                    case (int)StatesMachine.Values:
+                        //msg =+ @"Ok ...";
+                        Logging.Logg().Debug(@"Получено строк [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"]: " + (table as DataTable).Rows.Count, Logging.INDEX_MESSAGE.NOT_SET);
+                        if (TableRecieved == null)
+                        {
+                            TableRecieved = new DataTable();
+                        }
+                        else
+                            ;
+
+                        TableRecieved = GroupSignals.clearDupValues(table);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            catch (Exception e)
+            {
+                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader::StateResponse (::" + ((StatesMachine)state).ToString() + @") - ...");
+            }
+
+            //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
+            //Console.WriteLine (msg);
+
+            return iRes;
         }
     }
 
