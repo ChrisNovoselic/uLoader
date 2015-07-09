@@ -219,8 +219,8 @@ namespace uLoaderCommon
             /// </summary>
             /// <param name="parent">Объект-владелей группы сигналов источника</param>
             /// <param name="pars">Параметры для инициализации группы сигналов источника</param>
-            public GroupSignalsSrc(HHandlerDbULoader parent, object[] pars)
-                : base(parent, pars)
+            public GroupSignalsSrc(HHandlerDbULoader parent, int id, object[] pars)
+                : base(parent, id, pars)
             {
                 m_iRowCountRecieved = -1;
             }
@@ -461,8 +461,8 @@ namespace uLoaderCommon
             private DateTime m_dtStart;
             public DateTime DateTimeStart { get { return m_dtStart; } set { m_dtStart = value; } }
 
-            public GroupSignalsDatetimeSrc(HHandlerDbULoader parent, object[] pars)
-                : base(parent, pars)
+            public GroupSignalsDatetimeSrc(HHandlerDbULoader parent, int id, object[] pars)
+                : base(parent, id, pars)
             {
                 //Инициализация "временнЫх" значений
                 // конкретные значения м.б. получены при "старте" 
@@ -597,15 +597,18 @@ namespace uLoaderCommon
         {
             int iRes = base.Initialize(pars);
 
-            m_iCurIntervalShift = Convert.ToInt32(m_dictAdding[@"CUR_INTERVAL_SHIFT"]);
+            if (m_dictAdding.ContainsKey(@"CUR_INTERVAL_SHIFT") == true)
+                m_iCurIntervalShift = Convert.ToInt32(m_dictAdding[@"CUR_INTERVAL_SHIFT"]);
+            else
+                ;
 
             return iRes;
         }
 
         protected abstract class GroupSignalsMSTTMSrc : GroupSignalsDatetimeSrc
         {
-            public GroupSignalsMSTTMSrc(HHandlerDbULoader parent, object[] pars)
-                : base(parent, pars)
+            public GroupSignalsMSTTMSrc(HHandlerDbULoader parent, int id, object[] pars)
+                : base(parent, id, pars)
             {
             }
 

@@ -32,8 +32,8 @@ namespace DestTechSiteLastsql
 
         private class GroupSignalsTechSiteLastsql : GroupSignalsStatTMKKSNAMEDest
         {
-            public GroupSignalsTechSiteLastsql(HHandlerDbULoader parent, object[] pars)
-                : base(parent, pars)
+            public GroupSignalsTechSiteLastsql(HHandlerDbULoader parent, int id, object[] pars)
+                : base(parent, id, pars)
             {
             }
 
@@ -76,9 +76,9 @@ namespace DestTechSiteLastsql
             }
         }
 
-        protected override GroupSignals createGroupSignals(object[] objs)
+        protected override GroupSignals createGroupSignals(int id, object[] objs)
         {
-            return new GroupSignalsTechSiteLastsql(this, objs);
+            return new GroupSignalsTechSiteLastsql(this, id, objs);
         }
     }
 

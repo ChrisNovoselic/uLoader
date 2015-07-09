@@ -27,8 +27,8 @@ namespace SrcMSTKKSNAMEsql
 
         private class GroupSignalsMSTKKSNAMEsql : GroupSignalsMSTTMSrc
         {
-            public GroupSignalsMSTKKSNAMEsql(HHandlerDbULoader parent, object[] pars)
-                : base(parent, pars)
+            public GroupSignalsMSTKKSNAMEsql(HHandlerDbULoader parent, int id, object[] pars)
+                : base(parent, id, pars)
             {
             }
 
@@ -118,9 +118,9 @@ namespace SrcMSTKKSNAMEsql
             }
         }
 
-        protected override HHandlerDbULoader.GroupSignals createGroupSignals(object[] objs)
+        protected override HHandlerDbULoader.GroupSignals createGroupSignals(int id, object[] objs)
         {
-            return new GroupSignalsMSTKKSNAMEsql(this, objs);
+            return new GroupSignalsMSTKKSNAMEsql(this, id, objs);
         }
 
         public override void ClearValues()

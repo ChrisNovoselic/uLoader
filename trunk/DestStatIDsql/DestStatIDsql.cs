@@ -32,8 +32,8 @@ namespace DestStatIDsql
 
         private class GroupSignalsStatIDsql : GroupSignalsStatTMMSTDest
         {
-            public GroupSignalsStatIDsql(HHandlerDbULoader parent, object[] pars)
-                : base(parent, pars)
+            public GroupSignalsStatIDsql(HHandlerDbULoader parent, int id, object[] pars)
+                : base(parent, id, pars)
             {
             }
 
@@ -83,9 +83,9 @@ namespace DestStatIDsql
             }
         }
 
-        protected override GroupSignals createGroupSignals(object[] objs)
+        protected override GroupSignals createGroupSignals(int id, object[] objs)
         {
-            return new GroupSignalsStatIDsql(this, objs);
+            return new GroupSignalsStatIDsql(this, id, objs);
         }
     }
 

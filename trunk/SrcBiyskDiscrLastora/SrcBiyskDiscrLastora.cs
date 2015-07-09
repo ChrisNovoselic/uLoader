@@ -27,8 +27,8 @@ namespace SrcBiyskDiscrLastora
 
         private class GroupSignalsBiyskDiscrLastora : GroupSignalsSrc
         {
-            public GroupSignalsBiyskDiscrLastora(HHandlerDbULoader parent, object[] pars)
-                : base(parent, pars)
+            public GroupSignalsBiyskDiscrLastora(HHandlerDbULoader parent, int id, object[] pars)
+                : base(parent, id, pars)
             {
                 m_strQuery = string.Empty;
 
@@ -128,9 +128,9 @@ namespace SrcBiyskDiscrLastora
             }
         }
 
-        protected override HHandlerDbULoader.GroupSignals createGroupSignals(object[] objs)
+        protected override HHandlerDbULoader.GroupSignals createGroupSignals(int id, object[] objs)
         {
-            return new GroupSignalsBiyskDiscrLastora(this, objs);
+            return new GroupSignalsBiyskDiscrLastora(this, id, objs);
         }
 
         public override void ClearValues()

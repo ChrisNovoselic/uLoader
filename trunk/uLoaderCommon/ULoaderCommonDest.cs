@@ -173,8 +173,8 @@ namespace uLoaderCommon
             /// </summary>
             /// <param name="parent">Объект-владелец (для последующего обращения к его членам-данным)</param>
             /// <param name="pars">Параметры группы сигналов</param>
-            public GroupSignalsDest(HHandlerDbULoader parent, object[] pars)
-                : base(parent, pars)
+            public GroupSignalsDest(HHandlerDbULoader parent, int id, object[] pars)
+                : base(parent, id, pars)
             {
                 ////Вариант - очередь
                 //m_queueTableRec = new Queue<DataTable> ();
@@ -396,8 +396,8 @@ namespace uLoaderCommon
 
         public abstract class GroupSignalsStatTMDest : GroupSignalsDest
         {
-            public GroupSignalsStatTMDest(HHandlerDbULoader parent, object[] pars)
-                : base(parent, pars)
+            public GroupSignalsStatTMDest(HHandlerDbULoader parent, int id, object[] pars)
+                : base(parent, id, pars)
             {
             }            
 
@@ -592,8 +592,8 @@ namespace uLoaderCommon
 
         public abstract class GroupSignalsStatTMMSTDest : GroupSignalsStatTMDest
         {
-            public GroupSignalsStatTMMSTDest(HHandlerDbULoader parent, object[] pars)
-                : base(parent, pars)
+            public GroupSignalsStatTMMSTDest(HHandlerDbULoader parent, int id, object[] pars)
+                : base(parent, id, pars)
             {
             }
 
@@ -641,8 +641,8 @@ namespace uLoaderCommon
 
         protected abstract class GroupSignalsStatTMIDDest : GroupSignalsStatTMDest
         {
-            public GroupSignalsStatTMIDDest(HHandlerDbULoader parent, object[] pars)
-                : base(parent, pars)
+            public GroupSignalsStatTMIDDest(HHandlerDbULoader parent, int id, object[] pars)
+                : base(parent, id, pars)
             {
             }
 
@@ -728,8 +728,8 @@ namespace uLoaderCommon
 
         protected abstract class GroupSignalsStatTMKKSNAMEDest : GroupSignalsStatTMDest
         {
-            public GroupSignalsStatTMKKSNAMEDest(HHandlerDbULoader parent, object[] pars)
-                : base(parent, pars)
+            public GroupSignalsStatTMKKSNAMEDest(HHandlerDbULoader parent, int id, object[] pars)
+                : base(parent, id, pars)
             {
             }
 

@@ -65,6 +65,10 @@ namespace uLoaderCommon
             /// </summary>
             protected HHandlerDbULoader _parent;
             /// <summary>
+            /// Целочисленный идентификатор группы (дублирует значение ключа в словаре объекта-владельца группы)
+            /// </summary>
+            public int m_Id;
+            /// <summary>
             /// Перечисление возможных слстояний для группы сигналов
             /// </summary>
             public enum STATE { UNKNOWN = -1, STOP, SLEEP, TIMER, QUEUE, ACTIVE }
@@ -135,10 +139,12 @@ namespace uLoaderCommon
             /// </summary>
             /// <param name="parent">Объект-владелец (для последующего обращения к его членам-данным)</param>
             /// <param name="pars">Параметры группы сигналов</param>
-            public GroupSignals(HHandlerDbULoader parent, object[] pars)
+            public GroupSignals(HHandlerDbULoader parent, int id, object[] pars)
             {
-                //Владелей объекта
+                //Владелец объекта
                 _parent = parent;
+                //Целочисленный идентификатор
+                m_Id = id;
                 //Значения по умолчанию
                 m_tmSpanPeriod = new TimeSpan((long)((int)uLoaderCommon.DATETIME.SEC_SPANPERIOD_DEFAULT * Math.Pow(10, 7)));
                 m_msecInterval = (int)uLoaderCommon.DATETIME.MSEC_INTERVAL_DEFAULT;
@@ -554,7 +560,7 @@ namespace uLoaderCommon
             {
                 if (m_dictGroupSignals.Keys.Contains(id) == false)
                 {//Считать переданные параметры - параметрами сигналов                
-                    m_dictGroupSignals.Add(id, createGroupSignals (pars));
+                    m_dictGroupSignals.Add(id, createGroupSignals (id, pars));
 
                     Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - добавить группу сигналов [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
@@ -567,7 +573,7 @@ namespace uLoaderCommon
                         if (pars[0].GetType().IsArray == true)
                         {
                             //Считать переданные параметры - параметрами сигналов
-                            m_dictGroupSignals[id] = createGroupSignals(pars);
+                            m_dictGroupSignals[id] = createGroupSignals(id, pars);
 
                             Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - ПЕРЕсоздать группу сигналов [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
                         }
@@ -600,7 +606,7 @@ namespace uLoaderCommon
         /// </summary>
         /// <param name="objs">Массив параметров для создания группы сигналов (параметры сигналов)</param>
         /// <returns></returns>
-        protected abstract GroupSignals createGroupSignals(object []objs);
+        protected abstract GroupSignals createGroupSignals(int id, object []objs);
         /// <summary>
         /// Проверить требуется ли поставить идентификатор в очередь обработки
         /// </summary>
@@ -848,7 +854,7 @@ namespace uLoaderCommon
                 }
 
                 if ((bRes == true) && (base.IsStarted == false))
-                    throw new Exception (@"HHandlerDbULoader::IsStarted.get - несовпадение признака 'Старт' с базовым классом...");
+                    Logging.Logg ().Error(@"HHandlerDbULoader::IsStarted.get [ID=" + (_iPlugin as PlugInBase)._Id + @" - несовпадение признака 'Старт' с базовым классом...", Logging.INDEX_MESSAGE.NOT_SET);
                 else
                     ;
 

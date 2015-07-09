@@ -27,8 +27,8 @@ namespace DestBiTECStatIDsql
 
         private class GroupSignalsStatIDsql : GroupSignalsStatTMIDDest
         {
-            public GroupSignalsStatIDsql(HHandlerDbULoader parent, object[] pars)
-                : base(parent, pars)
+            public GroupSignalsStatIDsql(HHandlerDbULoader parent, int id, object[] pars)
+                : base(parent, id, pars)
             {
             }
 
@@ -76,9 +76,9 @@ namespace DestBiTECStatIDsql
             }
         }
 
-        protected override GroupSignals createGroupSignals(object[] objs)
+        protected override GroupSignals createGroupSignals(int id, object[] objs)
         {
-            return new GroupSignalsStatIDsql(this, objs);
+            return new GroupSignalsStatIDsql(this, id, objs);
         }
     }
 

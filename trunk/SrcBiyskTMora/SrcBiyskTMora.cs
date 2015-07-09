@@ -27,8 +27,8 @@ namespace SrcBiyskTMora
 
         private class GroupSignalsBiyskTMora : GroupSignalsDatetimeSrc
         {
-            public GroupSignalsBiyskTMora(HHandlerDbULoader parent, object[] pars)
-                : base(parent, pars)
+            public GroupSignalsBiyskTMora(HHandlerDbULoader parent, int id, object[] pars)
+                : base(parent, id, pars)
             {
             }
 
@@ -65,9 +65,9 @@ namespace SrcBiyskTMora
             }
         }
 
-        protected override HHandlerDbULoader.GroupSignals createGroupSignals(object[] objs)
+        protected override HHandlerDbULoader.GroupSignals createGroupSignals(int id, object[] objs)
         {
-            return new GroupSignalsBiyskTMora(this, objs);
+            return new GroupSignalsBiyskTMora(this, id, objs);
         }
 
         public override void ClearValues()

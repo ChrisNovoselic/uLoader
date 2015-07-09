@@ -28,8 +28,8 @@ namespace DestStatKKSNAMEsql
 
         private class GroupSignalsStatKKSNAMEsql : HHandlerDbULoaderStatTMMSTDest.GroupSignalsStatTMMSTDest
         {
-            public GroupSignalsStatKKSNAMEsql(HHandlerDbULoader parent, object[] pars)
-                : base(parent, pars)
+            public GroupSignalsStatKKSNAMEsql(HHandlerDbULoader parent, int id, object[] pars)
+                : base(parent, id, pars)
             {
             }
 
@@ -83,9 +83,9 @@ namespace DestStatKKSNAMEsql
             }
         }
 
-        protected override GroupSignals createGroupSignals(object[] objs)
+        protected override GroupSignals createGroupSignals(int id, object[] objs)
         {
-            return new GroupSignalsStatKKSNAMEsql(this, objs);
+            return new GroupSignalsStatKKSNAMEsql(this, id, objs);
         }
     }
 

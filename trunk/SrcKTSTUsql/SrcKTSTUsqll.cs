@@ -22,8 +22,8 @@ namespace SrcKTSTUsql
 
         private class GroupSignalsKTSTUsql : GroupSignalsDatetimeSrc
         {
-            public GroupSignalsKTSTUsql(HHandlerDbULoader parent, object[] pars)
-                : base(parent, pars)
+            public GroupSignalsKTSTUsql(HHandlerDbULoader parent, int id, object[] pars)
+                : base(parent, id, pars)
             {
             }
 
@@ -39,9 +39,9 @@ namespace SrcKTSTUsql
             }
         }
 
-        protected override HHandlerDbULoader.GroupSignals createGroupSignals(object[] objs)
+        protected override HHandlerDbULoader.GroupSignals createGroupSignals(int id, object[] objs)
         {
-            return new GroupSignalsKTSTUsql(this, objs);
+            return new GroupSignalsKTSTUsql(this, id, objs);
         }
 
         public override void ClearValues()
