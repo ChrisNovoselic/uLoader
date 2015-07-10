@@ -640,7 +640,7 @@ namespace uLoaderCommon
                             iRes ++;                        
 
                             //Проверить активность потока очереди обработки событий
-                            bool bSet = m_autoResetEvtQueue.WaitOne(0);
+                            bool bSet = m_autoResetEvtQueue.WaitOne(0, true);
 
                             //if (m_queueIdGroupSignals.Count == 1)
                             if (bSet == false)
@@ -724,7 +724,7 @@ namespace uLoaderCommon
                     Run(@"HHandlerDbULoader::fThreadQueue ()");
 
                     //Ожидать обработки всех состояний
-                    m_waitHandleState[(int)INDEX_WAITHANDLE_REASON.SUCCESS].WaitOne(System.Threading.Timeout.Infinite);
+                    m_waitHandleState[(int)INDEX_WAITHANDLE_REASON.SUCCESS].WaitOne(System.Threading.Timeout.Infinite, true);
 
                     lock (m_lockQueue)
                     {
@@ -1009,7 +1009,7 @@ namespace uLoaderCommon
 
                 //InitializeSyncState();
                 //Установить в "несигнальное" состояние
-                m_waitHandleState[(int)INDEX_WAITHANDLE_REASON.SUCCESS].WaitOne(System.Threading.Timeout.Infinite);
+                m_waitHandleState[(int)INDEX_WAITHANDLE_REASON.SUCCESS].WaitOne(System.Threading.Timeout.Infinite, true);
 
                 try { m_threadQueue.Start(); }
                 catch (Exception e)

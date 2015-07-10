@@ -137,11 +137,12 @@ namespace SrcMSTKKSNAMEtoris
                 //string strIds = @" [ID=" + ((_parent as HHandlerDbULoader)._iPlugin as PlugInBase)._Id + @", key=" + m_Id + @"]: ";
 
                 DateTime dtVal = 
-                    new DateTime(1904, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(timestamp)
+                    //new DateTime(1904, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(timestamp)
+                    DateTime.Now
                     //DateTime.FromOADate(timestamp)
                     //new DateTime(1899, 12, 30).AddDays(timestamp)
                     ;
-                
+
                 lock (this)
                 {
                     m_tableTorIs.Rows.Add(new object[] { kksname, value, dtVal });
@@ -466,7 +467,7 @@ namespace SrcMSTKKSNAMEtoris
             int iRes = 0;
             error = false;
 
-            table = (m_dictGroupSignals[m_IdGroupSignalsCurrent] as GroupSignalsMSTKKSNAMEtoris).m_tableTorIs;
+            table = (m_dictGroupSignals[m_IdGroupSignalsCurrent] as GroupSignalsMSTKKSNAMEtoris).m_tableTorIs.Copy();
 
             return iRes;
         }
