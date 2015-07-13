@@ -43,10 +43,6 @@ namespace SrcKTSTUsql
         {
             return new GroupSignalsKTSTUsql(this, id, objs);
         }
-
-        public override void ClearValues()
-        {
-        }
     }
 
     public class PlugIn : PlugInULoader

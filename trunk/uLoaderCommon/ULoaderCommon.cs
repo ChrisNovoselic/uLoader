@@ -220,7 +220,7 @@ namespace uLoaderCommon
                     DataRow[] arSel;
                     foreach (DataRow rRes in tblPrev.Rows)
                     {
-                        arSel = (tblRes as DataTable).Select(@"ID=" + rRes[@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
+                        arSel = (tblRes as DataTable).Select(@"ID=" + rRes[@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fffffff") + @"'");
                         iDup += arSel.Length;
                         foreach (DataRow rDel in arSel)
                             (tblRes as DataTable).Rows.Remove(rDel);
@@ -286,7 +286,7 @@ namespace uLoaderCommon
                     if (listIndxToDelete.IndexOf (tblDup.Rows.IndexOf(r)) < 0)
                     {
                         //Сформировать строку запроса
-                        strSel = @"ID=" + (bQuote == true ? @"'" : string.Empty) + r[@"ID"] + (bQuote == true ? @"'" : string.Empty) + @" AND " + @"DATETIME='" + ((DateTime)r[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'";
+                        strSel = @"ID=" + (bQuote == true ? @"'" : string.Empty) + r[@"ID"] + (bQuote == true ? @"'" : string.Empty) + @" AND " + @"DATETIME='" + ((DateTime)r[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fffffff") + @"'";
                         arDup = (tblDup as DataTable).Select(strSel);
                         //Проверить наличие дублирующих записей
                         if (arDup.Length > 1)
@@ -1075,6 +1075,11 @@ namespace uLoaderCommon
         protected override int StateCheckResponse(int state, out bool error, out object table)
         {
             return response(out error, out table);
+        }
+
+        public override void ClearValues()
+        {
+            throw new NotImplementedException();
         }
     }
     /// <summary>

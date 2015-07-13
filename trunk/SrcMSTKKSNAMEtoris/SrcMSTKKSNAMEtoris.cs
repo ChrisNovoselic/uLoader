@@ -126,9 +126,7 @@ namespace SrcMSTKKSNAMEtoris
                         base.TableRecieved = tblVal;
                     }
                     else
-                    {
                         base.TableRecieved = value;
-                    }
                 }
             }
 
@@ -148,7 +146,48 @@ namespace SrcMSTKKSNAMEtoris
                     m_tableTorIs.Rows.Add(new object[] { kksname, value, dtVal });
                 }
 
-                Console.WriteLine(@"Получено значение для сигнала:" + kksname + @"(" + value + @", " + dtVal.ToString (@"dd.MM.yyyy HH:mm:ss.fffffff") + @")");
+                Console.WriteLine(@"Получено значение для сигнала:" + kksname + @"(" + value + @", " + dtVal.ToString (@"dd.MM.yyyy HH:mm:ss.fff") + @")");
+            }
+
+            public void ClearValues ()
+            {
+                int iPrev = 0, iDel = 0, iCur = 0;
+
+                lock (this)
+                {
+                    iPrev = m_tableTorIs.Rows.Count;
+                    string strSel =
+                        @"DATETIME<'" + DateTimeStart.ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"' OR DATETIME>='" + DateTimeStart.AddSeconds(TimeSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
+                        //@"DATETIME BETWEEN '" + m_dtStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"' AND '" + m_dtStart.AddSeconds(m_tmSpanPeriod.Seconds).ToString(@"yyyy/MM/dd HH:mm:ss") + @"'"
+                        ;
+
+                    DataRow[] rowsDel = null;
+                    try { rowsDel = m_tableTorIs.Select(strSel); }
+                    catch (Exception e)
+                    {
+                        Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HBiyskTMOra::ClearValues () - ...");
+                    }
+
+                    if (!(rowsDel == null))
+                    {
+                        iDel = rowsDel.Length;
+                        if (rowsDel.Length > 0)
+                        {
+                            foreach (DataRow r in rowsDel)
+                                m_tableTorIs.Rows.Remove(r);
+                            //??? Обязательно ли...
+                            m_tableTorIs.AcceptChanges();
+                        }
+                        else
+                            ;
+                    }
+                    else
+                        ;
+
+                    iCur = m_tableTorIs.Rows.Count;
+                }
+
+                Console.WriteLine(@"Обновление рез-та [ID=" + m_Id + @"]: " + @"(было=" + iPrev + @", удалено=" + iDel + @", осталось=" + iCur + @")");
             }
         }
 
@@ -165,7 +204,7 @@ namespace SrcMSTKKSNAMEtoris
         protected override int addAllStates()
         {
             int iRes = 0;
-            
+
             AddState((int)StatesMachine.Values);
 
             return iRes;
@@ -173,6 +212,12 @@ namespace SrcMSTKKSNAMEtoris
 
         public override void ClearValues()
         {
+            if (!(TableRecieved == null))
+            {
+                (m_dictGroupSignals[m_IdGroupSignalsCurrent] as GroupSignalsMSTKKSNAMEtoris).ClearValues ();
+            }
+            else
+                ;
         }
 
         public override void Start()
@@ -484,6 +529,8 @@ namespace SrcMSTKKSNAMEtoris
             switch (state)
             {
                 case (int)StatesMachine.Values:
+                    m_dtServer = DateTime.Now;
+                    DateTimeStart = m_dtServer.AddMilliseconds(-1 * (m_dtServer.Second * 1000 + m_dtServer.Millisecond));
                     //Запрос на выборку данных не требуется
                     ClearValues ();
                     break;

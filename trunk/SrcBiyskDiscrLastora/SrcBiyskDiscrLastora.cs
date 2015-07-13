@@ -132,11 +132,6 @@ namespace SrcBiyskDiscrLastora
         {
             return new GroupSignalsBiyskDiscrLastora(this, id, objs);
         }
-
-        public override void ClearValues()
-        {
-            TableRecieved.Clear ();
-        }
     }
 
     public class PlugIn : PlugInULoader

@@ -235,11 +235,6 @@ namespace uLoaderCommon
             protected abstract DataTable getTableRes();
         }
 
-        public override void ClearValues()
-        {
-            //TableResults = new DataTable ();
-        }
-
         protected override int StateRequest(int state)
         {
             int iRes = 0;

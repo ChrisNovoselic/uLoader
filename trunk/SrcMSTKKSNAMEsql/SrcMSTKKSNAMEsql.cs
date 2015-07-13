@@ -122,10 +122,6 @@ namespace SrcMSTKKSNAMEsql
         {
             return new GroupSignalsMSTKKSNAMEsql(this, id, objs);
         }
-
-        public override void ClearValues()
-        {
-        }
     }
 
     public class PlugIn : PlugInULoader

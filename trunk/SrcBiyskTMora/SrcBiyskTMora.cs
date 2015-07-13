@@ -69,48 +69,6 @@ namespace SrcBiyskTMora
         {
             return new GroupSignalsBiyskTMora(this, id, objs);
         }
-
-        public override void ClearValues()
-        {
-            int iPrev = 0, iDel = 0, iCur = 0;
-            if (!(TableRecieved == null))
-            {
-                iPrev = TableRecieved.Rows.Count;
-                string strSel =
-                    @"DATETIME<'" + DateTimeStart.ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"' OR DATETIME>='" + DateTimeStart.AddSeconds(TimeSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
-                    //@"DATETIME BETWEEN '" + m_dtStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"' AND '" + m_dtStart.AddSeconds(m_tmSpanPeriod.Seconds).ToString(@"yyyy/MM/dd HH:mm:ss") + @"'"
-                    ;
-
-                DataRow[] rowsDel = null;
-                try { rowsDel = TableRecieved.Select(strSel); }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HBiyskTMOra::ClearValues () - ...");
-                }
-
-                if (!(rowsDel == null))
-                {
-                    iDel = rowsDel.Length;
-                    if (rowsDel.Length > 0)
-                    {
-                        foreach (DataRow r in rowsDel)
-                            TableRecieved.Rows.Remove(r);
-                        //??? Обязательно ли...
-                        TableRecieved.AcceptChanges();
-                    }
-                    else
-                        ;
-                }
-                else
-                    ;
-
-                iCur = TableRecieved.Rows.Count;
-
-                Console.WriteLine(@"Обновление рез-та [ID=" + m_IdGroupSignalsCurrent + @"]: " + @"(было=" + iPrev + @", удалено=" + iDel + @", осталось=" + iCur + @")");
-            }
-            else
-                ;
-        }
     }
 
     public class PlugIn : PlugInULoader
