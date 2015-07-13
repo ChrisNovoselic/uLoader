@@ -341,14 +341,17 @@ namespace uLoader
             {
                 STATE stateRes = STATE.UNKNOWN;
 
-                foreach (GroupSignals grpSgnls in m_listGroupSignals)
-                    if (grpSgnls.State == STATE.UNAVAILABLE)
-                    {
-                        stateRes = STATE.UNAVAILABLE;
-                        break;
-                    }
-                    else
-                        ;
+                if (m_listGroupSignals.Count > 0)
+                    foreach (GroupSignals grpSgnls in m_listGroupSignals)
+                        if (grpSgnls.State == STATE.UNAVAILABLE)
+                        {
+                            stateRes = STATE.UNAVAILABLE;
+                            break;
+                        }
+                        else
+                            ;
+                else
+                    stateRes = STATE.UNAVAILABLE;
 
                 if (stateRes == STATE.UNKNOWN)
                     //все группы сигналов имеют "известное" состояние
@@ -592,36 +595,37 @@ namespace uLoader
                 ;
 
             m_plugIn = loadPlugIn(out _iStateDLL);
-            if (!(_iStateDLL == STATE_DLL.LOADED))
-                throw new Exception(@"GroupSources::GroupSources () - ...");
-            else
-                ;
-
-            //sendInitSource();
-
-            int idGrpSgnls = -1;
-            GROUP_SIGNALS_PARS grpSgnlsPars;
-            foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
+            if (_iStateDLL == STATE_DLL.LOADED)
             {
-                //if (sendInitGroupSignals(FormMain.FileINI.GetIDIndex(itemGroupSignals.m_strID)) == 0)
-                if (itemGroupSignals.Validated == 0)
+                int idGrpSgnls = -1;
+                GROUP_SIGNALS_PARS grpSgnlsPars;
+                foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
                 {
-                    itemGroupSignals.State = STATE.STOPPED;
-
-                    idGrpSgnls = FormMain.FileINI.GetIDIndex(itemGroupSignals.m_strID);
-
-                    grpSgnlsPars = getGroupSignalsPars(idGrpSgnls);
-                    if (grpSgnlsPars.m_iAutoStart == 1)
+                    //if (sendInitGroupSignals(FormMain.FileINI.GetIDIndex(itemGroupSignals.m_strID)) == 0)
+                    if (itemGroupSignals.Validated == 0)
                     {
-                        sendInitGroupSignals (idGrpSgnls);
-                        sendState(idGrpSgnls, STATE.STARTED);
+                        itemGroupSignals.State = STATE.STOPPED;
+
+                        idGrpSgnls = FormMain.FileINI.GetIDIndex(itemGroupSignals.m_strID);
+
+                        grpSgnlsPars = getGroupSignalsPars(idGrpSgnls);
+                        if (grpSgnlsPars.m_iAutoStart == 1)
+                        {
+                            sendInitGroupSignals(idGrpSgnls);
+                            sendState(idGrpSgnls, STATE.STARTED);
+                        }
+                        else
+                            ;
                     }
                     else
-                        ;
+                        itemGroupSignals.State = STATE.UNAVAILABLE;
                 }
-                else
-                    itemGroupSignals.State = STATE.UNAVAILABLE;
             }
+            else
+                //throw new Exception(@"GroupSources::GroupSources () - ...")
+                ;
+
+            
         }
         /// <summary>
         /// Загрузить библиотеку с именем 'm_strDLLName'
@@ -1142,7 +1146,10 @@ namespace uLoader
             int iRes = 0;
             
             foreach (GroupSignals grpSgnls in m_listGroupSignals)
-                sendState(FormMain.FileINI.GetIDIndex(grpSgnls.m_strID), STATE.STOPPED);
+                if (grpSgnls.State == STATE.STARTED)
+                    sendState(FormMain.FileINI.GetIDIndex(grpSgnls.m_strID), STATE.STOPPED);
+                else
+                    ;
 
             return iRes;
         }

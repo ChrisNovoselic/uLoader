@@ -148,7 +148,7 @@ namespace SrcMSTKKSNAMEtoris
                     m_tableTorIs.Rows.Add(new object[] { kksname, value, dtVal });
                 }
 
-                Console.WriteLine(@"Получено значение для сигнала:" + kksname + @"(" + value + @", " + dtVal.ToString (@"dd.MM.yyyy HH:mm:ss.fff") + @")");
+                Console.WriteLine(@"Получено значение для сигнала:" + kksname + @"(" + value + @", " + dtVal.ToString (@"dd.MM.yyyy HH:mm:ss.fffffff") + @")");
             }
         }
 
@@ -184,6 +184,7 @@ namespace SrcMSTKKSNAMEtoris
                 m_torIsData.Connect();
 
                 m_torIsData.ItemNewValue += new _ITorISDataEvents_ItemNewValueEventHandler(torIsData_ItemNewValue);
+                m_torIsData.ChangeAttributeValue += new _ITorISDataEvents_ChangeAttributeValueEventHandler(torIsData_ChangeAttributeValue);
                 m_torIsData.ChangeStatus += new _ITorISDataEvents_ChangeStatusEventHandler(torIsData_ChangeStatus);
             }
             catch (Exception e)
@@ -442,6 +443,10 @@ namespace SrcMSTKKSNAMEtoris
             }
 
             (m_dictGroupSignals[idGrpSgnls] as GroupSignalsMSTKKSNAMEtoris).ItemNewValue(kksname, value, timestamp, quality, status);
+        }
+
+        private void torIsData_ChangeAttributeValue(string item, string name, int type, object value)
+        {
         }
 
         private void torIsData_ChangeStatus(int newStatus)

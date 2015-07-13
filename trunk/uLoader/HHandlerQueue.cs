@@ -533,12 +533,11 @@ namespace uLoader
         public override void Stop()
         {
             for (int i = 0; i < m_listGroupSources.Length; i ++)
-            {
                 foreach (GroupSources grpSrc in m_listGroupSources[i])
-                {
-                    grpSrc.Stop ();
-                }
-            }
+                    if (grpSrc.State == GroupSources.STATE.STARTED)
+                        grpSrc.Stop ();
+                    else
+                        ;
             
             base.Stop();
         }
