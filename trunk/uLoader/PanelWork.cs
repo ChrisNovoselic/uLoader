@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Collections.Generic;
 
 using System.Windows.Forms;
 using System.Data;
@@ -109,6 +110,16 @@ namespace uLoader
         private void enabledWorkItem(INDEX_SRC indxWork, PanelLoader.KEY_CONTROLS key, GroupSources.STATE[] states)
         {
             m_arLoader[(int)indxWork].EnabledWorkItem(key, states);
+        }
+        /// <summary>
+        /// "Включение"/"отключение" элементов интерфейса в зависимости от состояния (и-или параметров группы сигналов)
+        /// </summary>
+        /// <param name="indxWork">Индекс панели</param>
+        /// <param name="key">Ключ элемента интерфейса</param>
+        /// <param name="args">Массив аргументов для каждой из групп сигналов (STATE, bEnableTools)</param>
+        private void enabledWorkItem(INDEX_SRC indxWork, PanelLoader.KEY_CONTROLS key, object [] args)
+        {
+            m_arLoader[(int)indxWork].EnabledWorkItem(key, args);
         }        
         /// <summary>
         /// Активировать таймер
@@ -224,7 +235,7 @@ namespace uLoader
                     break;
                 case HHandlerQueue.StatesMachine.STATE_GROUP_SIGNALS: //Состояние группы сигналов  (источник, назначение)
                     for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc ++ )
-                        enabledWorkItem(indxSrc, PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS, (par as object[])[(int)indxSrc] as GroupSources.STATE[]);
+                        enabledWorkItem(indxSrc, PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS, (par as object[])[(int)indxSrc] as object []);
                     break;
                 case HHandlerQueue.StatesMachine.STATE_CHANGED_GROUP_SOURCES: //Состояние (изменено) группы источников (источник, назначение)
                     //Немедленно запросить состояния групп сигналов
@@ -528,12 +539,46 @@ namespace uLoader
                                                         }
                     };
                     break;
+                case KEY_EVENT.BTN_CLEAR_CLICK:
+                    switch (indxWork)
+                    {
+                        case INDEX_SRC.SOURCE:
+                            ;
+                            break;
+                        case INDEX_SRC.DEST:
+                            switch ((PanelLoader.KEY_CONTROLS)pars[(int)PanelLoader.INDEX_PREPARE_PARS.KEY_OBJ])
+                            {
+                                case PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES:
+                                    ;
+                                    break;
+                                case PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS:
+                                    state = HHandlerQueue.StatesMachine.CLEARVALUES_DEST_GROUP_SIGNALS;
+                                    arObjToDataHost = new object[] { new object []
+                                                        {
+                                                            (int)state
+                                                            , indxWork
+                                                            , pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL]
+                                                            , pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
+                                                        }
+                                    };
+                                    break;
+                                default:
+                                    break;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
                 default:
                     break;
             }
 
             //Ретрансляция для постановки в очередь
-            DataAskedHost(arObjToDataHost);
+            if (arObjToDataHost.Length > 0)
+                DataAskedHost(arObjToDataHost);
+            else
+                ;
         }
     }
 

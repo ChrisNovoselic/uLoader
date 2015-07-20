@@ -39,10 +39,11 @@ namespace uLoader
             , STATE_GROUP_SIGNALS //Состояние группы сигналов (источник, назначение)
             , STATE_CHANGED_GROUP_SOURCES //Изменение состояния группы источников (источник, назначение) - инициатива пользователя
             , STATE_CHANGED_GROUP_SIGNALS //Изменение состояния группы сигналов (источник, назначение) - инициатива пользователя
+            , CLEARVALUES_DEST_GROUP_SIGNALS //Очистить значения для группы сигналов - инициатива пользователя
             , DATA_SRC_GROUP_SIGNALS //Данные группы сигналов (источник)
             , DATA_DEST_GROUP_SIGNALS //Данные группы сигналов (назначение)
             , SET_IDCUR_SOURCE_OF_GROUP //Установить идентификатор текущего источника
-            , SET_TEXT_ADDING //Установить текст "дополнительных" параметров
+            , SET_TEXT_ADDING //Установить текст "дополнительных" параметров            
             ,
         }
         /// <summary>
@@ -200,6 +201,7 @@ namespace uLoader
                 case StatesMachine.STATE_GROUP_SIGNALS:
                 case StatesMachine.STATE_CHANGED_GROUP_SOURCES:
                 case StatesMachine.STATE_CHANGED_GROUP_SIGNALS:
+                case StatesMachine.CLEARVALUES_DEST_GROUP_SIGNALS:
                 case StatesMachine.DATA_SRC_GROUP_SIGNALS:
                 case StatesMachine.DATA_DEST_GROUP_SIGNALS:
                 case StatesMachine.SET_IDCUR_SOURCE_OF_GROUP:
@@ -244,13 +246,14 @@ namespace uLoader
                 case StatesMachine.STATE_GROUP_SOURCES:
                 case StatesMachine.STATE_GROUP_SIGNALS:
                 case StatesMachine.STATE_CHANGED_GROUP_SOURCES:
-                case StatesMachine.STATE_CHANGED_GROUP_SIGNALS:
+                case StatesMachine.STATE_CHANGED_GROUP_SIGNALS:                
                 case StatesMachine.DATA_SRC_GROUP_SIGNALS:
                 case StatesMachine.DATA_DEST_GROUP_SIGNALS:
                     itemQueue.m_objRecieved.OnEvtDataRecievedHost(new object[] { state, obj });
                     break;
                 case StatesMachine.SET_IDCUR_SOURCE_OF_GROUP:
                 case StatesMachine.SET_TEXT_ADDING:
+                case StatesMachine.CLEARVALUES_DEST_GROUP_SIGNALS:
                     //Ответа не требуется
                     break;
                 default:
@@ -453,9 +456,9 @@ namespace uLoader
                         outobj = new object[(int)INDEX_SRC.COUNT_INDEX_SRC];
                         for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
                             if (!((int)itemQueue.Pars[(int)indxSrc] < 0))
-                                (outobj as object[])[(int)indxSrc] = m_listGroupSources[(int)indxSrc][(int)itemQueue.Pars[(int)indxSrc]].GetStateGroupSignals();
+                                (outobj as object[])[(int)indxSrc] = m_listGroupSources[(int)indxSrc][(int)itemQueue.Pars[(int)indxSrc]].GetArgGroupSignals ();
                             else
-                                (outobj as object[])[(int)indxSrc] = new GroupSources.STATE[] { };
+                                (outobj as object[])[(int)indxSrc] = new object [] { };
 
                         iRes = 0;
                         break;
@@ -470,6 +473,16 @@ namespace uLoader
                         itemQueue = Peek;
 
                         iRes = m_listGroupSources[(int)((INDEX_SRC)itemQueue.Pars[0])][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].StateChange((string)itemQueue.Pars[2]);
+                        break;
+                    case StatesMachine.CLEARVALUES_DEST_GROUP_SIGNALS:
+                        //???
+                        error = false;
+                        itemQueue = Peek;
+
+                        int idGrpSrc = FormMain.FileINI.GetIDIndex((string)(itemQueue.Pars[1] as object [])[0])
+                         , idGrpSgnls = FormMain.FileINI.GetIDIndex((string)(itemQueue.Pars[1] as object[])[1]);
+
+                        iRes = 0;
                         break;
                     case StatesMachine.DATA_SRC_GROUP_SIGNALS:
                         error = false;
@@ -522,12 +535,12 @@ namespace uLoader
 
         protected override void StateErrors(int state, int req, int res)
         {
-            throw new NotImplementedException();
+            Logging.Logg().Error(@"HHandlerQueue::StateErrors () - не обработана ошибка [" + ((StatesMachine)state).ToString () + @", REQ=" + req + @", RES=" + res + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
 
         protected override void StateWarnings(int state, int req, int res)
         {
-            throw new NotImplementedException();
+            Logging.Logg().Warning(@"HHandlerQueue::StateWarnings () - не обработано предупреждение [" + ((StatesMachine)state).ToString() + @", REQ=" + req + @", RES=" + res + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
 
         public override void Stop()

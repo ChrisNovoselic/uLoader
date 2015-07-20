@@ -14,7 +14,7 @@ namespace uLoader
     /// <summary>
     /// Перечисление - ключи событий для передачи событий "родительской" панели
     /// </summary>
-    public enum KEY_EVENT { SELECTION_CHANGED, CELL_CLICK }
+    public enum KEY_EVENT { SELECTION_CHANGED, CELL_CLICK, BTN_CLEAR_CLICK }
 
     public partial class PanelWork
     {
@@ -33,7 +33,7 @@ namespace uLoader
                                         , DGV_GROUP_SIGNALS
                                         , GROUP_BOX_GROUP_SIGNALS
                                         , RBUTTON_CUR_DATETIME, TBX_CUR_PERIOD, TBX_CUR_INTERVAL
-                                        , RBUTTON_COSTUMIZE, CALENDAR_COSTUMIZE, TBX_COSTUMIZE_START_TIME, TBX_COSTUMIZE_PERIOD, TBX_COSTUMIZE_INTERVAL
+                                        , RBUTTON_COSTUMIZE, CALENDAR_COSTUMIZE, TBX_COSTUMIZE_START_TIME, TBX_COSTUMIZE_PERIOD, TBX_COSTUMIZE_INTERVAL, BTN_CLEAR
                                         //, TBX_GROUPSIGNALS_ADDING
                                         , DGV_SIGNALS_OF_GROUP
                                         , COUNT_KEY_CONTROLS
@@ -256,7 +256,7 @@ namespace uLoader
             /// </summary>
             /// <param name="ctrl">Элемент управления</param>
             /// <returns></returns>
-            KEY_CONTROLS getKeyWorkingItem (Control ctrl)
+            protected KEY_CONTROLS getKeyWorkingItem (Control ctrl)
             {
                 KEY_CONTROLS keyRes = KEY_CONTROLS.UNKNOWN;
                 
@@ -318,7 +318,7 @@ namespace uLoader
                         // , значит обязательно есть и группа источников (которой принадлежит "выбранная" группа сигналов)
                         arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] =
                             //(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView).SelectedRows[0].Cells[0].Value
-                            m_dictGroupIds[KEY_CONTROLS.DGV_GROUP_SOURCES][(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView).SelectedRows[0].Index]
+                            getGroupId(KEY_CONTROLS.DGV_GROUP_SOURCES)
                             ;
                         arObjRes[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] =
                             //(obj as DataGridView).Rows[indxRow].Cells[0].Value
@@ -384,6 +384,8 @@ namespace uLoader
                             //if (this is PanelLoaderDest)
                             //    clearValues(KEY_CONTROLS.TBX_GROUPSIGNALS_ADDING);
                             //else ;
+                            GetWorkingItem(KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS).Enabled =
+                                false;
                             break;
                         default:
                             break;
@@ -408,7 +410,7 @@ namespace uLoader
                 object[] arPreparePars = new object[(int)INDEX_PREPARE_PARS.COUNT_INDEX_PREPARE_PARS];
 
                 arPreparePars[(int)INDEX_PREPARE_PARS.KEY_OBJ] = KEY_CONTROLS.CBX_SOURCE_OF_GROUP;
-                arPreparePars[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] = m_dictGroupIds[KEY_CONTROLS.DGV_GROUP_SOURCES][(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView).SelectedRows[0].Index];
+                arPreparePars[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] = getGroupId(KEY_CONTROLS.DGV_GROUP_SOURCES);
                 arPreparePars[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] = m_dictGroupIds[KEY_CONTROLS.CBX_SOURCE_OF_GROUP][(obj as ComboBox).SelectedIndex];
 
                 arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = this;
@@ -421,6 +423,11 @@ namespace uLoader
                     ;
             }
 
+            protected string getGroupId (KEY_CONTROLS key)
+            {
+                return m_dictGroupIds[key][(GetWorkingItem(key) as DataGridView).SelectedRows[0].Index];
+            }
+
             private void panelLoader_GroupSourcesAddingLeave(object obj, EventArgs ev)
             {
                 //Подготовить параметры для передачи "родительской" панели
@@ -428,7 +435,7 @@ namespace uLoader
 
                 string strDepencededData = string.Empty;
                 arPreparePars[(int)INDEX_PREPARE_PARS.KEY_OBJ] = getKeyWorkingItem (obj as Control);
-                arPreparePars[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] = m_dictGroupIds[KEY_CONTROLS.DGV_GROUP_SOURCES][(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView).SelectedRows[0].Index];
+                arPreparePars[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] = getGroupId(KEY_CONTROLS.DGV_GROUP_SOURCES);
                 foreach (string line in (obj as TextBox).Lines)
                     strDepencededData += line + FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.PAIR_VAL];
                 if (strDepencededData.Length > (FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.PAIR_VAL].ToString().Length + 1))
@@ -449,7 +456,6 @@ namespace uLoader
                 else
                     ;
             }
-
             /// <summary>
             /// Словарь идентификаторв, отображаемых элементов
             /// </summary>
@@ -626,6 +632,38 @@ namespace uLoader
                     // не найдена группа сигналов
                     Logging.Logg().Warning(@"PanelLoader::FillWorkItem () - не найдена группа сигналов...", Logging.INDEX_MESSAGE.NOT_SET);
             }
+
+            private bool updateBtnCell (Control ctrl, int indx, GroupSources.STATE state)
+            {
+                bool bRes = false;
+                //Получить объект "кнопка"
+                DataGridViewDisableButtonCell btnCell = ((ctrl as DataGridView).Rows[indx].Cells[1] as DataGridViewDisableButtonCell); //Ячейка (кнопка) - состояние объекта
+                string btnCellText = string.Empty; //Текст для кнопки
+                //Изменить доступность кнопки
+                btnCell.Enabled = !(state == GroupSources.STATE.UNAVAILABLE);
+                //Определить текстт на кнопке в соответствии с состоянием
+                if (btnCell.Enabled == true)
+                {//При "доступной" (для нажатия) кнопке
+                    switch (state)
+                    {
+                        case GroupSources.STATE.STARTED: //При "стартованной" кнопке (хотя бы одна из групп "старт")
+                            btnCellText = @"<-"; // для возможности "остановить" такие группы
+                            break;
+                        case GroupSources.STATE.STOPPED: //Прии 
+                            btnCellText = @"->";
+                            bRes = true;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                else
+                    btnCellText = @"?";
+                //Установить текст на кнопке в соответствии состоянием
+                btnCell.Value = btnCellText;
+
+                return bRes;
+            }
             /// <summary>
             /// Включить элементы управления в соответствии с состоянием объектов
             ///  , которые они обозначают
@@ -637,43 +675,18 @@ namespace uLoader
             {
                 int iRes = 0; //Результат выполнения функции
 
+                bool bEnabled = false;
                 Control ctrl = GetWorkingItem(key); //Элемент управления, содержащий записи об объектах
-                DataGridViewDisableButtonCell btnCell = null; //Ячейка (кнопка) - состояние объекта
-                string btnCellText = string.Empty; //Текст для кнопки
+
                 //Индекс выбранной на текущий момент строки (объекта)
                 int indxSel = (ctrl as DataGridView).SelectedRows.Count > 0 ? (ctrl as DataGridView).SelectedRows[0].Index : -1;
-                bool bEnabled = false;
 
                 if ((!(indxSel < 0))
                 //    //&& ((ctrl as DataGridView).Rows.Count == states.Length)
                     )
                     for (int i = 0; i < states.Length; i++)
                     {
-                        bEnabled = false;
-                        //Получить объект "кнопка"
-                        btnCell = ((ctrl as DataGridView).Rows[i].Cells[1] as DataGridViewDisableButtonCell);
-                        //Изменить доступность кнопки
-                        btnCell.Enabled = !(states[i] == GroupSources.STATE.UNAVAILABLE);
-                        //Определить текстт на кнопке в соответствии с состоянием
-                        if (btnCell.Enabled == true)
-                        {//При "доступной" (для нажатия) кнопке
-                            switch (states[i])
-                            {
-                                case GroupSources.STATE.STARTED: //При "стартованной" кнопке (хотя бы одна из групп "старт")
-                                    btnCellText = @"<-"; // для возможности "остановить" такие группы
-                                    break;
-                                case GroupSources.STATE.STOPPED: //Прии 
-                                    btnCellText = @"->";
-                                    bEnabled = true;
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
-                        else
-                            btnCellText = @"?";
-                        //Установить текст на кнопке в соответствии состоянием
-                        btnCell.Value = btnCellText;
+                        bEnabled = updateBtnCell(ctrl, i, states[i]);
                         //Изменить состояние "зависимых" элементов интерфейса
                         if (i == indxSel)
                         {//Только для выбранной строки
@@ -704,6 +717,55 @@ namespace uLoader
                 return iRes;
             }
             /// <summary>
+            /// Включить элементы управления в соответствии с состоянием объектов
+            /// </summary>
+            /// <param name="key">Ключ элемента управления</param>
+            /// <param name="args">Массив аргументов для каждой из групп сигналов (STATE, bEnableTools)</param>
+            /// <returns></returns>
+            public int EnabledWorkItem(KEY_CONTROLS key, object []args)
+            {
+                int iRes = 0; //Результат выполнения функции
+
+                bool bEnabled = false;
+                Control ctrl = GetWorkingItem(key); //Элемент управления, содержащий записи об объектах
+
+                //Индекс выбранной на текущий момент строки (объекта)
+                int indxSel = (ctrl as DataGridView).SelectedRows.Count > 0 ? (ctrl as DataGridView).SelectedRows[0].Index : -1;
+
+                if ((!(indxSel < 0))
+                    //    //&& ((ctrl as DataGridView).Rows.Count == states.Length)
+                    )
+                    for (int i = 0; i < args.Length; i++)
+                    {
+                        bEnabled = updateBtnCell(ctrl, i, (GroupSources.STATE)(args[i] as object[])[0])
+                            && (bool)(args[i] as object[])[1];
+                        //Изменить состояние "зависимых" элементов интерфейса
+                        if (i == indxSel)
+                        {//Только для выбранной строки
+                            switch (key)
+                            {
+                                case KEY_CONTROLS.DGV_GROUP_SOURCES:
+                                    ;
+                                    break;
+                                case KEY_CONTROLS.DGV_GROUP_SIGNALS:
+                                    GetWorkingItem(KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS).Enabled =
+                                        bEnabled;
+                                    break;
+                                default:
+                                    throw new Exception(@"PanelLoader::EnabledWorkItem () - ...");
+                            }
+                        }
+                        else
+                            ;
+                    }
+                else
+                    //Нельзя назначить состояние несуществцющей строке
+                    // , и наоборот нельзя оставить без состояния существующую строку
+                    ;
+
+                return iRes;
+            }            
+            /// <summary>
             /// Получить объект - дочерний элемент интерфейса
             /// </summary>
             /// <param name="indxConfig">Индекс панели</param>
@@ -727,6 +789,7 @@ namespace uLoader
 
                 return ctrlRes;
             }
+
             public string GetWorkingItemId(KEY_CONTROLS key)
             {
                 Control ctrl = GetWorkingItem(key);
@@ -1139,6 +1202,7 @@ namespace uLoader
                 //Кнопка - выполнить
                 ctrl = new Button();
                 ctrl.Name = @"BTN_CLEAR";
+                (ctrl as Button).Click += new EventHandler(panelLoaderDest_btnClearCLick);
                 (ctrl as Button).Text = @"Выполнить";
                 ctrl.Dock = DockStyle.Fill;
                 panelGroupBox.Controls.Add(ctrl, 0, 3);
@@ -1195,6 +1259,27 @@ namespace uLoader
                     ;
 
                 return iRes;
+            }
+
+            private void panelLoaderDest_btnClearCLick (object obj, EventArgs ev)
+            {
+                //Подготовить параметры для передачи "родительской" панели
+                object[] arPreparePars = new object [(int)INDEX_PREPARE_PARS.COUNT_INDEX_PREPARE_PARS];
+
+                //Найти целочисленный идентфикатор элемента управления
+                arPreparePars[(int)INDEX_PREPARE_PARS.KEY_OBJ] = KEY_CONTROLS.DGV_GROUP_SIGNALS; //getKeyWorkingItem(obj as Control);
+                arPreparePars[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] = new object[] { getGroupId(KEY_CONTROLS.DGV_GROUP_SOURCES), getGroupId(KEY_CONTROLS.DGV_GROUP_SIGNALS) };
+                arPreparePars[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] = new object [] {
+                    (GetWorkingItem(KEY_CONTROLS.CALENDAR_COSTUMIZE) as DateTimePicker).Value.Date
+                    //+ KEY_CONTROLS.TBX_COSTUMIZE_START_TIME
+                    //+ KEY_CONTROLS.TBX_COSTUMIZE_PERIOD
+                };                
+
+                arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = this;
+                arPreparePars[(int)INDEX_PREPARE_PARS.KEY_EVT] = KEY_EVENT.BTN_CLEAR_CLICK;
+
+                //Отправить сообщение "родительской" панели (для дальнейшей ретрансляции)
+                DataAskedHost(arPreparePars);
             }
         }
     }    

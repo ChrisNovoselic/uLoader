@@ -326,7 +326,7 @@ namespace uLoader
         /// <summary>
         /// Перечисление состояний группы источников
         /// </summary>
-        public enum STATE { UNKNOWN = -1, UNAVAILABLE, STOPPED, STARTED }
+        public enum STATE { UNKNOWN = -2, REVERSE, UNAVAILABLE, STOPPED, STARTED }
         /// <summary>
         /// Перечисление состояний библиотеки
         /// </summary>
@@ -533,13 +533,17 @@ namespace uLoader
         /// <summary>
         /// Возвратить массив состояний групп сигналов для группы источников
         /// </summary>
-        public STATE[] GetStateGroupSignals ()
+        public object[] GetArgGroupSignals()
         {
-            STATE[] arRes = new STATE[m_listGroupSignals.Count];
+            object[] arRes = new object[m_listGroupSignals.Count];
 
             int i = 0;
             foreach (GroupSignals grpSgnls in m_listGroupSignals)
-                arRes[i ++] = grpSgnls.State;
+            {
+                arRes[i] = new object [] { grpSgnls.State, m_listGroupSignalsPars[i].m_bToolsEnabled };
+
+                i ++;
+            }
 
             return arRes;
         }
@@ -1006,7 +1010,7 @@ namespace uLoader
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public int StateChange (string strId)
+        public int StateChange (string strId, STATE prevState = STATE.REVERSE)
         {
             int iRes = 0
                 , iId = FormMain.FileINI.GetIDIndex (strId);
@@ -1020,17 +1024,13 @@ namespace uLoader
             {
                 if ((grpSgnls.State == STATE.STOPPED) 
                     && (State == STATE.STOPPED))
-                {
                     sendInitSource ();
-                }
                 else
-                {
                     if ((grpSgnls.State == STATE.STARTED)
                         &&(!(State == STATE.STARTED)))
                         throw new Exception(@"GroupSources::StateChange (ID=" + strId + @") - несовместимые состояния групп источников и сигналов...");
                     else
                         ;
-                }
 
                 ////Вариант №1 (пред-установка)
                 //iRes = grpSgnls.StateChange();
