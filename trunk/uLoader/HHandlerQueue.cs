@@ -533,7 +533,7 @@ namespace uLoader
             return iRes;
         }
 
-        protected override void StateErrors(int state, int req, int res)
+        protected override HHandler.INDEX_WAITHANDLE_REASON StateErrors(int state, int req, int res)
         {
             Logging.Logg().Error(@"HHandlerQueue::StateErrors () - не обработана ошибка [" + ((StatesMachine)state).ToString () + @", REQ=" + req + @", RES=" + res + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
         }

@@ -295,12 +295,16 @@ namespace uLoaderCommon
             return iRes;
         }
 
-        protected override void StateErrors(int state, int req, int res)
+        protected override HHandler.INDEX_WAITHANDLE_REASON StateErrors(int state, int req, int res)
         {
+            HHandler.INDEX_WAITHANDLE_REASON resReason = INDEX_WAITHANDLE_REASON.SUCCESS;
+            
             Logging.Logg().Error(@"HHandlerDbULoaderDest::StateErrors (state=" + ((StatesMachine)state).ToString() + @", req=" + req + @", res=" + res + @") - "
                 + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"]"
                 + @"..."
                 , Logging.INDEX_MESSAGE.NOT_SET);
+
+            return resReason;
         }
 
         protected override void StateWarnings(int state, int req, int res)

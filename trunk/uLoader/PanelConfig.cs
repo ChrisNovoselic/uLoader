@@ -428,48 +428,57 @@ namespace uLoader
 
             public void FillConfigItem(INDEX_PANEL indxPanel, string[,] rows)
             {
+                string strErr = @"FillConfigItem (IndexConfig=" + IndexConfig + @") - indxPanel=" + indxPanel.ToString() + @" - ...";
+
                 if (m_dictIds == null)
                     m_dictIds = new Dictionary<INDEX_PANEL, string[]>();
                 else
                     ;
 
-                int cnt = rows.GetLength (1)
+                int cnt = -1
                     , j = -1;
 
-                if (m_dictIds.Keys.Contains(indxPanel) == false)
-                    m_dictIds.Add(indxPanel, new string[cnt]);
-                else
-                    if (!(m_dictIds[indxPanel].Length == cnt))
-                        m_dictIds[indxPanel] = new string[cnt];
-                    else
-                        ;
-
-                DataGridViewConfigItem cfgItem = getConfigItem(indxPanel) as DataGridViewConfigItem;
                 if (!(rows == null))
                 {
-                    j = 0;
-                    for (j = 0; j < cnt; j++)
+                    cnt = rows.GetLength(1);
+
+                    if (m_dictIds.Keys.Contains(indxPanel) == false)
+                        m_dictIds.Add(indxPanel, new string[cnt]);
+                    else
+                        if (!(m_dictIds[indxPanel].Length == cnt))
+                            m_dictIds[indxPanel] = new string[cnt];
+                        else
+                            ;
+
+                    DataGridViewConfigItem cfgItem = getConfigItem(indxPanel) as DataGridViewConfigItem;
+                    if (!(rows == null))
                     {
-                        m_dictIds[indxPanel][j] = rows[0, j];
-                        try
+                        j = 0;
+                        for (j = 0; j < cnt; j++)
                         {
-                            //Вариант №1
-                            (cfgItem as DataGridView).Rows.Add(new object[] { rows[1, j], @"-" });
-                            ////Вариант №2
-                            //(cfgItem as DataGridView).Rows.Add(1);
-                            //(cfgItem as DataGridView).Rows[j].Cells[0].Value = rows[1, j];
-                            //(cfgItem as DataGridView).Rows[j].Cells[1].Value = @"-";
-                            ////Вариант №3
-                            //(cfgItem as DataGridViewConfigItem).AddRow(new object[] { rows[1, j], @"-" });
-                        }
-                        catch (ArgumentException e)
-                        {
-                            Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FillConfigItem (IndexConfig=" + IndexConfig + @") - indxPanel=" + indxPanel.ToString() + @" - ...");
+                            m_dictIds[indxPanel][j] = rows[0, j];
+                            try
+                            {
+                                //Вариант №1
+                                (cfgItem as DataGridView).Rows.Add(new object[] { rows[1, j], @"-" });
+                                ////Вариант №2
+                                //(cfgItem as DataGridView).Rows.Add(1);
+                                //(cfgItem as DataGridView).Rows[j].Cells[0].Value = rows[1, j];
+                                //(cfgItem as DataGridView).Rows[j].Cells[1].Value = @"-";
+                                ////Вариант №3
+                                //(cfgItem as DataGridViewConfigItem).AddRow(new object[] { rows[1, j], @"-" });
+                            }
+                            catch (ArgumentException e)
+                            {
+                                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, strErr);
+                            }
                         }
                     }
+                    else
+                        ;
                 }
                 else
-                    ;
+                    Logging.Logg().Error(strErr, Logging.INDEX_MESSAGE.NOT_SET);
             }
 
             //public void FillConfigItem(INDEX_PANEL indxPanel, string[] rows)

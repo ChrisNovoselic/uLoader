@@ -374,8 +374,10 @@ namespace uLoaderCommon
             return iRes;
         }
 
-        protected override void StateErrors(int state, int request, int result)
+        protected override HHandler.INDEX_WAITHANDLE_REASON StateErrors(int state, int req, int res)
         {
+            HHandler.INDEX_WAITHANDLE_REASON resReason = INDEX_WAITHANDLE_REASON.SUCCESS;
+
             string unknownErr = @"Неизвестная ошибка"
                 , msgErr = unknownErr;
 
@@ -399,6 +401,8 @@ namespace uLoaderCommon
             Console.WriteLine(msgErr);
 
             (_iPlugin as PlugInBase).DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.ERROR, m_IdGroupSignalsCurrent, state, msgErr });
+
+            return resReason;
         }
 
         protected override void StateWarnings(int state, int request, int result)
