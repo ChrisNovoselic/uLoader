@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 
 using HClassLibrary;
+using uLoaderCommon;
 
 using SrcKTSTUsql;
 
@@ -11,23 +12,18 @@ namespace TestFunc
 {
     class srcktstusql_test : TestFunc.Program.timer_test
     {
-        protected override object Data
+        public srcktstusql_test()
+            : base()
         {
-            get
-            {
-                return base.Data as SrcKTSTUsql.SrcKTSTUsql;
-            }
-
-            set
-            {
-                base.Data = value;
-            }
         }
 
-        public srcktstusql_test() : base ()
+        protected override int initialize()
         {
+            int iRes = 0;
+
             Data = new SrcKTSTUsql.SrcKTSTUsql();
-            Data.Initialize (new object [] {
+
+            Data.Initialize(new object[] {
                                 new ConnectionSettings (
                                     @"OraSOTIASSO-ORD"
                                     , @"10.220.2.5"
@@ -38,7 +34,7 @@ namespace TestFunc
                             }
                     );
             Data.Initialize(0
-                , new object []
+                , new object[]
                 {
                     new object [] { 20049, @"TAG_000049" }
                     , new object [] { 20051, @"TAG_000051" }
@@ -51,6 +47,8 @@ namespace TestFunc
                     , new object [] { 20064, @"TAG_000064" }
                 }
             );
+
+            return iRes;
         }
     }
 }

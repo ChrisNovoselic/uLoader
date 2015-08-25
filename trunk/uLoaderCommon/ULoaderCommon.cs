@@ -8,6 +8,24 @@ using HClassLibrary;
 
 namespace uLoaderCommon
 {
+    public interface ILoader
+    {
+        void Start();
+        void Stop();
+
+        bool Activate(bool active);
+        bool Actived { get; }
+
+        int Initialize(object[] pars);
+        int Initialize(int id, object[] pars);
+    }
+    
+    public interface ILoaderSrc : ILoader
+    {
+        //void ChangeState ();
+        void Start(int id);
+    }
+
     /// <summary>
     /// Перечисление (дата/время) константы по умолчанию
     /// </summary>
@@ -105,7 +123,7 @@ namespace uLoaderCommon
             /// Интервал (милисекунды) между опросами значений
             /// </summary>
             public long MSecInterval { get { return m_msecInterval; } set { m_msecInterval = value; } }
-            
+
             /// <summary>
             /// Класс для объекта СИГНАЛ
             /// </summary>
@@ -323,16 +341,16 @@ namespace uLoaderCommon
         {
             get
             {
-                if (!(m_IdGroupSignalsCurrent < 0))
-                    return m_dictGroupSignals[m_IdGroupSignalsCurrent].State;
+                if (!(IdGroupSignalsCurrent < 0))
+                    return m_dictGroupSignals[IdGroupSignalsCurrent].State;
                 else
                     throw new Exception(@"ULoaderCommon::State.get ...");
             }
             
             set
             {
-                if (!(m_IdGroupSignalsCurrent < 0))
-                    m_dictGroupSignals[m_IdGroupSignalsCurrent].State = value;
+                if (!(IdGroupSignalsCurrent < 0))
+                    m_dictGroupSignals[IdGroupSignalsCurrent].State = value;
                 else
                     throw new Exception(@"ULoaderCommon::State.set ...");
             }
@@ -344,13 +362,13 @@ namespace uLoaderCommon
         {
             get
             {
-                if (!(m_IdGroupSignalsCurrent < 0))
-                    return m_dictGroupSignals[m_IdGroupSignalsCurrent].Mode;
+                if (!(IdGroupSignalsCurrent < 0))
+                    return m_dictGroupSignals[IdGroupSignalsCurrent].Mode;
                 else
                     throw new Exception(@"ULoaderCommon::Mode.get ...");
             }
             
-            /*set { m_dictGroupSignals[m_IdGroupSignalsCurrent].Mode = value; }*/
+            /*set { m_dictGroupSignals[IdGroupSignalsCurrent].Mode = value; }*/
         }
         /// <summary>
         /// Период времени опроса текущей (обрабатываемой) группы сигналов
@@ -359,8 +377,8 @@ namespace uLoaderCommon
         {
             get
             {
-                if (!(m_IdGroupSignalsCurrent < 0))
-                    return m_dictGroupSignals[m_IdGroupSignalsCurrent].TimeSpanPeriod;
+                if (!(IdGroupSignalsCurrent < 0))
+                    return m_dictGroupSignals[IdGroupSignalsCurrent].TimeSpanPeriod;
                 else
                     throw new Exception(@"ULoaderCommon::TimeSpanPeriod.get ...");
             }
@@ -372,8 +390,8 @@ namespace uLoaderCommon
         {
             get
             {
-                if (!(m_IdGroupSignalsCurrent < 0))
-                    return m_dictGroupSignals[m_IdGroupSignalsCurrent].MSecInterval;
+                if (!(IdGroupSignalsCurrent < 0))
+                    return m_dictGroupSignals[IdGroupSignalsCurrent].MSecInterval;
                 else
                     throw new Exception(@"ULoaderCommon::MSecInterval.get ...");
             }
@@ -385,32 +403,32 @@ namespace uLoaderCommon
         {
             get
             {
-                if (!(m_IdGroupSignalsCurrent < 0))
-                    return m_dictGroupSignals[m_IdGroupSignalsCurrent].TableRecieved;
+                if (!(IdGroupSignalsCurrent < 0))
+                    return m_dictGroupSignals[IdGroupSignalsCurrent].TableRecieved;
                 else
                     throw new Exception(@"ULoaderCommon::TableResults.get ...");
             }
 
             set
             {
-                if (!(m_IdGroupSignalsCurrent < 0))
+                if (!(IdGroupSignalsCurrent < 0))
                 {
                     int cntPrev = -1;
-                    if (! (m_dictGroupSignals[m_IdGroupSignalsCurrent].TableRecieved == null))
-                        cntPrev = m_dictGroupSignals[m_IdGroupSignalsCurrent].TableRecieved.Rows.Count;
+                    if (! (m_dictGroupSignals[IdGroupSignalsCurrent].TableRecieved == null))
+                        cntPrev = m_dictGroupSignals[IdGroupSignalsCurrent].TableRecieved.Rows.Count;
                     else
                         ;
 
                     string msg = @"HHandlerDbULoader::TableRecieved.set - "
-                        + @"[ID=" + (_iPlugin as PlugInBase)._Id
-                        + @", key=" + m_IdGroupSignalsCurrent + @"] "
+                        + @"[" + PlugInId
+                        + @", key=" + IdGroupSignalsCurrent + @"] "
                         + @"строк_было=" + cntPrev
                         + @", строк_стало=" + value.Rows.Count
                         + @" ...";
                     Console.WriteLine (msg);
                     //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
 
-                    m_dictGroupSignals[m_IdGroupSignalsCurrent].TableRecieved = value;
+                    m_dictGroupSignals[IdGroupSignalsCurrent].TableRecieved = value;
                 }
                 else
                     throw new Exception(@"ULoaderCommon::TableResults.set ...");
@@ -423,13 +441,14 @@ namespace uLoaderCommon
         /// <summary>
         /// Параметры соединения с источником данных
         /// </summary>
-        protected ConnectionSettings m_connSett;        
+        protected ConnectionSettings m_connSett;
+        private int m_iIdGroupSignalsCurrent;
         /// <summary>
         /// Целочисленный идентификатор группы сигналов
         ///  , ключ для словаря с группами сигналов
         ///  , уникальный в границах приложения, передается из-вне (файл конфигурации)
         /// </summary>
-        protected int m_IdGroupSignalsCurrent;
+        protected virtual int IdGroupSignalsCurrent { get { return m_iIdGroupSignalsCurrent; } set { m_iIdGroupSignalsCurrent = value; } }
         /// <summary>
         /// Объект для синхронизации изменения состояний групп сигналов
         /// </summary>
@@ -484,7 +503,7 @@ namespace uLoaderCommon
             //Время источника данных "по умолчанию"
             m_dtServer = DateTime.MinValue;            
 
-            m_IdGroupSignalsCurrent = -1;
+            m_iIdGroupSignalsCurrent = -1;
             m_dictGroupSignals = new Dictionary<int, GroupSignals>();
 
             m_lockStateGroupSignals = new object();
@@ -562,7 +581,7 @@ namespace uLoaderCommon
                 {//Считать переданные параметры - параметрами сигналов                
                     m_dictGroupSignals.Add(id, createGroupSignals (id, pars));
 
-                    Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - добавить группу сигналов [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - добавить группу сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
                 else
                     //Сигналы д.б. инициализированы
@@ -575,7 +594,7 @@ namespace uLoaderCommon
                             //Считать переданные параметры - параметрами сигналов
                             m_dictGroupSignals[id] = createGroupSignals(id, pars);
 
-                            Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - ПЕРЕсоздать группу сигналов [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+                            Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - ПЕРЕсоздать группу сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
                         }
                         else
                         {//Считать переданные параметры - параметрами группы сигналов
@@ -588,7 +607,7 @@ namespace uLoaderCommon
                                 m_dictGroupSignals[id].MSecInterval = (int)pars[3];
                             }
 
-                            Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - параметры группы сигналов [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+                            Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
                         }
                     }
             }
@@ -621,8 +640,8 @@ namespace uLoaderCommon
         protected int push(int key)
         {
             int iRes = -1;
-            
-            string msgDebug = @"HHandlerDbULoader::enqueue () - [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + key + @"] - queue.Count=";
+
+            string msgDebug = @"HHandlerDbULoader::enqueue () - [" + PlugInId + @", key=" + key + @"] - queue.Count=";
             int keyQueueCount = -1;
 
             lock (m_lockQueue)
@@ -706,11 +725,11 @@ namespace uLoaderCommon
                             ;
                     }
                     //Получить объект очереди событий
-                    m_IdGroupSignalsCurrent = m_queueIdGroupSignals.Peek();
+                    IdGroupSignalsCurrent = m_queueIdGroupSignals.Peek();
 
                     State = GroupSignals.STATE.ACTIVE;
 
-                    //Logging.Logg().Debug(@"HHandlerDbULoader::fThreadQueue () - начало обработки группы событий очереди (ID_PLUGIN=" + (_iPlugin as PlugInBase)._Id + @", ID_GSGNLS=" + m_IdGroupSignalsCurrent + @")", Logging.INDEX_MESSAGE.NOT_SET);
+                    //Logging.Logg().Debug(@"HHandlerDbULoader::fThreadQueue () - начало обработки группы событий очереди (" + PlugInId + @", ID_GSGNLS=" + IdGroupSignalsCurrent + @")", Logging.INDEX_MESSAGE.NOT_SET);
 
                     lock (m_lockState)
                     {
@@ -739,13 +758,16 @@ namespace uLoaderCommon
                         State = newState;
                     }
 
-                    ((PlugInBase)_iPlugin).DataAskedHost(getDataAskedHost ());
+                    if (! (_iPlugin == null))
+                        ((PlugInBase)_iPlugin).DataAskedHost(getDataAskedHost ());
+                    else
+                        ;
 
-                    //Logging.Logg().Debug(@"HHandlerDbULoader::fThreadQueue () - окончание обработки группы событий очереди (ID_PLUGIN=" + (_iPlugin as PlugInBase)._Id + @", ID_GSGNLS=" + m_IdGroupSignalsCurrent + @")", Logging.INDEX_MESSAGE.NOT_SET);
+                    //Logging.Logg().Debug(@"HHandlerDbULoader::fThreadQueue () - окончание обработки группы событий очереди (" + PlugInId + @", ID_GSGNLS=" + IdGroupSignalsCurrent + @")", Logging.INDEX_MESSAGE.NOT_SET);
 
                     try
                     {
-                        m_IdGroupSignalsCurrent = -1;
+                        IdGroupSignalsCurrent = -1;
                     }
                     catch (Exception e)
                     {
@@ -774,7 +796,7 @@ namespace uLoaderCommon
         /// <returns></returns>
         protected virtual object [] getDataAskedHost ()
         {
-            return new object[] { ID_DATA_ASKED_HOST.TABLE_RES, m_IdGroupSignalsCurrent, TableRecieved, null };
+            return new object[] { ID_DATA_ASKED_HOST.TABLE_RES, IdGroupSignalsCurrent, TableRecieved, null };
         }
         /// <summary>
         /// Старт потоков для обмена данными с источниками информации
@@ -829,7 +851,7 @@ namespace uLoaderCommon
 
             startThreadDepended ();
 
-            Logging.Logg().Debug(@"HHandlerDbULoader::Start (ID=" + (_iPlugin as PlugInBase)._Id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);            
+            Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + PlugInId + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);            
         }
         /// <summary>
         /// Признак выполнения объекта и всех зависимых потоков
@@ -854,7 +876,7 @@ namespace uLoaderCommon
                 }
 
                 if ((bRes == true) && (base.IsStarted == false))
-                    Logging.Logg ().Error(@"HHandlerDbULoader::IsStarted.get [ID=" + (_iPlugin as PlugInBase)._Id + @" - несовпадение признака 'Старт' с базовым классом...", Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg ().Error(@"HHandlerDbULoader::IsStarted.get [" + PlugInId + @" - несовпадение признака 'Старт' с базовым классом...", Logging.INDEX_MESSAGE.NOT_SET);
                 else
                     ;
 
@@ -867,7 +889,7 @@ namespace uLoaderCommon
         /// <param name="id">Идентификатор группы сигналов</param>
         public virtual void Start(int id)
         {
-            Logging.Logg().Debug(@"HHandlerDbULoader::Start (ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
             
             int iNeedStarted = -1; //Признак необходимости запуска "родительского" объекта
             GroupSignals.STATE initState = GroupSignals.STATE.UNKNOWN; //Новое состояние группы сигналов при старте
@@ -878,7 +900,7 @@ namespace uLoaderCommon
             }
             catch (Exception e)
             {
-                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader::Start (ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @") - ...");
+                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - ...");
             }
             //Новое состояние в зависимости от режима группы сигналов
             switch (m_dictGroupSignals[id].Mode)
@@ -903,9 +925,14 @@ namespace uLoaderCommon
                     iNeedStarted = -1;
             }
 
-            Logging.Logg().Debug(@"HHandlerDbULoader::Start (ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @") - iNeedStarted=" + iNeedStarted + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
-            //Подтвердить клиенту изменение состояние
-            (_iPlugin as PlugInBase).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.START, id });
+            Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - iNeedStarted=" + iNeedStarted + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+
+            if (! (_iPlugin == null))
+                //Подтвердить клиенту изменение состояние
+                (_iPlugin as PlugInBase).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.START, id });
+            else
+                ;
+
             //Проврить признак необходимости запуска "родительского" объекта
             if (iNeedStarted == 1)
             {
@@ -923,11 +950,15 @@ namespace uLoaderCommon
             }
         }
         /// <summary>
+        /// Идентификатор плюгина (строка, для лог-сообщений)
+        /// </summary>
+        protected string PlugInId { get { return @"PlugInID=" + ((_iPlugin == null) ? @"в составе проекта" : (_iPlugin as PlugInBase)._Id.ToString()); } }
+        /// <summary>
         /// Остановить объект и все зависимые потоки
         /// </summary>
         public override void Stop()
         {
-            Logging.Logg().Debug(@"HHandlerDbULoader::Stop (ID=" + (_iPlugin as PlugInBase)._Id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            Logging.Logg().Debug(@"HHandlerDbULoader::Stop (" + PlugInId + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
             stopThreadQueue();
             //Вызвать "базовый" метод
@@ -960,8 +991,12 @@ namespace uLoaderCommon
             //Проверить возможность останова объекта
             if (! (iNeedStopped < 0))
             {
-                //Подтвердить клиенту останов группы сигналов
-                (_iPlugin as PlugInBase).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.STOP, id });
+                if (! (_iPlugin == null))
+                    //Подтвердить клиенту останов группы сигналов
+                    (_iPlugin as PlugInBase).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.STOP, id });
+                else
+                    ;
+
                 //Установить необходимость останова "родительского" объекта
                 try
                 {
@@ -969,7 +1004,7 @@ namespace uLoaderCommon
                 }
                 catch (Exception e)
                 {
-                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader::Stop (ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @") - ...");
+                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader::Stop (" + PlugInId + @", key=" + id + @") - ...");
                 }
                 //Проверить необходимость останова "родительского" для группы сигнала объекта
                 if (iNeedStopped == 1)

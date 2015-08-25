@@ -214,7 +214,7 @@ namespace SrcMSTKKSNAMEtoris
         {
             if (!(TableRecieved == null))
             {
-                (m_dictGroupSignals[m_IdGroupSignalsCurrent] as GroupSignalsMSTKKSNAMEtoris).ClearValues ();
+                (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsMSTKKSNAMEtoris).ClearValues ();
             }
             else
                 ;
@@ -316,7 +316,7 @@ namespace SrcMSTKKSNAMEtoris
             int idGrpSgnls = (int) (pars as object [])[0];
             string kks_name = (string) (pars as object [])[1]
                 , strErr = string.Empty
-                , strIds = @" [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + idGrpSgnls + @"]: ";
+                , strIds = @" [" + PlugInId + @", key=" + idGrpSgnls + @"]: ";
 
             if (IsStarted == false)
                 return;
@@ -416,7 +416,7 @@ namespace SrcMSTKKSNAMEtoris
                     ;
 
                 idGrpSgnls = m_dictSignalsAdvised[kks_name];
-                strIds = @" [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + idGrpSgnls + @"]: ";
+                strIds = @" [" + PlugInId + @", key=" + idGrpSgnls + @"]: ";
 
                 err = m_torIsData.UnadviseItem(kks_name);
 
@@ -517,7 +517,7 @@ namespace SrcMSTKKSNAMEtoris
             int iRes = 0;
             error = false;
 
-            table = (m_dictGroupSignals[m_IdGroupSignalsCurrent] as GroupSignalsMSTKKSNAMEtoris).m_tableTorIs.Copy();
+            table = (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsMSTKKSNAMEtoris).m_tableTorIs.Copy();
 
             return iRes;
         }
@@ -546,7 +546,7 @@ namespace SrcMSTKKSNAMEtoris
             int iRes = 0;
             DataTable table = obj as DataTable;
             //string msg = @"HHandlerDbULoaderDest::StateResponse () ::" + ((StatesMachine)state).ToString() + @" - "
-            //    + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"] ";
+            //    + @"[" + PlugInId + @", key=" + m_IdGroupSignalsCurrent + @"] ";
 
             try
             {
@@ -554,7 +554,7 @@ namespace SrcMSTKKSNAMEtoris
                 {
                     case (int)StatesMachine.Values:
                         //msg =+ @"Ok ...";
-                        Logging.Logg().Debug(@"Получено строк [ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"]: " + (table as DataTable).Rows.Count, Logging.INDEX_MESSAGE.NOT_SET);
+                        Logging.Logg().Debug(@"Получено строк [" + PlugInId + @", key=" + IdGroupSignalsCurrent + @"]: " + (table as DataTable).Rows.Count, Logging.INDEX_MESSAGE.NOT_SET);
                         if (TableRecieved == null)
                         {
                             TableRecieved = new DataTable();

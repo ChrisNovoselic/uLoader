@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 
 using HClassLibrary;
+using uLoaderCommon;
 
 namespace TestFunc
 {
@@ -18,14 +19,21 @@ namespace TestFunc
             string msg = @"Старт приложения [" + DateTime.Now.ToString(@"dd.MM.yyyy HH:mm:ss.fff" + @"]");
             Console.WriteLine(msg);            
 
+            object objTest = null;
             Type typeTest =
-                ////Вариант №1
-                //typeof(biysktmora_test)
-                //Вариант №2
-                typeof(ClassDataTableDistinct)
+                //Вариант №1
+                typeof(biysktmora_test)
+                ////Вариант №2
+                //typeof(ClassDataTableDistinct)
                 ;
-
-            object objTest = Activator.CreateInstance(typeTest);
+            
+            try { objTest = Activator.CreateInstance(typeTest); }
+            catch (Exception e)
+            {
+                msg = e.Message;
+                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"Activator.CreateInstance (" + typeTest.FullName + @") - ...");
+                Console.WriteLine(Environment.NewLine + msg);
+            }
 
             msg = @"Выход из приложения [" + DateTime.Now.ToString(@"dd.MM.yyyy HH:mm:ss.fff" + @"]");
             Console.WriteLine(Environment.NewLine + msg);
@@ -36,13 +44,16 @@ namespace TestFunc
             ProgramBase.Exit();
         }
 
-        public /*abstract */class timer_test
+        public /*abstract */
+        abstract class timer_test
         {
-            private object _data;
-            protected virtual object Data { get { return _data; } set { _data = value; } }
+            private static ILoaderSrc _data;
+            protected static /*virtual*/ ILoaderSrc Data { get { return _data; } set { _data = value; } }
+
+            protected abstract int initialize ();
 
             static Semaphore semaUserCancel;
-            static int s_msecInterval = 1666;
+            static int s_msecInterval = 5666;
             static Timer timer
                 , timerKeyPress;
             static object lockTimer;
@@ -76,8 +87,10 @@ namespace TestFunc
 
                 EvtKeyPress += new DelegateObjectFunc(timer_test_EvtKeyPress);
 
-                data.Start();
-                data.Activate(true);
+                initialize ();
+                //Data.Start();
+                Data.Start(0);
+                Data.Activate(true);
 
                 semaUserCancel = new Semaphore(0, 1);
                 lockTimer = new object();
@@ -91,11 +104,11 @@ namespace TestFunc
                 //Ожидать действия пользователя (Ctrl+C)
                 semaUserCancel.WaitOne();
 
-                data.Activate(false);
-                data.Stop();
+                Data.Activate(false);
+                Data.Stop();
             }
 
-            private event DelegateObjectFunc EvtKeyPress;
+            private static event DelegateObjectFunc EvtKeyPress;
             private bool _keyPress;
             private bool KeyPress
             {
@@ -123,7 +136,7 @@ namespace TestFunc
                 }
             }
 
-            private void timer_test_EvtKeyPress(object obj)
+            private static void timer_test_EvtKeyPress(object obj)
             {
                 if (((ConsoleKeyInfo)obj).Key == ConsoleKey.Spacebar)
                 {
@@ -169,13 +182,22 @@ namespace TestFunc
                 KeyPress = Console.KeyAvailable;
             }
 
-            private static void timerCallback(object obj)
+            private void timerCallback(object obj)
             {
                 string msg = "\t\nИтерация... " + DateTime.Now.ToString(@"dd.MM.yyyy HH:mm:ss.fff");
                 Console.WriteLine(msg);
                 Logging.Logg().Action(msg, Logging.INDEX_MESSAGE.NOT_SET);
 
-                data.ChangeState();
+                Data.Initialize(0
+                    , new object[]
+                    {
+                        uLoaderCommon.MODE_WORK.COSTUMIZE
+                        , DateTime.MinValue
+                        , TimeSpan.FromSeconds (181) //TimeSpan.Zero
+                        , 60000
+                    }
+                );
+                Data.Start (0);
 
                 lock (lockTimer)
                 {
@@ -189,6 +211,8 @@ namespace TestFunc
 
             private static void Console_CancelKeyPress(object obj, ConsoleCancelEventArgs ev)
             {
+                EvtKeyPress -= new DelegateObjectFunc(timer_test_EvtKeyPress);
+
                 lock (lockTimer)
                 {
                     timer.Change(System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);

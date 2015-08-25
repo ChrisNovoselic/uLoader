@@ -9,7 +9,7 @@ using HClassLibrary;
 
 namespace uLoaderCommon
 {
-    public abstract class HHandlerDbULoaderDest : HHandlerDbULoader
+    public abstract class HHandlerDbULoaderDest : HHandlerDbULoader, ILoader
     {
         private const int MAX_QUEUECOUNT_OF_KEY = 16;
 
@@ -90,7 +90,7 @@ namespace uLoaderCommon
                     ;
 
                 string msg = @"HHandlerDbULoaderDest.GroupSignalsDest::dequeue () - DEQUEUE!"
-                        + @" [ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HHandlerDbULoaderDest).m_IdGroupSignalsCurrent
+                        + @" [ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HHandlerDbULoaderDest).IdGroupSignalsCurrent
                         + @"] queue.Count=" + (_parent as HHandlerDbULoaderDest).QueueCount
                         + @", queueTableRec.Count=" + m_queueTableRec.Count
                         + @", строк_было=" + cntPrev
@@ -221,7 +221,7 @@ namespace uLoaderCommon
                     else
                         ;
 
-                    Logging.Logg().Debug(@"Строк для вставки [ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HHandlerDbULoaderDest).m_IdGroupSignalsCurrent + @"]: " + tblRes.Rows.Count, Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Debug(@"Строк для вставки [ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HHandlerDbULoaderDest).IdGroupSignalsCurrent + @"]: " + tblRes.Rows.Count, Logging.INDEX_MESSAGE.NOT_SET);
                 }
                 else
                     ;
@@ -242,23 +242,23 @@ namespace uLoaderCommon
             switch ((StatesMachine)state)
             {
                 case StatesMachine.CurrentTime:
-                    if (!(m_IdGroupSignalsCurrent < 0))
-                        GetCurrentTimeRequest(DbInterface.DB_TSQL_INTERFACE_TYPE.MSSQL, m_dictIdListeners[m_IdGroupSignalsCurrent][0]);
+                    if (!(IdGroupSignalsCurrent < 0))
+                        GetCurrentTimeRequest(DbInterface.DB_TSQL_INTERFACE_TYPE.MSSQL, m_dictIdListeners[IdGroupSignalsCurrent][0]);
                     else
                         throw new Exception(@"HHandlerDbULoaderDest::StateRequest () - state=" + state.ToString() + @"...");
                     break;
                 case StatesMachine.Values:
                     break;
                 case StatesMachine.Insert:
-                    string query = (m_dictGroupSignals[m_IdGroupSignalsCurrent] as GroupSignalsDest).GetInsertValuesQuery();
+                    string query = (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).GetInsertValuesQuery();
 
                     //Logging.Logg().Debug(@"HHandlerDbULoaderDest:StateRequest () ::" + ((StatesMachine)state).ToString() + @" - "
-                    //        + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"] "
+                    //        + @"[" + PlugInId + @", key=" + m_IdGroupSignalsCurrent + @"] "
                     //        + @"query=" + query + @"..."
                     //        , Logging.INDEX_MESSAGE.NOT_SET);
 
                     if (query.Equals(string.Empty) == false)
-                        Request(m_dictIdListeners[m_IdGroupSignalsCurrent][0], query);
+                        Request(m_dictIdListeners[IdGroupSignalsCurrent][0], query);
                     else
                         ;
                     break;
@@ -279,7 +279,7 @@ namespace uLoaderCommon
                 case StatesMachine.CurrentTime:
                     m_dtServer = (DateTime)(obj as DataTable).Rows[0][0];
                     //msg = @"HHandlerDbULoaderDest::StateResponse () ::" + ((StatesMachine)state).ToString() + @" - "
-                    //    + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"] "
+                    //    + @"[" + PlugInId + @", key=" + m_IdGroupSignalsCurrent + @"] "
                     //    + @"DATETIME=" + m_dtServer.ToString(@"dd.MM.yyyy HH.mm.ss.fff") + @"...";
                     //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
                     //Console.WriteLine (msg);
@@ -300,7 +300,7 @@ namespace uLoaderCommon
             HHandler.INDEX_WAITHANDLE_REASON resReason = INDEX_WAITHANDLE_REASON.SUCCESS;
             
             Logging.Logg().Error(@"HHandlerDbULoaderDest::StateErrors (state=" + ((StatesMachine)state).ToString() + @", req=" + req + @", res=" + res + @") - "
-                + @"[ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + m_IdGroupSignalsCurrent + @"]"
+                + @"[" + PlugInId + @", key=" + IdGroupSignalsCurrent + @"]"
                 + @"..."
                 , Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -348,7 +348,7 @@ namespace uLoaderCommon
                     ;
             }
 
-            ////Logging.Logg().Debug(@"HHandlerDbULoaderDest::Insert () - " + msg + @" ID=" + (_iPlugin as PlugInBase)._Id + @", key=" + id + @", от [ID_SOURCE=" + pars[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
+            ////Logging.Logg().Debug(@"HHandlerDbULoaderDest::Insert () - " + msg + @" " + PlugInId + @", key=" + id + @", от [ID_SOURCE=" + pars[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
 
             return iRes;
         }
