@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Data;
+using System.Threading;
 
 using HClassLibrary;
 
@@ -68,6 +69,20 @@ namespace uLoaderCommon
                     (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsSrc).MSecRemaindToActivate = value;
                 else
                     throw new Exception(@"ULoaderCommon::MSecRemaindToActivate.set ...");
+            }
+        }
+
+        /// <summary>
+        /// Старт группы сигналов с указанным идентификаторм
+        /// </summary>
+        /// <param name="id">Идентификатор группы сигналов</param>
+        public override void Start(int id)
+        {
+            base.Start (id);
+
+            lock (m_lockStateGroupSignals)
+            {
+                changeState (m_dictGroupSignals[id].State);
             }
         }
 
@@ -234,31 +249,41 @@ namespace uLoaderCommon
                 //Перевести в состояние "активное" ("ожидание") группы сигналов
                 foreach (KeyValuePair<int, GroupSignals> pair in m_dictGroupSignals)
                     if (pair.Value.State == state)
-                    {
-                        (pair.Value as GroupSignalsSrc).MSecRemaindToActivate -= m_msecIntervalTimerActivate;
-
-                        //Logging.Logg().Debug(@"HHandlerDbULoader::fTimerActivate () - [" + PlugInId + @", key=" + pair.Key + @"] - MSecRemaindToActivate=" + pair.Value.MSecRemaindToActivate + @"...", Logging.INDEX_MESSAGE.NOT_SET);
-
-                        if ((pair.Value as GroupSignalsSrc).MSecRemaindToActivate < 0)
+                        if (pair.Value.State == GroupSignals.STATE.TIMER)
                         {
-                            pair.Value.State = GroupSignals.STATE.QUEUE;
+                            (pair.Value as GroupSignalsSrc).MSecRemaindToActivate -= m_msecIntervalTimerActivate;
 
-                            push(pair.Key);
+                            //Logging.Logg().Debug(@"HHandlerDbULoader::fTimerActivate () - [" + PlugInId + @", key=" + pair.Key + @"] - MSecRemaindToActivate=" + pair.Value.MSecRemaindToActivate + @"...", Logging.INDEX_MESSAGE.NOT_SET);
+
+                            if ((pair.Value as GroupSignalsSrc).MSecRemaindToActivate < 0)
+                            {
+                                pair.Value.State = GroupSignals.STATE.QUEUE;
+
+                                push(pair.Key);
+                            }
+                            else
+                                ;
                         }
                         else
-                            ;
-                    }
+                            if (pair.Value.State == GroupSignals.STATE.SLEEP)
+                            {
+                                pair.Value.State = GroupSignals.STATE.QUEUE;
+
+                                push(pair.Key);
+                            }
+                            else
+                                ;
                     else
                         ;
             }
         }
-        /// <summary>
-        /// Изменить состояние - интциировать очередной запрос
-        /// </summary>
-        public void ChangeState()
-        {
-            changeState (GroupSignals.STATE.SLEEP);
-        }
+        ///// <summary>
+        ///// Изменить состояние - интциировать очередной запрос
+        ///// </summary>
+        //public void ChangeState()
+        //{
+        //    changeState (GroupSignals.STATE.SLEEP);
+        //}
         //Количество строк в таблице-результате для текущей (обрабатываемой) группы
         private int RowCountRecieved { get { return (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsSrc).RowCountRecieved; } set { (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsSrc).RowCountRecieved = value; } }
         //Строка запроса для текущей (обрабатываемой) группы
@@ -453,6 +478,12 @@ namespace uLoaderCommon
 
     public abstract class HHandlerDbULoaderDatetimeSrc : HHandlerDbULoaderSrc
     {
+        /// <summary>
+        /// Перечисление - идентификаторы режимов вычисления даты/времени начала опроса
+        /// </summary>
+        public enum MODE_CURINTERVAL { CAUSE_PERIOD /*округление до ПЕРИОД, ожидание полного набора записей за ПЕРИОД*/, CAUSE_NOT /*текущее время сервера*/ };
+        public static MODE_CURINTERVAL s_modeCurInterval = MODE_CURINTERVAL.CAUSE_NOT;
+
         public HHandlerDbULoaderDatetimeSrc()
             : base()
         {
@@ -473,52 +504,136 @@ namespace uLoaderCommon
 
             private DateTime m_dtStart;
             public DateTime DateTimeStart { get { return m_dtStart; } set { m_dtStart = value; } }
+            private DateTime m_dtBegin;
+            public DateTime DateTimeBegin { get { return m_dtBegin; } set { m_dtBegin = value; } }
 
             public GroupSignalsDatetimeSrc(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
                 //Инициализация "временнЫх" значений
                 // конкретные значения м.б. получены при "старте" 
-                m_dtStart = DateTime.MinValue;
+                m_dtStart =
+                m_dtBegin =
+                    DateTime.MinValue;
+            }
+
+            public override void Stop()
+            {
+                base.Stop();
+
+                DateTimeStart =
+                DateTimeBegin =
+                    DateTime.MinValue;
             }
 
             /// <summary>
             /// Строка для условия "по дате/времени"
             ///  - начало
             /// </summary>
-            protected virtual string DateTimeStartFormat
+            protected virtual string DateTimeBeginFormat
             {
-                get { return DateTimeStart.ToString(@"yyyyMMdd HHmmss"); }
+                get
+                {
+                    string strRes = string.Empty;
+
+                    switch (Mode)
+                    {
+                        case MODE_WORK.CUR_INTERVAL:
+                            strRes = DateTimeBegin.ToString(@"yyyyMMdd HHmmss");
+                            //switch (
+                            //    //((HHandlerDbULoaderDatetimeSrc)_parent).s_modeCurInterval
+                            //    HHandlerDbULoaderDatetimeSrc.s_modeCurInterval
+                            //    )
+                            //{
+                            //    case MODE_CURINTERVAL.CAUSE_PERIOD:
+                            //        break;
+                            //    case MODE_CURINTERVAL.CAUSE_NOT:
+                            //        break;
+                            //    default:
+                            //        break;
+                            //}
+                            break;
+                        case MODE_WORK.COSTUMIZE:
+                            strRes = DateTimeBegin.ToString(@"yyyyMMdd HHmmss");
+                            break;
+                        default:
+                            break;
+                    }
+
+                    return strRes;
+                }
             }
             /// <summary>
             /// Строка для условия "по дате/времени"
             ///  - окончание
             /// </summary>
-            protected virtual string DateTimeCurIntervalEndFormat
+            protected virtual string DateTimeEndFormat
             {
-                get { return DateTimeStart.AddSeconds((int)TimeSpanPeriod.TotalSeconds).ToString(@"yyyyMMdd HHmmss"); }
+                get
+                {
+                    string strRes = string.Empty;
+                    long msecDiff = -1;
+
+                    switch (Mode)
+                    {
+                        case MODE_WORK.CUR_INTERVAL:
+                            msecDiff = (long)(1000 * TimeSpanPeriod.TotalSeconds);
+                            //switch (HHandlerDbULoaderDatetimeSrc.s_modeCurInterval)
+                            //{
+                            //    case MODE_CURINTERVAL.CAUSE_PERIOD:
+                            //        break;
+                            //    case MODE_CURINTERVAL.CAUSE_NOT:
+                            //        break;
+                            //    default:
+                            //        break;
+                            //}                            
+                            break;
+                        case MODE_WORK.COSTUMIZE:
+                            msecDiff = MSecInterval;
+                            break;
+                        default:
+                            break;
+                    }
+
+                    strRes = DateTimeBegin.AddMilliseconds(msecDiff).ToString(@"yyyyMMdd HHmmss");
+                    //Console.WriteLine(@"DateTimeBegin=" + DateTimeBeginFormat + @"; DateTimeEndFormat=" + strRes);
+
+                    return strRes;
+                }
             }
 
             protected override bool isUpdateQuery (int cntRec)
             {
-                return ((RowCountRecieved < 0) || (RowCountRecieved == cntRec)) && ((!(EvtActualizeDateTimeStart == null)) && (EvtActualizeDateTimeStart() == 1));
+                bool bRes = false;
+
+                if (s_modeCurInterval == MODE_CURINTERVAL.CAUSE_PERIOD)
+                    bRes = ((RowCountRecieved < 0) || (RowCountRecieved == cntRec)) && ((!(EvtActualizeDateTimeBegin == null)) && (EvtActualizeDateTimeBegin() == 1));
+                else
+                    if (s_modeCurInterval == MODE_CURINTERVAL.CAUSE_NOT)
+                        bRes = (!(EvtActualizeDateTimeBegin == null)) && (EvtActualizeDateTimeBegin() == 1);
+                    else
+                        ; //throw new Exception (@"Неизвестный режим...")
+
+                return bRes;
             }
 
-            private event IntDelegateFunc EvtActualizeDateTimeStart;
+            private event IntDelegateFunc EvtActualizeDateTimeBegin;
             /// <summary>
             /// Установить метод для актуализации начальной даты/времени для опроса
             /// </summary>
             /// <param name="fActualize">Функция-делегат для актуализации начальной даты/времени для опроса</param>
-            public void SetDelegateActualizeDateTimeStart(IntDelegateFunc fActualize)
+            public void SetDelegateActualizeDateTimeBegin(IntDelegateFunc fActualize)
             {
-                if (EvtActualizeDateTimeStart == null)
+                //Установить обработчик только один раз
+                if (EvtActualizeDateTimeBegin == null)
                 {
-                    RowCountRecieved = -1;
-
-                    EvtActualizeDateTimeStart += fActualize;
+                    EvtActualizeDateTimeBegin += fActualize;
                 }
                 else
                     ;
+
+                ////??? - вызов при инициализации (сброс каждый раз...)
+                //RowCountRecieved = -1;
             }
         }
 
@@ -526,8 +641,44 @@ namespace uLoaderCommon
         {
             int iRes = base.Initialize(id, pars);
 
+            //Повторная проверка назначения массива параметров
+            try
+            {
+                if (m_dictGroupSignals.Keys.Contains(id) == true)
+                    //Сигналы д.б. инициализированы
+                    if (m_dictGroupSignals[id].Signals == null)
+                        ;
+                    else
+                        if (pars[0].GetType().IsArray == true)
+                            ;
+                        else
+                        {//Считать переданные параметры - параметрами группы сигналов
+                            lock (m_lockStateGroupSignals)
+                            {
+                                if (m_dictGroupSignals[id].Mode == MODE_WORK.COSTUMIZE)
+                                    if ((!(((DateTime)pars[1] == null)))
+                                        && (!(((DateTime)pars[1] == DateTime.MinValue))))
+                                        ((GroupSignalsDatetimeSrc)m_dictGroupSignals[id]).DateTimeStart = (DateTime)pars[1];
+                                    else
+                                        ;
+                                else
+                                    ;                             
+                            }
+
+                            Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+                        }
+                else
+                    ;
+            }
+            catch (Exception e)
+            {
+                Logging.Logg().Exception (e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoaderDatetimeSrc::Initialize () - ...");
+
+                iRes = -1;
+            }
+
             if (m_dictGroupSignals.Keys.Contains(id) == true)
-                (m_dictGroupSignals[id] as GroupSignalsDatetimeSrc).SetDelegateActualizeDateTimeStart(actualizeDateTimeStart);
+                (m_dictGroupSignals[id] as GroupSignalsDatetimeSrc).SetDelegateActualizeDateTimeBegin(actualizeDateTimeBegin);
             else
                 ;
 
@@ -578,36 +729,105 @@ namespace uLoaderCommon
         }
 
         /// <summary>
+        /// Дата/время начала опроса для текущей (обрабатываемой) группы
+        /// </summary>
+        protected DateTime DateTimeBegin
+        {
+            get
+            {
+                if (!(IdGroupSignalsCurrent < 0))
+                    return (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDatetimeSrc).DateTimeBegin
+                        //+ TimeSpan.FromMilliseconds (CountMSecInterval * MSecInterval)
+                        ;
+                else
+                    throw new Exception(@"ULoaderCommon::DateTimeBegin.get ...");
+            }
+
+            set
+            {
+                if (!(IdGroupSignalsCurrent < 0))
+                    (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDatetimeSrc).DateTimeBegin = value;
+                else
+                    throw new Exception(@"ULoaderCommon::DateTimeBegin.set ...");
+            }
+        }
+
+        /// <summary>
         /// Актулизировать дату/время начала опроса
         /// </summary>
         /// <returns>Признак изменения даты/времени начала опроса</returns>
-        protected int actualizeDateTimeStart()
+        protected int actualizeDateTimeBegin()
         {
             int iRes = 0;
-            //Проверить признак 1-го запуска
-            if (DateTimeStart == DateTime.MinValue)
-            {
-                DateTimeStart = m_dtServer.AddMilliseconds(-1 * (m_dtServer.Second * 1000 + m_dtServer.Millisecond));
-                //CountMSecInterval = 0;
-                iRes = 1;
-            }
-            else
-                //Проверить необходимость изменения даты/времени
-                if ((m_dtServer - DateTimeStart.AddSeconds(TimeSpanPeriod.TotalSeconds)).TotalMilliseconds > MSecInterval)
+            if (Mode == MODE_WORK.CUR_INTERVAL)
+                //Проверить признак 1-го запуска (в режиме CUR_INTERVAL)
+                if (DateTimeBegin == DateTime.MinValue)
                 {
-                    //Переход на очередной интервал
-                    DateTimeStart = DateTimeStart.AddSeconds(TimeSpanPeriod.TotalSeconds);
-                    //CountMSecInterval++;
-                    //Установить признак перехода
+                    if (s_modeCurInterval == MODE_CURINTERVAL.CAUSE_PERIOD)
+                    {
+                        DateTimeBegin = m_dtServer.AddMilliseconds(-1 * (m_dtServer.Second * 1000 + m_dtServer.Millisecond));
+                        //CountMSecInterval = 0;
+                    }
+                    else
+                        if (s_modeCurInterval == MODE_CURINTERVAL.CAUSE_NOT)
+                            DateTimeBegin = m_dtServer.AddMilliseconds(-1 * TimeSpanPeriod.TotalMilliseconds);
+                        else
+                            ;
+                    
                     iRes = 1;
                 }
                 else
-                    ;
+                    //Переход на очередной интервал (повторный опрос)
+                    switch (s_modeCurInterval)
+                    {
+                        case MODE_CURINTERVAL.CAUSE_PERIOD:
+                            //Проверить необходимость изменения даты/времени
+                            if ((m_dtServer - DateTimeBegin.AddSeconds(TimeSpanPeriod.TotalSeconds)).TotalMilliseconds > MSecInterval)
+                            {
+                                DateTimeBegin = DateTimeBegin.AddSeconds(TimeSpanPeriod.TotalSeconds);
+                                //CountMSecInterval++;
+                                //Установить признак перехода
+                                iRes = 1;
+                            }
+                            else
+                                ;
+                            break;
+                        case MODE_CURINTERVAL.CAUSE_NOT:
+                            DateTimeBegin = m_dtServer.AddMilliseconds(-1 * TimeSpanPeriod.TotalMilliseconds);
+                            //Установить признак перехода
+                            iRes = 1;
+                            break;
+                        default:
+                            break;
+                    }
+            else
+                if (Mode == MODE_WORK.COSTUMIZE)
+                {
+                    //Проверить признак 1-го запуска (в режиме COSTUMIZE)
+                    if (DateTimeBegin == DateTime.MinValue)
+                    {
+                        //Проверить указано ли дата/время начала опроса
+                        if (DateTimeStart == DateTime.MinValue)
+                            //Не указано - опросить ближайший к текущей дате/времени период
+                            DateTimeStart = m_dtServer.AddMilliseconds(-1 * TimeSpanPeriod.TotalMilliseconds);
+                        else
+                            ;
+
+                        DateTimeBegin = DateTimeStart;
+                    }
+                    else
+                        //Повторный опрос
+                        DateTimeBegin = DateTimeBegin.AddMilliseconds(MSecInterval);
+
+                    iRes = 1;
+                }
+                else
+                    throw new Exception(@"HHandlerDbULoaderDatetimeSrc::actualizeDateTimeStart () - неизвестный режим ...");
 
             Logging.Logg().Debug(@"HHandlerDbULoader::actualizeDateTimeStart () - "
                                 + @"[" + PlugInId + @", key=" + IdGroupSignalsCurrent + @"]"
                                 + @", m_dtServer=" + m_dtServer.ToString(@"dd.MM.yyyy HH:mm.ss.fff")
-                                + @", DateTimeStart=" + DateTimeStart.ToString(@"dd.MM.yyyy HH:mm.ss.fff")
+                                + @", DateTimeBegin=" + DateTimeBegin.ToString(@"dd.MM.yyyy HH:mm.ss.fff")
                                 + @", iRes=" + iRes
                                 + @"...", Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -618,16 +838,18 @@ namespace uLoaderCommon
 
         private void completeGroupSignalsCurrent()
         {
-            //if (State == GroupSignals.STATE.SLEEP)
-            //    if (! ((DateTimeStart + TimeSpan.FromMilliseconds (MSecInterval)) < (DateTimeStart - TimeSpan.FromMilliseconds(CountMSecInterval * MSecInterval) + TimeSpanPeriod)))
-            //        Stop(IdGroupSignalsCurrent);
-            //    else
-            //    {
-            //        CountMSecInterval ++;
-            //        push(IdGroupSignalsCurrent);
-            //    }
-            //else
-            //    ;
+            if (State == GroupSignals.STATE.SLEEP)
+                if ((DateTimeBegin + TimeSpan.FromMilliseconds(MSecInterval)) < (DateTimeStart + TimeSpanPeriod))
+                    push(IdGroupSignalsCurrent);
+                else
+                    new Thread(new ParameterizedThreadStart(new DelegateObjectFunc (stop))).Start (IdGroupSignalsCurrent);
+            else
+                ;
+        }
+
+        private void stop (object id)
+        {
+            Stop ((int)id);
         }
     }
 
@@ -666,15 +888,15 @@ namespace uLoaderCommon
 
             //Строки для условия "по дате/времени"
             // начало
-            protected override string DateTimeStartFormat
+            protected override string DateTimeBeginFormat
             {
-                get { return DateTimeStart.AddHours(-6).AddSeconds((_parent as HHandlerDbULoaderMSTTMSrc).m_iCurIntervalShift * (int)TimeSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss"); }
+                get { return DateTimeBegin.AddHours(-6).AddSeconds((_parent as HHandlerDbULoaderMSTTMSrc).m_iCurIntervalShift * (int)TimeSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss"); }
             }
             // окончание
-            protected override string DateTimeCurIntervalEndFormat
+            protected override string DateTimeEndFormat
             {
                 //get { return DateTimeStart.AddHours(-6).AddSeconds((int)TimeSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss"); }
-                get { return DateTimeStart.AddHours(-6).ToString(@"yyyy/MM/dd HH:mm:ss"); }
+                get { return DateTimeBegin.AddHours(-6).ToString(@"yyyy/MM/dd HH:mm:ss"); }
             }
         }
     }

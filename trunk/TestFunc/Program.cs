@@ -57,6 +57,7 @@ namespace TestFunc
             static Timer timer
                 , timerKeyPress;
             static object lockTimer;
+            static bool bActived = false;
 
             public timer_test()
             {
@@ -88,15 +89,16 @@ namespace TestFunc
                 EvtKeyPress += new DelegateObjectFunc(timer_test_EvtKeyPress);
 
                 initialize ();
-                //Data.Start();
-                Data.Start(0);
-                Data.Activate(true);
+                ////Data.Start();
+                //Data.Start(0);
+                //Data.Activate(true);
 
                 semaUserCancel = new Semaphore(0, 1);
                 lockTimer = new object();
                 Console.CancelKeyPress += new ConsoleCancelEventHandler(Console_CancelKeyPress);
                 //Выполнить 1-ю итерацию немедленно (без повторения)
                 timer = new Timer(timerCallback, null, 0, System.Threading.Timeout.Infinite);
+                bActived = true;
 
                 //Ожидать действия пользователя (другие)
                 timerKeyPress = new Timer(timerKeyPressCallback, null, 0, 66);
@@ -140,38 +142,55 @@ namespace TestFunc
             {
                 if (((ConsoleKeyInfo)obj).Key == ConsoleKey.Spacebar)
                 {
-                    if (Data.Actived == true)
+                    bActived = ! bActived;
+
+                    if (bActived == true)
                     {
                         lock (lockTimer)
-                        {
-                            if (!(timer == null))
-                                //Деактивация...
-                                timer.Change(System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
-                            else
-                                ;
-                        }
-                        //Деактивация...
-                        Data.Activate(false);
+                            {
+                                if (!(timer == null))
+                                    //Активация...
+                                    timer.Change(0, System.Threading.Timeout.Infinite);
+                                else
+                                    ;
+                            }
 
-                        Console.WriteLine();
-                        Console.Write(@"Пауза (для продолжения нажмите 'пробел')...");
+                            Console.WriteLine();
                     }
                     else
-                    {
-                        //Активация...
-                        Data.Activate(true);
-
-                        lock (lockTimer)
+                        if (bActived == false)
                         {
-                            if (!(timer == null))
-                                //Активация...
-                                timer.Change(0, System.Threading.Timeout.Infinite);
-                            else
-                                ;
-                        }
+                            lock (lockTimer)
+                            {
+                                if (!(timer == null))
+                                    //Деактивация...
+                                    timer.Change(System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+                                else
+                                    ;
+                            }
 
-                        Console.WriteLine();
-                    }
+                            Console.WriteLine();
+                            Console.WriteLine(@"Для продолжения нажмите 'Spacebar'...");                            
+                        }
+                        else
+                            ;
+                    
+                    if (Data.IsStarted == true)
+                        if ((Data.Actived == true)
+                            && (bActived == false))
+                        {                            
+                            //Деактивация...
+                            Data.Activate(false);
+                        }
+                        else
+                            if ((Data.Actived == false)
+                            && (bActived == true))
+                            {                            
+                                //Деактивация...
+                                Data.Activate(true);
+                            }
+                    else
+                        ;
                 }
                 else
                     ;
@@ -193,8 +212,8 @@ namespace TestFunc
                     {
                         uLoaderCommon.MODE_WORK.COSTUMIZE
                         , DateTime.MinValue
-                        , TimeSpan.FromSeconds (181) //TimeSpan.Zero
-                        , 60000
+                        , TimeSpan.FromSeconds (60) //TimeSpan.Zero
+                        , 60 * 1000
                     }
                 );
                 Data.Start (0);

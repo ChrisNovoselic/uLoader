@@ -43,8 +43,8 @@ namespace SrcBiyskTMora
                 {
                     m_strQuery += @"SELECT " + s.m_idMain + @" as ID, VALUE, QUALITY, DATETIME FROM ARCH_SIGNALS." + s.m_NameTable
                         + @" WHERE"
-                        + @" DATETIME >=" + @" to_timestamp('" + DateTimeStartFormat + @"', 'yyyymmdd hh24missFF9')"
-                        + @" AND DATETIME <" + @" to_timestamp('" + DateTimeCurIntervalEndFormat + @"', 'yyyymmdd hh24missFF9')"
+                        + @" DATETIME >=" + @" to_timestamp('" + DateTimeBeginFormat + @"', 'yyyymmdd hh24missFF9')"
+                        + @" AND DATETIME <" + @" to_timestamp('" + DateTimeEndFormat + @"', 'yyyymmdd hh24missFF9')"
                         + strUnion
                     ;
                 }

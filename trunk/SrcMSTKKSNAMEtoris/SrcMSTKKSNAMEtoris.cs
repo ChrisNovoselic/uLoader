@@ -157,7 +157,7 @@ namespace SrcMSTKKSNAMEtoris
                 {
                     iPrev = m_tableTorIs.Rows.Count;
                     string strSel =
-                        @"DATETIME<'" + DateTimeStart.ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"' OR DATETIME>='" + DateTimeStart.AddSeconds(TimeSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
+                        @"DATETIME<'" + DateTimeBegin.ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"' OR DATETIME>='" + DateTimeBegin.AddSeconds(TimeSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
                         //@"DATETIME BETWEEN '" + m_dtStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"' AND '" + m_dtStart.AddSeconds(m_tmSpanPeriod.Seconds).ToString(@"yyyy/MM/dd HH:mm:ss") + @"'"
                         ;
 
@@ -165,7 +165,7 @@ namespace SrcMSTKKSNAMEtoris
                     try { rowsDel = m_tableTorIs.Select(strSel); }
                     catch (Exception e)
                     {
-                        Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HBiyskTMOra::ClearValues () - ...");
+                        Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"SrcMSTKKSNAMEtoris.GroupSignalsMSTKKSNAMEtoris::ClearValues () - ...");
                     }
 
                     if (!(rowsDel == null))
@@ -234,7 +234,7 @@ namespace SrcMSTKKSNAMEtoris
             }
             catch (Exception e)
             {
-                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"SrcMSTKKSNAMEtoris::start () - ...");
+                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"SrcMSTKKSNAMEtoris::Start () - ...");
             }
         }
 
@@ -261,7 +261,7 @@ namespace SrcMSTKKSNAMEtoris
             }
             catch (Exception e)
             {
-                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"SrcMSTKKSNAMEtoris::stop () - ...");
+                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"SrcMSTKKSNAMEtoris::Stop () - ...");
             }
 
             ((HHandler)this).Stop();
@@ -530,7 +530,7 @@ namespace SrcMSTKKSNAMEtoris
             {
                 case (int)StatesMachine.Values:
                     m_dtServer = DateTime.Now;
-                    DateTimeStart = m_dtServer.AddMilliseconds(-1 * (m_dtServer.Second * 1000 + m_dtServer.Millisecond));
+                    DateTimeBegin = m_dtServer.AddMilliseconds(-1 * (m_dtServer.Second * 1000 + m_dtServer.Millisecond));
                     //Запрос на выборку данных не требуется
                     ClearValues ();
                     break;

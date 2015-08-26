@@ -13,6 +13,8 @@ namespace uLoaderCommon
         void Start();
         void Stop();
 
+        bool IsStarted { get; }
+
         bool Activate(bool active);
         bool Actived { get; }
 
@@ -58,6 +60,8 @@ namespace uLoaderCommon
         /// по текущему интервалу
         /// </summary>        
         CUR_INTERVAL,
+        //CUR_INTERVAL_CAUSEPERIOD,
+        //CUR_INTERVAL_CAUSENOT,
         /// <summary>
         /// выборочно (история)
         /// </summary>
@@ -107,6 +111,12 @@ namespace uLoaderCommon
                       || (State == GroupSignals.STATE.TIMER)
                       || (State == GroupSignals.STATE.SLEEP);
                 }
+            }
+
+            public virtual void Stop ()
+            {
+                State = GroupSignals.STATE.STOP;
+                TableRecieved = new DataTable();
             }
 
             private uLoaderCommon.MODE_WORK m_mode;
@@ -215,7 +225,7 @@ namespace uLoaderCommon
                             // для режима "по требованию"    
                             stateRes = GroupSignals.STATE.SLEEP;
                         else
-                            //??? throw new Exception
+                            //??? throw new Exception (@"")
                             ;
 
                 return stateRes;
@@ -358,7 +368,7 @@ namespace uLoaderCommon
         /// <summary>
         /// Режим работы текущей (обрабатываемой) группы сигналов
         /// </summary>
-        private MODE_WORK Mode
+        protected MODE_WORK Mode
         {
             get
             {
@@ -588,7 +598,6 @@ namespace uLoaderCommon
                     if (m_dictGroupSignals[id].Signals == null)
                         iRes = -1;
                     else
-                    {
                         if (pars[0].GetType().IsArray == true)
                         {
                             //Считать переданные параметры - параметрами сигналов
@@ -602,14 +611,21 @@ namespace uLoaderCommon
                             {
                                 m_dictGroupSignals[id].Mode = (uLoaderCommon.MODE_WORK)pars[0];
                                 m_dictGroupSignals[id].State = GroupSignals.STATE.STOP;
-                                //m_dictGroupSignals[id].DateTimeStart = (DateTime)pars[1];
+                                //Переопределено в 'HHandlerDbULoaderDatetimeSrc'
+                                //if (m_dictGroupSignals[id].Mode == MODE_WORK.COSTUMIZE)
+                                //    if ((!(((DateTime)pars[1] == null)))
+                                //        && (!(((DateTime)pars[1] == DateTime.MinValue))))
+                                //        m_dictGroupSignals[id].DateTimeStart = (DateTime)pars[1];
+                                //    else
+                                //        ;
+                                //else
+                                //    ;
                                 m_dictGroupSignals[id].TimeSpanPeriod = (TimeSpan)pars[2];
                                 m_dictGroupSignals[id].MSecInterval = (int)pars[3];
                             }
 
                             Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
                         }
-                    }
             }
             catch (Exception e)
             {
@@ -961,6 +977,9 @@ namespace uLoaderCommon
             Logging.Logg().Debug(@"HHandlerDbULoader::Stop (" + PlugInId + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
             stopThreadQueue();
+
+            Activate (false);
+
             //Вызвать "базовый" метод
             base.Stop();
         }
@@ -979,8 +998,7 @@ namespace uLoaderCommon
                 {
                     if (m_dictGroupSignals[id].IsStarted == true)
                     {
-                        m_dictGroupSignals[id].State = GroupSignals.STATE.STOP;
-                        m_dictGroupSignals[id].TableRecieved = new DataTable();
+                        m_dictGroupSignals[id].Stop();
                     }
                     else
                         ;

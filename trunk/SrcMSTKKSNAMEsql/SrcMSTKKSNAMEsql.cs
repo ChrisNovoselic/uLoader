@@ -65,8 +65,8 @@ namespace SrcMSTKKSNAMEsql
                         + @" FROM [v_STATISTICS_real_his] as [DATA]"
                         + @" INNER JOIN (SELECT [NAME], [ID] FROM [reals_rv] WHERE [NAME] IN (" + strIds + @")) AS [PARAM] ON [PARAM].[ID] = [DATA].[ID]"
                         + @" WHERE [DATA].[ID] IN (SELECT [id] FROM [reals_rv] WHERE [NAME] IN (" + strIds + @"))"
-                        + @" AND [last_changed_at] >='" + DateTimeStartFormat + @"'"
-                        + @" AND [last_changed_at] <'" + DateTimeCurIntervalEndFormat + @"'"
+                        + @" AND [last_changed_at] >='" + DateTimeBeginFormat + @"'"
+                        + @" AND [last_changed_at] <'" + DateTimeEndFormat + @"'"
                     ;
             }
 
