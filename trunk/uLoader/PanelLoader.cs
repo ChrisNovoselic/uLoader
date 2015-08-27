@@ -609,24 +609,50 @@ namespace uLoader
 
                     if (this is PanelLoaderSource)
                     {
-                        //??? Отобразить интервал опроса для режима 'CUR_INTERVAL'
+                        //??? Отобразить период опроса для режима 'CUR_INTERVAL'
                         key = PanelLoader.KEY_CONTROLS.TBX_CUR_PERIOD;
                         workItem = GetWorkingItem(key);
+                        (workItem as TextBox).Text = grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.Hours.ToString(@"00")
+                             + @":" + grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.Minutes.ToString (@"00")
+                             //+ @":" + grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.Seconds
+                            ;
 
                         //Отобразить шаг опроса для режима 'CUR_INTERVAL'
                         key = PanelLoader.KEY_CONTROLS.TBX_CUR_INTERVAL;
                         workItem = GetWorkingItem(key);
+                        (workItem as TextBox).Text = grpSgnlsPars.m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_iInterval.ToString ();
                     }
                     else
                         ;
 
                     //Отобразить дата опроса для режима 'COSTUMIZE'
+                    key = PanelLoader.KEY_CONTROLS.CALENDAR_COSTUMIZE;
+                    workItem = GetWorkingItem(key);
+                    (workItem as DateTimePicker).Value = grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart; //DateTime.Now;
 
                     //Отобразить нач./время опроса для режима 'COSTUMIZE'
+                    key = PanelLoader.KEY_CONTROLS.TBX_COSTUMIZE_START_TIME;
+                    workItem = GetWorkingItem(key);
+                    (workItem as TextBox).Text = grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.Hour.ToString(@"00")
+                        + @":" + grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.Minute.ToString(@"00")
+                        ;
 
-                    //Отобразить кон./время опроса для режима 'COSTUMIZE'
+                    //Отобразить период опроса для режима 'COSTUMIZE'
+                    key = PanelLoader.KEY_CONTROLS.TBX_COSTUMIZE_PERIOD;
+                    workItem = GetWorkingItem(key);
+                    (workItem as TextBox).Text = grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriod.Hours.ToString(@"00")
+                        + @":" + grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriod.Minutes.ToString(@"00")
+                        ;
 
-                    //Отобразить шаг опроса для режима 'COSTUMIZE'
+                    if (this is PanelLoaderSource)
+                    {
+                        //Отобразить шаг опроса для режима 'COSTUMIZE'
+                        key = PanelLoader.KEY_CONTROLS.TBX_COSTUMIZE_INTERVAL;
+                        workItem = GetWorkingItem(key);
+                        (workItem as TextBox).Text = grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_iInterval.ToString();
+                    }
+                    else
+                        ; //Не 'Source'
                 }
                 else
                     // не найдена группа сигналов

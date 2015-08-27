@@ -80,10 +80,8 @@ namespace uLoaderCommon
         {
             base.Start (id);
 
-            lock (m_lockStateGroupSignals)
-            {
-                changeState (m_dictGroupSignals[id].State);
-            }
+            //changeState (m_dictGroupSignals[id].State);
+            changeState(id);
         }
 
         public override void Start()
@@ -202,6 +200,13 @@ namespace uLoaderCommon
                 }
             }
 
+            public override void Stop()
+            {
+                base.Stop();
+
+                m_iRowCountRecieved = -1;
+            }
+
             protected string m_strQuery;
             /// <summary>
             /// Строка для запроса
@@ -239,8 +244,28 @@ namespace uLoaderCommon
             return iRes;
         }
         /// <summary>
-        /// Изменить состояние - интциировать очередной запрос
+        /// Изменить состояние - инициировать очередной запрос
         /// </summary>
+        /// <param name="id">Идентификатор группы сигналов</param>
+        private void changeState (int id)
+        {
+            
+            lock (m_lockStateGroupSignals)
+            {
+                if (m_dictGroupSignals[id].State == GroupSignals.STATE.SLEEP)
+                {
+                    m_dictGroupSignals[id].State = GroupSignals.STATE.QUEUE;
+
+                    push (id);
+                }
+                else
+                    ;
+            }
+        }
+        /// <summary>
+        /// Изменить состояние - инициировать очередной запрос
+        /// </summary>
+        /// <param name="state">Сотояние групп сигналов</param>
         private void changeState(GroupSignals.STATE state)
         {
             lock (m_lockStateGroupSignals)
@@ -292,6 +317,7 @@ namespace uLoaderCommon
         protected override int StateRequest(int state)
         {
             int iRes = 0;
+            string msg = string.Empty;
 
             switch (state)
             {
@@ -307,24 +333,10 @@ namespace uLoaderCommon
                     else
                         ;
 
-                    //Logging.Logg().Debug(@"HHandlerDbULoaderSrc::StateRequest (::Values) - Query=" + Query, Logging.INDEX_MESSAGE.NOT_SET);
+                    msg = @"HHandlerDbULoaderSrc::StateRequest (::Values) - Query=" + Query;
+                    //Console.WriteLine (msg);
+                    //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
 
-                    //try
-                    //{
-                    //    iActualizeDatetimeStart = actualizeDatetimeStart ();
-                    //    if (iActualizeDatetimeStart == 1)
-                    //    {//Дата/время "старта" изменено
-                    //ClearValues();
-
-                    //        setQuery(DateTimeStart);
-                    //    }
-                    //    else
-                    //        ;
-                    //}
-                    //catch (Exception e)
-                    //{
-                    //    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader::StateRequest (::Values) - ...");
-                    //}
                     Request(m_dictIdListeners[IdGroupSignalsCurrent][0], Query);
                     break;
                 default:
@@ -338,8 +350,7 @@ namespace uLoaderCommon
         {
             int iRes = 0;
             DataTable table = obj as DataTable;
-            //string msg = @"HHandlerDbULoaderDest::StateResponse () ::" + ((StatesMachine)state).ToString() + @" - "
-            //    + @"[" + PlugInId + @", key=" + m_IdGroupSignalsCurrent + @"] ";
+            string msg = string.Empty;
 
             try
             {
@@ -349,10 +360,13 @@ namespace uLoaderCommon
                         m_dtServer = (DateTime)(table as DataTable).Rows[0][0];
                         //msg =+ @"DATETIME=" + m_dtServer.ToString(@"dd.MM.yyyy HH.mm.ss.fff") + @"...";                        
                         break;
-                    case (int)StatesMachine.Values:
-                        //msg =+ @"Ok ...";
+                    case (int)StatesMachine.Values:                        
                         RowCountRecieved = table.Rows.Count;
-                        Logging.Logg().Debug(@"Получено строк [" + PlugInId + @", key=" + IdGroupSignalsCurrent + @"]: " + (table as DataTable).Rows.Count, Logging.INDEX_MESSAGE.NOT_SET);
+
+                        msg = @"Получено строк [" + PlugInId + @", key=" + IdGroupSignalsCurrent + @"]: " + (table as DataTable).Rows.Count;
+                        Console.WriteLine (msg);
+                        Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
+
                         if (TableRecieved == null)
                         {
                             TableRecieved = new DataTable();
@@ -606,13 +620,24 @@ namespace uLoaderCommon
             {
                 bool bRes = false;
 
-                if (s_modeCurInterval == MODE_CURINTERVAL.CAUSE_PERIOD)
-                    bRes = ((RowCountRecieved < 0) || (RowCountRecieved == cntRec)) && ((!(EvtActualizeDateTimeBegin == null)) && (EvtActualizeDateTimeBegin() == 1));
-                else
-                    if (s_modeCurInterval == MODE_CURINTERVAL.CAUSE_NOT)
+                switch (Mode)
+                {
+                    case MODE_WORK.CUR_INTERVAL:
+                        if (s_modeCurInterval == MODE_CURINTERVAL.CAUSE_PERIOD)
+                            bRes = ((RowCountRecieved < 0) || (RowCountRecieved == cntRec)) && ((!(EvtActualizeDateTimeBegin == null)) && (EvtActualizeDateTimeBegin() == 1));
+                        else
+                            if (s_modeCurInterval == MODE_CURINTERVAL.CAUSE_NOT)
+                                bRes = (!(EvtActualizeDateTimeBegin == null)) && (EvtActualizeDateTimeBegin() == 1);
+                            else
+                                ; //throw new Exception (@"Неизвестный режим...")
+                        break;
+                    case MODE_WORK.COSTUMIZE:
                         bRes = (!(EvtActualizeDateTimeBegin == null)) && (EvtActualizeDateTimeBegin() == 1);
-                    else
+                        break;
+                    default:
                         ; //throw new Exception (@"Неизвестный режим...")
+                        break;
+                }
 
                 return bRes;
             }
@@ -665,7 +690,7 @@ namespace uLoaderCommon
                                     ;                             
                             }
 
-                            Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+                            Logging.Logg().Debug(@"HHandlerDbULoaderDatetimeSrc::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
                         }
                 else
                     ;
@@ -765,12 +790,13 @@ namespace uLoaderCommon
                 {
                     if (s_modeCurInterval == MODE_CURINTERVAL.CAUSE_PERIOD)
                     {
+                        //Выравнивание по "минуте"
                         DateTimeBegin = m_dtServer.AddMilliseconds(-1 * (m_dtServer.Second * 1000 + m_dtServer.Millisecond));
                         //CountMSecInterval = 0;
                     }
                     else
                         if (s_modeCurInterval == MODE_CURINTERVAL.CAUSE_NOT)
-                            DateTimeBegin = m_dtServer.AddMilliseconds(-1 * TimeSpanPeriod.TotalMilliseconds);
+                            DateTimeBegin = m_dtServer.AddMilliseconds(-1 * TimeSpanPeriod.TotalMilliseconds / 2);
                         else
                             ;
                     
@@ -793,7 +819,7 @@ namespace uLoaderCommon
                                 ;
                             break;
                         case MODE_CURINTERVAL.CAUSE_NOT:
-                            DateTimeBegin = m_dtServer.AddMilliseconds(-1 * TimeSpanPeriod.TotalMilliseconds);
+                            DateTimeBegin = m_dtServer.AddMilliseconds(-1 * TimeSpanPeriod.TotalMilliseconds / 2);
                             //Установить признак перехода
                             iRes = 1;
                             break;

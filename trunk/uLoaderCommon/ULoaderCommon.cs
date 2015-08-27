@@ -115,8 +115,8 @@ namespace uLoaderCommon
 
             public virtual void Stop ()
             {
-                State = GroupSignals.STATE.STOP;
-                TableRecieved = new DataTable();
+                State = GroupSignals.STATE.STOP;                
+                TableRecieved = null;
             }
 
             private uLoaderCommon.MODE_WORK m_mode;
@@ -436,7 +436,7 @@ namespace uLoaderCommon
                         + @", строк_стало=" + value.Rows.Count
                         + @" ...";
                     Console.WriteLine (msg);
-                    //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
 
                     m_dictGroupSignals[IdGroupSignalsCurrent].TableRecieved = value;
                 }

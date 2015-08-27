@@ -54,8 +54,11 @@ namespace SrcBiyskTMora
                 ////Установить сортировку
                 //m_strQuery += @" ORDER BY DATETIME DESC";
 
-                //Logging.Logg().Debug(@"GroupSignalsBiystTMOra::setQuery() - m_strQuery=" + m_strQuery + @"]..."
-                //        , Logging.INDEX_MESSAGE.NOT_SET);
+                //Logging.Logg().Debug(@"GroupSignalsBiystTMOra::setQuery() - DateTimeBegin=" + DateTimeBeginFormat + @"; DateTimeEndFormat=" + DateTimeEndFormat, Logging.INDEX_MESSAGE.NOT_SET);
+                //Console.WriteLine(@"DateTimeBegin=" + DateTimeBeginFormat + @"; DateTimeEndFormat=" + DateTimeEndFormat);
+
+                //Logging.Logg().Debug(@"GroupSignalsBiystTMOra::setQuery() - m_strQuery=" + m_strQuery + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+                //Console.WriteLine(@"m_strQuery=" + m_strQuery);
             }
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
