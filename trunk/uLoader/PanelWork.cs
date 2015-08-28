@@ -439,6 +439,17 @@ namespace uLoader
                                         }
                                     };
                                     break;
+                                case PanelLoader.KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS:
+                                    state = HHandlerQueue.StatesMachine.SET_GROUP_SIGNALS_PARS;
+                                    arObjToDataHost = new object[] {
+                                        new object[] {
+                                            (int)state
+                                            , indxWork
+                                            , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL]
+                                            , (GROUP_SIGNALS_PARS)pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
+                                        }
+                                    };
+                                    break;
                                 default:
                                     break;
                             }
@@ -486,6 +497,17 @@ namespace uLoader
                                             , indxWork
                                             , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL]
                                             , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
+                                        }
+                                    };
+                                    break;
+                                case PanelLoader.KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS:
+                                    state = HHandlerQueue.StatesMachine.SET_GROUP_SIGNALS_PARS;
+                                    arObjToDataHost = new object[] {
+                                        new object[] {
+                                            (int)state
+                                            , indxWork
+                                            , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL]
+                                            , (GROUP_SIGNALS_PARS)pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
                                         }
                                     };
                                     break;

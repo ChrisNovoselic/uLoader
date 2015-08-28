@@ -43,7 +43,8 @@ namespace uLoader
             , DATA_SRC_GROUP_SIGNALS //Данные группы сигналов (источник)
             , DATA_DEST_GROUP_SIGNALS //Данные группы сигналов (назначение)
             , SET_IDCUR_SOURCE_OF_GROUP //Установить идентификатор текущего источника
-            , SET_TEXT_ADDING //Установить текст "дополнительных" параметров            
+            , SET_TEXT_ADDING //Установить текст "дополнительных" параметров
+            , SET_GROUP_SIGNALS_PARS //Установить параметры группы сигналов в группе источников при утрате фокуса ввода элементом управления (GroupBox) с их значениями
             ,
         }
         /// <summary>
@@ -206,6 +207,7 @@ namespace uLoader
                 case StatesMachine.DATA_DEST_GROUP_SIGNALS:
                 case StatesMachine.SET_IDCUR_SOURCE_OF_GROUP:
                 case StatesMachine.SET_TEXT_ADDING:
+                case StatesMachine.SET_GROUP_SIGNALS_PARS:
                     //Не требуют запроса
                     break;
                 default:
@@ -253,6 +255,7 @@ namespace uLoader
                     break;
                 case StatesMachine.SET_IDCUR_SOURCE_OF_GROUP:
                 case StatesMachine.SET_TEXT_ADDING:
+                case StatesMachine.SET_GROUP_SIGNALS_PARS:
                 case StatesMachine.CLEARVALUES_DEST_GROUP_SIGNALS:
                     //Ответа не требуется
                     break;
@@ -518,6 +521,12 @@ namespace uLoader
 
                         (m_listGroupSources[(int)itemQueue.Pars[0]][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])] as GroupSources).setAdding(((string)itemQueue.Pars[2]).Split(new char[] { FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.PAIR_VAL] }));
                         m_fileINI.UpdateParameter((int)itemQueue.Pars[0], (string)itemQueue.Pars[1], @"ADDING", (string)itemQueue.Pars[2]);
+
+                        iRes = 0;
+                        break;
+                    case StatesMachine.SET_GROUP_SIGNALS_PARS:
+                        error = false;
+                        itemQueue = Peek;
 
                         iRes = 0;
                         break;

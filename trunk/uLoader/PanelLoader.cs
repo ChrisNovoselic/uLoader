@@ -32,12 +32,14 @@ namespace uLoader
                                         , DGV_GROUP_SOURCES, LABEL_DLLNAME_GROUPSOURCES, BUTTON_DLLNAME_GROUPSOURCES, CBX_SOURCE_OF_GROUP, TBX_GROUPSOURCES_ADDING
                                         , DGV_GROUP_SIGNALS
                                         , GROUP_BOX_GROUP_SIGNALS
-                                        , RBUTTON_CUR_DATETIME, TBX_CUR_PERIOD, TBX_CUR_INTERVAL
-                                        , RBUTTON_COSTUMIZE, CALENDAR_COSTUMIZE, TBX_COSTUMIZE_START_TIME, TBX_COSTUMIZE_PERIOD, TBX_COSTUMIZE_INTERVAL, BTN_CLEAR
+                                        , RBUTTON_CUR_DATETIME, MTBX_CUR_PERIOD, TBX_CUR_INTERVAL
+                                        , RBUTTON_COSTUMIZE, CALENDAR_COSTUMIZE, MTBX_COSTUMIZE_START_TIME, MTBX_COSTUMIZE_PERIOD, TBX_COSTUMIZE_INTERVAL, BTN_CLEAR
                                         //, TBX_GROUPSIGNALS_ADDING
                                         , DGV_SIGNALS_OF_GROUP
                                         , COUNT_KEY_CONTROLS
                                         ,};
+
+            enum DGV_GROUP_SIGNALS_COL_INDEX { AUTO_START, SHR_NAME, TURN_ONOFF, COUNT_DGV_GROUP_SIGNALS_COL_INDEX }
 
             public PanelLoader()
                 : base (4, 1)
@@ -174,7 +176,8 @@ namespace uLoader
                 ctrl.Name = KEY_CONTROLS.DGV_GROUP_SIGNALS.ToString ();                
                 (ctrl as DataGridView).Columns.AddRange(
                     new DataGridViewColumn[] {
-                        new DataGridViewTextBoxColumn ()
+                        new DataGridViewCheckBoxColumn ()
+                        , new DataGridViewTextBoxColumn ()
                         , new DataGridViewDisableButtonColumn ()
                     }
                 );
@@ -187,10 +190,13 @@ namespace uLoader
                 (ctrl as DataGridView).SelectionMode = DataGridViewSelectionMode.FullRowSelect;
                 (ctrl as DataGridView).ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
                 (ctrl as DataGridView).RowHeadersVisible = false;
-                (ctrl as DataGridView).Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                (ctrl as DataGridView).Columns[0].HeaderText = @"Группы сигналов";
-                (ctrl as DataGridView).Columns[1].Width = 37;
-                (ctrl as DataGridView).Columns[1].HeaderText = @"Вкл./выкл.";
+                (ctrl as DataGridView).Columns[(int)DGV_GROUP_SIGNALS_COL_INDEX.AUTO_START].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                (ctrl as DataGridView).Columns[(int)DGV_GROUP_SIGNALS_COL_INDEX.AUTO_START].HeaderText = @"АвтоСт.";
+                //(ctrl as DataGridView).Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                (ctrl as DataGridView).Columns[(int)DGV_GROUP_SIGNALS_COL_INDEX.SHR_NAME].Width = 107;
+                (ctrl as DataGridView).Columns[(int)DGV_GROUP_SIGNALS_COL_INDEX.SHR_NAME].HeaderText = @"Группы сигналов";
+                (ctrl as DataGridView).Columns[(int)DGV_GROUP_SIGNALS_COL_INDEX.TURN_ONOFF].Width = 37;
+                (ctrl as DataGridView).Columns[(int)DGV_GROUP_SIGNALS_COL_INDEX.TURN_ONOFF].HeaderText = @"Вкл./выкл.";
                 //(ctrl as DataGridView).Columns[1].ReadOnly = true;
                 //(ctrl as DataGridView).ReadOnly = true;
                 (ctrl as DataGridView).RowsAdded += new DataGridViewRowsAddedEventHandler(panelLoader_WorkItemRowsAdded);
@@ -243,10 +249,12 @@ namespace uLoader
 
             private void panelLoader_WorkItemRowsAdded (object obj, EventArgs ev)
             {
-                int cnt = (obj as DataGridView).Rows.Count;
-                (obj as DataGridView).Rows[cnt - 1].Cells [1].Value = @"?";
-                if ((obj as DataGridView).Rows[cnt - 1].Cells [1].GetType () == typeof (DataGridViewDisableButtonCell))
-                    ((DataGridViewDisableButtonCell)(obj as DataGridView).Rows[cnt - 1].Cells [1]).Enabled = false;
+                int cnt = (obj as DataGridView).Rows.Count
+                    , indxCol = -1;
+                indxCol = (obj as DataGridView).ColumnCount == (int)DGV_GROUP_SIGNALS_COL_INDEX.COUNT_DGV_GROUP_SIGNALS_COL_INDEX ? (int)DGV_GROUP_SIGNALS_COL_INDEX.TURN_ONOFF : (int)DGV_GROUP_SIGNALS_COL_INDEX.TURN_ONOFF - 1;
+                (obj as DataGridView).Rows[cnt - 1].Cells[indxCol].Value = @"?";
+                if ((obj as DataGridView).Rows[cnt - 1].Cells[indxCol].GetType() == typeof(DataGridViewDisableButtonCell))
+                    ((DataGridViewDisableButtonCell)(obj as DataGridView).Rows[cnt - 1].Cells[indxCol]).Enabled = false;
                 else
                     ;
             }            
@@ -337,9 +345,9 @@ namespace uLoader
             /// <param name="ev">Аргумент для сопровождения события</param>
             private void panelLoader_WorkItemCellClick(object obj, DataGridViewCellEventArgs ev)
             {
-                //int indx...
+                int indxCol = (obj as DataGridView).ColumnCount == (int)DGV_GROUP_SIGNALS_COL_INDEX.COUNT_DGV_GROUP_SIGNALS_COL_INDEX ? (int)DGV_GROUP_SIGNALS_COL_INDEX.TURN_ONOFF : (int)DGV_GROUP_SIGNALS_COL_INDEX.TURN_ONOFF - 1;
                 //Проверить индекс ячейки (кнопки только в 1-ом столбце)
-                if (ev.ColumnIndex == 1)
+                if (ev.ColumnIndex == indxCol)
                 {
                     //Проверить способность ячейки изменять свое состояние
                     if (((obj as DataGridView).Rows[ev.RowIndex].Cells[ev.ColumnIndex].GetType () == typeof (DataGridViewDisableButtonCell))
@@ -403,7 +411,11 @@ namespace uLoader
                 else
                     ; //Нет выбранных строк
             }
-
+            /// <summary>
+            /// Обработчик события - изменение значения
+            /// </summary>
+            /// <param name="obj">Объект, инициировавший событие</param>
+            /// <param name="ev">Аргумент при возникновении события</param>
             private void panelLoader_SourceOfGroupSelectedValueChanged(object obj, EventArgs ev)
             {
                 //Подготовить параметры для передачи "родительской" панели
@@ -421,6 +433,61 @@ namespace uLoader
                     DataAskedHost(arPreparePars);
                 else
                     ;
+            }
+            /// <summary>
+            /// Преобразовать значение 'MaskedTextBox'
+            /// </summary>
+            /// <param name="key">Идентификатор элемента управления со значением для преобразования</param>
+            /// <returns>Преобразованное значение</returns>
+            private TimeSpan fromMaskedTextBox (KEY_CONTROLS key)
+            {
+                TimeSpan tsRes = TimeSpan.Zero;
+                string []vals;
+
+                vals = (GetWorkingItem(key) as MaskedTextBox).Text.Split (new char [] {':'});
+                tsRes = TimeSpan.FromMinutes (Int32.Parse (vals[0]) * 60 + Int32.Parse(vals[1]));
+
+                return tsRes;
+            }
+            /// <summary>
+            /// Обработчик события - потеря фокусса ввода элемента управления 'KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS'
+            /// </summary>
+            /// <param name="obj">Объект, инициировавший событие</param>
+            /// <param name="ev">Аргумент при возникновении события</param>
+            protected void panelLoader_grpBoxGroupSignalsLeave (object obj, EventArgs ev)
+            {
+                object[] arPreparePars = new object[(int)INDEX_PREPARE_PARS.COUNT_INDEX_PREPARE_PARS];
+                GROUP_SIGNALS_PARS objDepenceded;
+                if (this is PanelLoaderSource)
+                {
+                    objDepenceded = new GROUP_SIGNALS_SRC_PARS ();
+
+                    (objDepenceded as GROUP_SIGNALS_SRC_PARS).m_mode = (GetWorkingItem (KEY_CONTROLS.RBUTTON_CUR_DATETIME) as RadioButton).Checked == true ? MODE_WORK.CUR_INTERVAL :
+                        (GetWorkingItem (KEY_CONTROLS.RBUTTON_COSTUMIZE) as RadioButton).Checked == true ? MODE_WORK.COSTUMIZE : MODE_WORK.UNKNOWN;
+
+                    objDepenceded.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod = fromMaskedTextBox(KEY_CONTROLS.MTBX_CUR_PERIOD);
+                    objDepenceded.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval = Int32.Parse((GetWorkingItem(KEY_CONTROLS.TBX_CUR_INTERVAL) as TextBox).Text);
+
+                    objDepenceded.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_iInterval = Int32.Parse((GetWorkingItem(KEY_CONTROLS.TBX_COSTUMIZE_INTERVAL) as TextBox).Text);
+                }
+                else
+                    if (this is PanelLoaderDest)
+                        objDepenceded = new GROUP_SIGNALS_PARS ();
+                    else
+                        return ;
+
+                objDepenceded.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart = (GetWorkingItem (KEY_CONTROLS.CALENDAR_COSTUMIZE) as DateTimePicker).Value.Date;
+                objDepenceded.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart += fromMaskedTextBox(KEY_CONTROLS.MTBX_COSTUMIZE_START_TIME);
+                objDepenceded.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriod = fromMaskedTextBox(KEY_CONTROLS.MTBX_COSTUMIZE_PERIOD);                
+
+                arPreparePars [(int)INDEX_PREPARE_PARS.KEY_OBJ] = KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS; // обязательно для switch
+                arPreparePars [(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] = getGroupId (KEY_CONTROLS.DGV_GROUP_SIGNALS); //
+                arPreparePars[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] = objDepenceded; //
+
+                arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = this;
+                arPreparePars[(int)INDEX_PREPARE_PARS.KEY_EVT] = KEY_EVENT.SELECTION_CHANGED;
+
+                DataAskedHost(arPreparePars);
             }
 
             protected string getGroupId (KEY_CONTROLS key)
@@ -520,7 +587,8 @@ namespace uLoader
                 for (j = 0; j < cnt; j ++)
                 {
                     m_dictGroupIds[key][j] = grpSrc.m_listGroupSignalsPars[j].m_strId;
-                    (workItem as DataGridView).Rows.Add(new object[] { grpSrc.m_listGroupSignalsPars [j].m_strShrName });
+                    //Вставить значения с индексами: (int)DGV_GROUP_SIGNALS_COL_INDEX.AUTO_START, (int)DGV_GROUP_SIGNALS_COL_INDEX.SHR_NAME
+                    (workItem as DataGridView).Rows.Add(new object[] { grpSrc.m_listGroupSignalsPars [j].m_iAutoStart == 1, grpSrc.m_listGroupSignalsPars [j].m_strShrName });
                 }
                 //Список источников группы источников                
                 key = PanelLoader.KEY_CONTROLS.CBX_SOURCE_OF_GROUP;
@@ -610,9 +678,9 @@ namespace uLoader
                     if (this is PanelLoaderSource)
                     {
                         //??? Отобразить период опроса для режима 'CUR_INTERVAL'
-                        key = PanelLoader.KEY_CONTROLS.TBX_CUR_PERIOD;
+                        key = PanelLoader.KEY_CONTROLS.MTBX_CUR_PERIOD;
                         workItem = GetWorkingItem(key);
-                        (workItem as TextBox).Text = grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.Hours.ToString(@"00")
+                        (workItem as MaskedTextBox).Text = grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.Hours.ToString(@"00")
                              + @":" + grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.Minutes.ToString (@"00")
                              //+ @":" + grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.Seconds
                             ;
@@ -631,16 +699,16 @@ namespace uLoader
                     (workItem as DateTimePicker).Value = grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart; //DateTime.Now;
 
                     //Отобразить нач./время опроса для режима 'COSTUMIZE'
-                    key = PanelLoader.KEY_CONTROLS.TBX_COSTUMIZE_START_TIME;
+                    key = PanelLoader.KEY_CONTROLS.MTBX_COSTUMIZE_START_TIME;
                     workItem = GetWorkingItem(key);
-                    (workItem as TextBox).Text = grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.Hour.ToString(@"00")
+                    (workItem as MaskedTextBox).Text = grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.Hour.ToString(@"00")
                         + @":" + grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.Minute.ToString(@"00")
                         ;
 
                     //Отобразить период опроса для режима 'COSTUMIZE'
-                    key = PanelLoader.KEY_CONTROLS.TBX_COSTUMIZE_PERIOD;
+                    key = PanelLoader.KEY_CONTROLS.MTBX_COSTUMIZE_PERIOD;
                     workItem = GetWorkingItem(key);
-                    (workItem as TextBox).Text = grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriod.Hours.ToString(@"00")
+                    (workItem as MaskedTextBox).Text = grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriod.Hours.ToString(@"00")
                         + @":" + grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriod.Minutes.ToString(@"00")
                         ;
 
@@ -662,8 +730,10 @@ namespace uLoader
             private bool updateBtnCell (Control ctrl, int indx, GroupSources.STATE state)
             {
                 bool bRes = false;
+                int indxCell = -1;
                 //Получить объект "кнопка"
-                DataGridViewDisableButtonCell btnCell = ((ctrl as DataGridView).Rows[indx].Cells[1] as DataGridViewDisableButtonCell); //Ячейка (кнопка) - состояние объекта
+                indxCell = (ctrl as DataGridView).ColumnCount == (int)DGV_GROUP_SIGNALS_COL_INDEX.COUNT_DGV_GROUP_SIGNALS_COL_INDEX ? (int)DGV_GROUP_SIGNALS_COL_INDEX.TURN_ONOFF : (int)DGV_GROUP_SIGNALS_COL_INDEX.TURN_ONOFF - 1; 
+                DataGridViewDisableButtonCell btnCell = ((ctrl as DataGridView).Rows[indx].Cells[indxCell] as DataGridViewDisableButtonCell); //Ячейка (кнопка) - состояние объекта
                 string btnCellText = string.Empty; //Текст для кнопки
                 //Изменить доступность кнопки
                 btnCell.Enabled = !(state == GroupSources.STATE.UNAVAILABLE);
@@ -965,6 +1035,7 @@ namespace uLoader
                 (ctrl as GroupBox).Text = @"Режим опроса";
                 ctrl.Enabled = false;
                 ctrl.Dock = DockStyle.Fill;
+                ctrl.Leave += new EventHandler(panelLoader_grpBoxGroupSignalsLeave);
                 panelColumns.Controls.Add(ctrl, 0, panelColumns.GetRow(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SIGNALS)) + panelColumns.GetRowSpan(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SIGNALS)));
                 panelColumns.SetColumnSpan(ctrl, 1); panelColumns.SetRowSpan(ctrl, panelColumns.RowCount - panelColumns.GetRowSpan(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SIGNALS)));
                 //Панель для ГроупБокса
@@ -987,23 +1058,25 @@ namespace uLoader
                 ctrl.Anchor = ((AnchorStyles)(AnchorStyles.Bottom | AnchorStyles.Left));
                 panelGroupBox.Controls.Add(ctrl, 0, 1);
                 panelGroupBox.SetColumnSpan(ctrl, 6); panelGroupBox.SetRowSpan(ctrl, 1);
-                //TextBox изменения интервала
-                ctrl = new TextBox();
-                ctrl.Name = KEY_CONTROLS.TBX_CUR_PERIOD.ToString();
+                //TextBox изменения периода
+                ctrl = new MaskedTextBox();
+                ctrl.Name = KEY_CONTROLS.MTBX_CUR_PERIOD.ToString();
                 ctrl.Dock = DockStyle.Bottom;
+                (ctrl as MaskedTextBox).Mask = @"00:00";
                 panelGroupBox.Controls.Add(ctrl, 6, 1);
                 panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
-                //Описание для периода
+                //Описание для интервала
                 ctrl = new Label();
-                (ctrl as Label).Text = @"Интервал (ЧЧ:ММ)";
+                (ctrl as Label).Text = @"Интервал (мсек)";
                 //ctrl.Dock = DockStyle.Bottom;
                 ctrl.Anchor = ((AnchorStyles)(AnchorStyles.Bottom | AnchorStyles.Left));
                 panelGroupBox.Controls.Add(ctrl, 0, 2);
                 panelGroupBox.SetColumnSpan(ctrl, 6); panelGroupBox.SetRowSpan(ctrl, 1);
                 //TextBox изменения интервала
-                ctrl = new TextBox();
+                ctrl = new /*Masked*/TextBox();
                 ctrl.Name = KEY_CONTROLS.TBX_CUR_INTERVAL.ToString();
                 ctrl.Dock = DockStyle.Bottom;
+                //(ctrl as MaskedTextBox).Mask = @"00:00";
                 panelGroupBox.Controls.Add(ctrl, 6, 2);
                 panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Выборочно
@@ -1030,9 +1103,10 @@ namespace uLoader
                 panelGroupBox.Controls.Add(ctrl, 0, 5);
                 panelGroupBox.SetColumnSpan(ctrl, 6); panelGroupBox.SetRowSpan(ctrl, 1);                
                 //Начало периода - значение
-                ctrl = new TextBox();
-                ctrl.Name = KEY_CONTROLS.TBX_COSTUMIZE_START_TIME.ToString();
+                ctrl = new MaskedTextBox();
+                ctrl.Name = KEY_CONTROLS.MTBX_COSTUMIZE_START_TIME.ToString();
                 ctrl.Dock = DockStyle.Fill;
+                (ctrl as MaskedTextBox).Mask = @"00:00";
                 panelGroupBox.Controls.Add(ctrl, 6, 5);
                 panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Период
@@ -1044,23 +1118,25 @@ namespace uLoader
                 panelGroupBox.Controls.Add(ctrl, 0, 6);
                 panelGroupBox.SetColumnSpan(ctrl, 6); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Период - значение
-                ctrl = new TextBox();
-                ctrl.Name = KEY_CONTROLS.TBX_COSTUMIZE_PERIOD.ToString();
+                ctrl = new MaskedTextBox();
+                ctrl.Name = KEY_CONTROLS.MTBX_COSTUMIZE_PERIOD.ToString();
                 ctrl.Dock = DockStyle.Fill;
+                (ctrl as MaskedTextBox).Mask = @"00:00";
                 panelGroupBox.Controls.Add(ctrl, 6, 6);
                 panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Интервал
                 //Интервал - описание
                 ctrl = new Label();
-                (ctrl as Label).Text = @"Интервал (ЧЧ:ММ)";
+                (ctrl as Label).Text = @"Интервал (сек)";
                 //ctrl.Dock = DockStyle.Bottom;
                 ctrl.Anchor = ((AnchorStyles)(AnchorStyles.Bottom | AnchorStyles.Left));
                 panelGroupBox.Controls.Add(ctrl, 0, 7);
                 panelGroupBox.SetColumnSpan(ctrl, 6); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Интервал - значение
-                ctrl = new TextBox();
+                ctrl = new /*Masked*/TextBox();
                 ctrl.Name = KEY_CONTROLS.TBX_COSTUMIZE_INTERVAL.ToString();
                 ctrl.Dock = DockStyle.Fill;
+                //(ctrl as MaskedTextBox).Mask = @"00:00";
                 panelGroupBox.Controls.Add(ctrl, 6, 7);
                 panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
 
@@ -1098,16 +1174,16 @@ namespace uLoader
                     //    else
                     //        ;
 
-                    key = KEY_CONTROLS.TBX_CUR_PERIOD;
+                    key = KEY_CONTROLS.MTBX_CUR_PERIOD;
                     Controls.Find(key.ToString(), true)[0].Enabled = !bCostumizeEnabled;
                     key = KEY_CONTROLS.TBX_CUR_INTERVAL;
                     Controls.Find(key.ToString(), true)[0].Enabled = !bCostumizeEnabled;
 
                     key = KEY_CONTROLS.CALENDAR_COSTUMIZE;
                     Controls.Find(key.ToString(), true)[0].Enabled = bCostumizeEnabled;
-                    key = KEY_CONTROLS.TBX_COSTUMIZE_START_TIME;
+                    key = KEY_CONTROLS.MTBX_COSTUMIZE_START_TIME;
                     Controls.Find(key.ToString(), true)[0].Enabled = bCostumizeEnabled;
-                    key = KEY_CONTROLS.TBX_COSTUMIZE_PERIOD;
+                    key = KEY_CONTROLS.MTBX_COSTUMIZE_PERIOD;
                     Controls.Find(key.ToString(), true)[0].Enabled = bCostumizeEnabled;
                     key = KEY_CONTROLS.TBX_COSTUMIZE_INTERVAL;
                     Controls.Find(key.ToString(), true)[0].Enabled = bCostumizeEnabled;
@@ -1185,6 +1261,7 @@ namespace uLoader
                 (ctrl as GroupBox).Text = @"Удалить значения";
                 ctrl.Enabled = false;
                 ctrl.Dock = DockStyle.Fill;
+                ctrl.Leave += new EventHandler(panelLoader_grpBoxGroupSignalsLeave);
                 panelColumns.Controls.Add(ctrl, 0, 8);
                 panelColumns.SetColumnSpan(ctrl, 1); panelColumns.SetRowSpan(ctrl, 8);
                 //Панель для ГроупБокса
@@ -1206,9 +1283,10 @@ namespace uLoader
                 panelGroupBox.Controls.Add(ctrl, 0, 1);
                 panelGroupBox.SetColumnSpan(ctrl, 6); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Начало периода - значение
-                ctrl = new TextBox();
-                ctrl.Name = KEY_CONTROLS.TBX_COSTUMIZE_START_TIME.ToString();
+                ctrl = new MaskedTextBox();
+                ctrl.Name = KEY_CONTROLS.MTBX_COSTUMIZE_START_TIME.ToString();
                 ctrl.Dock = DockStyle.Fill;
+                (ctrl as MaskedTextBox).Mask = @"00:00";
                 panelGroupBox.Controls.Add(ctrl, 6, 1);
                 panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Период
@@ -1220,9 +1298,10 @@ namespace uLoader
                 panelGroupBox.Controls.Add(ctrl, 0, 2);
                 panelGroupBox.SetColumnSpan(ctrl, 6); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Период - значение
-                ctrl = new TextBox();
-                ctrl.Name = KEY_CONTROLS.TBX_COSTUMIZE_PERIOD.ToString();
+                ctrl = new MaskedTextBox();
+                ctrl.Name = KEY_CONTROLS.MTBX_COSTUMIZE_PERIOD.ToString();
                 ctrl.Dock = DockStyle.Fill;
+                (ctrl as MaskedTextBox).Mask = @"00:00";
                 panelGroupBox.Controls.Add(ctrl, 6, 2);
                 panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Кнопка - выполнить
@@ -1297,8 +1376,8 @@ namespace uLoader
                 arPreparePars[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] = new object[] { getGroupId(KEY_CONTROLS.DGV_GROUP_SOURCES), getGroupId(KEY_CONTROLS.DGV_GROUP_SIGNALS) };
                 arPreparePars[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] = new object [] {
                     (GetWorkingItem(KEY_CONTROLS.CALENDAR_COSTUMIZE) as DateTimePicker).Value.Date
-                    //+ KEY_CONTROLS.TBX_COSTUMIZE_START_TIME
-                    //+ KEY_CONTROLS.TBX_COSTUMIZE_PERIOD
+                    //+ KEY_CONTROLS.MTBX_COSTUMIZE_START_TIME
+                    //+ KEY_CONTROLS.MTBX_COSTUMIZE_PERIOD
                 };                
 
                 arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = this;
