@@ -476,12 +476,16 @@ namespace uLoader
                     else
                         return ;
 
+                objDepenceded.m_iAutoStart =((bool)(((GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView).SelectedRows[0].Cells[(int)DGV_GROUP_SIGNALS_COL_INDEX.AUTO_START]).Value) == true) ? 1 : 0;
+
                 objDepenceded.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart = (GetWorkingItem (KEY_CONTROLS.CALENDAR_COSTUMIZE) as DateTimePicker).Value.Date;
                 objDepenceded.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart += fromMaskedTextBox(KEY_CONTROLS.MTBX_COSTUMIZE_START_TIME);
                 objDepenceded.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriod = fromMaskedTextBox(KEY_CONTROLS.MTBX_COSTUMIZE_PERIOD);                
 
                 arPreparePars [(int)INDEX_PREPARE_PARS.KEY_OBJ] = KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS; // обязательно для switch
-                arPreparePars [(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] = getGroupId (KEY_CONTROLS.DGV_GROUP_SIGNALS); //
+                arPreparePars[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] = new string [2]; //2 идентификатора (GroupSources + GroupSignals)
+                (arPreparePars[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] as string[])[0] = getGroupId(KEY_CONTROLS.DGV_GROUP_SOURCES); //
+                (arPreparePars [(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] as string [])[1] = getGroupId (KEY_CONTROLS.DGV_GROUP_SIGNALS); //
                 arPreparePars[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] = objDepenceded; //
 
                 arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = this;

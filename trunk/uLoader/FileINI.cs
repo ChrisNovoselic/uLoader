@@ -233,7 +233,7 @@ namespace uLoader
 
                                 parsGrpSgnls = Activator.CreateInstance(typeGrpSgnls) as GROUP_SIGNALS_PARS; //new GROUP_SIGNALS_PARS ();
                                 parsGrpSgnls.m_strId = vals[pars.IndexOf(@"ID")]; //ID
-                                
+
                                 if (vals.Length == pars.Count)
                                 {
                                     parsGrpSgnls.m_iAutoStart = Int32.Parse(vals[pars.IndexOf(@"AUTO_START")]); //AUTO_START
@@ -292,7 +292,7 @@ namespace uLoader
                     //if (typeGroup == INDEX_TYPE_GROUP.SRC)
                     if (itemSrc is GROUP_SRC)
                     {//Только для группы источников
-                        (itemSrc as GROUP_SRC).setAdding(GetSecValueOfKey(secGroup, @"ADDING").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]));
+                        (itemSrc as GROUP_SRC).SetAdding(GetSecValueOfKey(secGroup, @"ADDING").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]));
                     }
                     else
                         ;
@@ -797,7 +797,8 @@ namespace uLoader
                 Logging.Logg().Debug(@"FileINI::UpdateParameter (ID=" + strIdGroup + @", par=" + par + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 if (par.Equals (@"SCUR") == true)
-                {
+                {//Установить индекс тукущего источника данных
+                    //???Какова очередность внесения изменений (объект - файл, файл - объект)
                     m_arListGroupValues[(int)type].m_listGroupSrc[GetIDIndex(strIdGroup)].m_IDCurrentConnSett = val;
                     SetSecValueOfKey(SEC_SRC_TYPES[(int)type] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
                         , par
@@ -806,15 +807,88 @@ namespace uLoader
                 else
                     if (par.Equals (@"ADDING") == true)
                     {
-                        //???m_arListGroupValues[type].m_listGroupSrc[GetIDIndex(strIdGroup)].m_dictAdding =
+                        //???Какова очередность внесения изменений (объект - файл, файл - объект)
+                        GROUP_SRC grpSrc = m_arListGroupValues[(int)type].m_listGroupSrc[GetIDIndex(strIdGroup)];
+                        grpSrc.SetAdding(val.Split(new char[] { s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL] }));
                         SetSecValueOfKey(SEC_SRC_TYPES[(int)type] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
                             , par
-                            , val);
-                        GROUP_SRC grpSrc = m_arListGroupValues[(int)type].m_listGroupSrc[GetIDIndex(strIdGroup)];
-                        grpSrc.setAdding(val.Split(new char[] { s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL] }));
+                            , val);                        
                     }
                     else
-                        ;
+                    {
+                        int indx = GetIDIndex (par);
+                        string mask = string.Empty;
+                        //Проверить является параметр индексированным (источник, группа сигналов)
+                        if (! (indx < 0))
+                        {//Обновляемый параметр - индексированный
+                            //???Какова очередность внесения изменений (объект - файл, файл - объект)
+                            GROUP_SRC grpSrc = m_arListGroupValues[(int)type].m_listGroupSrc[GetIDIndex(strIdGroup)];                            
+                            grpSrc.SetGroupSignalsPars (par, val.Split(new char[] { s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL] }));
+                            SetSecValueOfKey(SEC_SRC_TYPES[(int)type] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
+                                , par
+                                , val);
+                        }
+                        else
+                            ;
+                    }
+            }
+
+            private string makeValueGroupSignalsPars(int type, string strIdGroup, int indxGrpSgnls, GROUP_SIGNALS_PARS parValues)
+            {
+                string strRes = string.Empty;
+                List <string> listParValues;
+                int indxPar = -1;
+
+                //Получить ниаменования параметров для групп сигналов
+                List<string> pars = GetSecValueOfKey(SEC_SRC_TYPES[(int)type] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
+                    , KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + @"PARS").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]).ToList<string>();
+                listParValues = GetSecValueOfKey(SEC_SRC_TYPES[(int)type] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
+                    , KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + indxGrpSgnls).Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]).ToList<string>(); ;
+
+                indxPar = 0;
+                foreach (string par in pars)
+                {
+                    switch (par)
+                    {
+                        case @"ID": //Не устанавливается с помощью GUI
+                            break;
+                        case @"AUTO_START":
+                            listParValues[indxPar] = (parValues.m_iAutoStart == 1).ToString ();
+                            break;
+                        case @"TOOLS_ENABLED": //Не устанавливается с помощью GUI
+                            break;
+                        case @"CUR_INTERVAL_PERIOD":
+                            if (type == (int)INDEX_SRC.SOURCE)
+                                //Только для источника
+                                listParValues[indxPar] = parValues.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.TotalSeconds.ToString ();
+                            else
+                                ;
+                            break;
+                        case @"CUR_INTERVAL_VALUE":
+                            if (type == (int)INDEX_SRC.SOURCE)
+                                //Только для источника
+                                listParValues[indxPar] = parValues.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.TotalMilliseconds.ToString();
+                            else
+                                ;
+                            break;
+                        default:
+                            throw new Exception(@"FormMain.FileINI::getValueGroupSignalsPars () - ...");
+                    }
+
+                    indxPar ++;
+                }
+
+                strRes = string.Join(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL].ToString(), listParValues.ToArray());
+
+                return strRes;
+            }
+
+            public void UpdateParameter(int type, string strIdGroup, int indxGrpSgnls, GROUP_SIGNALS_PARS parValues)
+            {
+                UpdateParameter(type
+                    , strIdGroup
+                    , KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + indxGrpSgnls
+                    , makeValueGroupSignalsPars(type, strIdGroup, indxGrpSgnls, parValues));
             }
         }
     }

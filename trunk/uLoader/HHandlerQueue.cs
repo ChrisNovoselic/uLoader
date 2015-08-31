@@ -519,7 +519,7 @@ namespace uLoader
                         error = false;
                         itemQueue = Peek;
 
-                        (m_listGroupSources[(int)itemQueue.Pars[0]][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])] as GroupSources).setAdding(((string)itemQueue.Pars[2]).Split(new char[] { FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.PAIR_VAL] }));
+                        (m_listGroupSources[(int)itemQueue.Pars[0]][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])] as GroupSources).SetAdding(((string)itemQueue.Pars[2]).Split(new char[] { FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.PAIR_VAL] }));
                         m_fileINI.UpdateParameter((int)itemQueue.Pars[0], (string)itemQueue.Pars[1], @"ADDING", (string)itemQueue.Pars[2]);
 
                         iRes = 0;
@@ -527,6 +527,12 @@ namespace uLoader
                     case StatesMachine.SET_GROUP_SIGNALS_PARS:
                         error = false;
                         itemQueue = Peek;
+
+                        int indxGroupSgnls = -1;
+                        GroupSources grpSrcs = (m_listGroupSources[(int)itemQueue.Pars[0]][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])] as GroupSources);
+                        indxGroupSgnls = grpSrcs.SetGroupSignalsPars((string)itemQueue.Pars[2], itemQueue.Pars[3] as GROUP_SIGNALS_PARS);
+                        //indxGroupSgnls = grpSrcs.getIndexGroupSignalsPars((string)itemQueue.Pars[2]);
+                        m_fileINI.UpdateParameter((int)itemQueue.Pars[0], (string)itemQueue.Pars[1], indxGroupSgnls, itemQueue.Pars[3] as GROUP_SIGNALS_PARS);
 
                         iRes = 0;
                         break;

@@ -445,7 +445,8 @@ namespace uLoader
                                         new object[] {
                                             (int)state
                                             , indxWork
-                                            , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL]
+                                            , (string)(pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL] as string [])[0]
+                                            , (string)(pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL] as string [])[1]
                                             , (GROUP_SIGNALS_PARS)pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
                                         }
                                     };
@@ -506,7 +507,8 @@ namespace uLoader
                                         new object[] {
                                             (int)state
                                             , indxWork
-                                            , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL]
+                                            , (string)(pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL] as string [])[0]
+                                            , (string)(pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL] as string [])[1]
                                             , (GROUP_SIGNALS_PARS)pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
                                         }
                                     };

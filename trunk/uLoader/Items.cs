@@ -227,8 +227,11 @@ namespace uLoader
         /// Словарь для "дополнительных" параметров
         /// </summary>
         public Dictionary<string, string> m_dictAdding;
-
-        public void setAdding(string []vals)
+        /// <summary>
+        /// Установить значения дополнительных параметров для группы источников
+        /// </summary>
+        /// <param name="vals">Дополнительные параметры</param>
+        public void SetAdding(string []vals)
         {
             if (m_dictAdding == null)
                 m_dictAdding = new Dictionary<string, string>();
@@ -242,6 +245,70 @@ namespace uLoader
             else
                 //throw new Exception (@"FileINI::addGroupValues () - ADDING - некорректные разделители...")
                 ;
+        }
+        public int SetGroupSignalsPars (string key, GROUP_SIGNALS_PARS pars)
+        {
+            int iRes = FormMain.FileINI.GetIDIndex (key);
+        }
+        /// <summary>
+        /// Установить новые значения параметров для группы сигналов
+        ///  , возвращает (внутренний) индекс группы сигналов в списке
+        /// </summary>
+        /// <param name="idGroupSgnls">Идентификатор (строковый) группы сигналов</param>
+        /// <param name="pars">Параметры группы сигналов для установки</param>
+        /// <returns>Индекс (внутренний) группы сигналов в списке</returns>
+        public int SetGroupSignalsPars (string idGroupSgnls, GROUP_SIGNALS_PARS pars)
+        {
+            int iRes = getIndexGroupSignalsPars (idGroupSgnls);
+
+            if (pars is GROUP_SIGNALS_SRC_PARS)
+            {
+                MODE_WORK mode =
+                (m_listGroupSignalsPars[iRes] as GROUP_SIGNALS_SRC_PARS).m_mode =
+                    (pars as GROUP_SIGNALS_SRC_PARS).m_mode;
+
+                m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)mode].m_dtStart =
+                    pars.m_arWorkIntervals[(int)mode].m_dtStart;
+                m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)mode].m_tsPeriod =
+                    pars.m_arWorkIntervals[(int)mode].m_tsPeriod;
+
+                if (mode == MODE_WORK.CUR_INTERVAL)
+                    m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)mode].m_iInterval =
+                        pars.m_arWorkIntervals[(int)mode].m_iInterval;
+                else
+                    ;
+            }
+            else
+                if (pars is GROUP_SIGNALS_DEST_PARS)
+                {
+                    m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart = pars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart;
+                    m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriod = pars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriod;
+                }
+                else
+                    ;
+
+            return iRes;
+        }
+        /// <summary>
+        /// Возвращает (внутренний) индекс группы сигналов в списке
+        /// </summary>
+        /// <param name="idGroupSgnls">Идентификатор (строковый) группы сигналов</param>
+        /// <returns>Индекс (внутренний) группы сигналов в списке</returns>
+        private int getIndexGroupSignalsPars (string idGroupSgnls)
+        {
+            int iRes = -1;
+
+            foreach (GROUP_SIGNALS_PARS par in m_listGroupSignalsPars)
+                if (par.m_strId.Equals(idGroupSgnls) == true)
+                {
+                    iRes = m_listGroupSignalsPars.IndexOf (par);
+
+                    break;
+                }
+                else
+                    ;
+
+            return iRes;
         }
                 
         /// <summary>
