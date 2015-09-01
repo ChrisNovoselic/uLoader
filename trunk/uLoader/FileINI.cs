@@ -206,22 +206,11 @@ namespace uLoader
                         //Инициализировать список с параметрами для групп сигналов для группы источников
                         (itemSrc as GROUP_SRC).m_listGroupSignalsPars = null;
                         (itemSrc as GROUP_SRC).m_listGroupSignalsPars = new List <GROUP_SIGNALS_PARS> ();
-                        //Объект с параметрами группы сигналов
-                        GROUP_SIGNALS_PARS parsGrpSgnls;
+                        
                         //Получить ниаменования параметров для групп сигналов
                         List <string> pars = GetSecValueOfKey(secGroup, KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + @"PARS").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]).ToList <string> ();
                         string[] vals;
-                        string key = string.Empty;
-                        //Тип группы сигналов (для источника, для назаначения)
-                        Type typeGrpSgnls = Type.Missing as Type;
-                        if ((!(pars.IndexOf(@"CUR_INTERVAL_PERIOD") < 0))
-                            && (!(pars.IndexOf(@"CUR_INTERVAL_VALUE") < 0)))
-                            typeGrpSgnls = typeof(GROUP_SIGNALS_SRC_PARS);
-                        else
-                            if (!(pars.IndexOf(@"ID_GS") < 0))
-                                typeGrpSgnls = typeof(GROUP_SIGNALS_DEST_PARS);
-                            else
-                                ;
+                        string key = string.Empty;                        
 
                         int j = 0;
                         while (true)
@@ -231,28 +220,20 @@ namespace uLoader
                             {
                                 vals = GetSecValueOfKey(secGroup, key).Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]);
 
-                                parsGrpSgnls = Activator.CreateInstance(typeGrpSgnls) as GROUP_SIGNALS_PARS; //new GROUP_SIGNALS_PARS ();
-                                parsGrpSgnls.m_strId = vals[pars.IndexOf(@"ID")]; //ID
-
                                 if (vals.Length == pars.Count)
                                 {
-                                    parsGrpSgnls.m_iAutoStart = Int32.Parse(vals[pars.IndexOf(@"AUTO_START")]); //AUTO_START
-                                    parsGrpSgnls.m_bToolsEnabled = bool.Parse(vals[pars.IndexOf(@"TOOLS_ENABLED")]); //TOOLS_ENABLED
-                                    if (parsGrpSgnls is GROUP_SIGNALS_SRC_PARS)
-                                    {
-                                        parsGrpSgnls.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod = TimeSpan.FromSeconds(Int32.Parse(vals[pars.IndexOf(@"CUR_INTERVAL_PERIOD")])); //CUR_INTERVAL_PERIOD                                
-                                        parsGrpSgnls.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval = Int32.Parse(vals[pars.IndexOf(@"CUR_INTERVAL_VALUE")]); //CUR_INTERVAL_VALUE
-                                    }
-                                    else
-                                        if (parsGrpSgnls is GROUP_SIGNALS_DEST_PARS)
-                                            (parsGrpSgnls as GROUP_SIGNALS_DEST_PARS).m_idGrpSrcs = vals[pars.IndexOf(@"ID_GS")];
-                                        else
-                                            ;
+                                    //??? каждую итерацию будет определяться тип 'GROUP_SIGNAL_PARS'
+                                    (itemSrc as GROUP_SRC).SetGroupSignalsPars(pars, vals);
                                 }
                                 else
-                                    Logging.Logg().Error(@"FileINI::addGroupValues () - не установлены параметры для [" + secGroup + @", " + key + @"] - ...", Logging.INDEX_MESSAGE.NOT_SET);
-
-                                (itemSrc as GROUP_SRC).m_listGroupSignalsPars.Add(parsGrpSgnls);
+                                {
+                                    string msg = @"FileINI::addGroupValues () - не установлены параметры для [" + secGroup + @", " + key + @"] - ...";
+                                    ////Вариант №1 - аврийно завершить загрузку - работу приложения
+                                    //throw new Exception(msg);
+                                    //Вариант №2 - зафиксировать ошибку - продолжить загрузку
+                                    Logging.Logg().Error(msg, Logging.INDEX_MESSAGE.NOT_SET);
+                                    
+                                }
                             }
                             else
                                 break;
@@ -822,9 +803,13 @@ namespace uLoader
                         if (! (indx < 0))
                         {//Обновляемый параметр - индексированный
                             //???Какова очередность внесения изменений (объект - файл, файл - объект)
-                            GROUP_SRC grpSrc = m_arListGroupValues[(int)type].m_listGroupSrc[GetIDIndex(strIdGroup)];                            
-                            grpSrc.SetGroupSignalsPars (par, val.Split(new char[] { s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL] }));
-                            SetSecValueOfKey(SEC_SRC_TYPES[(int)type] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
+                            GROUP_SRC grpSrc = m_arListGroupValues[(int)type].m_listGroupSrc[GetIDIndex(strIdGroup)];
+                            //Строковый идентификатор раздела (группа источников)
+                            string secGroup = SEC_SRC_TYPES[(int)type] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup;
+                            //Получить ниаменования параметров для групп сигналов
+                            List<string> pars = GetSecValueOfKey(secGroup, KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + @"PARS").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]).ToList<string>();
+                            grpSrc.SetGroupSignalsPars (pars, val.Split(new char[] { s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL] }));
+                            SetSecValueOfKey(secGroup
                                 , par
                                 , val);
                         }
@@ -836,24 +821,36 @@ namespace uLoader
             private string makeValueGroupSignalsPars(int type, string strIdGroup, int indxGrpSgnls, GROUP_SIGNALS_PARS parValues)
             {
                 string strRes = string.Empty;
-                List <string> listParValues;
                 int indxPar = -1;
 
                 //Получить ниаменования параметров для групп сигналов
                 List<string> pars = GetSecValueOfKey(SEC_SRC_TYPES[(int)type] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
-                    , KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + @"PARS").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]).ToList<string>();
-                listParValues = GetSecValueOfKey(SEC_SRC_TYPES[(int)type] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
-                    , KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + indxGrpSgnls).Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]).ToList<string>(); ;
+                        , KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + @"PARS").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]).ToList<string>()
+                    , listParValues = GetSecValueOfKey(SEC_SRC_TYPES[(int)type] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
+                        , KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + indxGrpSgnls).Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]).ToList<string>(); ;
 
                 indxPar = 0;
                 foreach (string par in pars)
                 {
                     switch (par)
                     {
-                        case @"ID": //Не устанавливается с помощью GUI
+                        case @"ID":
+                        case @"ID_GS":
+                            //Не устанавливается с помощью GUI
                             break;
                         case @"AUTO_START":
-                            listParValues[indxPar] = (parValues.m_iAutoStart == 1).ToString ();
+                            ////Вариант №1, 2
+                            //listParValues[indxPar] = parValues.m_iAutoStart.ToString ();
+
+                            //Вариант №3
+                            int iAutoStart = Int32.Parse(listParValues[indxPar]);
+                            if (parValues.m_iAutoStart == 2)
+                                //Признак изменения значения                                
+                                listParValues[indxPar] = ((iAutoStart == 0) ? 1 : 0).ToString();
+                            else
+                                ; //Не изменять
+
+                            Console.WriteLine(@"MainForm.FileINI::makeValueGroupSignalsPars () - iAutoStart=" + listParValues[indxPar] + @"...");
                             break;
                         case @"TOOLS_ENABLED": //Не устанавливается с помощью GUI
                             break;
@@ -867,7 +864,7 @@ namespace uLoader
                         case @"CUR_INTERVAL_VALUE":
                             if (type == (int)INDEX_SRC.SOURCE)
                                 //Только для источника
-                                listParValues[indxPar] = parValues.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.TotalMilliseconds.ToString();
+                                listParValues[indxPar] = parValues.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval.ToString();
                             else
                                 ;
                             break;

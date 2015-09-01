@@ -530,9 +530,9 @@ namespace uLoader
 
                         int indxGroupSgnls = -1;
                         GroupSources grpSrcs = (m_listGroupSources[(int)itemQueue.Pars[0]][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])] as GroupSources);
-                        indxGroupSgnls = grpSrcs.SetGroupSignalsPars((string)itemQueue.Pars[2], itemQueue.Pars[3] as GROUP_SIGNALS_PARS);
+                        indxGroupSgnls = grpSrcs.SetGroupSignalsPars(/*(string)itemQueue.Pars[2],*/ itemQueue.Pars[2] as GROUP_SIGNALS_PARS);
                         //indxGroupSgnls = grpSrcs.getIndexGroupSignalsPars((string)itemQueue.Pars[2]);
-                        m_fileINI.UpdateParameter((int)itemQueue.Pars[0], (string)itemQueue.Pars[1], indxGroupSgnls, itemQueue.Pars[3] as GROUP_SIGNALS_PARS);
+                        m_fileINI.UpdateParameter((int)itemQueue.Pars[0], (string)itemQueue.Pars[1], indxGroupSgnls, itemQueue.Pars[2] as GROUP_SIGNALS_PARS);
 
                         iRes = 0;
                         break;

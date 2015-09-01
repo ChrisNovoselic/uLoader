@@ -246,20 +246,71 @@ namespace uLoader
                 //throw new Exception (@"FileINI::addGroupValues () - ADDING - некорректные разделители...")
                 ;
         }
-        public int SetGroupSignalsPars (string key, GROUP_SIGNALS_PARS pars)
+
+        private static Type getTypeGroupSignals(List<string> pars)
         {
-            int iRes = FormMain.FileINI.GetIDIndex (key);
+            Type typeRes = Type.Missing as Type;
+            if ((!(pars.IndexOf(@"CUR_INTERVAL_PERIOD") < 0))
+                && (!(pars.IndexOf(@"CUR_INTERVAL_VALUE") < 0)))
+                typeRes = typeof(GROUP_SIGNALS_SRC_PARS);
+            else
+                if (!(pars.IndexOf(@"ID_GS") < 0))
+                    typeRes = typeof(GROUP_SIGNALS_DEST_PARS);
+                else
+                    ;
+
+            return typeRes;
+        }
+
+        public int SetGroupSignalsPars (List <string> pars, string []vals)
+        {
+            int iRes = -1;
+            //Объект с параметрами группы сигналов
+            GROUP_SIGNALS_PARS item;
+            //Строковый идентификатор группы сигналов
+            string strId = vals[pars.IndexOf(@"ID")];
+            //Тип группы сигналов (для источника, для назаначения)
+            Type typeGrpSgnls = Type.Missing as Type;
+
+            iRes = getIndexGroupSignalsPars (strId);
+
+            if (iRes < 0)
+            {
+                typeGrpSgnls = getTypeGroupSignals(pars);
+                item = Activator.CreateInstance(typeGrpSgnls) as GROUP_SIGNALS_PARS; //new GROUP_SIGNALS_PARS ();
+                m_listGroupSignalsPars.Add(item);
+                iRes = m_listGroupSignalsPars.Count - 1;
+            }
+            else
+                item = m_listGroupSignalsPars[iRes];            
+
+            item.m_strId = strId; //ID
+
+            item.m_iAutoStart = Int32.Parse(vals[pars.IndexOf(@"AUTO_START")]); //AUTO_START
+            item.m_bToolsEnabled = bool.Parse(vals[pars.IndexOf(@"TOOLS_ENABLED")]); //TOOLS_ENABLED
+            if (item is GROUP_SIGNALS_SRC_PARS)
+            {
+                item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod = TimeSpan.FromSeconds(Int32.Parse(vals[pars.IndexOf(@"CUR_INTERVAL_PERIOD")])); //CUR_INTERVAL_PERIOD                                
+                item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval = Int32.Parse(vals[pars.IndexOf(@"CUR_INTERVAL_VALUE")]); //CUR_INTERVAL_VALUE
+            }
+            else
+                if (item is GROUP_SIGNALS_DEST_PARS)
+                    (item as GROUP_SIGNALS_DEST_PARS).m_idGrpSrcs = vals[pars.IndexOf(@"ID_GS")];
+                else
+                    ;
+
+            return iRes;
         }
         /// <summary>
-        /// Установить новые значения параметров для группы сигналов
-        ///  , возвращает (внутренний) индекс группы сигналов в списке
+        /// Установить новые значения параметров для СУЩЕСТВУЮЩей группы сигналов
+        ///  в контексте списка объектов выполнения, возвращает (внутренний) индекс группы сигналов в списке
         /// </summary>
         /// <param name="idGroupSgnls">Идентификатор (строковый) группы сигналов</param>
         /// <param name="pars">Параметры группы сигналов для установки</param>
         /// <returns>Индекс (внутренний) группы сигналов в списке</returns>
-        public int SetGroupSignalsPars (string idGroupSgnls, GROUP_SIGNALS_PARS pars)
+        public int SetGroupSignalsPars (/*string idGroupSgnls,*/ GROUP_SIGNALS_PARS pars)
         {
-            int iRes = getIndexGroupSignalsPars (idGroupSgnls);
+            int iRes = getIndexGroupSignalsPars (pars.m_strId/*idGroupSgnls*/);
 
             if (pars is GROUP_SIGNALS_SRC_PARS)
             {
@@ -272,11 +323,10 @@ namespace uLoader
                 m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)mode].m_tsPeriod =
                     pars.m_arWorkIntervals[(int)mode].m_tsPeriod;
 
-                if (mode == MODE_WORK.CUR_INTERVAL)
+                //if (mode == MODE_WORK.CUR_INTERVAL)
                     m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)mode].m_iInterval =
                         pars.m_arWorkIntervals[(int)mode].m_iInterval;
-                else
-                    ;
+                //else ;
             }
             else
                 if (pars is GROUP_SIGNALS_DEST_PARS)
@@ -607,7 +657,7 @@ namespace uLoader
             int i = 0;
             foreach (GroupSignals grpSgnls in m_listGroupSignals)
             {
-                arRes[i] = new object [] { grpSgnls.State, m_listGroupSignalsPars[i].m_bToolsEnabled };
+                arRes[i] = new object[] { grpSgnls.State, m_listGroupSignalsPars[i].m_bToolsEnabled, m_listGroupSignalsPars[i].m_iAutoStart };
 
                 i ++;
             }

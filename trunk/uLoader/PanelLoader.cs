@@ -284,8 +284,47 @@ namespace uLoader
                 }
 
                 return keyRes;
-            }            
+            }
             
+            private object[] getPrepareGroupSignalChangedPars(DataGridView obj, int indxRow)
+            {
+                object[] arObjRes = new object[(int)INDEX_PREPARE_PARS.COUNT_INDEX_PREPARE_PARS];
+
+                GROUP_SIGNALS_PARS objDepenceded;
+                if (this is PanelLoaderSource)
+                {
+                    objDepenceded = new GROUP_SIGNALS_SRC_PARS();
+
+                    (objDepenceded as GROUP_SIGNALS_SRC_PARS).m_mode = (GetWorkingItem(KEY_CONTROLS.RBUTTON_CUR_DATETIME) as RadioButton).Checked == true ? MODE_WORK.CUR_INTERVAL :
+                        (GetWorkingItem(KEY_CONTROLS.RBUTTON_COSTUMIZE) as RadioButton).Checked == true ? MODE_WORK.COSTUMIZE : MODE_WORK.UNKNOWN;
+
+                    objDepenceded.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod = fromMaskedTextBox(KEY_CONTROLS.MTBX_CUR_PERIOD);
+                    objDepenceded.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval = Int32.Parse((GetWorkingItem(KEY_CONTROLS.TBX_CUR_INTERVAL) as TextBox).Text);
+
+                    objDepenceded.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_iInterval = Int32.Parse((GetWorkingItem(KEY_CONTROLS.TBX_COSTUMIZE_INTERVAL) as TextBox).Text);
+                }
+                else
+                    if (this is PanelLoaderDest)
+                        objDepenceded = new GROUP_SIGNALS_DEST_PARS();
+                    else
+                        throw new Exception(@"PanelLoader::getPrepareGroupSignalChangedPars () - неизвестный тип панели ...");
+
+                objDepenceded.m_iAutoStart = ((bool)((obj.Rows[indxRow].Cells[(int)DGV_GROUP_SIGNALS_COL_INDEX.AUTO_START]).Value) == true) ? 1 : 0;
+
+                objDepenceded.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart = (GetWorkingItem(KEY_CONTROLS.CALENDAR_COSTUMIZE) as DateTimePicker).Value.Date;
+                objDepenceded.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart += fromMaskedTextBox(KEY_CONTROLS.MTBX_COSTUMIZE_START_TIME);
+                objDepenceded.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriod = fromMaskedTextBox(KEY_CONTROLS.MTBX_COSTUMIZE_PERIOD);
+
+                arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJ] = KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS; // обязательно для switch
+                arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] = getGroupId(KEY_CONTROLS.DGV_GROUP_SOURCES);
+                objDepenceded.m_strId = getGroupId(KEY_CONTROLS.DGV_GROUP_SIGNALS); //Уточнить идентификатор для группы сигналов
+                arObjRes[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] = objDepenceded; //
+
+                arObjRes[(int)INDEX_PREPARE_PARS.OBJ] = this;
+                arObjRes[(int)INDEX_PREPARE_PARS.KEY_EVT] = KEY_EVENT.SELECTION_CHANGED;
+
+                return arObjRes;
+            }
             /// <summary>
             /// Подготовить параметры для передачи "родительской" панели
             ///  для последующего на их основе формирования события
@@ -294,7 +333,7 @@ namespace uLoader
             /// <param name="obj">Объект инициировавший событие</param>
             /// <param name="indxRow">индекс "выделенной" строки объекта, инициировавшего событие</param>
             /// <returns>Массив параметров</returns>
-            private object[] getPreparePars(DataGridView obj, int indxRow)
+            private object[] getPrepareCommonPars(DataGridView obj, int indxRow)
             {
                 //0 - Ключ объекта
                 //1 - Индекс "выделенной" строки в объекте с группами источников
@@ -346,28 +385,65 @@ namespace uLoader
             private void panelLoader_WorkItemCellClick(object obj, DataGridViewCellEventArgs ev)
             {
                 int indxCol = (obj as DataGridView).ColumnCount == (int)DGV_GROUP_SIGNALS_COL_INDEX.COUNT_DGV_GROUP_SIGNALS_COL_INDEX ? (int)DGV_GROUP_SIGNALS_COL_INDEX.TURN_ONOFF : (int)DGV_GROUP_SIGNALS_COL_INDEX.TURN_ONOFF - 1;
-                //Проверить индекс ячейки (кнопки только в 1-ом столбце)
-                if (ev.ColumnIndex == indxCol)
-                {
-                    //Проверить способность ячейки изменять свое состояние
-                    if (((obj as DataGridView).Rows[ev.RowIndex].Cells[ev.ColumnIndex].GetType () == typeof (DataGridViewDisableButtonCell))
-                        // , если - да, то проверить "включенное" состояние
-                        && (((obj as DataGridView).Rows[ev.RowIndex].Cells[ev.ColumnIndex] as DataGridViewDisableButtonCell).Enabled == true))
-                    {
-                        //Подготовить параметры для передачи "родительской" панели
-                        object[] arPreparePars = getPreparePars(obj as DataGridView, ev.RowIndex);
+                //Параметры-аргументы события для дальнейшей обработки
+                object[] arPreparePars = null;
+                //Ключ элемента управления
+                KEY_CONTROLS key = getKeyWorkingItem (obj as Control);
+                //Проверить индекс ячейки
+                if (ev.ColumnIndex == (int)DGV_GROUP_SIGNALS_COL_INDEX.AUTO_START)
+                    //Признак "авто/запуск" группы сигналов
+                    if (key == KEY_CONTROLS.DGV_GROUP_SIGNALS)
+                    {//Только для группы сигналов
+                        DataGridView dgv = GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView;
+                        arPreparePars = getPrepareGroupSignalChangedPars(dgv, dgv.SelectedRows[0].Index);
 
-                        arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = this;
-                        arPreparePars[(int)INDEX_PREPARE_PARS.KEY_EVT] = KEY_EVENT.CELL_CLICK;
+                        ////Вариант №1
+                        //int iAutoStart = (arPreparePars[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] as GROUP_SIGNALS_PARS).m_iAutoStart;
+                        //if (iAutoStart == 0)
+                        //    iAutoStart = 1;
+                        //else
+                        //    if (iAutoStart == 1)
+                        //        iAutoStart = 0;
+                        //    else
+                        //        throw new Exception(@"PanelLoader::panelLoader_WorkItemCellClick () - неизвестное состояние автозапуска для key=" + key + @"...");
+                        //(arPreparePars[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] as GROUP_SIGNALS_PARS).m_iAutoStart = iAutoStart;
+
+                        ////Вариант №2
+                        //(arPreparePars[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] as GROUP_SIGNALS_PARS).m_iAutoStart =
+                        //    ((bool)(((obj as DataGridView).Rows[ev.RowIndex].Cells[(int)DGV_GROUP_SIGNALS_COL_INDEX.AUTO_START]).Value) == true) ? 0 : 1;
+
+                        //Console.WriteLine(@"PanelLoader::panelLoader_WorkItemCellClick () - iAutoStart=" + (arPreparePars[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] as GROUP_SIGNALS_PARS).m_iAutoStart + @"...");
+
+                        //Вариант №3
+                        (arPreparePars[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] as GROUP_SIGNALS_PARS).m_iAutoStart = 2;
 
                         //Отправить сообщение "родительской" панели (для дальнейшей ретрансляции)
                         DataAskedHost(arPreparePars);
                     }
                     else
                         ;
-                }
                 else
-                    ;
+                    if (ev.ColumnIndex == indxCol)
+                    {//Кнопки только в КРАЙНем столбце
+                        //Проверить способность ячейки изменять свое состояние
+                        if (((obj as DataGridView).Rows[ev.RowIndex].Cells[ev.ColumnIndex].GetType () == typeof (DataGridViewDisableButtonCell))
+                            // , если - да, то проверить "включенное" состояние
+                            && (((obj as DataGridView).Rows[ev.RowIndex].Cells[ev.ColumnIndex] as DataGridViewDisableButtonCell).Enabled == true))
+                        {
+                            //Подготовить параметры для передачи "родительской" панели
+                            arPreparePars = getPrepareCommonPars(obj as DataGridView, ev.RowIndex);
+
+                            arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = this;
+                            arPreparePars[(int)INDEX_PREPARE_PARS.KEY_EVT] = KEY_EVENT.CELL_CLICK;
+
+                            //Отправить сообщение "родительской" панели (для дальнейшей ретрансляции)
+                            DataAskedHost(arPreparePars);
+                        }
+                        else
+                            ;
+                    }
+                    else
+                        ;
             }
             /// <summary>
             /// Обработчик события "изменение выбора"
@@ -380,7 +456,7 @@ namespace uLoader
                 if ((obj as DataGridView).SelectedRows.Count > 0)
                 {
                     //Подготовить параметры для передачи "родительской" панели
-                    object[] arPreparePars = getPreparePars(obj as DataGridView, (obj as DataGridView).SelectedRows[0].Index);
+                    object[] arPreparePars = getPrepareCommonPars(obj as DataGridView, (obj as DataGridView).SelectedRows[0].Index);
 
                     switch ((KEY_CONTROLS)arPreparePars[(int)INDEX_PREPARE_PARS.KEY_OBJ])
                     {
@@ -456,40 +532,10 @@ namespace uLoader
             /// <param name="ev">Аргумент при возникновении события</param>
             protected void panelLoader_grpBoxGroupSignalsLeave (object obj, EventArgs ev)
             {
-                object[] arPreparePars = new object[(int)INDEX_PREPARE_PARS.COUNT_INDEX_PREPARE_PARS];
-                GROUP_SIGNALS_PARS objDepenceded;
-                if (this is PanelLoaderSource)
-                {
-                    objDepenceded = new GROUP_SIGNALS_SRC_PARS ();
+                object[] arPreparePars = null;
 
-                    (objDepenceded as GROUP_SIGNALS_SRC_PARS).m_mode = (GetWorkingItem (KEY_CONTROLS.RBUTTON_CUR_DATETIME) as RadioButton).Checked == true ? MODE_WORK.CUR_INTERVAL :
-                        (GetWorkingItem (KEY_CONTROLS.RBUTTON_COSTUMIZE) as RadioButton).Checked == true ? MODE_WORK.COSTUMIZE : MODE_WORK.UNKNOWN;
-
-                    objDepenceded.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod = fromMaskedTextBox(KEY_CONTROLS.MTBX_CUR_PERIOD);
-                    objDepenceded.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval = Int32.Parse((GetWorkingItem(KEY_CONTROLS.TBX_CUR_INTERVAL) as TextBox).Text);
-
-                    objDepenceded.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_iInterval = Int32.Parse((GetWorkingItem(KEY_CONTROLS.TBX_COSTUMIZE_INTERVAL) as TextBox).Text);
-                }
-                else
-                    if (this is PanelLoaderDest)
-                        objDepenceded = new GROUP_SIGNALS_PARS ();
-                    else
-                        return ;
-
-                objDepenceded.m_iAutoStart =((bool)(((GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView).SelectedRows[0].Cells[(int)DGV_GROUP_SIGNALS_COL_INDEX.AUTO_START]).Value) == true) ? 1 : 0;
-
-                objDepenceded.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart = (GetWorkingItem (KEY_CONTROLS.CALENDAR_COSTUMIZE) as DateTimePicker).Value.Date;
-                objDepenceded.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart += fromMaskedTextBox(KEY_CONTROLS.MTBX_COSTUMIZE_START_TIME);
-                objDepenceded.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriod = fromMaskedTextBox(KEY_CONTROLS.MTBX_COSTUMIZE_PERIOD);                
-
-                arPreparePars [(int)INDEX_PREPARE_PARS.KEY_OBJ] = KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS; // обязательно для switch
-                arPreparePars[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] = new string [2]; //2 идентификатора (GroupSources + GroupSignals)
-                (arPreparePars[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] as string[])[0] = getGroupId(KEY_CONTROLS.DGV_GROUP_SOURCES); //
-                (arPreparePars [(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] as string [])[1] = getGroupId (KEY_CONTROLS.DGV_GROUP_SIGNALS); //
-                arPreparePars[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] = objDepenceded; //
-
-                arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = this;
-                arPreparePars[(int)INDEX_PREPARE_PARS.KEY_EVT] = KEY_EVENT.SELECTION_CHANGED;
+                DataGridView dgv = GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView;
+                arPreparePars = getPrepareGroupSignalChangedPars(dgv, dgv.SelectedRows[0].Index);
 
                 DataAskedHost(arPreparePars);
             }
@@ -837,8 +883,8 @@ namespace uLoader
                     )
                     for (int i = 0; i < args.Length; i++)
                     {
-                        bEnabled = updateBtnCell(ctrl, i, (GroupSources.STATE)(args[i] as object[])[0])
-                            && (bool)(args[i] as object[])[1];
+                        bEnabled = updateBtnCell(ctrl, i, (GroupSources.STATE)(args[i] as object[])[0]) // 0 - состояние группы
+                            && (bool)(args[i] as object[])[1]; // 1 - признак вкл/выкл параметров настроек для группы (источников, сигналов)
                         //Изменить состояние "зависимых" элементов интерфейса
                         if (i == indxSel)
                         {//Только для выбранной строки
@@ -850,6 +896,8 @@ namespace uLoader
                                 case KEY_CONTROLS.DGV_GROUP_SIGNALS:
                                     GetWorkingItem(KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS).Enabled =
                                         bEnabled;
+                                    // 2 - признак авто-старт для группы (ТОЛЬКО сигналов)
+                                    ((ctrl as DataGridView).Rows[indxSel].Cells [(int)DGV_GROUP_SIGNALS_COL_INDEX.AUTO_START] as DataGridViewCheckBoxCell).Value = (int)((args[i] as object[])[2]) == 1;
                                     break;
                                 default:
                                     throw new Exception(@"PanelLoader::EnabledWorkItem () - ...");
