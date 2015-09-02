@@ -93,27 +93,28 @@ namespace SrcMSTKKSNAMEsql
 
                 set
                 {
-                    //Требуется добавить идентификаторы 'id_main'
-                    if (! (value.Columns.IndexOf (@"ID") < 0))
-                    {
-                        DataTable tblVal = value.Copy ();
-                        tblVal.Columns.Add (@"KKSNAME_MST", typeof(string));
-                        //tblVal.Columns.Add(@"ID_MST", typeof(int));
-
-                        foreach (DataRow r in tblVal.Rows)
+                    if (! (value == null))
+                        //Требуется добавить идентификаторы 'id_main'
+                        if (! (value.Columns.IndexOf (@"ID") < 0))
                         {
-                            r[@"KKSNAME_MST"] = r[@"ID"];
-                            //r[@"ID_MST"] = getIdMST((string)r[@"KKSNAME_MST"]);
+                            DataTable tblVal = value.Copy ();
+                            tblVal.Columns.Add (@"KKSNAME_MST", typeof(string));
+                            //tblVal.Columns.Add(@"ID_MST", typeof(int));
 
-                            r[@"ID"] = getIdMain((string)r[@"KKSNAME_MST"]);
+                            foreach (DataRow r in tblVal.Rows)
+                            {
+                                r[@"KKSNAME_MST"] = r[@"ID"];
+                                //r[@"ID_MST"] = getIdMST((string)r[@"KKSNAME_MST"]);
+
+                                r[@"ID"] = getIdMain((string)r[@"KKSNAME_MST"]);
+                            }
+
+                            base.TableRecieved = tblVal;
                         }
-
-                        base.TableRecieved = tblVal;
-                    }
+                        else
+                            base.TableRecieved = value;
                     else
-                    {
                         base.TableRecieved = value;
-                    }
                 }
             }
         }

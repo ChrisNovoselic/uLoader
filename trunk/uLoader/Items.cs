@@ -897,17 +897,21 @@ namespace uLoader
                 //Проверить признак группы сигналов: источник или назначение
                 //if (! (grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL] == null))
                 if (grpSgnlsPars is GROUP_SIGNALS_SRC_PARS)
+                {
+                    MODE_WORK mode = (grpSgnlsPars as GROUP_SIGNALS_SRC_PARS).m_mode;
+                    
                     arDataAskedHost = new object[]
                         {
                             iIDGroupSignals
                             , new object[]
                             {
-                                (grpSgnlsPars as GROUP_SIGNALS_SRC_PARS).m_mode
-                                , grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart
-                                , TimeSpan.FromSeconds(grpSgnlsPars.m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.TotalSeconds)
-                                , grpSgnlsPars.m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_iInterval
+                                mode
+                                , grpSgnlsPars.m_arWorkIntervals[(int)mode].m_dtStart
+                                , TimeSpan.FromSeconds(grpSgnlsPars.m_arWorkIntervals [(int)mode].m_tsPeriod.TotalSeconds)
+                                , grpSgnlsPars.m_arWorkIntervals [(int)mode].m_iInterval
                             }
                         };
+                }
                 else
                     if (grpSgnlsPars is GROUP_SIGNALS_DEST_PARS)
                         arDataAskedHost = new object[]

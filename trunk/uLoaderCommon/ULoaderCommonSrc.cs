@@ -683,7 +683,10 @@ namespace uLoaderCommon
                                 if (m_dictGroupSignals[id].Mode == MODE_WORK.COSTUMIZE)
                                     if ((!(((DateTime)pars[1] == null)))
                                         && (!(((DateTime)pars[1] == DateTime.MinValue))))
+                                    {
                                         ((GroupSignalsDatetimeSrc)m_dictGroupSignals[id]).DateTimeStart = (DateTime)pars[1];
+                                        m_dictGroupSignals[id].MSecInterval *= 1000; //Т.к. для реж. 'COSTUMIZE' - секунды
+                                    }
                                     else
                                         ;
                                 else
@@ -865,7 +868,7 @@ namespace uLoaderCommon
         private void completeGroupSignalsCurrent()
         {
             if (State == GroupSignals.STATE.SLEEP)
-                if ((DateTimeBegin + TimeSpan.FromMilliseconds(MSecInterval)) < (DateTimeStart + TimeSpanPeriod))
+                if (! ((DateTimeBegin + TimeSpan.FromMilliseconds(MSecInterval)) > (DateTimeStart + TimeSpanPeriod)))
                     push(IdGroupSignalsCurrent);
                 else
                     new Thread(new ParameterizedThreadStart(new DelegateObjectFunc (stop))).Start (IdGroupSignalsCurrent);
@@ -916,13 +919,54 @@ namespace uLoaderCommon
             // начало
             protected override string DateTimeBeginFormat
             {
-                get { return DateTimeBegin.AddHours(-6).AddSeconds((_parent as HHandlerDbULoaderMSTTMSrc).m_iCurIntervalShift * (int)TimeSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss"); }
+                get
+                {
+                    string strRes = string.Empty;
+                    long msecDiff = -1;
+
+                    switch (Mode)
+                    {
+                        case MODE_WORK.CUR_INTERVAL:
+                            msecDiff = (long)(1000 * (_parent as HHandlerDbULoaderMSTTMSrc).m_iCurIntervalShift * (int)TimeSpanPeriod.TotalSeconds);                          
+                            break;
+                        case MODE_WORK.COSTUMIZE:
+                            msecDiff = 0; //MSecInterval;
+                            break;
+                        default:
+                            break;
+                    }
+
+                    strRes = DateTimeBegin.AddHours(-6).AddMilliseconds(msecDiff).ToString(@"yyyy/MM/dd HH:mm:ss");
+                    //Console.WriteLine(@"DateTimeBegin=" + DateTimeBeginFormat + @"; DateTimeEndFormat=" + strRes);
+
+                    return strRes;
+                }
             }
             // окончание
             protected override string DateTimeEndFormat
             {
-                //get { return DateTimeStart.AddHours(-6).AddSeconds((int)TimeSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss"); }
-                get { return DateTimeBegin.AddHours(-6).ToString(@"yyyy/MM/dd HH:mm:ss"); }
+                get
+                {
+                    string strRes = string.Empty;
+                    long msecDiff = -1;
+
+                    switch (Mode)
+                    {
+                        case MODE_WORK.CUR_INTERVAL:
+                            msecDiff = 0;                          
+                            break;
+                        case MODE_WORK.COSTUMIZE:
+                            msecDiff = MSecInterval;
+                            break;
+                        default:
+                            break;
+                    }
+
+                    strRes = DateTimeBegin.AddHours(-6).AddMilliseconds(msecDiff).ToString(@"yyyy/MM/dd HH:mm:ss");
+                    //Console.WriteLine(@"DateTimeBegin=" + DateTimeBeginFormat + @"; DateTimeEndFormat=" + strRes);
+
+                    return strRes;
+                }
             }
         }
     }
