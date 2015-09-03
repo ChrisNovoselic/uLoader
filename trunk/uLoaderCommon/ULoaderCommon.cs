@@ -308,32 +308,42 @@ namespace uLoaderCommon
                 //Строка запроса для поиска дублирующих записей
                 string strSel = string.Empty;
 
-                foreach (DataRow r in tblDup.Rows)
+                try
                 {
-                    //Проверить наличие индекса строки в уже найденных (как дублированные)
-                    if (listIndxToDelete.IndexOf (tblDup.Rows.IndexOf(r)) < 0)
+                    foreach (DataRow r in tblDup.Rows)
                     {
-                        //Сформировать строку запроса
-                        strSel = @"ID=" + (bQuote == true ? @"'" : string.Empty) + r[@"ID"] + (bQuote == true ? @"'" : string.Empty) + @" AND " + @"DATETIME='" + ((DateTime)r[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fffffff") + @"'";
-                        arDup = (tblDup as DataTable).Select(strSel);
-                        //Проверить наличие дублирующих записей
-                        if (arDup.Length > 1)
-                            //Добавить индексы всех найденных дублирующих строк в список для удаления
-                            // , КРОМЕ 1-ой!
-                            for (int i = 1; i < arDup.Length; i ++)
-                                listIndxToDelete.Add(tblDup.Rows.IndexOf(arDup[i]));
-                        else
-                            if (arDup.Length == 0)
-                                throw new Exception("HHandlerDbULoader.GroupSignals.clearDupValues () - в таблице не найдена \"собственная\" строка...");
+                        //Проверить наличие индекса строки в уже найденных (как дублированные)
+                        if (listIndxToDelete.IndexOf (tblDup.Rows.IndexOf(r)) < 0)
+                        {
+                            //Сформировать строку запроса
+                            strSel = @"ID=" + (bQuote == true ? @"'" : string.Empty) + r[@"ID"] + (bQuote == true ? @"'" : string.Empty) + @" AND " + @"DATETIME='" + ((DateTime)r[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fffffff") + @"'";
+                            arDup = (tblDup as DataTable).Select(strSel);
+                            //Проверить наличие дублирующих записей
+                            if (arDup.Length > 1)
+                                //Добавить индексы всех найденных дублирующих строк в список для удаления
+                                // , КРОМЕ 1-ой!
+                                for (int i = 1; i < arDup.Length; i ++)
+                                    listIndxToDelete.Add(tblDup.Rows.IndexOf(arDup[i]));
                             else
-                                ;
+                                if (arDup.Length == 0)
+                                    throw new Exception("HHandlerDbULoader.GroupSignals.clearDupValues () - в таблице не найдена \"собственная\" строка...");
+                                else
+                                    ;
 
-                        //Добавить строку в таблицу-результат
-                        tblRes.ImportRow(arDup[0]);                            
+                            //Добавить строку в таблицу-результат
+                            tblRes.ImportRow(arDup[0]);                            
+                        }
+                        else
+                            ;
                     }
-                    else
-                        ;
                 }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader::GroupSignals::clearDupValues () - ...");
+
+                    tblRes.Clear ();
+                }
+
                 //Принять внесенные изменения в таблицу-результат
                 tblRes.AcceptChanges();
 
