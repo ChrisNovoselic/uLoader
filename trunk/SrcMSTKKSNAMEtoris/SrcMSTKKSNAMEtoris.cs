@@ -109,7 +109,7 @@ namespace SrcMSTKKSNAMEtoris
                 set
                 {
                     //Требуется добавить идентификаторы 'id_main'
-                    if (! (value.Columns.IndexOf (@"ID") < 0))
+                    if ((! (value == null)) && (! (value.Columns.IndexOf (@"ID") < 0)))
                     {
                         DataTable tblVal = value.Copy ();
                         tblVal.Columns.Add (@"KKSNAME_MST", typeof(string));

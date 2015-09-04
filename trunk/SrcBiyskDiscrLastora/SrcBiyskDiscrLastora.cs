@@ -85,7 +85,7 @@ namespace SrcBiyskDiscrLastora
                     DataRow rowAdd;
                     
                     //Требуется добавить идентификаторы 'id_main'
-                    if (!(value.Columns.IndexOf(@"ID") < 0))
+                    if ((! (value == null)) && (!(value.Columns.IndexOf(@"ID") < 0)))
                     {
                         DataTable tblVal = value.Clone();
                         tblVal.Columns.Remove (@"ID");

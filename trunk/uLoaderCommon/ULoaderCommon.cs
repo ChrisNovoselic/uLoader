@@ -469,6 +469,8 @@ namespace uLoaderCommon
         ///  , уникальный в границах приложения, передается из-вне (файл конфигурации)
         /// </summary>
         protected virtual int IdGroupSignalsCurrent { get { return m_iIdGroupSignalsCurrent; } set { m_iIdGroupSignalsCurrent = value; } }
+
+        private Semaphore m_semaInit;
         /// <summary>
         /// Объект для синхронизации изменения состояний групп сигналов
         /// </summary>
@@ -526,6 +528,7 @@ namespace uLoaderCommon
             m_iIdGroupSignalsCurrent = -1;
             m_dictGroupSignals = new Dictionary<int, GroupSignals>();
 
+            m_semaInit = new Semaphore (1, 1);
             m_lockStateGroupSignals = new object();
 
             //m_threadQueue = //Создание при "старте"
@@ -916,6 +919,8 @@ namespace uLoaderCommon
         public virtual void Start(int id)
         {
             Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+
+            m_semaInit.WaitOne ();
             
             int iNeedStarted = -1; //Признак необходимости запуска "родительского" объекта
             GroupSignals.STATE initState = GroupSignals.STATE.UNKNOWN; //Новое состояние группы сигналов при старте
@@ -974,6 +979,8 @@ namespace uLoaderCommon
             {
                 register(id, 0, m_connSett, string.Empty);
             }
+
+            m_semaInit.Release (1);
         }
         /// <summary>
         /// Идентификатор плюгина (строка, для лог-сообщений)
@@ -1000,6 +1007,8 @@ namespace uLoaderCommon
         public virtual void Stop(int id)
         {
             int iNeedStopped = 0; //Признак необходимости останова "родительского" объекта
+
+            m_semaInit.WaitOne ();
 
             lock (m_lockStateGroupSignals)
             {
@@ -1045,6 +1054,8 @@ namespace uLoaderCommon
             }
             else
                 ;
+
+            m_semaInit.Release(1);
         }
         /// <summary>
         /// Запустить поток обработки очереди событий

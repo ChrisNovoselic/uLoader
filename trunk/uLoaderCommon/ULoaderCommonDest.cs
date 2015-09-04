@@ -402,13 +402,16 @@ namespace uLoaderCommon
 
             protected override DataTable getTableRes()
             {
-                DataTable tblRec
+                DataTable tblRec = new DataTable()
                     , tblDiff
                     , tblRes = new DataTable ();
 
                 lock (this)
                 {
-                    tblRec = TableRecieved.Copy();
+                    if (! (TableRecieved == null))
+                        tblRec = TableRecieved.Copy();
+                    else
+                        ;
                 }
 
                 tblDiff = clearDupValues(TableRecievedPrev.Copy(), tblRec);

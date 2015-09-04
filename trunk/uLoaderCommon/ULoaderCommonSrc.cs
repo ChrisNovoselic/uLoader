@@ -12,7 +12,14 @@ namespace uLoaderCommon
     {
         private int m_msecIntervalTimerActivate;
         private int m_msecCorrectTimerActivate;
-        private System.Threading.Timer m_timerActivate;
+        private
+            //Вариант №1
+            System.Threading.Timer
+            ////Вариант №2
+            //System.Timers.Timer
+            ////Вариант №3
+            //System.Windows.Threading.DispatcherTimer
+                m_timerActivate;
 
         enum StatesMachine
         {
@@ -103,8 +110,17 @@ namespace uLoaderCommon
             int iRes = 0;
 
             stopTimerActivate();
-            m_timerActivate = new System.Threading.Timer(fTimerActivate, null, System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+            m_timerActivate =
+                //Вариант №1
+                new System.Threading.Timer(fTimerActivate, null, System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite)
+                ////Вариант №2
+                //new System.Timers.Timer (m_msecIntervalTimerActivate);
+                ;
+            //Вариант №1
             m_timerActivate.Change(0, System.Threading.Timeout.Infinite);
+            ////Вариант №2
+            //m_timerActivate.Elapsed += new System.Timers.ElapsedEventHandler(timerActivate_OnElapsed);
+            //m_timerActivate.Start ();
 
             return iRes;
         }
@@ -115,7 +131,11 @@ namespace uLoaderCommon
 
             if (!(m_timerActivate == null))
             {
+                //Вариант №1
                 m_timerActivate.Change(System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+                ////Вариант №2
+                //m_timerActivate.Stop ();
+                //m_timerActivate.Close ();
                 m_timerActivate.Dispose();
                 m_timerActivate = null;
             }
@@ -124,16 +144,30 @@ namespace uLoaderCommon
 
             return iRes;
         }
-
+        //Вариант №1
+        /// <summary>
+        /// Обработчик события таймера 'System.Threading.Timer'
+        /// </summary>
+        /// <param name="obj">Аргумент события</param>
         private void fTimerActivate(object obj)
         {
-            changeState (GroupSignals.STATE.TIMER);
+            changeState(GroupSignals.STATE.TIMER);
 
             if (!(m_timerActivate == null))
                 m_timerActivate.Change(m_msecIntervalTimerActivate, System.Threading.Timeout.Infinite);
             else
                 ;
         }
+        ////Вариант №2
+        ///// <summary>
+        /////  Обработчик события таймера 'System.Timers.Timer'
+        ///// </summary>
+        ///// <param name="obj">Объект, инициировавший событие</param>
+        ///// <param name="ev">Аргумент события</param>
+        //private void timerActivate_OnElapsed (object obj, System.Timers.ElapsedEventArgs ev)
+        //{
+        //    changeState(GroupSignals.STATE.TIMER);
+        //}
         /// <summary>
         /// Класс для описания группы сигналов источника
         /// </summary>
