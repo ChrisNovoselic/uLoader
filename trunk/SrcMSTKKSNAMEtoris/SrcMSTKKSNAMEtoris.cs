@@ -157,7 +157,7 @@ namespace SrcMSTKKSNAMEtoris
                 {
                     iPrev = m_tableTorIs.Rows.Count;
                     string strSel =
-                        @"DATETIME<'" + DateTimeBegin.ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"' OR DATETIME>='" + DateTimeBegin.AddSeconds(TimeSpanPeriod.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
+                        @"DATETIME<'" + DateTimeBegin.ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"' OR DATETIME>='" + DateTimeBegin.AddSeconds(PeriodMain.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
                         //@"DATETIME BETWEEN '" + m_dtStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"' AND '" + m_dtStart.AddSeconds(m_tmSpanPeriod.Seconds).ToString(@"yyyy/MM/dd HH:mm:ss") + @"'"
                         ;
 

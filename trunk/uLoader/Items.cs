@@ -87,8 +87,9 @@ namespace uLoader
             // округлить по 0-ой минуте
             m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.AddMinutes(-1 * m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.Minute);
             m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.AddMilliseconds(-1 * m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.Second * 1000 + m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.Millisecond);
-            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriod = TimeSpan.FromHours(1);
-            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_iInterval = 60;
+            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriodMain = TimeSpan.FromHours(1);
+            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriodLocal = TimeSpan.FromMinutes(1);
+            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_iIntervalLocal = (int)DATETIME.MSEC_INTERVAL_DEFAULT;
         }
     }
     /// <summary>
@@ -113,8 +114,10 @@ namespace uLoader
             m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart = DateTime.Now;
             // округлить по текущей минуте
             m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart.AddMilliseconds(-1 * m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart.Second * 1000 + m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart.Millisecond);
-            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod = TimeSpan.FromSeconds((int)DATETIME.SEC_SPANPERIOD_DEFAULT);
-            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval = (int)DATETIME.MSEC_INTERVAL_DEFAULT;
+            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodMain =
+            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodLocal =
+                TimeSpan.FromSeconds((int)DATETIME.SEC_SPANPERIOD_DEFAULT);
+            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iIntervalLocal = (int)DATETIME.MSEC_INTERVAL_DEFAULT;
         }
     }
     /// <summary>
@@ -159,7 +162,7 @@ namespace uLoader
         /// <summary>
         /// Длительность интервала (секунды)
         /// </summary>
-        public int m_iInterval;
+        public int m_iIntervalLocal;
         /// <summary>
         /// Начало интервала
         /// </summary>
@@ -167,39 +170,46 @@ namespace uLoader
         /// <summary>
         /// Окончание интервала (зависит от начала и длительности)
         /// </summary>
-        public TimeSpan m_tsPeriod;
+        public TimeSpan m_tsPeriodMain;
+        /// <summary>
+        /// Окончание интервала (зависит от начала и длительности)
+        ///  для "текущ./интервала" равен 'm_tsPeriodMain'
+        /// </summary>
+        public TimeSpan m_tsPeriodLocal;
         /// <summary>
         /// Конструктор - основной (без параметров)
         /// </summary>
         public DATETIME_WORK ()
         {
-            m_iInterval = -1;
+            m_iIntervalLocal = -1;
             m_dtStart = new DateTime ();
-            m_tsPeriod = TimeSpan.FromSeconds (60);
+            m_tsPeriodMain =
+            m_tsPeriodLocal =
+                TimeSpan.FromSeconds((int)DATETIME.SEC_SPANPERIOD_DEFAULT);
         }
-        /// <summary>
-        /// Установить значения для интервала
-        /// </summary>
-        /// <param name="iInterval">Длительность (секунды)</param>
-        /// <returns>Признак успешного выполнения функции (0 - успех, иначе - ошибка)</returns>
-        public int Set (int iInterval)
-        {
-            int iRes = 0;
+        ///// <summary>
+        ///// Установить значения для интервала
+        ///// </summary>
+        ///// <param name="iInterval">Длительность (секунды)</param>
+        ///// <returns>Признак успешного выполнения функции (0 - успех, иначе - ошибка)</returns>
+        //public int Set (int iInterval)
+        //{
+        //    int iRes = 0;
 
-            return iRes;
-        }
-        /// <summary>
-        /// Установить значения для интервала
-        /// </summary>
-        /// <param name="iInterval">Длительность (секунды)</param>
-        /// <param name="dtBegin">Начало интервала</param>
-        /// <returns>Признак успешного выполнения функции (0 - успех, иначе - ошибка)</returns>
-        public int Set(int iInterval, DateTime dtBegin)
-        {
-            int iRes = 0;
+        //    return iRes;
+        //}
+        ///// <summary>
+        ///// Установить значения для интервала
+        ///// </summary>
+        ///// <param name="iInterval">Длительность (секунды)</param>
+        ///// <param name="dtBegin">Начало интервала</param>
+        ///// <returns>Признак успешного выполнения функции (0 - успех, иначе - ошибка)</returns>
+        //public int Set(int iInterval, DateTime dtBegin)
+        //{
+        //    int iRes = 0;
 
-            return iRes;
-        }
+        //    return iRes;
+        //}
     }
     /// <summary>
     /// Параметры группы источников информации
@@ -290,8 +300,10 @@ namespace uLoader
             item.m_bToolsEnabled = bool.Parse(vals[pars.IndexOf(@"TOOLS_ENABLED")]); //TOOLS_ENABLED
             if (item is GROUP_SIGNALS_SRC_PARS)
             {
-                item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod = TimeSpan.FromSeconds(Int32.Parse(vals[pars.IndexOf(@"CUR_INTERVAL_PERIOD")])); //CUR_INTERVAL_PERIOD                                
-                item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval = Int32.Parse(vals[pars.IndexOf(@"CUR_INTERVAL_VALUE")]); //CUR_INTERVAL_VALUE
+                item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodMain =
+                item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodLocal =
+                    TimeSpan.FromSeconds(Int32.Parse(vals[pars.IndexOf(@"CUR_INTERVAL_PERIOD")])); //CUR_INTERVAL_PERIOD                                
+                item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iIntervalLocal = Int32.Parse(vals[pars.IndexOf(@"CUR_INTERVAL_VALUE")]); //CUR_INTERVAL_VALUE
             }
             else
                 if (item is GROUP_SIGNALS_DEST_PARS)
@@ -320,19 +332,25 @@ namespace uLoader
 
                 m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)mode].m_dtStart =
                     pars.m_arWorkIntervals[(int)mode].m_dtStart;
-                m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)mode].m_tsPeriod =
-                    pars.m_arWorkIntervals[(int)mode].m_tsPeriod;
+                m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)mode].m_tsPeriodMain =
+                    pars.m_arWorkIntervals[(int)mode].m_tsPeriodMain;
+                m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)mode].m_tsPeriodLocal =
+                    pars.m_arWorkIntervals[(int)mode].m_tsPeriodLocal;
 
                 //if (mode == MODE_WORK.CUR_INTERVAL)
-                    m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)mode].m_iInterval =
-                        pars.m_arWorkIntervals[(int)mode].m_iInterval;
+                    m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)mode].m_iIntervalLocal =
+                        pars.m_arWorkIntervals[(int)mode].m_iIntervalLocal;
                 //else ;
             }
             else
                 if (pars is GROUP_SIGNALS_DEST_PARS)
                 {
-                    m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart = pars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart;
-                    m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriod = pars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriod;
+                    m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart =
+                        pars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart;
+                    m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriodMain =                    
+                        pars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriodMain;
+                    //m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriodLocal =
+                    //    pars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriodLocal;
                 }
                 else
                     ;
@@ -907,8 +925,9 @@ namespace uLoader
                             {
                                 mode
                                 , grpSgnlsPars.m_arWorkIntervals[(int)mode].m_dtStart
-                                , TimeSpan.FromSeconds(grpSgnlsPars.m_arWorkIntervals [(int)mode].m_tsPeriod.TotalSeconds)
-                                , grpSgnlsPars.m_arWorkIntervals [(int)mode].m_iInterval
+                                , TimeSpan.FromSeconds(grpSgnlsPars.m_arWorkIntervals [(int)mode].m_tsPeriodMain.TotalSeconds)
+                                , TimeSpan.FromSeconds(grpSgnlsPars.m_arWorkIntervals [(int)mode].m_tsPeriodLocal.TotalSeconds)
+                                , grpSgnlsPars.m_arWorkIntervals [(int)mode].m_iIntervalLocal
                             }
                         };
                 }

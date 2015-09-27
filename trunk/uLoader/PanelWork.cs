@@ -364,14 +364,6 @@ namespace uLoader
                 , new object [] { (int)HHandlerQueue.StatesMachine.DATA_SRC_GROUP_SIGNALS, indxSrcSel, strSrcIDGrpSignals }
                 , new object [] { (int)HHandlerQueue.StatesMachine.DATA_DEST_GROUP_SIGNALS, indxDestSel, strDestIDGrpSignals }
             });
-
-            ////Запросить данные
-            //DataAskedHost(new object[] {
-            //    //new object [] { (int)HHandlerQueue.StatesMachine.STATE_GROUP_SOURCES /*, без параметров*/ }
-            //    //, new object [] { (int)HHandlerQueue.StatesMachine.STATE_GROUP_SIGNALS, indxSrcSel, indxDestSel }
-            //    new object [] { (int)HHandlerQueue.StatesMachine.DATA_SRC_GROUP_SIGNALS, strSrcIDGrpSignals }
-            //    , new object [] { (int)HHandlerQueue.StatesMachine.DATA_DEST_GROUP_SIGNALS, strDestIDGrpSignals }
-            //});
         }
 
         /// <summary>

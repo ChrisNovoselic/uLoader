@@ -156,8 +156,9 @@ namespace uLoader
                 int iRes = 0;
 
                 dtWorkRes.m_dtStart = DateTime.Now;
-                dtWorkRes.m_tsPeriod = TimeSpan.FromSeconds (60);
-                dtWorkRes.m_iInterval = -1;
+                dtWorkRes.m_tsPeriodMain = TimeSpan.FromSeconds (60);
+                dtWorkRes.m_tsPeriodLocal = TimeSpan.FromSeconds(60);
+                dtWorkRes.m_iIntervalLocal = -1;
 
                 return iRes;
             }
@@ -857,14 +858,14 @@ namespace uLoader
                         case @"CUR_INTERVAL_PERIOD":
                             if (type == (int)INDEX_SRC.SOURCE)
                                 //Только для источника
-                                listParValues[indxPar] = parValues.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.TotalSeconds.ToString ();
+                                listParValues[indxPar] = parValues.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodMain.TotalSeconds.ToString ();
                             else
                                 ;
                             break;
                         case @"CUR_INTERVAL_VALUE":
                             if (type == (int)INDEX_SRC.SOURCE)
                                 //Только для источника
-                                listParValues[indxPar] = parValues.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval.ToString();
+                                listParValues[indxPar] = parValues.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iIntervalLocal.ToString();
                             else
                                 ;
                             break;

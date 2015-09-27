@@ -122,17 +122,22 @@ namespace uLoaderCommon
             private uLoaderCommon.MODE_WORK m_mode;
             public uLoaderCommon.MODE_WORK Mode { get { return m_mode; } set { m_mode = value; } }
 
-            private TimeSpan m_tmSpanPeriod;
+            private TimeSpan m_tsPeriodMain
+                , m_tsPeriodLocal;
             /// <summary>
-            /// Период времени для формирования запроса значений
+            /// Период времени для формирования запроса значений (глобальный)
             /// </summary>
-            public TimeSpan TimeSpanPeriod { get { return m_tmSpanPeriod; } set { m_tmSpanPeriod = value; } }
+            public TimeSpan PeriodMain { get { return m_tsPeriodMain; } set { m_tsPeriodMain = value; } }
+            /// <summary>
+            /// Период времени для формирования запроса значений (локальный)
+            /// </summary>
+            public TimeSpan PeriodLocal { get { return m_tsPeriodLocal; } set { m_tsPeriodLocal = value; } }
 
-            private long m_msecInterval;
+            private long m_msecIntervalLocal;
             /// <summary>
             /// Интервал (милисекунды) между опросами значений
             /// </summary>
-            public long MSecInterval { get { return m_msecInterval; } set { m_msecInterval = value; } }
+            public long MSecIntervalLocal { get { return m_msecIntervalLocal; } set { m_msecIntervalLocal = value; } }
 
             /// <summary>
             /// Класс для объекта СИГНАЛ
@@ -174,8 +179,10 @@ namespace uLoaderCommon
                 //Целочисленный идентификатор
                 m_Id = id;
                 //Значения по умолчанию
-                m_tmSpanPeriod = new TimeSpan((long)((int)uLoaderCommon.DATETIME.SEC_SPANPERIOD_DEFAULT * Math.Pow(10, 7)));
-                m_msecInterval = (int)uLoaderCommon.DATETIME.MSEC_INTERVAL_DEFAULT;
+                m_tsPeriodMain =
+                m_tsPeriodLocal =
+                    new TimeSpan((long)((int)uLoaderCommon.DATETIME.SEC_SPANPERIOD_DEFAULT * Math.Pow(10, 7)));
+                m_msecIntervalLocal = (int)uLoaderCommon.DATETIME.MSEC_INTERVAL_DEFAULT;
 
                 //Инициализировать массив сигналов
                 if (pars.Length > 0)
@@ -393,27 +400,40 @@ namespace uLoaderCommon
         /// <summary>
         /// Период времени опроса текущей (обрабатываемой) группы сигналов
         /// </summary>
-        protected TimeSpan TimeSpanPeriod
+        protected TimeSpan PeriodMain
         {
             get
             {
                 if (!(IdGroupSignalsCurrent < 0))
-                    return m_dictGroupSignals[IdGroupSignalsCurrent].TimeSpanPeriod;
+                    return m_dictGroupSignals[IdGroupSignalsCurrent].PeriodMain;
                 else
-                    throw new Exception(@"ULoaderCommon::TimeSpanPeriod.get ...");
+                    throw new Exception(@"ULoaderCommon::PeriodMain.get ...");
+            }
+        }
+        /// <summary>
+        /// Период времени опроса текущей (обрабатываемой) группы сигналов
+        /// </summary>
+        protected TimeSpan PeriodLocal
+        {
+            get
+            {
+                if (!(IdGroupSignalsCurrent < 0))
+                    return m_dictGroupSignals[IdGroupSignalsCurrent].PeriodLocal;
+                else
+                    throw new Exception(@"ULoaderCommon::PeriodLocal.get ...");
             }
         }
         /// <summary>
         /// Интервал (милисекунды) между опросами значений обрабатываемой группы сигналов
         /// </summary>
-        protected long MSecInterval
+        protected long MSecIntervalLocal
         {
             get
             {
                 if (!(IdGroupSignalsCurrent < 0))
-                    return m_dictGroupSignals[IdGroupSignalsCurrent].MSecInterval;
+                    return m_dictGroupSignals[IdGroupSignalsCurrent].MSecIntervalLocal;
                 else
-                    throw new Exception(@"ULoaderCommon::MSecInterval.get ...");
+                    throw new Exception(@"ULoaderCommon::MSecIntervalLocal.get ...");
             }
         }
         /// <summary>
@@ -633,8 +653,9 @@ namespace uLoaderCommon
                                 //        ;
                                 //else
                                 //    ;
-                                m_dictGroupSignals[id].TimeSpanPeriod = (TimeSpan)pars[2];
-                                m_dictGroupSignals[id].MSecInterval = (int)pars[3];
+                                m_dictGroupSignals[id].PeriodMain = (TimeSpan)pars[2];
+                                m_dictGroupSignals[id].PeriodLocal = (TimeSpan)pars[3];
+                                m_dictGroupSignals[id].MSecIntervalLocal = (int)pars[4];
                             }
 
                             Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -921,7 +942,7 @@ namespace uLoaderCommon
             Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
             m_semaInit.WaitOne ();
-            
+
             int iNeedStarted = -1; //Признак необходимости запуска "родительского" объекта
             GroupSignals.STATE initState = GroupSignals.STATE.UNKNOWN; //Новое состояние группы сигналов при старте
             //Установить признак необходимости запуска "родительского" объекта

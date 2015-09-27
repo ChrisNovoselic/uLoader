@@ -56,7 +56,7 @@ namespace uLoaderCommon
             {
                 base.State = value;
 
-                MSecRemaindToActivate = MSecInterval;
+                MSecRemaindToActivate = MSecIntervalLocal;
             }
         }
 
@@ -79,17 +79,17 @@ namespace uLoaderCommon
             }
         }
 
-        /// <summary>
-        /// Старт группы сигналов с указанным идентификаторм
-        /// </summary>
-        /// <param name="id">Идентификатор группы сигналов</param>
-        public override void Start(int id)
-        {
-            base.Start (id);
+        ///// <summary>
+        ///// Старт группы сигналов с указанным идентификаторм
+        ///// </summary>
+        ///// <param name="id">Идентификатор группы сигналов</param>
+        //public override void Start(int id)
+        //{
+        //    base.Start (id);
 
-            //changeState (m_dictGroupSignals[id].State);
-            changeState(id);
-        }
+        //    //changeState (m_dictGroupSignals[id].State);
+        //    changeState(id);
+        //}
 
         public override void Start()
         {
@@ -151,7 +151,7 @@ namespace uLoaderCommon
         /// <param name="obj">Аргумент события</param>
         private void fTimerActivate(object obj)
         {
-            changeState(GroupSignals.STATE.TIMER);
+            changeState();
 
             if (!(m_timerActivate == null))
                 m_timerActivate.Change(m_msecIntervalTimerActivate, System.Threading.Timeout.Infinite);
@@ -238,6 +238,7 @@ namespace uLoaderCommon
             {
                 base.Stop();
 
+                m_msecRemaindToActivate = 0;
                 m_iRowCountRecieved = -1;
             }
 
@@ -254,6 +255,7 @@ namespace uLoaderCommon
             public GroupSignalsSrc(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
+                m_msecRemaindToActivate = 0;
                 m_iRowCountRecieved = -1;
             }
 
@@ -277,65 +279,93 @@ namespace uLoaderCommon
 
             return iRes;
         }
-        /// <summary>
-        /// Изменить состояние - инициировать очередной запрос
-        /// </summary>
-        /// <param name="id">Идентификатор группы сигналов</param>
-        private void changeState (int id)
-        {
-            
-            lock (m_lockStateGroupSignals)
-            {
-                if (m_dictGroupSignals[id].State == GroupSignals.STATE.SLEEP)
-                {
-                    m_dictGroupSignals[id].State = GroupSignals.STATE.QUEUE;
 
-                    push (id);
-                }
-                else
-                    ;
-            }
-        }
-        /// <summary>
-        /// Изменить состояние - инициировать очередной запрос
-        /// </summary>
-        /// <param name="state">Сотояние групп сигналов</param>
-        private void changeState(GroupSignals.STATE state)
+        private void changeState()
         {
             lock (m_lockStateGroupSignals)
             {
                 //Logging.Logg().Debug(@"HHandlerDbULoader::fTimerActivate () - [" + PlugInId + @"]" + @" 'QUEUE' не найдено...", Logging.INDEX_MESSAGE.NOT_SET);
                 //Перевести в состояние "активное" ("ожидание") группы сигналов
                 foreach (KeyValuePair<int, GroupSignals> pair in m_dictGroupSignals)
-                    if (pair.Value.State == state)
-                        if (pair.Value.State == GroupSignals.STATE.TIMER)
+                    if ((pair.Value.State == GroupSignals.STATE.TIMER)
+                        || (pair.Value.State == GroupSignals.STATE.SLEEP))
+                    {
+                        (pair.Value as GroupSignalsSrc).MSecRemaindToActivate -= m_msecIntervalTimerActivate;
+
+                        //Logging.Logg().Debug(@"HHandlerDbULoader::fTimerActivate () - [" + PlugInId + @", key=" + pair.Key + @"] - MSecRemaindToActivate=" + pair.Value.MSecRemaindToActivate + @"...", Logging.INDEX_MESSAGE.NOT_SET);
+
+                        if ((pair.Value as GroupSignalsSrc).MSecRemaindToActivate < 0)
                         {
-                            (pair.Value as GroupSignalsSrc).MSecRemaindToActivate -= m_msecIntervalTimerActivate;
+                            pair.Value.State = GroupSignals.STATE.QUEUE;
 
-                            //Logging.Logg().Debug(@"HHandlerDbULoader::fTimerActivate () - [" + PlugInId + @", key=" + pair.Key + @"] - MSecRemaindToActivate=" + pair.Value.MSecRemaindToActivate + @"...", Logging.INDEX_MESSAGE.NOT_SET);
-
-                            if ((pair.Value as GroupSignalsSrc).MSecRemaindToActivate < 0)
-                            {
-                                pair.Value.State = GroupSignals.STATE.QUEUE;
-
-                                push(pair.Key);
-                            }
-                            else
-                                ;
+                            push(pair.Key);
                         }
                         else
-                            if (pair.Value.State == GroupSignals.STATE.SLEEP)
-                            {
-                                pair.Value.State = GroupSignals.STATE.QUEUE;
-
-                                push(pair.Key);
-                            }
-                            else
-                                ;
-                    else
+                            ;
+                    }
+                    else                            
                         ;
             }
         }
+        ///// <summary>
+        ///// Изменить состояние - инициировать очередной запрос
+        ///// </summary>
+        ///// <param name="id">Идентификатор группы сигналов</param>
+        //private void changeState (int id)
+        //{
+            
+        //    lock (m_lockStateGroupSignals)
+        //    {
+        //        if (m_dictGroupSignals[id].State == GroupSignals.STATE.SLEEP)
+        //        {
+        //            m_dictGroupSignals[id].State = GroupSignals.STATE.QUEUE;
+
+        //            push (id);
+        //        }
+        //        else
+        //            ;
+        //    }
+        //}
+        ///// <summary>
+        ///// Изменить состояние - инициировать очередной запрос
+        ///// </summary>
+        ///// <param name="state">Сотояние групп сигналов</param>
+        //private void changeState(GroupSignals.STATE state)
+        //{
+        //    lock (m_lockStateGroupSignals)
+        //    {
+        //        //Logging.Logg().Debug(@"HHandlerDbULoader::fTimerActivate () - [" + PlugInId + @"]" + @" 'QUEUE' не найдено...", Logging.INDEX_MESSAGE.NOT_SET);
+        //        //Перевести в состояние "активное" ("ожидание") группы сигналов
+        //        foreach (KeyValuePair<int, GroupSignals> pair in m_dictGroupSignals)
+        //            if (pair.Value.State == state)
+        //                if (pair.Value.State == GroupSignals.STATE.TIMER)
+        //                {
+        //                    (pair.Value as GroupSignalsSrc).MSecRemaindToActivate -= m_msecIntervalTimerActivate;
+
+        //                    //Logging.Logg().Debug(@"HHandlerDbULoader::fTimerActivate () - [" + PlugInId + @", key=" + pair.Key + @"] - MSecRemaindToActivate=" + pair.Value.MSecRemaindToActivate + @"...", Logging.INDEX_MESSAGE.NOT_SET);
+
+        //                    if ((pair.Value as GroupSignalsSrc).MSecRemaindToActivate < 0)
+        //                    {
+        //                        pair.Value.State = GroupSignals.STATE.QUEUE;
+
+        //                        push(pair.Key);
+        //                    }
+        //                    else
+        //                        ;
+        //                }
+        //                else
+        //                    if (pair.Value.State == GroupSignals.STATE.SLEEP)
+        //                    {
+        //                        pair.Value.State = GroupSignals.STATE.QUEUE;
+
+        //                        push(pair.Key);
+        //                    }
+        //                    else
+        //                        ;
+        //            else
+        //                ;
+        //    }
+        //}
         ///// <summary>
         ///// Изменить состояние - интциировать очередной запрос
         ///// </summary>
@@ -625,7 +655,7 @@ namespace uLoaderCommon
                     switch (Mode)
                     {
                         case MODE_WORK.CUR_INTERVAL:
-                            msecDiff = (long)(1000 * TimeSpanPeriod.TotalSeconds);
+                            msecDiff = (long)(PeriodMain.TotalMilliseconds); //'PeriodLocal' тоже валиден, т.к. они равны
                             //switch (HHandlerDbULoaderDatetimeSrc.s_modeCurInterval)
                             //{
                             //    case MODE_CURINTERVAL.CAUSE_PERIOD:
@@ -637,7 +667,7 @@ namespace uLoaderCommon
                             //}                            
                             break;
                         case MODE_WORK.COSTUMIZE:
-                            msecDiff = MSecInterval;
+                            msecDiff = (long)(PeriodLocal.TotalMilliseconds);
                             break;
                         default:
                             break;
@@ -700,44 +730,44 @@ namespace uLoaderCommon
         {
             int iRes = base.Initialize(id, pars);
 
-            //Повторная проверка назначения массива параметров
-            try
-            {
-                if (m_dictGroupSignals.Keys.Contains(id) == true)
-                    //Сигналы д.б. инициализированы
-                    if (m_dictGroupSignals[id].Signals == null)
-                        ;
-                    else
-                        if (pars[0].GetType().IsArray == true)
-                            ;
-                        else
-                        {//Считать переданные параметры - параметрами группы сигналов
-                            lock (m_lockStateGroupSignals)
-                            {
-                                if (m_dictGroupSignals[id].Mode == MODE_WORK.COSTUMIZE)
-                                    if ((!(((DateTime)pars[1] == null)))
-                                        && (!(((DateTime)pars[1] == DateTime.MinValue))))
-                                    {
-                                        ((GroupSignalsDatetimeSrc)m_dictGroupSignals[id]).DateTimeStart = (DateTime)pars[1];
-                                        m_dictGroupSignals[id].MSecInterval *= 1000; //Т.к. для реж. 'COSTUMIZE' - секунды
-                                    }
-                                    else
-                                        ;
-                                else
-                                    ;                             
-                            }
+            ////Повторная проверка назначения массива параметров
+            //try
+            //{
+            //    if (m_dictGroupSignals.Keys.Contains(id) == true)
+            //        //Сигналы д.б. инициализированы
+            //        if (m_dictGroupSignals[id].Signals == null)
+            //            ;
+            //        else
+            //            if (pars[0].GetType().IsArray == true)
+            //                ;
+            //            else
+            //            {//Считать переданные параметры - параметрами группы сигналов
+            //                lock (m_lockStateGroupSignals)
+            //                {
+            //                    if (m_dictGroupSignals[id].Mode == MODE_WORK.COSTUMIZE)
+            //                        if ((!(((DateTime)pars[1] == null)))
+            //                            && (!(((DateTime)pars[1] == DateTime.MinValue))))
+            //                        {
+            //                            ((GroupSignalsDatetimeSrc)m_dictGroupSignals[id]).DateTimeStart = (DateTime)pars[1];
+            //                            m_dictGroupSignals[id].MSecInterval *= 1000; //Т.к. для реж. 'COSTUMIZE' - секунды
+            //                        }
+            //                        else
+            //                            ;
+            //                    else
+            //                        ;                             
+            //                }
 
-                            Logging.Logg().Debug(@"HHandlerDbULoaderDatetimeSrc::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
-                        }
-                else
-                    ;
-            }
-            catch (Exception e)
-            {
-                Logging.Logg().Exception (e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoaderDatetimeSrc::Initialize () - ...");
+            //                Logging.Logg().Debug(@"HHandlerDbULoaderDatetimeSrc::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+            //            }
+            //    else
+            //        ;
+            //}
+            //catch (Exception e)
+            //{
+            //    Logging.Logg().Exception (e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoaderDatetimeSrc::Initialize () - ...");
 
-                iRes = -1;
-            }
+            //    iRes = -1;
+            //}
 
             if (m_dictGroupSignals.Keys.Contains(id) == true)
                 (m_dictGroupSignals[id] as GroupSignalsDatetimeSrc).SetDelegateActualizeDateTimeBegin(actualizeDateTimeBegin);
@@ -833,7 +863,7 @@ namespace uLoaderCommon
                     }
                     else
                         if (s_modeCurInterval == MODE_CURINTERVAL.CAUSE_NOT)
-                            DateTimeBegin = m_dtServer.AddMilliseconds(-1 * TimeSpanPeriod.TotalMilliseconds / 2);
+                            DateTimeBegin = m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds / 2);
                         else
                             ;
                     
@@ -845,9 +875,9 @@ namespace uLoaderCommon
                     {
                         case MODE_CURINTERVAL.CAUSE_PERIOD:
                             //Проверить необходимость изменения даты/времени
-                            if ((m_dtServer - DateTimeBegin.AddSeconds(TimeSpanPeriod.TotalSeconds)).TotalMilliseconds > MSecInterval)
+                            if ((m_dtServer - DateTimeBegin.AddSeconds(PeriodLocal.TotalSeconds)).TotalMilliseconds > MSecIntervalLocal)
                             {
-                                DateTimeBegin = DateTimeBegin.AddSeconds(TimeSpanPeriod.TotalSeconds);
+                                DateTimeBegin = DateTimeBegin.AddSeconds(PeriodLocal.TotalSeconds);
                                 //CountMSecInterval++;
                                 //Установить признак перехода
                                 iRes = 1;
@@ -856,7 +886,7 @@ namespace uLoaderCommon
                                 ;
                             break;
                         case MODE_CURINTERVAL.CAUSE_NOT:
-                            DateTimeBegin = m_dtServer.AddMilliseconds(-1 * TimeSpanPeriod.TotalMilliseconds / 2);
+                            DateTimeBegin = m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds / 2);
                             //Установить признак перехода
                             iRes = 1;
                             break;
@@ -872,7 +902,7 @@ namespace uLoaderCommon
                         //Проверить указано ли дата/время начала опроса
                         if (DateTimeStart == DateTime.MinValue)
                             //Не указано - опросить ближайший к текущей дате/времени период
-                            DateTimeStart = m_dtServer.AddMilliseconds(-1 * TimeSpanPeriod.TotalMilliseconds);
+                            DateTimeStart = m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds);
                         else
                             ;
 
@@ -880,7 +910,7 @@ namespace uLoaderCommon
                     }
                     else
                         //Повторный опрос
-                        DateTimeBegin = DateTimeBegin.AddMilliseconds(MSecInterval);
+                        DateTimeBegin = DateTimeBegin.AddMilliseconds(PeriodLocal.TotalMilliseconds);
 
                     iRes = 1;
                 }
@@ -902,9 +932,12 @@ namespace uLoaderCommon
         private void completeGroupSignalsCurrent()
         {
             if (State == GroupSignals.STATE.SLEEP)
-                if (! ((DateTimeBegin + TimeSpan.FromMilliseconds(MSecInterval)) > (DateTimeStart + TimeSpanPeriod)))
-                    push(IdGroupSignalsCurrent);
+                if (! ((DateTimeBegin + TimeSpan.FromMilliseconds(PeriodLocal.TotalMilliseconds)) > (DateTimeStart + PeriodMain)))
+                    ////Поставить в очередь для обработки идентификатор группы сигналов
+                    //push(IdGroupSignalsCurrent)
+                        ;
                 else
+                    //Остановить сбор данных
                     new Thread(new ParameterizedThreadStart(new DelegateObjectFunc (stop))).Start (IdGroupSignalsCurrent);
             else
                 ;
@@ -961,7 +994,7 @@ namespace uLoaderCommon
                     switch (Mode)
                     {
                         case MODE_WORK.CUR_INTERVAL:
-                            msecDiff = (long)(1000 * (_parent as HHandlerDbULoaderMSTTMSrc).m_iCurIntervalShift * (int)TimeSpanPeriod.TotalSeconds);                          
+                            msecDiff = (long)(1000 * (_parent as HHandlerDbULoaderMSTTMSrc).m_iCurIntervalShift * (int)PeriodLocal.TotalSeconds);                          
                             break;
                         case MODE_WORK.COSTUMIZE:
                             msecDiff = 0; //MSecInterval;
@@ -990,7 +1023,7 @@ namespace uLoaderCommon
                             msecDiff = 0;                          
                             break;
                         case MODE_WORK.COSTUMIZE:
-                            msecDiff = MSecInterval;
+                            msecDiff = (int)PeriodLocal.TotalMilliseconds;
                             break;
                         default:
                             break;
