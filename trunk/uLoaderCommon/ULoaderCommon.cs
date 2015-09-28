@@ -648,7 +648,7 @@ namespace uLoaderCommon
                                 //if (m_dictGroupSignals[id].Mode == MODE_WORK.COSTUMIZE)
                                 //    if ((!(((DateTime)pars[1] == null)))
                                 //        && (!(((DateTime)pars[1] == DateTime.MinValue))))
-                                //        m_dictGroupSignals[id].DateTimeStart = (DateTime)pars[1];
+                                //        m_dictGroupSignals[id]. = (DateTime)pars[1];
                                 //    else
                                 //        ;
                                 //else

@@ -730,44 +730,44 @@ namespace uLoaderCommon
         {
             int iRes = base.Initialize(id, pars);
 
-            ////Повторная проверка назначения массива параметров
-            //try
-            //{
-            //    if (m_dictGroupSignals.Keys.Contains(id) == true)
-            //        //Сигналы д.б. инициализированы
-            //        if (m_dictGroupSignals[id].Signals == null)
-            //            ;
-            //        else
-            //            if (pars[0].GetType().IsArray == true)
-            //                ;
-            //            else
-            //            {//Считать переданные параметры - параметрами группы сигналов
-            //                lock (m_lockStateGroupSignals)
-            //                {
-            //                    if (m_dictGroupSignals[id].Mode == MODE_WORK.COSTUMIZE)
-            //                        if ((!(((DateTime)pars[1] == null)))
-            //                            && (!(((DateTime)pars[1] == DateTime.MinValue))))
-            //                        {
-            //                            ((GroupSignalsDatetimeSrc)m_dictGroupSignals[id]).DateTimeStart = (DateTime)pars[1];
-            //                            m_dictGroupSignals[id].MSecInterval *= 1000; //Т.к. для реж. 'COSTUMIZE' - секунды
-            //                        }
-            //                        else
-            //                            ;
-            //                    else
-            //                        ;                             
-            //                }
+            //Повторная проверка назначения массива параметров
+            try
+            {
+                if (m_dictGroupSignals.Keys.Contains(id) == true)
+                    //Сигналы д.б. инициализированы
+                    if (m_dictGroupSignals[id].Signals == null)
+                        ;
+                    else
+                        if (pars[0].GetType().IsArray == true)
+                            ;
+                        else
+                        {//Считать переданные параметры - параметрами группы сигналов
+                            lock (m_lockStateGroupSignals)
+                            {
+                                if (m_dictGroupSignals[id].Mode == MODE_WORK.COSTUMIZE)
+                                    if ((!(((DateTime)pars[1] == null)))
+                                        && (!(((DateTime)pars[1] == DateTime.MinValue))))
+                                    {
+                                        ((GroupSignalsDatetimeSrc)m_dictGroupSignals[id]).DateTimeStart = (DateTime)pars[1];
+                                        //m_dictGroupSignals[id].MSecIntervalLocal *= 1000; //Т.к. для реж. 'COSTUMIZE' - секунды
+                                    }
+                                    else
+                                        ;
+                                else
+                                    ;
+                            }
 
-            //                Logging.Logg().Debug(@"HHandlerDbULoaderDatetimeSrc::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
-            //            }
-            //    else
-            //        ;
-            //}
-            //catch (Exception e)
-            //{
-            //    Logging.Logg().Exception (e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoaderDatetimeSrc::Initialize () - ...");
+                            Logging.Logg().Debug(@"HHandlerDbULoaderDatetimeSrc::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+                        }
+                else
+                    ;
+            }
+            catch (Exception e)
+            {
+                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoaderDatetimeSrc::Initialize () - ...");
 
-            //    iRes = -1;
-            //}
+                iRes = -1;
+            }
 
             if (m_dictGroupSignals.Keys.Contains(id) == true)
                 (m_dictGroupSignals[id] as GroupSignalsDatetimeSrc).SetDelegateActualizeDateTimeBegin(actualizeDateTimeBegin);

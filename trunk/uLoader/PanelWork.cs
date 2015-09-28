@@ -442,6 +442,10 @@ namespace uLoader
                                         }
                                     };
                                     break;
+                                case PanelLoader.KEY_CONTROLS.RBUTTON_CUR_DATETIME:
+                                case PanelLoader.KEY_CONTROLS.RBUTTON_COSTUMIZE:
+                                    state = HHandlerQueue.StatesMachine.GET_GROUP_SIGNALS_PARS;
+                                    break;
                                 default:
                                     break;
                             }

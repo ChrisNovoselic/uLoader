@@ -453,8 +453,8 @@ namespace uLoader
             /// <summary>
             /// Обработчик события "изменение выбора"
             /// </summary>
-            /// <param name="obj"></param>
-            /// <param name="ev"></param>
+            /// <param name="obj">Объект, инициировавший событие</param>
+            /// <param name="ev">Аргумент при возникновении события</param>
             private void panelLoader_WorkItemSelectionChanged(object obj, EventArgs ev)
             {
                 //Проверить наличие возможности выбора строки
@@ -1190,7 +1190,10 @@ namespace uLoader
             private void panelLoaderSource_ModeGroupSignals_CheckedChanged(object obj, EventArgs ev)
             {
                 RadioButton rBtn = obj as RadioButton;
+                Control ctrl;
                 KEY_CONTROLS key;
+                MODE_WORK modeWork = MODE_WORK.UNKNOWN;
+
                 //Реагировать только на 'RadioButton' в состоянии 'Checked'
                 if (rBtn.Checked == true)
                 {
@@ -1199,6 +1202,8 @@ namespace uLoader
                         rBtn.Name.Equals(KEY_CONTROLS.RBUTTON_COSTUMIZE.ToString())
                         //false
                         ;
+
+                    modeWork = bCostumizeEnabled == true ? MODE_WORK.COSTUMIZE : MODE_WORK.CUR_INTERVAL;
 
                     //if (rBtn.Name.Equals (KEY_CONTROLS.RBUTTON_CUR_DATETIME.ToString ()) == true)
                     //{
@@ -1211,17 +1216,17 @@ namespace uLoader
                     //    else
                     //        ;
 
-                    key = KEY_CONTROLS.CALENDAR_START_DATE;
-                    Controls.Find(key.ToString(), true)[0].Enabled = bCostumizeEnabled;
-                    key = KEY_CONTROLS.MTBX_START_TIME;
-                    Controls.Find(key.ToString(), true)[0].Enabled = bCostumizeEnabled;
+                    key = KEY_CONTROLS.CALENDAR_START_DATE; ctrl = Controls.Find(key.ToString(), true)[0];
+                    ctrl.Enabled = bCostumizeEnabled;
+                    key = KEY_CONTROLS.MTBX_START_TIME; ctrl = Controls.Find(key.ToString(), true)[0];
+                    ctrl.Enabled = bCostumizeEnabled;
 
-                    //key = KEY_CONTROLS.MTBX_PERIOD_MAIN;
-                    //Controls.Find(key.ToString(), true)[0].Enabled = !bCostumizeEnabled;
-                    key = KEY_CONTROLS.MTBX_PERIOD_LOCAL;
-                    Controls.Find(key.ToString(), true)[0].Enabled = bCostumizeEnabled;
-                    //key = KEY_CONTROLS.TBX_INTERVAL;
-                    //Controls.Find(key.ToString(), true)[0].Enabled = !bCostumizeEnabled;
+                    //key = KEY_CONTROLS.MTBX_PERIOD_MAIN; ctrl = Controls.Find(key.ToString(), true)[0];
+                    //ctrl.Enabled = !bCostumizeEnabled;
+                    key = KEY_CONTROLS.MTBX_PERIOD_LOCAL; ctrl = Controls.Find(key.ToString(), true)[0];
+                    ctrl.Enabled = bCostumizeEnabled;
+                    //key = KEY_CONTROLS.TBX_INTERVAL; ctrl = Controls.Find(key.ToString(), true)[0];
+                    //ctrl.Enabled = !bCostumizeEnabled;
                 }
                 else
                     ; //Не "отмеченные" - игнорировать
