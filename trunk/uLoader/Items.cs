@@ -357,6 +357,11 @@ namespace uLoader
 
             return iRes;
         }
+
+        public GROUP_SIGNALS_SRC_PARS GetGroupSignalsPars (string id)
+        {
+            return m_listGroupSignalsPars[getIndexGroupSignalsPars(id)] as GROUP_SIGNALS_SRC_PARS;
+        }
         /// <summary>
         /// Возвращает (внутренний) индекс группы сигналов в списке
         /// </summary>
@@ -940,6 +945,7 @@ namespace uLoader
                                 {
                                     MODE_WORK.ON_REQUEST
                                     , DateTime.MinValue
+                                    , TimeSpan.Zero
                                     , TimeSpan.Zero
                                     , -1
                                 }

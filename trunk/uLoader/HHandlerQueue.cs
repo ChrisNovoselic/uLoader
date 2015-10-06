@@ -45,6 +45,7 @@ namespace uLoader
             , SET_IDCUR_SOURCE_OF_GROUP //Установить идентификатор текущего источника
             , SET_TEXT_ADDING //Установить текст "дополнительных" параметров
             , SET_GROUP_SIGNALS_PARS //Установить параметры группы сигналов в группе источников при утрате фокуса ввода элементом управления (GroupBox) с их значениями
+            , GET_GROUP_SIGNALS_DATETIME_PARS //Запросить параметры группы сигналов в группе источников при изменении типа параметров (CUR_DATETIME, COSTUMIZE)
             ,
         }
         /// <summary>
@@ -208,6 +209,7 @@ namespace uLoader
                 case StatesMachine.SET_IDCUR_SOURCE_OF_GROUP:
                 case StatesMachine.SET_TEXT_ADDING:
                 case StatesMachine.SET_GROUP_SIGNALS_PARS:
+                case StatesMachine.GET_GROUP_SIGNALS_DATETIME_PARS:
                     //Не требуют запроса
                     break;
                 default:
@@ -251,6 +253,7 @@ namespace uLoader
                 case StatesMachine.STATE_CHANGED_GROUP_SIGNALS:                
                 case StatesMachine.DATA_SRC_GROUP_SIGNALS:
                 case StatesMachine.DATA_DEST_GROUP_SIGNALS:
+                case StatesMachine.GET_GROUP_SIGNALS_DATETIME_PARS:
                     itemQueue.m_objRecieved.OnEvtDataRecievedHost(new object[] { state, obj });
                     break;
                 case StatesMachine.SET_IDCUR_SOURCE_OF_GROUP:
@@ -536,6 +539,15 @@ namespace uLoader
 
                         iRes = 0;
                         break;
+                    case StatesMachine.GET_GROUP_SIGNALS_DATETIME_PARS:
+                        error = false;
+                        itemQueue = Peek;
+
+                        GROUP_SIGNALS_SRC_PARS grpSgnlsPars = m_listGroupSources[(int)INDEX_SRC.SOURCE][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].GetGroupSignalsPars((string)itemQueue.Pars[2]);
+                        outobj = grpSgnlsPars.m_arWorkIntervals[(int)itemQueue.Pars[3]];
+
+                        iRes = 0;
+                        break;
                     default:
                         break;
                 }
@@ -543,6 +555,9 @@ namespace uLoader
             catch (Exception e)
             {
                 Logging.Logg ().Exception (e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerQueue::StateCheckResponse (state=" + state.ToString () + @") - ...");
+
+                error = true;
+                iRes = -1 * (int)state;
             }
 
             return iRes;

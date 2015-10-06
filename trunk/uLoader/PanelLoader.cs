@@ -317,8 +317,8 @@ namespace uLoader
                 objDepenceded.m_arWorkIntervals[(int)modeWork].m_dtStart = (GetWorkingItem(KEY_CONTROLS.CALENDAR_START_DATE) as DateTimePicker).Value.Date;
                 objDepenceded.m_arWorkIntervals[(int)modeWork].m_dtStart += fromMaskedTextBox(KEY_CONTROLS.MTBX_START_TIME);
                 objDepenceded.m_arWorkIntervals[(int)modeWork].m_tsPeriodMain = fromMaskedTextBox(KEY_CONTROLS.MTBX_PERIOD_MAIN);
-                objDepenceded.m_arWorkIntervals[(int)modeWork].m_tsPeriodLocal = fromMaskedTextBox(KEY_CONTROLS.MTBX_PERIOD_LOCAL); ;
-                objDepenceded.m_arWorkIntervals[(int)modeWork].m_iIntervalLocal = Int32.Parse((GetWorkingItem(KEY_CONTROLS.TBX_INTERVAL) as TextBox).Text);
+                objDepenceded.m_arWorkIntervals[(int)modeWork].m_tsPeriodLocal = this is PanelLoaderSource ? fromMaskedTextBox(KEY_CONTROLS.MTBX_PERIOD_LOCAL) : TimeSpan.Zero;
+                objDepenceded.m_arWorkIntervals[(int)modeWork].m_iIntervalLocal = this is PanelLoaderSource ? Int32.Parse((GetWorkingItem(KEY_CONTROLS.TBX_INTERVAL) as TextBox).Text) : 0;
 
                 arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJ] = KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS; // обязательно для switch
                 arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] = getGroupId(KEY_CONTROLS.DGV_GROUP_SOURCES);
@@ -707,6 +707,7 @@ namespace uLoader
                 Control workItem;
                 PanelLoader.KEY_CONTROLS key;
                 MODE_WORK modeWork = MODE_WORK.UNKNOWN;
+                bool bAutoUpdateDatetimePars = false;
 
                 if (!(grpSgnlsPars == null))
                 {
@@ -728,51 +729,63 @@ namespace uLoader
                                 throw new Exception(@"PanelWork::fillWorkItem () - ...");
                         }
                         workItem = GetWorkingItem(key);
+                        bAutoUpdateDatetimePars = ! (workItem as RadioButton).Checked;
                         (workItem as RadioButton).Checked = true;
                     }
                     else
                         modeWork = MODE_WORK.COSTUMIZE;
 
-                    //Отобразить дата опроса для режима 'COSTUMIZE'
-                    key = PanelLoader.KEY_CONTROLS.CALENDAR_START_DATE;
-                    workItem = GetWorkingItem(key);
-                    (workItem as DateTimePicker).Value = grpSgnlsPars.m_arWorkIntervals[(int)modeWork].m_dtStart; //DateTime.Now;
-
-                    //Отобразить нач./время опроса для режима 'COSTUMIZE'
-                    key = PanelLoader.KEY_CONTROLS.MTBX_START_TIME;
-                    workItem = GetWorkingItem(key);
-                    (workItem as MaskedTextBox).Text = grpSgnlsPars.m_arWorkIntervals[(int)modeWork].m_dtStart.Hour.ToString(@"00")
-                        + @":" + grpSgnlsPars.m_arWorkIntervals[(int)modeWork].m_dtStart.Minute.ToString(@"00")
-                        ;
-
-                    //??? Отобразить период опроса (основной)
-                    key = PanelLoader.KEY_CONTROLS.MTBX_PERIOD_MAIN;
-                    workItem = GetWorkingItem(key);
-                    (workItem as MaskedTextBox).Text = grpSgnlsPars.m_arWorkIntervals[(int)modeWork].m_tsPeriodMain.Hours.ToString(@"00")
-                        + @":" + grpSgnlsPars.m_arWorkIntervals[(int)modeWork].m_tsPeriodMain.Minutes.ToString(@"00")
-                        //+ @":" + grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.Seconds
-                        ;
-
-                    if (this is PanelLoaderSource)
-                    {
-                        //??? Отобразить период опроса (локальный)
-                        key = PanelLoader.KEY_CONTROLS.MTBX_PERIOD_LOCAL;
-                        workItem = GetWorkingItem(key);
-                        (workItem as MaskedTextBox).Text = grpSgnlsPars.m_arWorkIntervals[(int)modeWork].m_tsPeriodLocal.Hours.ToString(@"00")
-                            + @":" + grpSgnlsPars.m_arWorkIntervals[(int)modeWork].m_tsPeriodMain.Minutes.ToString(@"00")
-                            ;
-
-                        //Отобразить шаг опроса для режима 'COSTUMIZE'
-                        key = PanelLoader.KEY_CONTROLS.TBX_INTERVAL;
-                        workItem = GetWorkingItem(key);
-                        (workItem as TextBox).Text = grpSgnlsPars.m_arWorkIntervals[(int)modeWork].m_iIntervalLocal.ToString();
-                    }
+                    if (bAutoUpdateDatetimePars == false)
+                        FillDatetimePars (grpSgnlsPars.m_arWorkIntervals[(int)modeWork]);
                     else
-                        ; //Не 'Source'
+                        ;                    
                 }
                 else
                     // не найдена группа сигналов
                     Logging.Logg().Warning(@"PanelLoader::FillWorkItem () - не найдена группа сигналов...", Logging.INDEX_MESSAGE.NOT_SET);
+            }
+
+            public void FillDatetimePars (DATETIME_WORK pars)
+            {
+                Control workItem;
+                PanelLoader.KEY_CONTROLS key;
+
+                //Отобразить дата опроса для режима 'COSTUMIZE'
+                key = PanelLoader.KEY_CONTROLS.CALENDAR_START_DATE;
+                workItem = GetWorkingItem(key);
+                (workItem as DateTimePicker).Value = pars.m_dtStart; //DateTime.Now;
+
+                //Отобразить нач./время опроса для режима 'COSTUMIZE'
+                key = PanelLoader.KEY_CONTROLS.MTBX_START_TIME;
+                workItem = GetWorkingItem(key);
+                (workItem as MaskedTextBox).Text = pars.m_dtStart.Hour.ToString(@"00")
+                    + @":" + pars.m_dtStart.Minute.ToString(@"00")
+                    ;
+
+                //??? Отобразить период опроса (основной)
+                key = PanelLoader.KEY_CONTROLS.MTBX_PERIOD_MAIN;
+                workItem = GetWorkingItem(key);
+                (workItem as MaskedTextBox).Text = pars.m_tsPeriodMain.Hours.ToString(@"00")
+                    + @":" + pars.m_tsPeriodMain.Minutes.ToString(@"00")
+                    //+ @":" + grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.Seconds
+                    ;
+
+                if (this is PanelLoaderSource)
+                {
+                    //??? Отобразить период опроса (локальный)
+                    key = PanelLoader.KEY_CONTROLS.MTBX_PERIOD_LOCAL;
+                    workItem = GetWorkingItem(key);
+                    (workItem as MaskedTextBox).Text = pars.m_tsPeriodLocal.Hours.ToString(@"00")
+                        + @":" + pars.m_tsPeriodMain.Minutes.ToString(@"00")
+                        ;
+
+                    //Отобразить шаг опроса для режима 'COSTUMIZE'
+                    key = PanelLoader.KEY_CONTROLS.TBX_INTERVAL;
+                    workItem = GetWorkingItem(key);
+                    (workItem as TextBox).Text = pars.m_iIntervalLocal.ToString();
+                }
+                else
+                    ; //Не 'Source'
             }
 
             private bool updateBtnCell (Control ctrl, int indx, GroupSources.STATE state)
@@ -1191,7 +1204,7 @@ namespace uLoader
             {
                 RadioButton rBtn = obj as RadioButton;
                 Control ctrl;
-                KEY_CONTROLS key;
+                KEY_CONTROLS key = KEY_CONTROLS.UNKNOWN;
                 MODE_WORK modeWork = MODE_WORK.UNKNOWN;
 
                 //Реагировать только на 'RadioButton' в состоянии 'Checked'
@@ -1227,6 +1240,18 @@ namespace uLoader
                     ctrl.Enabled = bCostumizeEnabled;
                     //key = KEY_CONTROLS.TBX_INTERVAL; ctrl = Controls.Find(key.ToString(), true)[0];
                     //ctrl.Enabled = !bCostumizeEnabled;
+
+                    object[] arObjRes = new object[(int)INDEX_PREPARE_PARS.COUNT_INDEX_PREPARE_PARS];
+                    arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJ] = getKeyWorkingItem(rBtn); // обязательно для switch
+                    arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] = getGroupId(KEY_CONTROLS.DGV_GROUP_SOURCES);
+                    arObjRes[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] = new object[] { getGroupId(KEY_CONTROLS.DGV_GROUP_SIGNALS) //Уточнить идентификатор для группы сигналов
+                        , modeWork }; // для выбранного режима
+
+                    arObjRes[(int)INDEX_PREPARE_PARS.OBJ] = this;
+                    arObjRes[(int)INDEX_PREPARE_PARS.KEY_EVT] = KEY_EVENT.SELECTION_CHANGED;
+
+                    //Отправить запрос на обновление параметров  группы сигналов "родительской" панели (для ретрансляции)
+                    DataAskedHost(arObjRes);
                 }
                 else
                     ; //Не "отмеченные" - игнорировать

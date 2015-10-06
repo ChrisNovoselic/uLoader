@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using System.Data;
 
 using HClassLibrary;
+using uLoaderCommon;
 
 namespace uLoader
 {    
@@ -259,6 +260,12 @@ namespace uLoader
                     break;
                 //case HHandlerQueue.StatesMachine.SET_IDCUR_SOURCE_OF_GROUP:
                 //    break;
+                case HHandlerQueue.StatesMachine.GET_GROUP_SIGNALS_DATETIME_PARS:
+                    if (!(par == null))
+                        m_arLoader[(int)INDEX_SRC.SOURCE].FillDatetimePars (par as DATETIME_WORK);
+                    else
+                        ;
+                    break;
                 default:
                     break;
             }
@@ -444,7 +451,16 @@ namespace uLoader
                                     break;
                                 case PanelLoader.KEY_CONTROLS.RBUTTON_CUR_DATETIME:
                                 case PanelLoader.KEY_CONTROLS.RBUTTON_COSTUMIZE:
-                                    state = HHandlerQueue.StatesMachine.GET_GROUP_SIGNALS_PARS;
+                                    state = HHandlerQueue.StatesMachine.GET_GROUP_SIGNALS_DATETIME_PARS;
+                                    arObjToDataHost = new object[] {
+                                        new object[] {
+                                            (int)state
+                                            , indxWork
+                                            , (string)(pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL])
+                                            , (string)(pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA] as object [])[0] //Строковый идентификатор группы сигналов
+                                            , (MODE_WORK)(pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA] as object [])[1] //MODE_WORK
+                                        }
+                                    };
                                     break;
                                 default:
                                     break;
