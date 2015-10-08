@@ -554,7 +554,7 @@ namespace SrcMSTKKSNAMEtoris
                 {
                     case (int)StatesMachine.Values:
                         //msg =+ @"Ok ...";
-                        Logging.Logg().Debug(@"Получено строк [" + PlugInId + @", key=" + IdGroupSignalsCurrent + @"]: " + (table as DataTable).Rows.Count, Logging.INDEX_MESSAGE.NOT_SET);
+                        //Logging.Logg().Debug(@"Получено строк [" + PlugInId + @", key=" + IdGroupSignalsCurrent + @"]: " + (table as DataTable).Rows.Count, Logging.INDEX_MESSAGE.NOT_SET);
                         if (TableRecieved == null)
                         {
                             TableRecieved = new DataTable();

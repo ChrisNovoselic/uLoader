@@ -5,6 +5,8 @@ using System.Reflection; //Assembly
 using System.IO;
 using System.Data;
 
+using System.Threading;
+
 using HClassLibrary;
 using uLoaderCommon;
 
@@ -714,6 +716,8 @@ namespace uLoader
             foreach (string skey in srcItem.m_listSKeys)
                 this.m_listSKeys.Add (skey);
 
+            m_semaStateChange = new Semaphore (1, 1);
+
             //Список с объектми параметров соединения с источниками данных
             foreach (KeyValuePair <string, ConnectionSettings> pair in srcItem.m_dictConnSett)
                 //??? Значения списка независимы
@@ -740,35 +744,14 @@ namespace uLoader
 
             m_plugIn = loadPlugIn(out _iStateDLL);
             if (_iStateDLL == STATE_DLL.LOADED)
-            {
-                int idGrpSgnls = -1;
-                GROUP_SIGNALS_PARS grpSgnlsPars;
                 foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
-                {
-                    //if (sendInitGroupSignals(FormMain.FileINI.GetIDIndex(itemGroupSignals.m_strID)) == 0)
                     if (itemGroupSignals.Validated == 0)
-                    {
-                        itemGroupSignals.State = STATE.STOPPED;
-
-                        idGrpSgnls = FormMain.FileINI.GetIDIndex(itemGroupSignals.m_strID);
-
-                        grpSgnlsPars = getGroupSignalsPars(idGrpSgnls);
-                        if (grpSgnlsPars.m_iAutoStart == 1)
-                        {
-                            sendInitGroupSignals(idGrpSgnls);
-                            sendState(idGrpSgnls, STATE.STARTED);
-                        }
-                        else
-                            ;
-                    }
+                        itemGroupSignals.State = STATE.STOPPED;                        
                     else
                         itemGroupSignals.State = STATE.UNAVAILABLE;
-                }
-            }
             else
                 //throw new Exception(@"GroupSources::GroupSources () - ...")
                 ;
-
             
         }
         /// <summary>
@@ -833,6 +816,32 @@ namespace uLoader
             }
 
             return plugInRes;
+        }
+
+        public void AutoStart()
+        {
+            int idGrpSgnls = -1;
+            GROUP_SIGNALS_PARS grpSgnlsPars;            
+
+            if (_iStateDLL == STATE_DLL.LOADED)
+                foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
+                    if (itemGroupSignals.State == STATE.STOPPED)
+                    {
+                        idGrpSgnls = FormMain.FileINI.GetIDIndex(itemGroupSignals.m_strID);
+
+                        grpSgnlsPars = getGroupSignalsPars(idGrpSgnls);
+                        if (grpSgnlsPars.m_iAutoStart == 1)
+                        {
+                            sendInitGroupSignals(idGrpSgnls);
+                            sendState(idGrpSgnls, STATE.STARTED);
+                        }
+                        else
+                            ;
+                    }
+                    else
+                        ;
+            else
+                ;
         }
 
         private object [] Pack ()
@@ -900,6 +909,9 @@ namespace uLoader
             int iRes = 0;
             ID_DATA_ASKED_HOST idToSend = ID_DATA_ASKED_HOST.UNKNOWN;
 
+            bool bSemaStateChangeRes = false;
+            bSemaStateChangeRes = m_semaStateChange.WaitOne();
+
             switch (state)
             {
                 case STATE.STARTED:
@@ -909,6 +921,7 @@ namespace uLoader
                     idToSend = ID_DATA_ASKED_HOST.STOP;
                     break;
                 default:
+                    throw new Exception(@"GroupSources::sendState (id=" + m_strID + @", key=" + iIDGroupSignals + @") - неизвестное состояние: state=" + state + @" - ...");
                     break;
             }
 
@@ -966,6 +979,7 @@ namespace uLoader
             return iRes;
         }
 
+        private Semaphore m_semaStateChange;
         /// <summary>
         /// Обработка сообщений "от" библиотеки
         /// </summary>
@@ -988,7 +1002,8 @@ namespace uLoader
 
                 switch ((ID_DATA_ASKED_HOST)pars[0])
                 {
-                    case ID_DATA_ASKED_HOST.INIT_SOURCE: //Получен запрос на парметры инициализации                    
+                    case ID_DATA_ASKED_HOST.INIT_SOURCE: //Получен запрос на парметры инициализации
+                        m_semaStateChange.Release(1);
                         //Отправить данные для инициализации
                         sendInitSource ();
                         if (!(grpSgnls.State == STATE.UNAVAILABLE))
@@ -1000,6 +1015,8 @@ namespace uLoader
                         msgDebugLog = @"отправлен: " + ((ID_DATA_ASKED_HOST)pars[0]).ToString ();
                         break;
                     case ID_DATA_ASKED_HOST.INIT_SIGNALS: //Получен запрос на обрабатываемую группу сигналов
+                        m_semaStateChange.Release(1);
+
                         sendInitGroupSignals(iIDGroupSignals);
                         if (!(grpSgnls.State == STATE.UNAVAILABLE))
                             //sendState(iIDGroupSignals, m_listGroupSignals[iIDGroupSignals].State);
@@ -1032,6 +1049,8 @@ namespace uLoader
                             ;
 
                         msgDebugLog = @"получено подтверждение: " + ((ID_DATA_ASKED_HOST)pars[0]).ToString();
+
+                        m_semaStateChange.Release (1);
                         break;
                     case ID_DATA_ASKED_HOST.ERROR:
                         //???
@@ -1125,29 +1144,37 @@ namespace uLoader
             int iRes = 0
                 , iId = -1;
 
-            STATE newState = getNewState (State, out iRes);
+            STATE newState = STATE.UNKNOWN;
 
-            //Изменить состояние ВСЕХ групп сигналов
-            foreach (GroupSignals grpSgnls in m_listGroupSignals)
-                //Проверить текцщее стостояние
-                if (!(grpSgnls.State == newState))
-                {
-                    iId = FormMain.FileINI.GetIDIndex(grpSgnls.m_strID);
+            if (_iStateDLL == STATE_DLL.LOADED)
+            {
+                newState = getNewState(State, out iRes);                
 
-                    ////Вариант №1 (пред-установка)
-                    ////Изменить только, если "другое"
-                    //grpSgnls.StateChange(newState);
-                    //sendState(FormMain.FileINI.GetIDIndex(grpSgnls.m_strID), grpSgnls.State);
+                //Изменить состояние ВСЕХ групп сигналов
+                foreach (GroupSignals grpSgnls in m_listGroupSignals)
+                    //Проверить текцщее стостояние
+                    if ((!(grpSgnls.State == newState))
+                        && (!(grpSgnls.State == STATE.UNAVAILABLE)))
+                    {
+                        iId = FormMain.FileINI.GetIDIndex(grpSgnls.m_strID);
 
-                    //Вариант №2  (пост-установка)
-                    if (newState == STATE.STARTED)
-                        sendInitGroupSignals(iId);
+                        ////Вариант №1 (пред-установка)
+                        ////Изменить только, если "другое"
+                        //grpSgnls.StateChange(newState);
+                        //sendState(FormMain.FileINI.GetIDIndex(grpSgnls.m_strID), grpSgnls.State);
+
+                        //Вариант №2  (пост-установка)
+                        if (newState == STATE.STARTED)
+                            sendInitGroupSignals(iId);
+                        else
+                            ;
+                        sendState(iId, newState);
+                    }
                     else
                         ;
-                    sendState(iId, newState);
-                }
-                else
-                    ;
+            }
+            else
+                iRes = -1;
 
             return iRes;
         }

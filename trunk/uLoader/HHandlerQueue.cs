@@ -171,6 +171,14 @@ namespace uLoader
             return iRes;
         }
 
+        public void AutoStart ()
+        {
+            for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc ++)
+                foreach (GroupSources grpSources in m_listGroupSources[(int)indxSrc])
+                    grpSources.AutoStart ();
+                    //grpSources.StateChange();
+        }
+
         protected override int StateRequest(int state)
         {
             int iRes = 0;

@@ -18,11 +18,9 @@ namespace uLoaderCommon
         enum StatesMachine
         {
             Unknown = -1
-            ,
-            CurrentTime
-                ,
-            Values
-                , Insert
+            , CurrentTime
+            , Values
+            , Insert
         }
 
         public HHandlerDbULoaderDest()

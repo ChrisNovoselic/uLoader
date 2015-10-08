@@ -427,9 +427,9 @@ namespace uLoaderCommon
                     case (int)StatesMachine.Values:                        
                         RowCountRecieved = table.Rows.Count;
 
-                        msg = @"Получено строк [" + PlugInId + @", key=" + IdGroupSignalsCurrent + @"]: " + (table as DataTable).Rows.Count;
-                        Console.WriteLine (msg);
-                        Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
+                        //msg = @"Получено строк [" + PlugInId + @", key=" + IdGroupSignalsCurrent + @"]: " + (table as DataTable).Rows.Count;
+                        //Console.WriteLine (msg);
+                        //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
 
                         if (TableRecieved == null)
                         {
@@ -490,21 +490,24 @@ namespace uLoaderCommon
             switch (state)
             {
                 case (int)StatesMachine.CurrentTime: //Ошибка получения даты/времени сервера-источника
-                    msgErr = @"получения даты/времени сервера-источника";
+                    msgErr = @"дату/время СУБД";
                     break;
                 case (int)StatesMachine.Values: //Ошибка получения значений источника
-                    msgErr = @"получения значений источника";
+                    msgErr = @"значения в БД";
                     break;
                 default:
                     break;
             }
 
             if (msgErr.Equals(unknownErr) == false)
-                msgErr = @"Ошибка " + msgErr;
+            {
+                msgErr = @"Не удалось получить " + msgErr;
+            }
             else
                 ;
 
-            Console.WriteLine(msgErr);
+            Logging.Logg ().Error (@"[" + PlugInId + @", key=" + IdGroupSignalsCurrent + @"]" + msgErr, Logging.INDEX_MESSAGE.NOT_SET);
+            //Console.WriteLine(@"Ошибка. " + msgErr);
 
             if (! (_iPlugin == null))
                 (_iPlugin as PlugInBase).DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.ERROR, IdGroupSignalsCurrent, state, msgErr });

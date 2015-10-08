@@ -459,14 +459,14 @@ namespace uLoaderCommon
                     else
                         ;
 
-                    string msg = @"HHandlerDbULoader::TableRecieved.set - "
-                        + @"[" + PlugInId
-                        + @", key=" + IdGroupSignalsCurrent + @"] "
-                        + @"строк_было=" + cntPrev
-                        + @", строк_стало=" + value.Rows.Count
-                        + @" ...";
-                    Console.WriteLine (msg);
-                    Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
+                    //string msg = @"HHandlerDbULoader::TableRecieved.set - "
+                    //    + @"[" + PlugInId
+                    //    + @", key=" + IdGroupSignalsCurrent + @"] "
+                    //    + @"строк_было=" + cntPrev
+                    //    + @", строк_стало=" + value.Rows.Count
+                    //    + @" ...";
+                    //Console.WriteLine (msg);
+                    //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
 
                     m_dictGroupSignals[IdGroupSignalsCurrent].TableRecieved = value;
                 }
@@ -570,6 +570,7 @@ namespace uLoaderCommon
             : this()
         {
             this._iPlugin = iPlugIn;
+            m_connSett = null;
         }
         /// <summary>
         /// Инициализация данных объекта
@@ -579,35 +580,50 @@ namespace uLoaderCommon
         public virtual int Initialize(object[] pars)
         {
             int iRes = 0;
-            //Значения параметров соединения с источником данных
-            m_connSett = new ConnectionSettings((pars[0] as ConnectionSettings));
-            //Очистить словарь с доп./параметрами
-            m_dictAdding.Clear();
-            
-            string key = string.Empty
-                , val = string.Empty;
-            //Проверить наличие дополнительных параметров
-            if (pars.Length > 1)
-            {
-                //Сохранить переданные из-вне параметры
-                for (int i = 1; i < pars.Length; i ++)
-                {
-                    if (pars[i] is string)
-                    {
-                        key = ((string)pars[i]).Split (FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE])[0];
-                        val = ((string)pars[i]).Split (FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE])[1];
+            string strMsg = string.Empty;
 
-                        m_dictAdding.Add(key, val);
+            m_semaInit.WaitOne();
+
+            if (m_connSett == null) {                
+                //Значения параметров соединения с источником данных
+                m_connSett = new ConnectionSettings((pars[0] as ConnectionSettings));
+
+                strMsg = @"HHandlerDbUloader::Initialize [ID=" + PlugInId + @"] - объект: ConnectionSettings.ID=" + m_connSett.id + @" ...";
+                Console.WriteLine(strMsg);
+                Logging.Logg ().Debug (strMsg, Logging.INDEX_MESSAGE.NOT_SET);
+
+                //Очистить словарь с доп./параметрами
+                m_dictAdding.Clear();
+
+                string key = string.Empty
+                    , val = string.Empty;
+                //Проверить наличие дополнительных параметров
+                if (pars.Length > 1)
+                {
+                    //Сохранить переданные из-вне параметры
+                    for (int i = 1; i < pars.Length; i ++)
+                    {
+                        if (pars[i] is string)
+                        {
+                            key = ((string)pars[i]).Split (FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE])[0];
+                            val = ((string)pars[i]).Split (FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE])[1];
+
+                            m_dictAdding.Add(key, val);
+                        }
+                        else
+                            ;
                     }
-                    else
-                        ;
                 }
-            }
-            else
-                ; //Для инициализации передан только 'ConnectionSettings' (pars[0])
+                else
+                    ; //Для инициализации передан только 'ConnectionSettings' (pars[0])
+            } else
+                ;
+
+            m_semaInit.Release (1);
 
             return iRes;
         }
+
         /// <summary>
         /// Инициализация группы сигналов
         /// </summary>
@@ -620,46 +636,49 @@ namespace uLoaderCommon
 
             try
             {
-                if (m_dictGroupSignals.Keys.Contains(id) == false)
-                {//Считать переданные параметры - параметрами сигналов                
-                    m_dictGroupSignals.Add(id, createGroupSignals (id, pars));
+                lock (m_lockStateGroupSignals)
+                {
+                    if (m_dictGroupSignals.Keys.Contains(id) == false)
+                    {//Считать переданные параметры - параметрами сигналов                
+                        m_dictGroupSignals.Add(id, createGroupSignals (id, pars));
 
-                    Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - добавить группу сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
-                else
-                    //Сигналы д.б. инициализированы
-                    if (m_dictGroupSignals[id].Signals == null)
-                        iRes = -1;
+                        Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - добавить группу сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+                    }
                     else
-                        if (pars[0].GetType().IsArray == true)
-                        {
-                            //Считать переданные параметры - параметрами сигналов
-                            m_dictGroupSignals[id] = createGroupSignals(id, pars);
-
-                            Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - ПЕРЕсоздать группу сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
-                        }
+                        //Сигналы д.б. инициализированы
+                        if (m_dictGroupSignals[id].Signals == null)
+                            iRes = -1;
                         else
-                        {//Считать переданные параметры - параметрами группы сигналов
-                            lock (m_lockStateGroupSignals)
+                            if (pars[0].GetType().IsArray == true)
                             {
-                                m_dictGroupSignals[id].Mode = (uLoaderCommon.MODE_WORK)pars[0];
-                                m_dictGroupSignals[id].State = GroupSignals.STATE.STOP;
-                                //Переопределено в 'HHandlerDbULoaderDatetimeSrc'
-                                //if (m_dictGroupSignals[id].Mode == MODE_WORK.COSTUMIZE)
-                                //    if ((!(((DateTime)pars[1] == null)))
-                                //        && (!(((DateTime)pars[1] == DateTime.MinValue))))
-                                //        m_dictGroupSignals[id]. = (DateTime)pars[1];
-                                //    else
-                                //        ;
-                                //else
-                                //    ;
-                                m_dictGroupSignals[id].PeriodMain = (TimeSpan)pars[2];
-                                m_dictGroupSignals[id].PeriodLocal = (TimeSpan)pars[3];
-                                m_dictGroupSignals[id].MSecIntervalLocal = (int)pars[4];
-                            }
+                                //Считать переданные параметры - параметрами сигналов
+                                m_dictGroupSignals[id] = createGroupSignals(id, pars);
 
-                            Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
-                        }
+                                Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - ПЕРЕсоздать группу сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+                            }
+                            else
+                            {//Считать переданные параметры - параметрами группы сигналов
+                                lock (m_lockStateGroupSignals)
+                                {
+                                    m_dictGroupSignals[id].Mode = (uLoaderCommon.MODE_WORK)pars[0];
+                                    m_dictGroupSignals[id].State = GroupSignals.STATE.STOP;
+                                    //Переопределено в 'HHandlerDbULoaderDatetimeSrc'
+                                    //if (m_dictGroupSignals[id].Mode == MODE_WORK.COSTUMIZE)
+                                    //    if ((!(((DateTime)pars[1] == null)))
+                                    //        && (!(((DateTime)pars[1] == DateTime.MinValue))))
+                                    //        m_dictGroupSignals[id]. = (DateTime)pars[1];
+                                    //    else
+                                    //        ;
+                                    //else
+                                    //    ;
+                                    m_dictGroupSignals[id].PeriodMain = (TimeSpan)pars[2];
+                                    m_dictGroupSignals[id].PeriodLocal = (TimeSpan)pars[3];
+                                    m_dictGroupSignals[id].MSecIntervalLocal = (int)pars[4];
+                                }
+
+                                Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+                            }
+                }
             }
             catch (Exception e)
             {
@@ -879,7 +898,11 @@ namespace uLoaderCommon
                     ;
 
             if (bReq == true)
+            {
                 base.register(id, indx, connSett, name);
+
+                Logging.Logg().Debug(@"HHandlerDbLoader::register (" + PlugInId + @", key=" + id + @")" + @" iListenerId = " + m_dictIdListeners[id][indx], Logging.INDEX_MESSAGE.NOT_SET);
+            }
             else
                 ;
         }
@@ -939,9 +962,9 @@ namespace uLoaderCommon
         /// <param name="id">Идентификатор группы сигналов</param>
         public virtual void Start(int id)
         {
-            Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
-
             m_semaInit.WaitOne ();
+
+            Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
             int iNeedStarted = -1; //Признак необходимости запуска "родительского" объекта
             GroupSignals.STATE initState = GroupSignals.STATE.UNKNOWN; //Новое состояние группы сигналов при старте
@@ -979,12 +1002,6 @@ namespace uLoaderCommon
 
             Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - iNeedStarted=" + iNeedStarted + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
-            if (! (_iPlugin == null))
-                //Подтвердить клиенту изменение состояние
-                (_iPlugin as PlugInBase).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.START, id });
-            else
-                ;
-
             //Проврить признак необходимости запуска "родительского" объекта
             if (iNeedStarted == 1)
             {
@@ -1000,6 +1017,12 @@ namespace uLoaderCommon
             {
                 register(id, 0, m_connSett, string.Empty);
             }
+
+            if (! (_iPlugin == null))
+                //Подтвердить клиенту изменение состояние
+                (_iPlugin as PlugInBase).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.START, id });
+            else
+                ;
 
             m_semaInit.Release (1);
         }
@@ -1017,6 +1040,9 @@ namespace uLoaderCommon
             stopThreadQueue();
 
             Activate (false);
+
+            m_connSett = null;
+            (_iPlugin as PlugInULoader).SetMark((int)ID_DATA_ASKED_HOST.INIT_SOURCE, false);
 
             //Вызвать "базовый" метод
             base.Stop();
@@ -1188,6 +1214,12 @@ namespace uLoaderCommon
         public PlugInULoader()
             : base()
         {
+            //_MarkReversed = true;
+        }
+
+        public void SetMark (int indx, bool val)
+        {
+            m_markDataHost.Set (indx, val);
         }
         /// <summary>
         /// Обработчик запросов от клиента

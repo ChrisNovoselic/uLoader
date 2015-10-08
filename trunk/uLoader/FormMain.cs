@@ -17,6 +17,8 @@ namespace uLoader
 
     public partial class FormMain : Form
     {
+        private FormWait m_formWait;
+        
         private HHandlerQueue m_handler;
 
         enum INDEX_TAB { WORK, CONFIG, COUNT_INDEX_TAB };
@@ -27,6 +29,8 @@ namespace uLoader
         public FormMain()
         {
             InitializeComponent();
+
+            m_formWait = FormWait.This;
 
             m_handler = new HHandlerQueue();
             m_handler.Start(); m_handler.Activate(true);
@@ -66,6 +70,10 @@ namespace uLoader
         /// <param name="e">Аргументы события</param>
         private void FormMain_Load(object sender, EventArgs e)
         {
+            m_formWait.StartWaitForm (Location, Size);
+
+            m_handler.AutoStart ();
+
             //Проверить признак отображения вкладки "работа"
             if (работаToolStripMenuItem.Checked == true)
             {
@@ -77,6 +85,8 @@ namespace uLoader
             }
             else
                 ;
+
+            m_formWait.StopWaitForm ();
 
             this.m_notifyIcon.Icon = this.Icon;
         }
