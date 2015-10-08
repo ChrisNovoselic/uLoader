@@ -109,6 +109,7 @@
     <Compile Include="UIMap.Designer.cs">
       <DependentUpon>UIMap.uitest</DependentUpon>
     </Compile>
+    <Compile Include="UnitTest_DBSources.cs" />
   </ItemGroup>
   <ItemGroup>
     <Shadow Include="Тестовые ссылки\uLoader.accessor" />
