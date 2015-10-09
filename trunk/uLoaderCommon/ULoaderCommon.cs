@@ -490,7 +490,9 @@ namespace uLoaderCommon
         /// </summary>
         protected virtual int IdGroupSignalsCurrent { get { return m_iIdGroupSignalsCurrent; } set { m_iIdGroupSignalsCurrent = value; } }
 
-        private Semaphore m_semaInit;
+        private Semaphore m_semaInitId;
+        private ManualResetEvent m_evtInitSource;
+        private object m_lockInitSource;
         /// <summary>
         /// Объект для синхронизации изменения состояний групп сигналов
         /// </summary>
@@ -548,7 +550,9 @@ namespace uLoaderCommon
             m_iIdGroupSignalsCurrent = -1;
             m_dictGroupSignals = new Dictionary<int, GroupSignals>();
 
-            m_semaInit = new Semaphore (1, 1);
+            m_semaInitId = new Semaphore (1, 1);
+            m_evtInitSource = new ManualResetEvent (false);
+            m_lockInitSource = new object ();
             m_lockStateGroupSignals = new object();
 
             //m_threadQueue = //Создание при "старте"
@@ -582,48 +586,48 @@ namespace uLoaderCommon
             int iRes = 0;
             string strMsg = string.Empty;
 
-            m_semaInit.WaitOne();
+            lock (m_lockInitSource)
+            {
+                if (m_connSett == null) {
+                    //Значения параметров соединения с источником данных
+                    m_connSett = new ConnectionSettings((pars[0] as ConnectionSettings));
 
-            if (m_connSett == null) {                
-                //Значения параметров соединения с источником данных
-                m_connSett = new ConnectionSettings((pars[0] as ConnectionSettings));
+                    strMsg = @"HHandlerDbUloader::Initialize [ID=" + PlugInId + @"] - объект: ConnectionSettings.ID=" + m_connSett.id + @" ...";
+                    Console.WriteLine(strMsg);
+                    Logging.Logg ().Debug (strMsg, Logging.INDEX_MESSAGE.NOT_SET);
 
-                strMsg = @"HHandlerDbUloader::Initialize [ID=" + PlugInId + @"] - объект: ConnectionSettings.ID=" + m_connSett.id + @" ...";
-                Console.WriteLine(strMsg);
-                Logging.Logg ().Debug (strMsg, Logging.INDEX_MESSAGE.NOT_SET);
+                    //Очистить словарь с доп./параметрами
+                    m_dictAdding.Clear();
 
-                //Очистить словарь с доп./параметрами
-                m_dictAdding.Clear();
-
-                string key = string.Empty
-                    , val = string.Empty;
-                //Проверить наличие дополнительных параметров
-                if (pars.Length > 1)
-                {
-                    //Сохранить переданные из-вне параметры
-                    for (int i = 1; i < pars.Length; i ++)
+                    string key = string.Empty
+                        , val = string.Empty;
+                    //Проверить наличие дополнительных параметров
+                    if (pars.Length > 1)
                     {
-                        if (pars[i] is string)
+                        //Сохранить переданные из-вне параметры
+                        for (int i = 1; i < pars.Length; i ++)
                         {
-                            key = ((string)pars[i]).Split (FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE])[0];
-                            val = ((string)pars[i]).Split (FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE])[1];
+                            if (pars[i] is string)
+                            {
+                                key = ((string)pars[i]).Split (FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE])[0];
+                                val = ((string)pars[i]).Split (FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE])[1];
 
-                            m_dictAdding.Add(key, val);
+                                m_dictAdding.Add(key, val);
+                            }
+                            else
+                                ;
                         }
-                        else
-                            ;
                     }
-                }
-                else
-                    ; //Для инициализации передан только 'ConnectionSettings' (pars[0])
-            } else
-                ;
+                    else
+                        ; //Для инициализации передан только 'ConnectionSettings' (pars[0])
 
-            m_semaInit.Release (1);
+                    m_evtInitSource.Set ();
+                } else
+                    ;
+            }
 
             return iRes;
         }
-
         /// <summary>
         /// Инициализация группы сигналов
         /// </summary>
@@ -642,7 +646,7 @@ namespace uLoaderCommon
                     {//Считать переданные параметры - параметрами сигналов                
                         m_dictGroupSignals.Add(id, createGroupSignals (id, pars));
 
-                        Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - добавить группу сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+                        //Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - добавить группу сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
                     else
                         //Сигналы д.б. инициализированы
@@ -676,7 +680,7 @@ namespace uLoaderCommon
                                     m_dictGroupSignals[id].MSecIntervalLocal = (int)pars[4];
                                 }
 
-                                Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+                                //Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
                             }
                 }
             }
@@ -901,7 +905,7 @@ namespace uLoaderCommon
             {
                 base.register(id, indx, connSett, name);
 
-                Logging.Logg().Debug(@"HHandlerDbLoader::register (" + PlugInId + @", key=" + id + @")" + @" iListenerId = " + m_dictIdListeners[id][indx], Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Debug(@"HHandlerDbLoader::register (" + PlugInId + @", key=" + id + @")" + @" iListenerId = " + m_dictIdListeners[id][indx] + @"; групп=" + m_dictGroupSignals.Count + @", идентификаторов_источников=" + m_dictIdListeners.Count, Logging.INDEX_MESSAGE.NOT_SET);
             }
             else
                 ;
@@ -926,6 +930,8 @@ namespace uLoaderCommon
 
             Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + PlugInId + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);            
         }
+
+        public bool IsInitSource { get { lock (m_lockInitSource) { return !(m_connSett == null); } } }
         /// <summary>
         /// Признак выполнения объекта и всех зависимых потоков
         /// </summary>
@@ -962,7 +968,7 @@ namespace uLoaderCommon
         /// <param name="id">Идентификатор группы сигналов</param>
         public virtual void Start(int id)
         {
-            m_semaInit.WaitOne ();
+            m_semaInitId.WaitOne ();
 
             Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -972,59 +978,62 @@ namespace uLoaderCommon
             try
             {
                 iNeedStarted = IsStarted == false ? 1 : 0;
+
+                //Новое состояние в зависимости от режима группы сигналов
+                switch (m_dictGroupSignals[id].Mode)
+                {
+                    case MODE_WORK.CUR_INTERVAL:
+                        initState = GroupSignals.STATE.TIMER;
+                        break;
+                    case MODE_WORK.COSTUMIZE:
+                    case MODE_WORK.ON_REQUEST: // для состояния 'UNKNOWN' (для группы сигналов назначения)
+                        initState = GroupSignals.STATE.SLEEP;
+                        break;
+                    default:
+                        break;
+                }
+                //Изменить состояние
+                lock (m_lockStateGroupSignals)
+                {
+                    if ((!(m_dictGroupSignals == null))
+                        && (m_dictGroupSignals.Keys.Contains(id) == true))
+                        m_dictGroupSignals[id].State = initState;
+                    else
+                        iNeedStarted = -1;
+                }
+
+                Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - iNeedStarted=" + iNeedStarted + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+
+                //Проврить признак необходимости запуска "родительского" объекта
+                if (iNeedStarted == 1)
+                {
+                    m_evtInitSource.WaitOne ();
+                    //Запустиь объект и все зависимые потоки
+                    Start();
+                    //Активировать объект
+                    Activate(true);
+                }
+                else
+                    ;
             }
             catch (Exception e)
             {
                 Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - ...");
             }
-            //Новое состояние в зависимости от режима группы сигналов
-            switch (m_dictGroupSignals[id].Mode)
-            {
-                case MODE_WORK.CUR_INTERVAL:
-                    initState = GroupSignals.STATE.TIMER;
-                    break;
-                case MODE_WORK.COSTUMIZE:
-                case MODE_WORK.ON_REQUEST: // для состояния 'UNKNOWN' (для группы сигналов назначения)
-                    initState = GroupSignals.STATE.SLEEP;
-                    break;
-                default:
-                    break;
-            }
-            //Изменить состояние
-            lock (m_lockStateGroupSignals)
-            {
-                if ((!(m_dictGroupSignals == null))
-                    && (m_dictGroupSignals.Keys.Contains(id) == true))
-                    m_dictGroupSignals[id].State = initState;
-                else
-                    iNeedStarted = -1;
-            }
 
-            Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - iNeedStarted=" + iNeedStarted + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
-
-            //Проврить признак необходимости запуска "родительского" объекта
-            if (iNeedStarted == 1)
-            {
-                //Запустиь объект и все зависимые потоки
-                Start();
-                //Активировать объект
-                Activate(true);
-            }
-            else
-                ;
             //Регистрация источника дфнных и установка с ним соединения
             lock (m_lockStateGroupSignals)
             {
                 register(id, 0, m_connSett, string.Empty);
+
+                if (! (_iPlugin == null))
+                    //Подтвердить клиенту изменение состояние
+                    (_iPlugin as PlugInBase).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.START, id, ID_HEAD_ASKED_HOST.CONFIRM });
+                else
+                    ;
             }
 
-            if (! (_iPlugin == null))
-                //Подтвердить клиенту изменение состояние
-                (_iPlugin as PlugInBase).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.START, id });
-            else
-                ;
-
-            m_semaInit.Release (1);
+            m_semaInitId.Release(1);
         }
         /// <summary>
         /// Идентификатор плюгина (строка, для лог-сообщений)
@@ -1035,17 +1044,21 @@ namespace uLoaderCommon
         /// </summary>
         public override void Stop()
         {
-            Logging.Logg().Debug(@"HHandlerDbULoader::Stop (" + PlugInId + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            lock (m_lockInitSource)
+            {
+                Logging.Logg().Debug(@"HHandlerDbULoader::Stop (" + PlugInId + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
-            stopThreadQueue();
+                stopThreadQueue();
 
-            Activate (false);
+                Activate (false);
 
-            m_connSett = null;
-            (_iPlugin as PlugInULoader).SetMark((int)ID_DATA_ASKED_HOST.INIT_SOURCE, false);
+                m_evtInitSource.Reset ();
+                m_connSett = null;
+                (_iPlugin as PlugInULoader).SetMark((int)ID_DATA_ASKED_HOST.INIT_SOURCE, false);
 
-            //Вызвать "базовый" метод
-            base.Stop();
+                //Вызвать "базовый" метод
+                base.Stop();
+            }
         }
         /// <summary>
         /// Остановить группу сигналов по указанному идентификатору
@@ -1055,7 +1068,7 @@ namespace uLoaderCommon
         {
             int iNeedStopped = 0; //Признак необходимости останова "родительского" объекта
 
-            m_semaInit.WaitOne ();
+            m_semaInitId.WaitOne ();
 
             lock (m_lockStateGroupSignals)
             {
@@ -1077,7 +1090,7 @@ namespace uLoaderCommon
             {
                 if (! (_iPlugin == null))
                     //Подтвердить клиенту останов группы сигналов
-                    (_iPlugin as PlugInBase).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.STOP, id });
+                    (_iPlugin as PlugInBase).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.STOP, id, ID_HEAD_ASKED_HOST.CONFIRM });
                 else
                     ;
 
@@ -1102,7 +1115,7 @@ namespace uLoaderCommon
             else
                 ;
 
-            m_semaInit.Release(1);
+            m_semaInitId.Release(1);
         }
         /// <summary>
         /// Запустить поток обработки очереди событий
@@ -1233,19 +1246,24 @@ namespace uLoaderCommon
             switch (ev.id)
             {
                 case (int)ID_DATA_ASKED_HOST.INIT_SOURCE: //Приняты параметры для инициализации целевого объекта
-                    target.Initialize(ev.par as object []);
+                    if (target.Initialize(ev.par as object []) == 0)
+                        //Подтвердить клиенту  получение параметров
+                        DataAskedHost(new object[] { ID_DATA_ASKED_HOST.INIT_SOURCE, (ev.par as object[])[0], ID_HEAD_ASKED_HOST.CONFIRM });
+                    else
+                        ;
                     break;
                 case (int)ID_DATA_ASKED_HOST.INIT_SIGNALS: //Приняты параметры инициализации группы сигналов
                     //Инициализация группы сигналов по идентифактору [0]
-                    if (! (target.Initialize((int)(ev.par as object[])[0], (ev.par as object[])[1] as object[]) == 0))
-                        //??? ошибка
-                        ;
+                    if (target.Initialize((int)(ev.par as object[])[0], (ev.par as object[])[1] as object[]) == 0)                        
+                        //Подтвердить клиенту  получение параметров
+                        DataAskedHost(new object[] { ID_DATA_ASKED_HOST.INIT_SIGNALS, (ev.par as object[])[0], ID_HEAD_ASKED_HOST.CONFIRM });
                     else
                         ;
                     break;
                 case (int)ID_DATA_ASKED_HOST.START: //Принята команда на запуск группы сигналов
                     //Проверить признак получения целевым объектом параметоров для инициализации
-                    if (m_markDataHost.IsMarked((int)ID_DATA_ASKED_HOST.INIT_SOURCE) == true)
+                    if ((m_markDataHost.IsMarked((int)ID_DATA_ASKED_HOST.INIT_SOURCE) == true) && (target.IsInitSource == true))
+                    //if (m_markDataHost.IsMarked((int)ID_DATA_ASKED_HOST.INIT_SOURCE) == true)
                     {
                         //Инициализация группы сигналов по идентифактору [0]
                         if (target.Initialize((int)(ev.par as object[])[0], (ev.par as object[])[1] as object[]) == 0)
@@ -1253,11 +1271,11 @@ namespace uLoaderCommon
                             target.Start((int)(ev.par as object[])[0]);
                         else
                             //Отправить запрос клиенту для получения параметров инициализации для группы сигналов
-                            DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.INIT_SIGNALS, (int)(ev.par as object[])[0] });
+                            DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.INIT_SIGNALS, (int)(ev.par as object[])[0], ID_HEAD_ASKED_HOST.GET });
                     }
                     else
                         //Отправить запрос клиенту для получения целевым объектом параметоров для инициализации
-                        DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.INIT_SOURCE, (int)(ev.par as object[])[0] });
+                        DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.INIT_SOURCE, (int)(ev.par as object[])[0], ID_HEAD_ASKED_HOST.GET });
                     break;
                 case (int)ID_DATA_ASKED_HOST.STOP:
                     target.Stop((int)(ev.par as object[])[0]);

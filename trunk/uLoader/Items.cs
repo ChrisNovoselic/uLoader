@@ -6,6 +6,7 @@ using System.IO;
 using System.Data;
 
 using System.Threading;
+using System.ComponentModel;
 
 using HClassLibrary;
 using uLoaderCommon;
@@ -752,7 +753,6 @@ namespace uLoader
             else
                 //throw new Exception(@"GroupSources::GroupSources () - ...")
                 ;
-            
         }
         /// <summary>
         /// Загрузить библиотеку с именем 'm_strDLLName'
@@ -820,10 +820,21 @@ namespace uLoader
 
         public void AutoStart()
         {
+            BackgroundWorker thread = new BackgroundWorker ();
+            thread.DoWork += new DoWorkEventHandler(autoStart);
+            thread.RunWorkerAsync ();
+        }
+
+        private void autoStart (object obj, DoWorkEventArgs ev)
+        {
             int idGrpSgnls = -1;
-            GROUP_SIGNALS_PARS grpSgnlsPars;            
+            GROUP_SIGNALS_PARS grpSgnlsPars;
+            bool bSemaStateChangeRes = false;
 
             if (_iStateDLL == STATE_DLL.LOADED)
+            {
+                sendInitSource ();
+
                 foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
                     if (itemGroupSignals.State == STATE.STOPPED)
                     {
@@ -833,13 +844,19 @@ namespace uLoader
                         if (grpSgnlsPars.m_iAutoStart == 1)
                         {
                             sendInitGroupSignals(idGrpSgnls);
-                            sendState(idGrpSgnls, STATE.STARTED);
+                            //sendState(idGrpSgnls, STATE.STARTED);
+
+                            ////Ожидать подтверждения изменения
+                            //bSemaStateChangeRes = false;
+                            //bSemaStateChangeRes = m_semaStateChange.WaitOne();
+                            //Thread.Sleep (666);
                         }
                         else
                             ;
                     }
                     else
                         ;
+            }
             else
                 ;
         }
@@ -903,14 +920,18 @@ namespace uLoader
 
             return iRes;
         }
-
+        /// <summary>
+        /// Отправить DLL сообщение о "новом" (START, STOP) состоянии группы сигналов
+        /// </summary>
+        /// <param name="iIDGroupSignals">Идентификатор группы сигналов</param>
+        /// <param name="state">"Новое" состояние</param>
+        /// <returns>Признак результата выполнения</returns>
         private int sendState(int iIDGroupSignals, STATE state)
         {
             int iRes = 0;
             ID_DATA_ASKED_HOST idToSend = ID_DATA_ASKED_HOST.UNKNOWN;
 
-            bool bSemaStateChangeRes = false;
-            bSemaStateChangeRes = m_semaStateChange.WaitOne();
+            m_semaStateChange.WaitOne ();
 
             switch (state)
             {
@@ -1003,26 +1024,38 @@ namespace uLoader
                 switch ((ID_DATA_ASKED_HOST)pars[0])
                 {
                     case ID_DATA_ASKED_HOST.INIT_SOURCE: //Получен запрос на парметры инициализации
-                        m_semaStateChange.Release(1);
-                        //Отправить данные для инициализации
-                        sendInitSource ();
-                        if (!(grpSgnls.State == STATE.UNAVAILABLE))
-                            //sendState(iIDGroupSignals, m_listGroupSignals[iIDGroupSignals].State);
-                            sendState(iIDGroupSignals, STATE.STARTED);
+                        if ((ID_HEAD_ASKED_HOST)pars[2] == ID_HEAD_ASKED_HOST.GET)
+                            //Отправить данные для инициализации
+                            sendInitSource ();
                         else
-                            ;
+                            if ((ID_HEAD_ASKED_HOST)pars[2] == ID_HEAD_ASKED_HOST.CONFIRM)
+                                //Повторить команду старт
+                                if (!(grpSgnls.State == STATE.UNAVAILABLE))
+                                {
+                                    sendState(iIDGroupSignals, STATE.STARTED);
+                                }
+                                else
+                                    ;
+                            else
+                                ;
 
                         msgDebugLog = @"отправлен: " + ((ID_DATA_ASKED_HOST)pars[0]).ToString ();
                         break;
                     case ID_DATA_ASKED_HOST.INIT_SIGNALS: //Получен запрос на обрабатываемую группу сигналов
-                        m_semaStateChange.Release(1);
-
-                        sendInitGroupSignals(iIDGroupSignals);
-                        if (!(grpSgnls.State == STATE.UNAVAILABLE))
-                            //sendState(iIDGroupSignals, m_listGroupSignals[iIDGroupSignals].State);
-                            sendState(iIDGroupSignals, STATE.STARTED);
+                        if ((ID_HEAD_ASKED_HOST)pars[2] == ID_HEAD_ASKED_HOST.GET)
+                            //Отправить данные для инициализации
+                            sendInitGroupSignals(iIDGroupSignals);
                         else
-                            ;
+                            if ((ID_HEAD_ASKED_HOST)pars[2] == ID_HEAD_ASKED_HOST.CONFIRM)
+                                //Повторить команду старт
+                                if (!(grpSgnls.State == STATE.UNAVAILABLE))
+                                {
+                                    sendState(iIDGroupSignals, STATE.STARTED);
+                                }
+                                else
+                                    ;
+                            else
+                                ;
 
                         msgDebugLog = @"отправлен: " + ((ID_DATA_ASKED_HOST)pars[0]).ToString();
                         break;
@@ -1040,6 +1073,7 @@ namespace uLoader
                         break;
                     case ID_DATA_ASKED_HOST.START:
                     case ID_DATA_ASKED_HOST.STOP:
+                        m_semaStateChange.Release (1);
                         //Вариант №2 (пост-установка)
                         grpSgnls.StateChange();
                         //Установить/разорвать взаимосвязь между группами источников (при необходимости)
@@ -1049,8 +1083,8 @@ namespace uLoader
                             ;
 
                         msgDebugLog = @"получено подтверждение: " + ((ID_DATA_ASKED_HOST)pars[0]).ToString();
-
-                        m_semaStateChange.Release (1);
+                        ////Разрешить очередную команду на изменение состояния
+                        //m_semaStateChange.Release (1);
                         break;
                     case ID_DATA_ASKED_HOST.ERROR:
                         //???

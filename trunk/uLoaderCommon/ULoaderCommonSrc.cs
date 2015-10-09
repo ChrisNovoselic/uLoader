@@ -506,7 +506,7 @@ namespace uLoaderCommon
             else
                 ;
 
-            Logging.Logg ().Error (@"[" + PlugInId + @", key=" + IdGroupSignalsCurrent + @"]" + msgErr, Logging.INDEX_MESSAGE.NOT_SET);
+            Logging.Logg ().Error (@"[" + PlugInId + @", key=" + IdGroupSignalsCurrent + @"] - " + msgErr, Logging.INDEX_MESSAGE.NOT_SET);
             //Console.WriteLine(@"Ошибка. " + msgErr);
 
             if (! (_iPlugin == null))
@@ -760,7 +760,7 @@ namespace uLoaderCommon
                                     ;
                             }
 
-                            Logging.Logg().Debug(@"HHandlerDbULoaderDatetimeSrc::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+                            //Logging.Logg().Debug(@"HHandlerDbULoaderDatetimeSrc::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
                         }
                 else
                     ;
