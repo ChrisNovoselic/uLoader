@@ -931,7 +931,7 @@ namespace uLoader
             int iRes = 0;
             ID_DATA_ASKED_HOST idToSend = ID_DATA_ASKED_HOST.UNKNOWN;
 
-            m_semaStateChange.WaitOne ();
+            //m_semaStateChange.WaitOne ();
 
             switch (state)
             {
@@ -1073,7 +1073,7 @@ namespace uLoader
                         break;
                     case ID_DATA_ASKED_HOST.START:
                     case ID_DATA_ASKED_HOST.STOP:
-                        m_semaStateChange.Release (1);
+                        //m_semaStateChange.Release (1);
                         //Вариант №2 (пост-установка)
                         grpSgnls.StateChange();
                         //Установить/разорвать взаимосвязь между группами источников (при необходимости)
@@ -1202,7 +1202,7 @@ namespace uLoader
                             sendInitGroupSignals(iId);
                         else
                             ;
-                        sendState(iId, newState);
+                        //sendState(iId, newState);
                     }
                     else
                         ;
@@ -1248,7 +1248,7 @@ namespace uLoader
                     sendInitGroupSignals(iId);
                 else
                     ;
-                sendState(iId, newState);
+                //sendState(iId, newState);
             }
             else
             {
