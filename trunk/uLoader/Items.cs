@@ -1182,7 +1182,12 @@ namespace uLoader
 
             if (_iStateDLL == STATE_DLL.LOADED)
             {
-                newState = getNewState(State, out iRes);                
+                newState = getNewState(State, out iRes);
+
+                if (newState == STATE.STARTED)
+                    sendInitSource();
+                else
+                    ;
 
                 //Изменить состояние ВСЕХ групп сигналов
                 foreach (GroupSignals grpSgnls in m_listGroupSignals)
@@ -1201,8 +1206,7 @@ namespace uLoader
                         if (newState == STATE.STARTED)
                             sendInitGroupSignals(iId);
                         else
-                            ;
-                        //sendState(iId, newState);
+                            sendState(iId, newState);
                     }
                     else
                         ;
@@ -1247,8 +1251,7 @@ namespace uLoader
                 if (newState == STATE.STARTED)
                     sendInitGroupSignals(iId);
                 else
-                    ;
-                //sendState(iId, newState);
+                    sendState(iId, newState);
             }
             else
             {
