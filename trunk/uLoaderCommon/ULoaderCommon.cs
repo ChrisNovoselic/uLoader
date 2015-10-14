@@ -905,7 +905,7 @@ namespace uLoaderCommon
             {
                 base.register(id, indx, connSett, name);
 
-                Logging.Logg().Debug(@"HHandlerDbLoader::register (" + PlugInId + @", key=" + id + @")" + @" iListenerId = " + m_dictIdListeners[id][indx] + @"; групп=" + m_dictGroupSignals.Count + @", идентификаторов_источников=" + m_dictIdListeners.Count, Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Debug(@"HHandlerDbLoader::register (" + PlugInId + @", key=" + id + @")" + @" iListenerId = " + m_dictIdListeners[id][indx] + @"; кол-во_групп=" + m_dictGroupSignals.Count + @", идентификаторов_источников=" + m_dictIdListeners.Count, Logging.INDEX_MESSAGE.NOT_SET);
             }
             else
                 ;
@@ -1248,7 +1248,7 @@ namespace uLoaderCommon
                 case (int)ID_DATA_ASKED_HOST.INIT_SOURCE: //Приняты параметры для инициализации целевого объекта
                     if (target.Initialize(ev.par as object []) == 0)
                         //Подтвердить клиенту  получение параметров
-                        DataAskedHost(new object[] { ID_DATA_ASKED_HOST.INIT_SOURCE, (ev.par as object[])[0], ID_HEAD_ASKED_HOST.CONFIRM });
+                        DataAskedHost(new object[] { ID_DATA_ASKED_HOST.INIT_SOURCE, -1, ID_HEAD_ASKED_HOST.CONFIRM });
                     else
                         ;
                     break;
