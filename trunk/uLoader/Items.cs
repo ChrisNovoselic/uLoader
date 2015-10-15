@@ -476,6 +476,7 @@ namespace uLoader
         public enum STATE_DLL { UNKNOWN = -3, NOT_LOAD, TYPE_MISMATCH, LOADED, }
 
         private ManualResetEvent m_evtInitSource;
+        private Semaphore m_semaStateChange;
         /// <summary>
         /// Состояние группы источников
         /// </summary>
@@ -719,6 +720,7 @@ namespace uLoader
                 this.m_listSKeys.Add (skey);
 
             m_evtInitSource = new ManualResetEvent (false);
+            m_semaStateChange = new Semaphore (0, 1);
 
             //Список с объектми параметров соединения с источниками данных
             foreach (KeyValuePair <string, ConnectionSettings> pair in srcItem.m_dictConnSett)
@@ -821,50 +823,14 @@ namespace uLoader
 
         public void AutoStart()
         {
-            BackgroundWorker thread = new BackgroundWorker ();
-            thread.DoWork += new DoWorkEventHandler(autoStart);
-            thread.RunWorkerAsync ();
-        }
-
-        private void autoStart (object obj, DoWorkEventArgs ev)
-        {
-            int idGrpSgnls = -1;
-            GROUP_SIGNALS_PARS grpSgnlsPars;
-
-            if (_iStateDLL == STATE_DLL.LOADED)
-                foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
-                    if (itemGroupSignals.State == STATE.STOPPED)
-                    {
-                        idGrpSgnls = FormMain.FileINI.GetIDIndex(itemGroupSignals.m_strID);
-
-                        grpSgnlsPars = getGroupSignalsPars(idGrpSgnls);
-                        if (grpSgnlsPars.m_iAutoStart == 1)
-                        {
-                            if (m_evtInitSource.WaitOne (0) == false)
-                                sendInitSource();
-                            else
-                                ;
-
-                            if (m_evtInitSource.WaitOne() == true)
-                            {                            
-                                sendInitGroupSignals(idGrpSgnls);
-                                //sendState(idGrpSgnls, STATE.STARTED);
-
-                                ////Ожидать подтверждения изменения
-                                //bSemaStateChangeRes = false;
-                                //bSemaStateChangeRes = m_semaStateChange.WaitOne();
-                                //Thread.Sleep (666);
-                            }
-                            else
-                                ;
-                        }
-                        else
-                            ;
-                    }
-                    else
-                        ;
-            else
-                ;
+            ////Вариант №0
+            //new Thread(new ParameterizedThreadStart(new Action <object> (autoStart)));
+            ////Вариант №1
+            //BackgroundWorker thread = new BackgroundWorker ();
+            //thread.DoWork += new DoWorkEventHandler(autoStart);
+            //thread.RunWorkerAsync ();
+            //Вариант №2
+            autoStart ();
         }
 
         private object [] Pack ()
@@ -1032,33 +998,44 @@ namespace uLoader
                 {
                     case ID_DATA_ASKED_HOST.INIT_SOURCE: //Получен запрос на парметры инициализации
                         if ((ID_HEAD_ASKED_HOST)pars[2] == ID_HEAD_ASKED_HOST.GET)
+                        {
                             //Отправить данные для инициализации
                             sendInitSource ();
+                            msgDebugLog = @"отправлен: ";
+                        }
                         else
                             if ((ID_HEAD_ASKED_HOST)pars[2] == ID_HEAD_ASKED_HOST.CONFIRM)
+                            {
+                                //Подтвердить установку параметров группы источников
                                 m_evtInitSource.Set ();
+                                msgDebugLog = @"подтверждено: ";
+                            }
                             else
                                 ;
 
-                        msgDebugLog = @"отправлен: " + ((ID_DATA_ASKED_HOST)pars[0]).ToString ();
+                        msgDebugLog += ((ID_DATA_ASKED_HOST)pars[0]).ToString ();
                         break;
                     case ID_DATA_ASKED_HOST.INIT_SIGNALS: //Получен запрос на обрабатываемую группу сигналов
                         if ((ID_HEAD_ASKED_HOST)pars[2] == ID_HEAD_ASKED_HOST.GET)
+                        {
                             //Отправить данные для инициализации
                             sendInitGroupSignals(iIDGroupSignals);
+                        }
                         else
                             if ((ID_HEAD_ASKED_HOST)pars[2] == ID_HEAD_ASKED_HOST.CONFIRM)
                                 //Отправить команду старт
                                 if (!(grpSgnls.State == STATE.UNAVAILABLE))
                                 {
                                     sendState(iIDGroupSignals, STATE.STARTED);
+                                    //Подтвердить установку параметров группы сигналов
+                                    msgDebugLog = @"подтверждено: ";
                                 }
                                 else
                                     ;
                             else
                                 ;
 
-                        msgDebugLog = @"отправлен: " + ((ID_DATA_ASKED_HOST)pars[0]).ToString();
+                        msgDebugLog += ((ID_DATA_ASKED_HOST)pars[0]).ToString();
                         break;
                     case ID_DATA_ASKED_HOST.TABLE_RES:
                         if ((!(grpSgnls == null))
@@ -1066,8 +1043,7 @@ namespace uLoader
                         {
                             msgDebugLog = @"получено строк=" + (pars[2] as DataTable).Rows.Count;
 
-                            grpSgnls.m_tableData = (pars[2] as DataTable).Copy();
-                        
+                            grpSgnls.m_tableData = (pars[2] as DataTable).Copy();                        
                         }
                         else
                             ;
@@ -1083,9 +1059,9 @@ namespace uLoader
                         else
                             ;
 
-                        msgDebugLog = @"получено подтверждение: " + ((ID_DATA_ASKED_HOST)pars[0]).ToString();
-                        ////Разрешить очередную команду на изменение состояния
-                        //m_semaStateChange.Release (1);
+                        msgDebugLog = @"подтверждено: " + ((ID_DATA_ASKED_HOST)pars[0]).ToString();
+                        //Разрешить очередную команду на изменение состояния
+                        m_semaStateChange.Release (1);
                         break;
                     case ID_DATA_ASKED_HOST.ERROR:
                         //???
@@ -1095,7 +1071,7 @@ namespace uLoader
                         break;
                 }
 
-                Logging.Logg().Debug(@"GroupSources::plugIn_OnEvtDataAskedHost (id=" + m_strID + @", key=" + grpSgnls.m_strID + @") - " + msgDebugLog + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Debug(@"GroupSources::plugIn_OnEvtDataAskedHost (id=" + m_strID + @", key=" + (grpSgnls == null ? @"НЕ_ТРЕБУЕТСЯ" : grpSgnls.m_strID) + @") - " + msgDebugLog + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
             catch (Exception e)
             {
@@ -1170,15 +1146,40 @@ namespace uLoader
 
             return stateRes;
         }
+
+        //private void autoStart(object obj) //Вариант №0
+        //private void autoStart(object obj, DoWorkEventArgs ev) //Вариант №1
+        private void autoStart() //Вариант №2
+        {
+            int idGrpSgnls = -1;
+            GROUP_SIGNALS_PARS grpSgnlsPars;
+
+            if (_iStateDLL == STATE_DLL.LOADED)
+                foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
+                    if (itemGroupSignals.State == STATE.STOPPED)
+                    {
+                        idGrpSgnls = FormMain.FileINI.GetIDIndex(itemGroupSignals.m_strID);
+
+                        grpSgnlsPars = getGroupSignalsPars(idGrpSgnls);
+                        if (grpSgnlsPars.m_iAutoStart == 1)
+                        {
+                            stateChange(idGrpSgnls, STATE.STARTED);
+                        }
+                        else
+                            ;
+                    }
+                    else
+                        ;
+            else
+                ;
+        }
         /// <summary>
         /// Остановить/запустить все группы сигналов
         /// </summary>
         /// <returns></returns>
         public int StateChange()
         {
-            int iRes = 0
-                , iId = -1;
-
+            int iRes = 0;
             STATE newState = STATE.UNKNOWN;
 
             if ((_iStateDLL == STATE_DLL.LOADED)
@@ -1186,34 +1187,12 @@ namespace uLoader
             {
                 newState = getNewState(State, out iRes);
 
-                if (newState == STATE.STARTED)
-                    sendInitSource();
-                else
-                    if (newState == STATE.STOPPED)
-                        m_evtInitSource.Reset ();
-                    else
-                        ;
-
                 //Изменить состояние ВСЕХ групп сигналов
                 foreach (GroupSignals grpSgnls in m_listGroupSignals)
                     //Проверить текцщее стостояние
                     if ((!(grpSgnls.State == newState))
                         && (!(grpSgnls.State == STATE.UNAVAILABLE)))
-                    {
-                        iId = FormMain.FileINI.GetIDIndex(grpSgnls.m_strID);
-
-                        ////Вариант №1 (пред-установка)
-                        ////Изменить только, если "другое"
-                        //grpSgnls.StateChange(newState);
-                        //sendState(FormMain.FileINI.GetIDIndex(grpSgnls.m_strID), grpSgnls.State);
-
-                        //Вариант №2  (пост-установка)
-                        if ((newState == STATE.STARTED)
-                            && (m_evtInitSource.WaitOne() == true))
-                            sendInitGroupSignals(iId);
-                        else
-                            sendState(iId, newState);
-                    }
+                        stateChange(FormMain.FileINI.GetIDIndex(grpSgnls.m_strID), newState);
                     else
                         ; //Группа сигналов уже имеет указанное состояние ИЛИ не может изменить состояние на указанное
             }
@@ -1239,26 +1218,13 @@ namespace uLoader
             if ((!(grpSgnls == null))
                 && (iRes == 0))
             {
-                if ((grpSgnls.State == STATE.STOPPED) 
-                    && (State == STATE.STOPPED))
-                    sendInitSource ();
+                if ((grpSgnls.State == STATE.STARTED)
+                    &&(!(State == STATE.STARTED)))
+                    throw new Exception(@"GroupSources::StateChange (ID=" + strId + @") - несовместимые состояния групп источников и сигналов...");
                 else
-                    if ((grpSgnls.State == STATE.STARTED)
-                        &&(!(State == STATE.STARTED)))
-                        throw new Exception(@"GroupSources::StateChange (ID=" + strId + @") - несовместимые состояния групп источников и сигналов...");
-                    else
-                        ;
+                    ;
 
-                ////Вариант №1 (пред-установка)
-                //iRes = grpSgnls.StateChange();
-                //sendState(id, grpSgnls.State);
-
-                //Вариант №2 (пост-установка)
-                if ((newState == STATE.STARTED)
-                    && (m_evtInitSource.WaitOne() == true))
-                    sendInitGroupSignals(iId);
-                else
-                    sendState(iId, newState);
+                stateChange (iId, newState);
             }
             else
             {
@@ -1269,6 +1235,30 @@ namespace uLoader
             }
 
             return iRes;
+        }
+
+        private void stateChange (int iId, STATE newState)
+        {
+            bool bSync = false;
+
+            if ((newState == STATE.STARTED)
+                && (m_evtInitSource.WaitOne(0) == false))
+                sendInitSource();
+            else
+                if (newState == STATE.STOPPED)
+                    m_evtInitSource.Reset ();
+                else
+                    ;
+            
+            //Вариант №2 (пост-установка)
+            if ((newState == STATE.STARTED)
+                && (m_evtInitSource.WaitOne() == true))
+                sendInitGroupSignals(iId);
+            else
+                sendState(iId, newState);
+
+            //Ожидать подтверждение об изменении состоянии
+            m_semaStateChange.WaitOne ();
         }
         /// <summary>
         /// Получить данные (результаты запроса в ~ режима) 'DataTable' по указанной группе сигналов

@@ -1253,12 +1253,14 @@ namespace uLoaderCommon
                         ;
                     break;
                 case (int)ID_DATA_ASKED_HOST.INIT_SIGNALS: //Приняты параметры инициализации группы сигналов
+                    ID_HEAD_ASKED_HOST idHead = ID_HEAD_ASKED_HOST.CONFIRM;
                     //Инициализация группы сигналов по идентифактору [0]
                     if (target.Initialize((int)(ev.par as object[])[0], (ev.par as object[])[1] as object[]) == 0)                        
-                        //Подтвердить клиенту  получение параметров
-                        DataAskedHost(new object[] { ID_DATA_ASKED_HOST.INIT_SIGNALS, (ev.par as object[])[0], ID_HEAD_ASKED_HOST.CONFIRM });
-                    else
                         ;
+                    else
+                        ; //??? сообщить об ошибке idHead = ID_HEAD_ASKED_HOST.ERROR
+                    //Подтвердить клиенту  получение параметров
+                    DataAskedHost(new object[] { ID_DATA_ASKED_HOST.INIT_SIGNALS, (ev.par as object[])[0], idHead });
                     break;
                 case (int)ID_DATA_ASKED_HOST.START: //Принята команда на запуск группы сигналов
                     //Проверить признак получения целевым объектом параметоров для инициализации
@@ -1270,12 +1272,14 @@ namespace uLoaderCommon
                             //Запустить на выполнение группу сигналов
                             target.Start((int)(ev.par as object[])[0]);
                         else
-                            //Отправить запрос клиенту для получения параметров инициализации для группы сигналов
-                            DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.INIT_SIGNALS, (int)(ev.par as object[])[0], ID_HEAD_ASKED_HOST.GET });
+                            ////Отправить запрос клиенту для получения параметров инициализации для группы сигналов
+                            //DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.INIT_SIGNALS, (int)(ev.par as object[])[0], ID_HEAD_ASKED_HOST.GET })
+                            ;
                     }
                     else
-                        //Отправить запрос клиенту для получения целевым объектом параметоров для инициализации
-                        DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.INIT_SOURCE, (int)(ev.par as object[])[0], ID_HEAD_ASKED_HOST.GET });
+                        ////Отправить запрос клиенту для получения целевым объектом параметоров для инициализации
+                        //DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.INIT_SOURCE, (int)(ev.par as object[])[0], ID_HEAD_ASKED_HOST.GET })
+                        ;
                     break;
                 case (int)ID_DATA_ASKED_HOST.STOP:
                     target.Stop((int)(ev.par as object[])[0]);
