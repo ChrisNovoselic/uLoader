@@ -262,7 +262,7 @@ namespace uLoader
                 case StatesMachine.DATA_SRC_GROUP_SIGNALS:
                 case StatesMachine.DATA_DEST_GROUP_SIGNALS:
                 case StatesMachine.GET_GROUP_SIGNALS_DATETIME_PARS:
-                    itemQueue.m_objRecieved.OnEvtDataRecievedHost(new object[] { state, obj });
+                    itemQueue.m_dataHostRecieved.OnEvtDataRecievedHost(new object[] { state, obj });
                     break;
                 case StatesMachine.SET_IDCUR_SOURCE_OF_GROUP:
                 case StatesMachine.SET_TEXT_ADDING:
