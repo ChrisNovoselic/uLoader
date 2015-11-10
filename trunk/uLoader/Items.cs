@@ -532,11 +532,11 @@ namespace uLoader
         }
 
         # region ??? Обязательный метод для интерфейса 'IPlugInHost'
-        public bool Register (IPlugIn plugIn)
+        public int Register (IPlugIn plugIn)
         {
-            bool bRes = true;
+            int iRes = 0;
 
-            return true;
+            return iRes;
         }
         # endregion
 

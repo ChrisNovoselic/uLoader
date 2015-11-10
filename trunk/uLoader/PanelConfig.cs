@@ -631,8 +631,8 @@ namespace uLoader
             int iRes = 0;
 
             s_arMarkChanged = new HMark [(int)INDEX_SRC.COUNT_INDEX_SRC];
-            s_arMarkChanged [(int)INDEX_SRC.SOURCE] = new HMark ();
-            s_arMarkChanged[(int)INDEX_SRC.DEST] = new HMark();
+            s_arMarkChanged [(int)INDEX_SRC.SOURCE] = new HMark (0);
+            s_arMarkChanged[(int)INDEX_SRC.DEST] = new HMark(0);
 
             return iRes;
         } 
