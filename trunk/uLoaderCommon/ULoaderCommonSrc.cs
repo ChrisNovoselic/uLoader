@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Data;
 using System.Threading;
@@ -197,9 +198,12 @@ namespace uLoaderCommon
 
             public class SIGNALKTSTUsql : SIGNAL
             {
-                public SIGNALKTSTUsql(int idMain)
+                public bool m_bAVG;
+                
+                public SIGNALKTSTUsql(int idMain, bool bAVG)
                     : base(idMain)
                 {
+                    m_bAVG = bAVG;
                 }
             }
 
@@ -559,20 +563,23 @@ namespace uLoaderCommon
 
     public abstract class HHandlerDbULoaderDatetimeSrc : HHandlerDbULoaderSrc
     {
+        protected string m_strDateTimeDBFormat;
         /// <summary>
         /// Перечисление - идентификаторы режимов вычисления даты/времени начала опроса
         /// </summary>
         public enum MODE_CURINTERVAL { CAUSE_PERIOD /*округление до ПЕРИОД, ожидание полного набора записей за ПЕРИОД*/, CAUSE_NOT /*текущее время сервера*/ };
         public static MODE_CURINTERVAL s_modeCurInterval = MODE_CURINTERVAL.CAUSE_NOT;
 
-        public HHandlerDbULoaderDatetimeSrc()
+        public HHandlerDbULoaderDatetimeSrc(string dtDBFormat)
             : base()
         {
+            m_strDateTimeDBFormat = dtDBFormat;
         }
 
-        public HHandlerDbULoaderDatetimeSrc(IPlugIn iPlugIn)
+        public HHandlerDbULoaderDatetimeSrc(IPlugIn iPlugIn, string dtDBFormat)
             : base(iPlugIn)
         {
+            m_strDateTimeDBFormat = dtDBFormat;
         }
 
         /// <summary>
@@ -620,7 +627,7 @@ namespace uLoaderCommon
                     switch (Mode)
                     {
                         case MODE_WORK.CUR_INTERVAL:
-                            strRes = DateTimeBegin.ToString(@"yyyyMMdd HHmmss");
+                            strRes = DateTimeBegin.ToString((_parent as HHandlerDbULoaderDatetimeSrc).m_strDateTimeDBFormat, CultureInfo.InvariantCulture);
                             //switch (
                             //    //((HHandlerDbULoaderDatetimeSrc)_parent).s_modeCurInterval
                             //    HHandlerDbULoaderDatetimeSrc.s_modeCurInterval
@@ -635,7 +642,7 @@ namespace uLoaderCommon
                             //}
                             break;
                         case MODE_WORK.COSTUMIZE:
-                            strRes = DateTimeBegin.ToString(@"yyyyMMdd HHmmss");
+                            strRes = DateTimeBegin.ToString((_parent as HHandlerDbULoaderDatetimeSrc).m_strDateTimeDBFormat, CultureInfo.InvariantCulture);
                             break;
                         default:
                             break;
@@ -676,7 +683,7 @@ namespace uLoaderCommon
                             break;
                     }
 
-                    strRes = DateTimeBegin.AddMilliseconds(msecDiff).ToString(@"yyyyMMdd HHmmss");
+                    strRes = DateTimeBegin.AddMilliseconds(msecDiff).ToString((_parent as HHandlerDbULoaderDatetimeSrc).m_strDateTimeDBFormat, CultureInfo.InvariantCulture);
                     //Console.WriteLine(@"DateTimeBegin=" + DateTimeBeginFormat + @"; DateTimeEndFormat=" + strRes);
 
                     return strRes;
@@ -957,12 +964,12 @@ namespace uLoaderCommon
         public int m_iCurIntervalShift;
 
         public HHandlerDbULoaderMSTTMSrc()
-            : base()
+            : base(@"yyyy/MM/dd HH:mm:ss")
         {
         }
 
         public HHandlerDbULoaderMSTTMSrc(IPlugIn iPlugIn)
-            : base(iPlugIn)
+            : base(iPlugIn, @"yyyy/MM/dd HH:mm:ss")
         {
         }
 
@@ -984,9 +991,9 @@ namespace uLoaderCommon
                 : base(parent, id, pars)
             {
             }
-
-            //Строки для условия "по дате/времени"
-            // начало
+            /// <summary>
+            /// Строки для условия "по дате/времени" - начало
+            /// </summary>
             protected override string DateTimeBeginFormat
             {
                 get
@@ -1006,13 +1013,15 @@ namespace uLoaderCommon
                             break;
                     }
 
-                    strRes = DateTimeBegin.AddHours(-6).AddMilliseconds(msecDiff).ToString(@"yyyy/MM/dd HH:mm:ss");
+                    strRes = DateTimeBegin.AddHours(-6).AddMilliseconds(msecDiff).ToString((_parent as HHandlerDbULoaderMSTTMSrc).m_strDateTimeDBFormat);
                     //Console.WriteLine(@"DateTimeBegin=" + DateTimeBeginFormat + @"; DateTimeEndFormat=" + strRes);
 
                     return strRes;
                 }
             }
-            // окончание
+            /// <summary>
+            /// Строки для условия "по дате/времени" - окончание
+            /// </summary>
             protected override string DateTimeEndFormat
             {
                 get
@@ -1032,7 +1041,7 @@ namespace uLoaderCommon
                             break;
                     }
 
-                    strRes = DateTimeBegin.AddHours(-6).AddMilliseconds(msecDiff).ToString(@"yyyy/MM/dd HH:mm:ss");
+                    strRes = DateTimeBegin.AddHours(-6).AddMilliseconds(msecDiff).ToString((_parent as HHandlerDbULoaderMSTTMSrc).m_strDateTimeDBFormat);
                     //Console.WriteLine(@"DateTimeBegin=" + DateTimeBeginFormat + @"; DateTimeEndFormat=" + strRes);
 
                     return strRes;

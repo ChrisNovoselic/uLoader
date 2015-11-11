@@ -11,12 +11,12 @@ namespace SrcKTSTUsql
     public class SrcKTSTUsql : HHandlerDbULoaderDatetimeSrc
     {
         public SrcKTSTUsql()
-            : base()
+            : base(@"dd/MM/yyyy HH:mm:ss")
         {
         }
 
         public SrcKTSTUsql(IPlugIn iPlugIn)
-            : base(iPlugIn)
+            : base(iPlugIn, @"dd/MM/yyyy HH:mm:ss")
         {
         }
 
@@ -30,12 +30,45 @@ namespace SrcKTSTUsql
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
                 //ID_MAIN
-                return new SIGNALKTSTUsql((int)objs[0]);
+                return new SIGNALKTSTUsql((int)objs[0], bool.Parse((string)objs[2]));
             }
 
             protected override void setQuery()
             {
-                m_strQuery = string.Empty;
+                int idReq = HMath.GetRandomNumber ()
+                    , i = -1;
+                string cmd = string.Empty;
+                //Формировать запрос
+                i = 0;
+                foreach (GroupSignalsKTSTUsql.SIGNALKTSTUsql s in m_arSignals)
+                {
+                    if (i == 0)
+                        cmd = @"List";
+                    else
+                        if (i == 1)
+                            cmd = @"ListAdd";
+                        else
+                            ; // оставить без изменений
+
+                    m_strQuery += @"exec e6work.dbo.ep_AskVTIdata @cmd='" + cmd + @"',"
+                        + @"@idVTI=" + s.m_idMain + @","
+                        + @"@TimeStart='" + DateTimeBeginFormat + @"',"
+                        + @"@TimeEnd='" + DateTimeEndFormat + @"',"
+                        + @"@idReq=" + idReq
+                        + @";";
+
+                    i ++;
+                }
+
+                m_strQuery += @"SELECT idVTI as [ID],idReq,TimeIdx,TimeRTC,TimeSQL as [DATETIME],idState,ValueFl as [VALUE],ValueInt,IsInteger,idUnit"
+                    + @" FROM e6work.dbo.VTIdataList"
+                    + @" WHERE idReq=" + idReq
+                    + @";";
+
+
+                m_strQuery += @"exec e6work.dbo.ep_AskVTIdata @cmd='" + @"Clear" + @"',"
+                    + @"@idReq=" + idReq
+                    + @";";
             }
         }
 

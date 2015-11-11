@@ -21,10 +21,12 @@ namespace TestFunc
 
             object objTest = null;
             Type typeTest =
-                //Вариант №1
-                typeof(biysktmora_test)
+                ////Вариант №1
+                //typeof(biysktmora_test)
                 ////Вариант №2
                 //typeof(ClassDataTableDistinct)
+                //Вариант №3
+                typeof(srcktstusql_test)
                 ;
 
             try { objTest = Activator.CreateInstance(typeTest); }
@@ -67,10 +69,10 @@ namespace TestFunc
             public enum STATE { EXIT = -2, OFF, PAUSED, ON }
             public static STATE iActived = STATE.OFF;
 
-            public timer_test()
+            public timer_test(string where, string who)
             {
-                string msgWelcome = "\t\nКонсольное приложение тестирования объекта получения значений БД RtSoft-Siberia"
-                + "\t\nСОТИАССО для Бийской ТЭЦ, ОАО СибЭКо (@ЗАО ИТС)"
+                string msgWelcome = "\t\nКонсольное приложение тестирования объекта получения значений " + where
+                + "\t\n" + who + @", ОАО СибЭКо (@ЗАО ИТС)"
                 + "\t\n использование: при запуске /t=MSEC (MSEC - интервал обновления"
                 + "\t\n в процессе выполнения 'Space' - пауза, 'Ctrl+C' - выход из программы"
                 ;

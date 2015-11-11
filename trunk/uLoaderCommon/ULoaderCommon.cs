@@ -1054,7 +1054,10 @@ namespace uLoaderCommon
 
                 m_evtInitSource.Reset ();
                 m_connSett = null;
-                (_iPlugin as PlugInULoader).SetMark((int)ID_DATA_ASKED_HOST.INIT_SOURCE, false);
+                if (! (_iPlugin == null))
+                    (_iPlugin as PlugInULoader).SetMark((int)ID_DATA_ASKED_HOST.INIT_SOURCE, false);
+                else
+                    ;
 
                 //Вызвать "базовый" метод
                 base.Stop();

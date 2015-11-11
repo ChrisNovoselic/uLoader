@@ -13,9 +13,8 @@ namespace TestFunc
     class biysktmora_test : TestFunc.Program.timer_test
     {
         public biysktmora_test()
-            : base()
-        {
-            
+            : base(@"БД RtSoft-Siberia", @"СОТИАССО для Бийской ТЭЦ")
+        {            
         }
 
         protected override int initialize()
