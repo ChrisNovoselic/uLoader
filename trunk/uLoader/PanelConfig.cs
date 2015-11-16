@@ -470,7 +470,7 @@ namespace uLoader
                             }
                             catch (ArgumentException e)
                             {
-                                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, strErr);
+                                Logging.Logg().Exception(e, strErr, Logging.INDEX_MESSAGE.NOT_SET);
                             }
                         }
                     }
@@ -585,7 +585,7 @@ namespace uLoader
                 }
                 catch (Exception e)
                 {
-                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"PanelSources::FillConfigItemProp (indxPanel=" + indxPanel.ToString () + @") - ...");
+                    Logging.Logg().Exception(e, @"PanelSources::FillConfigItemProp (indxPanel=" + indxPanel.ToString() + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
         }

@@ -459,7 +459,7 @@ namespace uLoaderCommon
                             }
                             catch (Exception e)
                             {
-                                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"statidsql::getTableIns () - ...");
+                                Logging.Logg().Exception(e, @"statidsql::getTableIns () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                             }
 
                             if (!(arSelIns == null))

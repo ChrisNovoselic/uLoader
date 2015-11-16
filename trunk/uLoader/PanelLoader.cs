@@ -1280,7 +1280,7 @@ namespace uLoader
                             }
                             catch (Exception e)
                             {
-                                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"PanelLoaderSources::UpdateData () - ...");
+                                Logging.Logg().Exception(e, @"PanelLoaderSources::UpdateData () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                             }
                         }
                         else

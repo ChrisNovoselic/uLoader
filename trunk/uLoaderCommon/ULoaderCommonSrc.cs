@@ -378,9 +378,23 @@ namespace uLoaderCommon
         //    changeState (GroupSignals.STATE.SLEEP);
         //}
         //Количество строк в таблице-результате для текущей (обрабатываемой) группы
-        private int RowCountRecieved { get { return (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsSrc).RowCountRecieved; } set { (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsSrc).RowCountRecieved = value; } }
+        protected int RowCountRecieved { get { return (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsSrc).RowCountRecieved; } set { (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsSrc).RowCountRecieved = value; } }
         //Строка запроса для текущей (обрабатываемой) группы
         private string Query { get { return (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsSrc).Query; } }
+
+        protected virtual void parseValues (DataTable table)
+        {
+            RowCountRecieved = table.Rows.Count;
+
+            if (TableRecieved == null)
+            {
+                TableRecieved = new DataTable();
+            }
+            else
+                ;
+
+            TableRecieved = GroupSignals.clearDupValues(table);
+        }
 
         protected override int StateRequest(int state)
         {
@@ -428,46 +442,8 @@ namespace uLoaderCommon
                         m_dtServer = (DateTime)(table as DataTable).Rows[0][0];
                         //msg =+ @"DATETIME=" + m_dtServer.ToString(@"dd.MM.yyyy HH.mm.ss.fff") + @"...";                        
                         break;
-                    case (int)StatesMachine.Values:                        
-                        RowCountRecieved = table.Rows.Count;
-
-                        //msg = @"Получено строк [" + PlugInId + @", key=" + IdGroupSignalsCurrent + @"]: " + (table as DataTable).Rows.Count;
-                        //Console.WriteLine (msg);
-                        //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
-
-                        if (TableRecieved == null)
-                        {
-                            TableRecieved = new DataTable();
-                        }
-                        else
-                            ;
-
-                        //int iPrev = -1, iDupl = -1, iAdd = -1, iCur = -1;
-                        //iPrev = 0; iDupl = 0; iAdd = 0; iCur = 0;
-                        //iPrev = TableResults.Rows.Count;
-
-                        //if (results.Rows.Count == 0)
-                        //{
-                        //    results = table.Copy ();
-                        //}
-                        //else
-                        //    ;
-
-                        //!!! Перенесена в библ. для "вставки"
-                        ////Удалить из таблицы записи, метки времени в которых, совпадают с метками времени в таблице-рез-те предыдущего опроса
-                        //iDupl = clearDupValues (ref table);
-
-                        ////!!! Перенесена в библ. для "вставки"
-                        ////Сформировать таблицу с "новыми" данными
-                        //DataTable tableIns = getTableIns(ref table);
-                        //tableIns.Columns.Add(@"tmdelta", typeof(int));
-
-                        //iAdd = table.Rows.Count;
-                        //TableResults.Merge(table);
-                        //iCur = TableResults.Rows.Count;
-                        //Console.WriteLine(@"Объединение таблицы-рез-та: [было=" + iPrev + @", дублирущих= " + iDupl + @", добавлено=" + iAdd + @", стало=" + iCur + @"]");
-
-                        TableRecieved = GroupSignals.clearDupValues(table);
+                    case (int)StatesMachine.Values:
+                        parseValues(table);
                         break;
                     default:
                         break;
@@ -475,7 +451,7 @@ namespace uLoaderCommon
             }
             catch (Exception e)
             {
-                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader::StateResponse (::" + ((StatesMachine)state).ToString () + @") - ...");
+                Logging.Logg().Exception(e, @"HHandlerDbULoader::StateResponse (::" + ((StatesMachine)state).ToString() + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
 
             //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
@@ -774,7 +750,7 @@ namespace uLoaderCommon
             }
             catch (Exception e)
             {
-                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoaderDatetimeSrc::Initialize () - ...");
+                Logging.Logg().Exception(e, @"HHandlerDbULoaderDatetimeSrc::Initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 iRes = -1;
             }
@@ -858,7 +834,7 @@ namespace uLoaderCommon
         /// Актулизировать дату/время начала опроса
         /// </summary>
         /// <returns>Признак изменения даты/времени начала опроса</returns>
-        protected int actualizeDateTimeBegin()
+        protected virtual int actualizeDateTimeBegin()
         {
             int iRes = 0;
             if (Mode == MODE_WORK.CUR_INTERVAL)

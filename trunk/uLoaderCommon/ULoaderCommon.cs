@@ -346,7 +346,7 @@ namespace uLoaderCommon
                 }
                 catch (Exception e)
                 {
-                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader::GroupSignals::clearDupValues () - ...");
+                    Logging.Logg().Exception(e, @"HHandlerDbULoader::GroupSignals::clearDupValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                     tblRes.Clear ();
                 }
@@ -686,7 +686,7 @@ namespace uLoaderCommon
             }
             catch (Exception e)
             {
-                Logging.Logg().Exception (e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader::Initialize () - ...");
+                Logging.Logg().Exception(e, @"HHandlerDbULoader::Initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 iRes = -1;
             }
@@ -744,7 +744,7 @@ namespace uLoaderCommon
                         }
                         catch (Exception e)
                         {
-                            Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, msgDebug + @" ...");
+                            Logging.Logg().Exception(e, msgDebug + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
                             msgDebug = string.Empty;
                         }
                     else
@@ -844,7 +844,7 @@ namespace uLoaderCommon
                     }
                     catch (Exception e)
                     {
-                        Logging.Logg().Exception (e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader.fThreadQueue () - ...");
+                        Logging.Logg().Exception(e, @"HHandlerDbULoader.fThreadQueue () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
                 }
             }
@@ -858,7 +858,7 @@ namespace uLoaderCommon
                 }
                 catch (Exception e)
                 { //System.Threading.SemaphoreFullException
-                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, "HHandlerDbULoader::fThreadQueue () - semaState.Release(1)");
+                    Logging.Logg().Exception(e, "HHandlerDbULoader::fThreadQueue () - semaState.Release(1)", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             else
                 ;
@@ -1018,7 +1018,7 @@ namespace uLoaderCommon
             }
             catch (Exception e)
             {
-                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - ...");
+                Logging.Logg().Exception(e, @"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
 
             //Регистрация источника дфнных и установка с ним соединения
@@ -1104,7 +1104,7 @@ namespace uLoaderCommon
                 }
                 catch (Exception e)
                 {
-                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader::Stop (" + PlugInId + @", key=" + id + @") - ...");
+                    Logging.Logg().Exception(e, @"HHandlerDbULoader::Stop (" + PlugInId + @", key=" + id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
                 //Проверить необходимость останова "родительского" для группы сигнала объекта
                 if (iNeedStopped == 1)
@@ -1151,7 +1151,7 @@ namespace uLoaderCommon
                 try { m_threadQueue.Start(); }
                 catch (Exception e)
                 {
-                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader::startThreadQueue () - ...");
+                    Logging.Logg().Exception(e, @"HHandlerDbULoader::startThreadQueue () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
             else
@@ -1182,7 +1182,7 @@ namespace uLoaderCommon
                 }
                 catch (Exception e)
                 {
-                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, "HHandlerDbULoader::stopThreadQueue () - m_semaQueue.Release(1)");
+                    Logging.Logg().Exception(e, "HHandlerDbULoader::stopThreadQueue () - m_semaQueue.Release(1)", Logging.INDEX_MESSAGE.NOT_SET);
                 }
                 //Ожидать завершения потоковой функции
                 joined = m_threadQueue.Join(666);

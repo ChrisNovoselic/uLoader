@@ -791,8 +791,8 @@ namespace uLoader
             }
             catch (Exception e)
             {
-                iRes = STATE_DLL.NOT_LOAD;                
-                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"GroupSources::loadPlugin () ... LoadFrom () ... plugIn.Name = " + name);
+                iRes = STATE_DLL.NOT_LOAD;
+                Logging.Logg().Exception(e, @"GroupSources::loadPlugin () ... LoadFrom () ... plugIn.Name = " + name, Logging.INDEX_MESSAGE.NOT_SET);
             }
 
             if (!(objType == null))
@@ -810,7 +810,7 @@ namespace uLoader
                 }
                 catch (Exception e)
                 {
-                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"GroupSources::loadPlugin () ... CreateInstance ... plugIn.Name = " + name);
+                    Logging.Logg().Exception(e, @"GroupSources::loadPlugin () ... CreateInstance ... plugIn.Name = " + name, Logging.INDEX_MESSAGE.NOT_SET);
                 }
             else
             {
@@ -1075,7 +1075,7 @@ namespace uLoader
             }
             catch (Exception e)
             {
-                Logging.Logg ().Exception (e, Logging.INDEX_MESSAGE.NOT_SET, @"GroupSources::plugIn_OnEvtDataAskedHost (id=" + m_strID + @", key=" + grpSgnls.m_strID + @") - ...");
+                Logging.Logg().Exception(e, @"GroupSources::plugIn_OnEvtDataAskedHost (id=" + m_strID + @", key=" + grpSgnls.m_strID + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
         /// <summary>

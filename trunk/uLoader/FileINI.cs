@@ -651,7 +651,7 @@ namespace uLoader
                 }
                 catch (Exception e)
                 {
-                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FileINI::getIDMasked () - ...");
+                    Logging.Logg().Exception(e, @"FileINI::getIDMasked () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
 
                 return strRes;
@@ -673,7 +673,7 @@ namespace uLoader
                 try { iRes = Int32.Parse(id.Substring(lengthMaskId, id.Length - lengthMaskId)); }
                 catch (Exception e)
                 {
-                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"FileINI::GetIDIndex () - ...");
+                    Logging.Logg().Exception(e, @"FileINI::GetIDIndex () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
 
                 return iRes;

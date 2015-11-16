@@ -165,7 +165,7 @@ namespace SrcMSTKKSNAMEtoris
                     try { rowsDel = m_tableTorIs.Select(strSel); }
                     catch (Exception e)
                     {
-                        Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"SrcMSTKKSNAMEtoris.GroupSignalsMSTKKSNAMEtoris::ClearValues () - ...");
+                        Logging.Logg().Exception(e, @"SrcMSTKKSNAMEtoris.GroupSignalsMSTKKSNAMEtoris::ClearValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
 
                     if (!(rowsDel == null))
@@ -234,7 +234,7 @@ namespace SrcMSTKKSNAMEtoris
             }
             catch (Exception e)
             {
-                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"SrcMSTKKSNAMEtoris::Start () - ...");
+                Logging.Logg().Exception(e, @"SrcMSTKKSNAMEtoris::Start () - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
 
@@ -261,7 +261,7 @@ namespace SrcMSTKKSNAMEtoris
             }
             catch (Exception e)
             {
-                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"SrcMSTKKSNAMEtoris::Stop () - ...");
+                Logging.Logg().Exception(e, @"SrcMSTKKSNAMEtoris::Stop () - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
 
             ((HHandler)this).Stop();
@@ -570,7 +570,7 @@ namespace SrcMSTKKSNAMEtoris
             }
             catch (Exception e)
             {
-                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerDbULoader::StateResponse (::" + ((StatesMachine)state).ToString() + @") - ...");
+                Logging.Logg().Exception(e, @"HHandlerDbULoader::StateResponse (::" + ((StatesMachine)state).ToString() + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
 
             //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);

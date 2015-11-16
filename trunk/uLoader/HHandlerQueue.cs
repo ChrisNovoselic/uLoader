@@ -562,7 +562,7 @@ namespace uLoader
             }
             catch (Exception e)
             {
-                Logging.Logg ().Exception (e, Logging.INDEX_MESSAGE.NOT_SET, @"HHandlerQueue::StateCheckResponse (state=" + state.ToString () + @") - ...");
+                Logging.Logg().Exception(e, @"HHandlerQueue::StateCheckResponse (state=" + state.ToString() + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 error = true;
                 iRes = -1 * (int)state;
