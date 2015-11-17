@@ -229,10 +229,13 @@ namespace uLoaderCommon
 
                 set
                 {
-                    if (isUpdateQuery (value) == true)
-                        setQuery ();
-                    else
-                        ;
+                    ////Вариант №1
+                    //if (isUpdateQuery (value) == true)
+                    //    setQuery ();
+                    //else
+                    //    ;
+                    //Вариант №2 - признак обновления содержания запроса перед его выполнением ()
+                    m_bIsUpdateQuery = isUpdateQuery(value);
 
                     m_iRowCountRecieved = value;
                 }
@@ -250,7 +253,23 @@ namespace uLoaderCommon
             /// <summary>
             /// Строка для запроса
             /// </summary>
-            public string Query { get { return m_strQuery; } set { m_strQuery = value; } }
+            public string Query {
+                get
+                {
+                    if (m_bIsUpdateQuery == true)
+                    {
+                        setQuery();
+
+                        m_bIsUpdateQuery = false;
+                    }
+                    else
+                        ;
+
+                    return m_strQuery;
+                }
+
+                /*set { m_strQuery = value; }*/
+            }
             /// <summary>
             ///  Конструктор - основной (с параметрами)
             /// </summary>
@@ -259,9 +278,13 @@ namespace uLoaderCommon
             public GroupSignalsSrc(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
+                m_bIsUpdateQuery = true;
+                
                 m_msecRemaindToActivate = 0;
                 m_iRowCountRecieved = -1;
             }
+
+            protected bool m_bIsUpdateQuery;
 
             protected virtual bool isUpdateQuery (int cntRec)
             {
@@ -413,7 +436,7 @@ namespace uLoaderCommon
                     if (RowCountRecieved == -1)
                         RowCountRecieved = 0;
                     else
-                        ;
+                        ;                    
 
                     msg = @"HHandlerDbULoaderSrc::StateRequest (::Values) - Query=" + Query;
                     //Console.WriteLine (msg);

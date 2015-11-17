@@ -33,7 +33,7 @@ namespace TestFunc
             catch (Exception e)
             {
                 msg = e.Message;
-                Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"Activator.CreateInstance (" + typeTest.FullName + @") - ...");
+                Logging.Logg().Exception(e, @"Activator.CreateInstance (" + typeTest.FullName + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 Console.WriteLine(Environment.NewLine + msg);
             }
 

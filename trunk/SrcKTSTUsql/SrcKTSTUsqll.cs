@@ -83,13 +83,43 @@ namespace SrcKTSTUsql
             //base.parseValues (table);
 
             DataTable tblRes = new DataTable ();
+            DataRow[] rowsSgnl = null;
+            DateTime dtValue;
+
+            tblRes.Columns.AddRange(new DataColumn [] {
+                new DataColumn (@"ID", typeof (int))
+                , new DataColumn (@"DATE_TIME", typeof (DateTime))
+                , new DataColumn (@"VALUE", typeof (float))
+            });
 
             foreach (GroupSignalsKTSTUsql.SIGNALKTSTUsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
             {
-                
+                rowsSgnl = table.Select(@"ID=" + sgnl.m_idMain, @"DATE_TIME");
+
+                if (rowsSgnl.Length == 2)
+                {
+                    dtValue = (DateTime)rowsSgnl[0][@"DATE_TIME"];
+                    if (dtValue.Minute == 30)
+                    {
+                        tblRes.Rows.Add(new object[] {
+                            (int)rowsSgnl[0][@"ID"]
+                            , new DateTime (dtValue.Year, dtValue.Month, dtValue.Day, dtValue.Hour, 0, 0)
+                            , 0F
+                        });
+
+                        foreach (DataRow r in rowsSgnl)
+                        {
+                            dtValue = (DateTime)r[@"DATE_TIME"];                            
+                        }
+                    }
+                    else
+                        break; // значения за разные интервалы интегрирования
+                }
+                else
+                    ; // не полные данные
             }
-            
-            RowCountRecieved = table.Rows.Count;
+
+            RowCountRecieved = tblRes.Rows.Count;
 
             TableRecieved = tblRes;
         }
@@ -136,7 +166,7 @@ namespace SrcKTSTUsql
                                 ;
                             break;
                         case MODE_CURINTERVAL.CAUSE_NOT:
-                            DateTimeBegin = m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds / 2);
+                            DateTimeBegin = m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds);
                             //Установить признак перехода
                             iRes = 1;
                             break;
