@@ -38,7 +38,8 @@ namespace SrcKTSTUsql
             {
                 int idReq = HMath.GetRandomNumber ()
                     , i = -1;
-                string cmd = string.Empty;
+                string cmd =
+                    string.Empty;
                 //Формировать запрос
                 i = 0;
                 foreach (GroupSignalsKTSTUsql.SIGNALKTSTUsql s in m_arSignals)
@@ -62,10 +63,10 @@ namespace SrcKTSTUsql
                 }
 
                 m_strQuery += @"SELECT idVTI as [ID],idReq,TimeIdx,TimeRTC,TimeSQL as [DATETIME],idState,ValueFl as [VALUE],ValueInt,IsInteger,idUnit"
+                        + @", DATEPART(HH, GETUTCDATE() - GETDATE()) as [UTC_OFFSET]"
                     + @" FROM e6work.dbo.VTIdataList"
                     + @" WHERE idReq=" + idReq
                     + @";";
-
 
                 m_strQuery += @"exec e6work.dbo.ep_AskVTIdata @cmd='" + @"Clear" + @"',"
                     + @"@idReq=" + idReq
@@ -84,33 +85,52 @@ namespace SrcKTSTUsql
 
             DataTable tblRes = new DataTable ();
             DataRow[] rowsSgnl = null;
+            DataRow rowIns = null;
             DateTime dtValue;
+            double dblSumValue = -1F;
+            int hUTCOffset = -1
+                , cntRec = -1;
 
             tblRes.Columns.AddRange(new DataColumn [] {
                 new DataColumn (@"ID", typeof (int))
-                , new DataColumn (@"DATE_TIME", typeof (DateTime))
+                , new DataColumn (@"DATETIME", typeof (DateTime))
                 , new DataColumn (@"VALUE", typeof (float))
             });
 
             foreach (GroupSignalsKTSTUsql.SIGNALKTSTUsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
             {
-                rowsSgnl = table.Select(@"ID=" + sgnl.m_idMain, @"DATE_TIME");
+                rowsSgnl = table.Select(@"ID=" + sgnl.m_idMain, @"DATETIME");
 
-                if (rowsSgnl.Length == 2)
+                if ((rowsSgnl.Length > 0)
+                    && (rowsSgnl.Length % 2 == 0))
                 {
-                    dtValue = (DateTime)rowsSgnl[0][@"DATE_TIME"];
+                    hUTCOffset = (int)rowsSgnl[0][@"UTC_OFFSET"];
+                    dtValue = (DateTime)rowsSgnl[0][@"DATETIME"];
+                    //У 1-го значения минуты д.б. = 30
                     if (dtValue.Minute == 30)
                     {
-                        tblRes.Rows.Add(new object[] {
+                        //Для обработки метки времени по UTC
+                        dtValue = dtValue.AddHours(hUTCOffset).AddMinutes(30);
+                        // вставить строку
+                        rowIns = tblRes.Rows.Add(new object[] {
                             (int)rowsSgnl[0][@"ID"]
-                            , new DateTime (dtValue.Year, dtValue.Month, dtValue.Day, dtValue.Hour, 0, 0)
+                            , dtValue
                             , 0F
                         });
-
+                        Console.WriteLine(@"Вставлена строка для sgnl.Id=" + sgnl.m_idMain + @"; Дата/время=" + dtValue.ToString() + @"; hUTCOffset=" + hUTCOffset);
+                        //Вычислить суммарное значение для сигнала
+                        dblSumValue = 0F;
+                        cntRec = 0;
                         foreach (DataRow r in rowsSgnl)
                         {
-                            dtValue = (DateTime)r[@"DATE_TIME"];                            
+                            dblSumValue += (double)r[@"VALUE"];
+                            cntRec++;
                         }
+                        // при необходимости найти среднее
+                        if (sgnl.m_bAVG == true)
+                            rowIns[@"VALUE"] = dblSumValue / cntRec;
+                        else
+                            ;
                     }
                     else
                         break; // значения за разные интервалы интегрирования

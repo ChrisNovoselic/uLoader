@@ -234,8 +234,13 @@ namespace uLoaderCommon
                     //    setQuery ();
                     //else
                     //    ;
-                    //Вариант №2 - признак обновления содержания запроса перед его выполнением ()
-                    m_bIsUpdateQuery = isUpdateQuery(value);
+                    ////Вариант №2 - признак обновления содержания запроса перед его выполнением ()
+                    //m_bIsUpdateQuery = isUpdateQuery(value);
+                    //Вариант №2 - 
+                    if (isUpdateQuery(value) == true)
+                        m_strQuery = string.Empty;
+                    else
+                        ;
 
                     m_iRowCountRecieved = value;
                 }
@@ -256,12 +261,8 @@ namespace uLoaderCommon
             public string Query {
                 get
                 {
-                    if (m_bIsUpdateQuery == true)
-                    {
+                    if (m_strQuery.Equals (string.Empty) == true)
                         setQuery();
-
-                        m_bIsUpdateQuery = false;
-                    }
                     else
                         ;
 
@@ -278,13 +279,13 @@ namespace uLoaderCommon
             public GroupSignalsSrc(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
-                m_bIsUpdateQuery = true;
+                //m_bIsUpdateQuery = true;
                 
                 m_msecRemaindToActivate = 0;
                 m_iRowCountRecieved = -1;
             }
 
-            protected bool m_bIsUpdateQuery;
+            //protected bool m_bIsUpdateQuery;
 
             protected virtual bool isUpdateQuery (int cntRec)
             {
