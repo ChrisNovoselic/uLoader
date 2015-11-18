@@ -856,14 +856,16 @@ namespace uLoader
                         case @"TOOLS_ENABLED": //Не устанавливается с помощью GUI
                             break;
                         case @"CUR_INTERVAL_PERIOD":
-                            if (type == (int)INDEX_SRC.SOURCE)
+                            if ((type == (int)INDEX_SRC.SOURCE)
+                                && ((parValues as GROUP_SIGNALS_SRC_PARS).m_mode == MODE_WORK.CUR_INTERVAL))
                                 //Только для источника
                                 listParValues[indxPar] = parValues.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodMain.TotalSeconds.ToString ();
                             else
                                 ;
                             break;
                         case @"CUR_INTERVAL_VALUE":
-                            if (type == (int)INDEX_SRC.SOURCE)
+                            if ((type == (int)INDEX_SRC.SOURCE)
+                                && ((parValues as GROUP_SIGNALS_SRC_PARS).m_mode == MODE_WORK.CUR_INTERVAL))
                                 //Только для источника
                                 listParValues[indxPar] = parValues.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iIntervalLocal.ToString();
                             else

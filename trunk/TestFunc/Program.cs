@@ -128,7 +128,7 @@ namespace TestFunc
                 }
                 catch (Exception e)
                 {
-                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"::ctor - [Data.IsStarted == true] ...");
+                    Logging.Logg().Exception(e, @"::ctor - [Data.IsStarted == true] ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
 
@@ -162,7 +162,7 @@ namespace TestFunc
                     }
                     catch (Exception e)
                     {
-                        Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"KeyPress.set - ...");
+                        Logging.Logg().Exception(e, @"KeyPress.set - ...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
                 }
             }
@@ -294,7 +294,7 @@ namespace TestFunc
                 }
                 catch (Exception e)
                 {
-                    Logging.Logg().Exception(e, Logging.INDEX_MESSAGE.NOT_SET, @"Console_CancelKeyPress () - ...");
+                    Logging.Logg().Exception(e, @"Console_CancelKeyPress () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
         }

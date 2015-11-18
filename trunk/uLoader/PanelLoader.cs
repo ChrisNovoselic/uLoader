@@ -776,7 +776,7 @@ namespace uLoader
                     key = PanelLoader.KEY_CONTROLS.MTBX_PERIOD_LOCAL;
                     workItem = GetWorkingItem(key);
                     (workItem as MaskedTextBox).Text = pars.m_tsPeriodLocal.Hours.ToString(@"00")
-                        + @":" + pars.m_tsPeriodMain.Minutes.ToString(@"00")
+                        + @":" + pars.m_tsPeriodLocal.Minutes.ToString(@"00")
                         ;
 
                     //Отобразить шаг опроса для режима 'COSTUMIZE'
