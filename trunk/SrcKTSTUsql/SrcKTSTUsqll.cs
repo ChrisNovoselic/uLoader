@@ -31,7 +31,7 @@ namespace SrcKTSTUsql
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
                 //ID_MAIN
-                return new SIGNALKTSTUsql((int)objs[0], bool.Parse((string)objs[2]));
+                return new SIGNALKTSTUsql((int)objs[0], (int)objs[2], bool.Parse((string)objs[3]));
             }
 
             protected override void setQuery()
@@ -53,7 +53,7 @@ namespace SrcKTSTUsql
                             ; // оставить без изменений
 
                     m_strQuery += @"exec e6work.dbo.ep_AskVTIdata @cmd='" + cmd + @"',"
-                        + @"@idVTI=" + s.m_idMain + @","
+                        + @"@idVTI=" + s.m_iIdKTS + @","
                         + @"@TimeStart='" + DateTimeBeginFormat + @"',"
                         + @"@TimeEnd='" + DateTimeEndFormat + @"',"
                         + @"@idReq=" + idReq
@@ -63,7 +63,7 @@ namespace SrcKTSTUsql
                 }
 
                 m_strQuery += @"SELECT idVTI as [ID],idReq,TimeIdx,TimeRTC,TimeSQL as [DATETIME],idState,ValueFl as [VALUE],ValueInt,IsInteger,idUnit"
-                        + @", DATEPART(HH, GETUTCDATE() - GETDATE()) as [UTC_OFFSET]"
+                        + @", DATEDIFF(HH, GETDATE(), GETUTCDATE()) as [UTC_OFFSET]"
                     + @" FROM e6work.dbo.VTIdataList"
                     + @" WHERE idReq=" + idReq
                     + @";";
@@ -85,11 +85,10 @@ namespace SrcKTSTUsql
 
             DataTable tblRes = new DataTable ();
             DataRow[] rowsSgnl = null;
-            DataRow rowIns = null;
+            //DataRow rowIns = null;
             DateTime dtValue;
             double dblSumValue = -1F;
-            int hUTCOffset = -1
-                , cntRec = -1;
+            //int cntRec = -1;
 
             tblRes.Columns.AddRange(new DataColumn [] {
                 new DataColumn (@"ID", typeof (int))
@@ -99,38 +98,37 @@ namespace SrcKTSTUsql
 
             foreach (GroupSignalsKTSTUsql.SIGNALKTSTUsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
             {
-                rowsSgnl = table.Select(@"ID=" + sgnl.m_idMain, @"DATETIME");
+                rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdKTS, @"DATETIME");
 
                 if ((rowsSgnl.Length > 0)
                     && (rowsSgnl.Length % 2 == 0))
                 {
-                    hUTCOffset = (int)rowsSgnl[0][@"UTC_OFFSET"];
                     dtValue = (DateTime)rowsSgnl[0][@"DATETIME"];
                     //У 1-го значения минуты д.б. = 30
                     if (dtValue.Minute == 30)
                     {
                         //Для обработки метки времени по UTC
-                        dtValue = dtValue.AddHours(hUTCOffset).AddMinutes(30);
-                        // вставить строку
-                        rowIns = tblRes.Rows.Add(new object[] {
-                            (int)rowsSgnl[0][@"ID"]
-                            , dtValue
-                            , 0F
-                        });
-                        Console.WriteLine(@"Вставлена строка для sgnl.Id=" + sgnl.m_idMain + @"; Дата/время=" + dtValue.ToString() + @"; hUTCOffset=" + hUTCOffset);
+                        dtValue = dtValue.AddHours((int)rowsSgnl[0][@"UTC_OFFSET"]).AddMinutes(30);
                         //Вычислить суммарное значение для сигнала
                         dblSumValue = 0F;
-                        cntRec = 0;
+                        //cntRec = 0;
                         foreach (DataRow r in rowsSgnl)
                         {
                             dblSumValue += (double)r[@"VALUE"];
-                            cntRec++;
+                            //cntRec++;
                         }
                         // при необходимости найти среднее
                         if (sgnl.m_bAVG == true)
-                            rowIns[@"VALUE"] = dblSumValue / cntRec;
+                            //dblSumValue /= cntRec;
+                            dblSumValue /= rowsSgnl.Length;
                         else
                             ;
+                        // вставить строку
+                        tblRes.Rows.Add(new object[] {
+                            sgnl.m_idMain
+                            , dtValue
+                            , dblSumValue
+                        });
                     }
                     else
                         break; // значения за разные интервалы интегрирования

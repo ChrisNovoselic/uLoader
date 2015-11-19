@@ -198,11 +198,13 @@ namespace uLoaderCommon
 
             public class SIGNALKTSTUsql : SIGNAL
             {
+                public int m_iIdKTS;
                 public bool m_bAVG;
-                
-                public SIGNALKTSTUsql(int idMain, bool bAVG)
+
+                public SIGNALKTSTUsql(int idMain, int idKTS, bool bAVG)
                     : base(idMain)
                 {
+                    m_iIdKTS = idKTS;
                     m_bAVG = bAVG;
                 }
             }
