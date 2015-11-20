@@ -39,6 +39,7 @@ namespace DestTEP32sql
             {
                 string strRes = string.Empty
                     , strRow = string.Empty;
+                int iIdToInsert = -1;
 
                 //Logging.Logg().Debug(@"GroupSignalsStatIDsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -54,15 +55,18 @@ namespace DestTEP32sql
 
                 foreach (DataRow row in tblRes.Rows)
                 {
-                    if (((int)getIdToInsert(Int32.Parse(row[@"ID"].ToString().Trim()))) == 0)
+                    iIdToInsert = (int)getIdToInsert(Int32.Parse(row[@"ID"].ToString().Trim()));
+                    if (iIdToInsert > 0)
                     {
                         strRow = @"(";
 
-                        strRow += row[@"ID_DEST"] + @",";
-                        strRow += (_parent as HHandlerDbULoaderStatTMDest).m_strIdTEC + @",";
-                        strRow += ((double)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
+                        strRow += iIdToInsert + @",";
+                        //strRow += (_parent as HHandlerDbULoaderStatTMDest).m_strIdTEC + @",";
+                        strRow += 0.ToString() + @","; //ID_USER
+                        strRow += 0.ToString() + @","; //ID_SOURCE
                         strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(0).ToString(@"yyyyMMdd HH:mm:ss.fff") + @"',";
-                        strRow += row[@"tmdelta"] + @",";
+                        strRow += 0.ToString() + @","; //QUALITY
+                        strRow += ((double)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";                        
                         strRow += @"GETDATE()";
 
                         strRow += @"),";

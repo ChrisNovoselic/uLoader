@@ -602,7 +602,11 @@ namespace uLoaderCommon
                 //ID_MAIN, ID_SRC_SGNL
                 return new SIGNALDest((int)objs[0], (int)objs[1]);
             }
-
+            /// <summary>
+            /// Возвраить идентификатор для вставки строки в целевую таблицу
+            /// </summary>
+            /// <param name="idLink">Идентификатор источника сигнала</param>
+            /// <returns>Идентификатор сигнала в целевой таблице</returns>
             protected override object getIdToInsert(int idLink)
             {
                 int iRes = -1;
@@ -610,7 +614,7 @@ namespace uLoaderCommon
                 foreach (SIGNALDest sgnl in m_arSignals)
                     if (sgnl.m_idLink == idLink)
                     {
-                        iRes = 0;
+                        iRes = sgnl.m_idMain;
 
                         break;
                     }
@@ -627,65 +631,65 @@ namespace uLoaderCommon
         }
     }
 
-    public abstract class HHandlerDbULoaderStatTMIDDest : HHandlerDbULoaderStatTMDest
-    {
-        public HHandlerDbULoaderStatTMIDDest()
-            : base()
-        {
-        }
+    //public abstract class HHandlerDbULoaderStatTMIDDest : HHandlerDbULoaderStatTMDest
+    //{
+    //    public HHandlerDbULoaderStatTMIDDest()
+    //        : base()
+    //    {
+    //    }
 
-        public HHandlerDbULoaderStatTMIDDest(IPlugIn iPlugIn)
-            : base(iPlugIn)
-        {
-        }
+    //    public HHandlerDbULoaderStatTMIDDest(IPlugIn iPlugIn)
+    //        : base(iPlugIn)
+    //    {
+    //    }
 
-        protected abstract class GroupSignalsStatTMIDDest : GroupSignalsStatTMDest
-        {
-            public GroupSignalsStatTMIDDest(HHandlerDbULoader parent, int id, object[] pars)
-                : base(parent, id, pars)
-            {
-            }
+    //    protected abstract class GroupSignalsStatTMIDDest : GroupSignalsStatTMDest
+    //    {
+    //        public GroupSignalsStatTMIDDest(HHandlerDbULoader parent, int id, object[] pars)
+    //            : base(parent, id, pars)
+    //        {
+    //        }
 
-            protected class SIGNALStatIDsql : GroupSignalsDest.SIGNALDest
-            {
-                public int m_idStat;
+    //        protected class SIGNALStatIDsql : GroupSignalsDest.SIGNALDest
+    //        {
+    //            public int m_idStat;
 
-                public SIGNALStatIDsql(int idMain, int idLink, int idStat)
-                    : base(idMain, idLink)
-                {
-                    m_idStat = idStat;
-                }
-            }
+    //            public SIGNALStatIDsql(int idMain, int idLink, int idStat)
+    //                : base(idMain, idLink)
+    //            {
+    //                m_idStat = idStat;
+    //            }
+    //        }
 
-            protected override GroupSignals.SIGNAL createSignal(object[] objs)
-            {
-                //ID_MAIN, ID_SRC_SGNL, ID_STAT
-                return new SIGNALStatIDsql((int)objs[0], (int)objs[1], (int)objs[3]);
-            }
+    //        protected override GroupSignals.SIGNAL createSignal(object[] objs)
+    //        {
+    //            //ID_MAIN, ID_SRC_SGNL, ID_STAT
+    //            return new SIGNALStatIDsql((int)objs[0], (int)objs[1], (int)objs[3]);
+    //        }
 
-            protected override object getIdToInsert(int idLink)
-            {
-                int iRes = -1;
+    //        protected override object getIdToInsert(int idLink)
+    //        {
+    //            int iRes = -1;
 
-                foreach (SIGNALStatIDsql sgnl in m_arSignals)
-                    if (sgnl.m_idLink == idLink)
-                    {
-                        iRes = sgnl.m_idStat;
+    //            foreach (SIGNALStatIDsql sgnl in m_arSignals)
+    //                if (sgnl.m_idLink == idLink)
+    //                {
+    //                    iRes = sgnl.m_idStat;
 
-                        break;
-                    }
-                    else
-                        ;
+    //                    break;
+    //                }
+    //                else
+    //                    ;
 
-                if (iRes < 0)
-                    throw new Exception(@"GroupSignlasStatTMIDDest::getIdToInsert (idLink=" + idLink + @") - ...");
-                else
-                    ;
+    //            if (iRes < 0)
+    //                throw new Exception(@"GroupSignlasStatTMIDDest::getIdToInsert (idLink=" + idLink + @") - ...");
+    //            else
+    //                ;
 
-                return iRes;
-            }
-        }
-    }
+    //            return iRes;
+    //        }
+    //    }
+    //}
 
     public abstract class HHandlerDbULoaderStatTMKKSNAMEDest : HHandlerDbULoaderStatTMDest
     {

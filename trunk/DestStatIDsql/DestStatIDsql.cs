@@ -55,7 +55,7 @@ namespace DestStatIDsql
 
                 foreach (DataRow row in tblRes.Rows)
                 {
-                    if (((int)getIdToInsert(Int32.Parse(row[@"ID"].ToString().Trim()))) == 0)
+                    if (((int)getIdToInsert(Int32.Parse(row[@"ID"].ToString().Trim()))) > 0)
                     {
                         strRow = @"(";
 

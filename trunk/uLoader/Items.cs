@@ -1463,14 +1463,17 @@ namespace uLoader
 
                 int iIdGrpSgnls = -1;
 
-                foreach (SIGNAL_SRC sgnl in m_listSgnls)
-                {
-                    iIdGrpSgnls = Convert.ToInt16(sgnl.m_arSPars[m_listSKeys.IndexOf(@"ID_SRC_SGNL")].Substring(1, 2)) - 1;
-                    if (listRes.IndexOf(iIdGrpSgnls) < 0)
-                        listRes.Add(iIdGrpSgnls);
-                    else
-                        ;
-                }
+                if (!(m_listSgnls == null))
+                    foreach (SIGNAL_SRC sgnl in m_listSgnls)
+                    {
+                        iIdGrpSgnls = Convert.ToInt16(sgnl.m_arSPars[m_listSKeys.IndexOf(@"ID_SRC_SGNL")].Substring(1, 2)) - 1;
+                        if (listRes.IndexOf(iIdGrpSgnls) < 0)
+                            listRes.Add(iIdGrpSgnls);
+                        else
+                            ;
+                    }
+                else
+                    ;
 
                 return listRes;
             }

@@ -10,7 +10,7 @@ using uLoaderCommon;
 
 namespace DestBiTECStatIDsql
 {
-    public class DestBiTECStatIDsql : HHandlerDbULoaderStatTMIDDest
+    public class DestBiTECStatIDsql : HHandlerDbULoaderStatTMMSTDest //HHandlerDbULoaderStatTMIDDest
     {
         //private static string s_strNameDestTable = @"ALL_PARAM_SOTIASSO"
         //    , s_strIdTEC = @"6";
@@ -25,7 +25,7 @@ namespace DestBiTECStatIDsql
         {
         }
 
-        private class GroupSignalsStatIDsql : GroupSignalsStatTMIDDest
+        private class GroupSignalsStatIDsql : GroupSignalsStatTMMSTDest //GroupSignalsStatTMIDDest
         {
             public GroupSignalsStatIDsql(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)

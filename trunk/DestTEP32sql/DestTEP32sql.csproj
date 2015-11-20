@@ -8,8 +8,8 @@
     <ProjectGuid>{4DDEC172-3900-47BF-B92D-4CF940346533}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DestStatIDsql</RootNamespace>
-    <AssemblyName>DestStatIDsql</AssemblyName>
+    <RootNamespace>DestTEP32sql</RootNamespace>
+    <AssemblyName>DestTEP32sql</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
