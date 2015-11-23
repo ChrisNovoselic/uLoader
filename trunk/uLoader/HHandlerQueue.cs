@@ -489,12 +489,16 @@ namespace uLoader
                         iRes = m_listGroupSources[(int)((INDEX_SRC)itemQueue.Pars[0])][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].StateChange((string)itemQueue.Pars[2]);
                         break;
                     case StatesMachine.CLEARVALUES_DEST_GROUP_SIGNALS:
-                        //???
+                        //[1] - идентификаторы
+                        //[2] = дата/время / продолжительность
                         error = false;
                         itemQueue = Peek;
 
                         int idGrpSrc = FormMain.FileINI.GetIDIndex((string)(itemQueue.Pars[1] as object [])[0])
                          , idGrpSgnls = FormMain.FileINI.GetIDIndex((string)(itemQueue.Pars[1] as object[])[1]);
+                        DateTime dtStartDate = (DateTime)(itemQueue.Pars[2] as object[])[0];
+                        TimeSpan tsStartTime = (TimeSpan)(itemQueue.Pars[2] as object[])[1]
+                            , tsPeriodMain = (TimeSpan)(itemQueue.Pars[2] as object[])[2];
 
                         iRes = 0;
                         break;

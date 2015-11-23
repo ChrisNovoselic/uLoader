@@ -520,7 +520,7 @@ namespace uLoader
             /// </summary>
             /// <param name="key">Идентификатор элемента управления со значением для преобразования</param>
             /// <returns>Преобразованное значение</returns>
-            private TimeSpan fromMaskedTextBox (KEY_CONTROLS key)
+            protected TimeSpan fromMaskedTextBox (KEY_CONTROLS key)
             {
                 TimeSpan tsRes = TimeSpan.Zero;
                 string []vals;
@@ -1441,8 +1441,8 @@ namespace uLoader
                 arPreparePars[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] = new object[] { getGroupId(KEY_CONTROLS.DGV_GROUP_SOURCES), getGroupId(KEY_CONTROLS.DGV_GROUP_SIGNALS) };
                 arPreparePars[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] = new object [] {
                     (GetWorkingItem(KEY_CONTROLS.CALENDAR_START_DATE) as DateTimePicker).Value.Date
-                    //+ KEY_CONTROLS.MTBX_COSTUMIZE_START_TIME
-                    //+ KEY_CONTROLS.MTBX_COSTUMIZE_PERIOD
+                    , fromMaskedTextBox (KEY_CONTROLS.MTBX_START_TIME)
+                    , fromMaskedTextBox (KEY_CONTROLS.MTBX_PERIOD_MAIN)
                 };                
 
                 arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = this;

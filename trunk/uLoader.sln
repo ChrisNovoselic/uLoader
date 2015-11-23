@@ -1,6 +1,6 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "uLoader", "uLoader\uLoader.csproj", "{33C90FD1-85FE-41F0-84AD-712E89AD8F2D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HClassLibrary", "..\HClassLibrary\HClassLibrary.csproj", "{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}"
