@@ -100,18 +100,22 @@ namespace uLoaderCommon
 
                 return iRes;
             }
-
             /// <summary>
-            /// х таблиц результата от источника
+            /// Очередь таблиц результата от источника
+            ///  , очередная таблица при обработке попадает в 'm_arTableRec'
             /// </summary>
             private Queue<DataTable> m_queueTableRec;
-            ///// <summary>
-            ///// Признак наличия необработанных таблиц результата от источника
-            ///// </summary>
-            //public bool IsQueueTableRec { get { return m_queueTableRec.Count > 1; } }
+            /// <summary>
+            /// Количество таблиц со значениями в очереди для обработки
+            /// </summary>
             public int QueueCountTableRec { get { return m_queueTableRec.Count; } }
+            /// <summary>
+            /// Массив с текущей и предыдущей таблицами полученными от источника
+            /// </summary>
             private DataTable[] m_arTableRec;
-            //private DataTable m_tableRecPrev;
+            /// <summary>
+            /// Текущая (крайняя полученная) таблица со значениями от источника
+            /// </summary>
             public override DataTable TableRecieved
             {
                 get
@@ -121,13 +125,23 @@ namespace uLoaderCommon
                         return
                             m_queueTableRec.Count > 0 ? m_queueTableRec.Peek() : m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT];
                             ;
-                    }
+                    } 
                 }
 
                 set
                 {
                     lock (this)
-                    {                        
+                    {
+                        if ((!(value == null))
+                            && (value.Rows.Count > 0))
+                        {
+                            // т.к. записи в таблице отсортированы по [DATE_TIME]
+                            DateTimeRangeRecieved.Set((DateTime)value.Rows[0][@"DATE_TIME"]
+                                , (DateTime)value.Rows[value.Rows.Count - 1][@"DATE_TIME"]);
+                        }
+                        else
+                            ;
+                        
                         //Добавить элемент в очередь
                         m_queueTableRec.Enqueue (value);
                     }
@@ -139,12 +153,68 @@ namespace uLoaderCommon
                     //    , Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
-
             /// <summary>
             /// Таблица с результатами - предыдущая (обработанная, для использования в вызове 'GetInsertQuery')
             /// </summary>
-            protected DataTable TableRecievedPrev { get { return m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS]; } }
+            public DataTable TableRecievedPrev
+            {
+                get { return m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS]; }
 
+                set { m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS] = value; }
+            }
+
+            public class DateTimeRange
+            {
+                public DateTimeRange()
+                {
+                    clear();
+                }
+
+                public DateTimeRange(DateTime begin, DateTime end)
+                {
+                    Begin = begin;
+                    End = end;
+                }
+
+                public void Set(DateTime begin, DateTime end)
+                {
+                    Begin = begin;
+                    End = end;
+                }
+
+                public DateTime Begin { get; private set; }
+                public DateTime End { get; private set; }
+
+                public bool Includes(DateTime value)
+                {
+                    return (Begin <= value) && (value <= End);
+                }
+
+                public bool Includes(DateTimeRange range)
+                {
+                    return (Begin <= range.Begin) && (range.End <= End);
+                }
+
+                //public void Clear()
+                //{
+                //    clear();
+                //}
+
+                private void clear()
+                {
+                    Begin = DateTime.MinValue;
+                    End = DateTime.MaxValue;
+                }
+
+                //public bool IsEmpty
+                //{
+                //    get { return (Begin.Equals(DateTime.MinValue) == true) && (End.Equals(DateTime.MaxValue) == true); }
+                //}
+            }
+            /// <summary>
+            /// Дата/время начала интервала (минимальное значение), за который получен набор значений для всавки в целевую таблицу
+            /// </summary>
+            public DateTimeRange DateTimeRangeRecieved;            
             /// <summary>
             /// Состояние группы сигналов
             /// </summary>
@@ -182,7 +252,8 @@ namespace uLoaderCommon
                     m_arTableRec [(int)indx] = new DataTable();
 
                 m_queueTableRec = new Queue<DataTable>();
-                //m_stackTableRec = new Stack<DataTable>();
+
+                DateTimeRangeRecieved = new DateTimeRange ();
             }
             /// <summary>
             /// Получить таблицу для вставки значений в целевую БД
@@ -202,6 +273,11 @@ namespace uLoaderCommon
             /// <param name="tblRes">Таблица, использующуюся для формирования строки запроса</param>
             /// <returns>Строка с запросом на вставку значений</returns>
             protected abstract string getInsertValuesQuery(DataTable tblRes);
+            /// <summary>
+            /// Получить строку с запросом текущих записей в целевой таблице
+            /// </summary>
+            /// <returns>Строка с запросом</returns>
+            protected virtual string getExistsValuesQuery() { return string.Empty; }
             /// <summary>
             /// Получить строку с запросом на вставку значений
             /// </summary>
@@ -230,39 +306,63 @@ namespace uLoaderCommon
                     ;
             }
 
+            public string GetExistsValuesQuery()
+            {
+                string strRes = string.Empty;
+
+                strRes = getExistsValuesQuery();
+
+                return strRes;
+            }
+
+            public override void Stop()
+            {
+                //Установить признак 
+                TableRecievedPrev.Rows.Clear();
+                //DateTimeRangeRecieved.Clear ();
+
+                base.Stop();
+            }
+
             protected abstract DataTable getTableRes();
+        }
+
+        protected virtual void previousValues(DataTable tableRes)
+        {
+            TableRecievedPrev = tableRes;
         }
 
         protected override int StateRequest(int state)
         {
             int iRes = 0;
+            string query = string.Empty;
 
-            switch ((StatesMachine)state)
-            {
-                case StatesMachine.CurrentTime:
-                    if (!(IdGroupSignalsCurrent < 0))
-                        GetCurrentTimeRequest(DbInterface.DB_TSQL_INTERFACE_TYPE.MSSQL, m_dictIdListeners[IdGroupSignalsCurrent][0]);
-                    else
-                        throw new Exception(@"HHandlerDbULoaderDest::StateRequest () - state=" + state.ToString() + @"...");
-                    break;
-                case StatesMachine.Values:
-                    break;
-                case StatesMachine.Insert:
-                    string query = (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).GetInsertValuesQuery();
+            if (!(IdGroupSignalsCurrent < 0))
+                switch ((StatesMachine)state)
+                {
+                    case StatesMachine.CurrentTime:
+                        GetCurrentTimeRequest(DbInterface.DB_TSQL_INTERFACE_TYPE.MSSQL, m_dictIdListeners[IdGroupSignalsCurrent][0]);                    
+                        break;
+                    case StatesMachine.Values:
+                    case StatesMachine.Insert:
+                        if ((StatesMachine)state == StatesMachine.Values)
+                            query = (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).GetExistsValuesQuery();
+                        else
+                            if ((StatesMachine)state == StatesMachine.Insert)
+                                query = (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).GetInsertValuesQuery();
+                            else
+                                ;
 
-                    //Logging.Logg().Debug(@"HHandlerDbULoaderDest:StateRequest () ::" + ((StatesMachine)state).ToString() + @" - "
-                    //        + @"[" + PlugInId + @", key=" + m_IdGroupSignalsCurrent + @"] "
-                    //        + @"query=" + query + @"..."
-                    //        , Logging.INDEX_MESSAGE.NOT_SET);
-
-                    if (query.Equals(string.Empty) == false)
-                        Request(m_dictIdListeners[IdGroupSignalsCurrent][0], query);
-                    else
-                        ;
-                    break;
-                default:
-                    break;
-            }
+                        if (query.Equals(string.Empty) == false)
+                            Request(m_dictIdListeners[IdGroupSignalsCurrent][0], query);
+                        else
+                            ;
+                        break;
+                    default:
+                        break;
+                }
+            else
+                throw new Exception(@"HHandlerDbULoaderDest::StateRequest () - state=" + state.ToString() + @"...");
 
             return iRes;
         }
@@ -282,7 +382,9 @@ namespace uLoaderCommon
                     //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
                     //Console.WriteLine (msg);
                     break;
-                case StatesMachine.Values:                    
+                case StatesMachine.Values:
+                    // ??? обработать результат запроса на получение текущих значений
+                    previousValues (obj as DataTable);
                     break;
                 case StatesMachine.Insert:
                     break;
@@ -351,12 +453,50 @@ namespace uLoaderCommon
             return iRes;
         }
 
+        public void Clear(int id)
+        {
+            (m_dictGroupSignals[id] as GroupSignalsDest).TableRecievedPrev.Rows.Clear();
+        }
+
+        protected GroupSignalsDest.DateTimeRange DateTimeRangeRecieved
+        {
+            get
+            {
+                if (!(IdGroupSignalsCurrent < 0))
+                    return (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).DateTimeRangeRecieved;
+                else
+                    throw new Exception(@"ULoaderCommonDest::DateTimeRangeRecieved.get ...");
+            }
+        }
+
+        protected DataTable TableRecievedPrev
+        {
+            get
+            {
+                if (!(IdGroupSignalsCurrent < 0))
+                    return (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).TableRecievedPrev;
+                else
+                    throw new Exception(@"ULoaderCommonDest::TableRecievedPrev.get ...");
+            }
+
+            set
+            {
+                if (!(IdGroupSignalsCurrent < 0))
+                    (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).TableRecievedPrev = value;
+                else
+                    throw new Exception(@"ULoaderCommonDest::TableRecievedPrev.get ...");
+            }
+        }
+
         protected override int addAllStates()
         {
             int iRes = 0;
 
             AddState((int)StatesMachine.CurrentTime);
-            //AddState((int)StatesMachine.Values);
+            if (TableRecievedPrev.Rows.Count == 0)
+                AddState((int)StatesMachine.Values);
+            else
+                ;
             AddState((int)StatesMachine.Insert);
 
             return iRes;
@@ -428,10 +568,15 @@ namespace uLoaderCommon
             protected class TableInsTMDelta : object
             {
                 private DataTable m_tblPrevRecieved;
+                private DataTable m_tblRes;
 
-                public DataTable Result(DataTable tblCur, DataTable tblPrev, GroupSignalsDest.SIGNAL[] arSignals)
+                private TableInsTMDelta()
                 {
-                    DataTable tableRes = new DataTable();
+                    m_tblRes = null; // new DataTable();
+                }
+
+                public TableInsTMDelta(DataTable tblCur, DataTable tblPrev, GroupSignalsDest.SIGNAL[] arSignals)
+                {
                     DataRow[] arSelIns = null;
                     DataRow rowCur = null
                         , rowAdd
@@ -446,7 +591,7 @@ namespace uLoaderCommon
                         && ((!(tblCur.Columns.IndexOf(@"ID") < 0)) && (!(tblCur.Columns.IndexOf(@"DATETIME") < 0))))
                     {
                         tblCur.Columns.Add(@"tmdelta", typeof(int));
-                        tableRes = tblCur.Clone();
+                        m_tblRes = tblCur.Clone();
 
                         for (int s = 0; s < arSignals.Length; s++)
                         {
@@ -467,8 +612,8 @@ namespace uLoaderCommon
                                 {
                                     if (i < (arSelIns.Length - 1))
                                     {
-                                        tableRes.ImportRow(arSelIns[i]);
-                                        rowCur = tableRes.Rows[tableRes.Rows.Count - 1];
+                                        m_tblRes.ImportRow(arSelIns[i]);
+                                        rowCur = m_tblRes.Rows[m_tblRes.Rows.Count - 1];
                                     }
                                     else
                                         //Не вставлять без известной 'tmdelta'
@@ -486,9 +631,9 @@ namespace uLoaderCommon
                                             && (tmDelta > 0))
                                         {
                                             //Добавить из предыдущего опроса
-                                            rowAdd = tableRes.Rows.Add();
+                                            rowAdd = m_tblRes.Rows.Add();
                                             //Скопировать все значения
-                                            foreach (DataColumn col in tableRes.Columns)
+                                            foreach (DataColumn col in m_tblRes.Columns)
                                             {
                                                 if (col.ColumnName.Equals(@"tmdelta") == true)
                                                     //Для "нового" столбца - найденное значение
@@ -542,9 +687,12 @@ namespace uLoaderCommon
                     else
                         ; //Отсутствуют необходимые столбцы (т.е. у таблицы нет структуры)
 
-                    tableRes.AcceptChanges();
+                    m_tblRes.AcceptChanges();
+                }
 
-                    return tableRes;
+                public DataTable Result
+                {
+                    get { return m_tblRes;  }
                 }
 
                 private DataRow setTMDelta(int id, DateTime dtCurrent, out int tmDelta)
@@ -794,6 +942,9 @@ namespace uLoaderCommon
             {
                 case (int)ID_DATA_ASKED_HOST.TO_INSERT:
                     target.Insert((int)(ev.par as object[])[0], (ev.par as object[])[1] as DataTable, (ev.par as object[])[2] as object[]);
+                    break;
+                case (int)ID_DATA_ASKED_HOST.TO_CLEAR:
+                    target.Clear((int)(ev.par as object[])[0]); 
                     break;
                 default:
                     break;

@@ -1609,6 +1609,15 @@ namespace uLoader
                         else
                             ;
                     break;
+                case ID_DATA_ASKED_HOST.STOP:
+                    //Установить взаимосвязь между полученными значениями группы сигналов и группой сигналов назначения
+                    foreach (GroupSignalsDest grpSgnls in m_listGroupSignals)
+                        if (!(grpSgnls.GetListNeededIndexGroupSignals().IndexOf((int)pars[1]) < 0))
+                            //Да, группа сигналов 'grpSgnls' ожидает значения от группы сигналов '(int)pars[1]';
+                            PerformDataAskedHostPlugIn(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.TO_CLEAR, new object [] { FormMain.FileINI.GetIDIndex(grpSgnls.m_strID) }));
+                        else
+                            ;
+                    break;
                 case ID_DATA_ASKED_HOST.ERROR:
                     iIDGroupSignals = (int)pars[1];
                     break;

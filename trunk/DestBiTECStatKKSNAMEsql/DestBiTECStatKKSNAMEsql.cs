@@ -35,7 +35,7 @@ namespace DestBiTECStatKKSNAMEsql
 
             protected override DataTable getTableIns(ref DataTable table)
             {
-                return new TableInsTMDelta ().Result (table, TableRecievedPrev, Signals);
+                return new TableInsTMDelta(table, TableRecievedPrev, Signals).Result;
             }
 
             protected override string getInsertValuesQuery(DataTable tblRes)

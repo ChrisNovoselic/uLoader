@@ -1135,7 +1135,7 @@ namespace uLoader
                 //Начало периода - описание
                 ctrl = new Label();
                 (ctrl as Label).Text = @"Начало (ЧЧ:ММ)";
-                //ctrl.Dock = DockStyle.Bottom;
+                ctrl.Dock = DockStyle.Bottom;
                 //ctrl.Anchor = ((AnchorStyles)(AnchorStyles.Bottom | AnchorStyles.Left));
                 panelGroupBox.Controls.Add(ctrl, 0, 3);
                 panelGroupBox.SetColumnSpan(ctrl, 6); panelGroupBox.SetRowSpan(ctrl, 1);
@@ -1150,8 +1150,8 @@ namespace uLoader
                 //Описание для главного периода
                 ctrl = new Label();
                 (ctrl as Label).Text = @"Период(ЧЧ:ММ)";
-                //ctrl.Dock = DockStyle.Bottom;
-                ctrl.Anchor = ((AnchorStyles)(AnchorStyles.Bottom | AnchorStyles.Left));
+                ctrl.Dock = DockStyle.Bottom;
+                //ctrl.Anchor = ((AnchorStyles)(AnchorStyles.Bottom | AnchorStyles.Left));
                 panelGroupBox.Controls.Add(ctrl, 0, 4);
                 panelGroupBox.SetColumnSpan(ctrl, 6); panelGroupBox.SetRowSpan(ctrl, 1);
                 //TextBox изменения главного периода
@@ -1164,8 +1164,8 @@ namespace uLoader
                 //Описание для локального периода
                 ctrl = new Label();
                 (ctrl as Label).Text = @"Период(ЧЧ:ММ)";
-                //ctrl.Dock = DockStyle.Bottom;
-                ctrl.Anchor = ((AnchorStyles)(AnchorStyles.Bottom | AnchorStyles.Left));
+                ctrl.Dock = DockStyle.Bottom;
+                //ctrl.Anchor = ((AnchorStyles)(AnchorStyles.Bottom | AnchorStyles.Left));
                 panelGroupBox.Controls.Add(ctrl, 0, 5);
                 panelGroupBox.SetColumnSpan(ctrl, 6); panelGroupBox.SetRowSpan(ctrl, 1);
                 //TextBox изменения главного периода
@@ -1178,8 +1178,8 @@ namespace uLoader
                 //Интервал
                 ctrl = new Label();
                 (ctrl as Label).Text = @"Интервал (мсек)";
-                //ctrl.Dock = DockStyle.Bottom;
-                ctrl.Anchor = ((AnchorStyles)(AnchorStyles.Bottom | AnchorStyles.Left));
+                ctrl.Dock = DockStyle.Bottom;
+                //ctrl.Anchor = ((AnchorStyles)(AnchorStyles.Bottom | AnchorStyles.Left));
                 panelGroupBox.Controls.Add(ctrl, 0, 6);
                 panelGroupBox.SetColumnSpan(ctrl, 6); panelGroupBox.SetRowSpan(ctrl, 1);
                 //TextBox изменения интервала
