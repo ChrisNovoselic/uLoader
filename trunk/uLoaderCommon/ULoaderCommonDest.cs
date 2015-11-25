@@ -62,6 +62,8 @@ namespace uLoaderCommon
                 }
             }
 
+            protected static string s_strFormatDbDateTime = @"yyyyMMdd HH:mm:ss.fffffff";
+
             protected int dequeue()
             {
                 int iRes = 0
@@ -277,7 +279,7 @@ namespace uLoaderCommon
             /// Получить строку с запросом текущих записей в целевой таблице
             /// </summary>
             /// <returns>Строка с запросом</returns>
-            protected virtual string getExistsValuesQuery() { return string.Empty; }
+            protected abstract string getExistsValuesQuery();
             /// <summary>
             /// Получить строку с запросом на вставку значений
             /// </summary>

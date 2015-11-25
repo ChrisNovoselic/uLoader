@@ -58,7 +58,7 @@ namespace DestBiTECStatIDsql
                     strRow += getIdToInsert(Int32.Parse(row[@"ID"].ToString().Trim())) + @",";
                     strRow += (_parent as HHandlerDbULoaderStatTMDest).m_strIdTEC + @",";
                     strRow += ((decimal)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
-                    strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(-6).ToString(@"yyyyMMdd HH:mm:ss.fff") + @"',";
+                    strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(-6).ToString(s_strFormatDbDateTime) + @"',";
                     strRow += row[@"tmdelta"] + @",";
                     strRow += @"GETDATE()";
 
@@ -73,6 +73,11 @@ namespace DestBiTECStatIDsql
                     //string.Empty
                     strRes
                     ;
+            }
+
+            protected override string getExistsValuesQuery()
+            {
+                return string.Empty;
             }
         }
 

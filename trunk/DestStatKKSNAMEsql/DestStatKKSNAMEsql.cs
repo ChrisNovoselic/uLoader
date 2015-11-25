@@ -60,7 +60,7 @@ namespace DestStatKKSNAMEsql
                         strRow += @"'" + row[@"KKSNAME_MST"] + @"'" + @",";
                         strRow += (_parent as HHandlerDbULoaderStatTMDest).m_strIdTEC + @",";
                         strRow += ((double)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
-                        strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(0).ToString(@"yyyyMMdd HH:mm:ss.fff") + @"',";
+                        strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(0).ToString(s_strFormatDbDateTime) + @"',";
                         strRow += row[@"tmdelta"] + @",";
                         strRow += @"GETDATE()" + @",";
                         strRow += (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).m_strIdSource + @",";
@@ -80,6 +80,11 @@ namespace DestStatKKSNAMEsql
                     //string.Empty
                     strRes
                     ;
+            }
+
+            protected override string getExistsValuesQuery()
+            {
+                return string.Empty;
             }
         }
 

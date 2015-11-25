@@ -63,7 +63,7 @@ namespace DestTechSiteLastsql
                     else
                         strRes += row[@"VALUE"];
                     strRes +=  @"',";
-                    strRes += @"[DATETIME]='" + ((DateTime)row[@"DATETIME"]).AddHours(-6).ToString(@"yyyyMMdd HH:mm:ss.fff") + @"'" + @",";
+                    strRes += @"[DATETIME]='" + ((DateTime)row[@"DATETIME"]).AddHours(-6).ToString(s_strFormatDbDateTime) + @"'" + @",";
                     strRes += @"[UPDATE_DATETIME]=GETDATE()";
 
                     strRes += @" WHERE [KKS_NAME]='" + (string)getIdToInsert(Int32.Parse(row[@"ID"].ToString().Trim())) + @"';";
@@ -73,6 +73,11 @@ namespace DestTechSiteLastsql
                     //string.Empty
                     strRes
                     ;
+            }
+
+            protected override string getExistsValuesQuery()
+            {
+                return string.Empty;
             }
         }
 
