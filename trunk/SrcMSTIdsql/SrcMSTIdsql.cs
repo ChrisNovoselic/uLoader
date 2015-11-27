@@ -62,13 +62,13 @@ namespace SrcMSTIdsql
                 //удалить "лишнюю" запятую
                 strIds = strIds.Substring(0, strIds.Length - 1);
 
-                m_strQuery = @"SELECT [ID], 1 AS [ID_TEC],"
+                m_strQuery = @"SELECT [ID], 5 AS [ID_TEC],"
                     + @" CASE WHEN ([Value] > -0.1 AND [Value] < 0.1) THEN 0 ELSE [Value] END AS [VALUE],"
                     + @" [last_changed_at] as [DATETIME],[tmdelta]"
-                    + @" FROM [dbo].[v_STATISTICS_real_his]"
+                    + @" FROM [dbo].[states-real_his_0]"
                         + @" WHERE"
-                        + @" [last_changed_at] >='" + DateTimeStartFormat + @"'"
-                        + @" AND [last_changed_at] <'" + DateTimeCurIntervalEndFormat + @"'"
+                        + @" [last_changed_at] >='" + DateTimeBeginFormat + @"'"
+                        + @" AND [last_changed_at] <'" + DateTimeEndFormat + @"'"
                             + @" AND [ID] IN (" + strIds + @")"
                     ;
             }
