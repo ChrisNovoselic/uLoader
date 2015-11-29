@@ -11,28 +11,28 @@ using System.Threading;
 using HClassLibrary;
 using uLoaderCommon;
 
-namespace SrcMSTIdsql
+namespace SrcMSTASUTPIdsql
 {
-    public class SrcMSTIDsql : HHandlerDbULoaderMSTTMSrc
+    public class SrcMSTASUTPIDsql : HHandlerDbULoaderMSTTMSrc
     {
-        public SrcMSTIDsql()
+        public SrcMSTASUTPIDsql()
             : base()
         {
             //Нет возможности опросить источники с "одинаковыми" [ID]. 16.06.2015
             throw new NotImplementedException();
         }
 
-        public SrcMSTIDsql(IPlugIn iPlugIn)
+        public SrcMSTASUTPIDsql(IPlugIn iPlugIn)
             : base(iPlugIn)
         {
             //Нет возможности опросить источники с "одинаковыми" [ID]. 16.06.2015
             throw new NotImplementedException ();
         }
 
-        private class GroupSignalsMSTIDsql : GroupSignalsMSTTMSrc
+        private class GroupSignalsMSTIDsql : GroupSignalsDatetimeSrc
         {
-            public GroupSignalsMSTIDsql(HHandlerDbULoader parent, object[] pars)
-                : base(parent, pars)
+            public GroupSignalsMSTIDsql(HHandlerDbULoader parent, int id, object[] pars)
+                : base(parent, id, pars)
             {
             }
 
@@ -118,9 +118,9 @@ namespace SrcMSTIdsql
             }
         }
 
-        protected override HHandlerDbULoader.GroupSignals createGroupSignals(object[] objs)
+        protected override HHandlerDbULoader.GroupSignals createGroupSignals(int id, object[] objs)
         {
-            return new GroupSignalsMSTIDsql(this, objs);
+            return new GroupSignalsMSTIDsql(this, id, objs);
         }
 
         public override void ClearValues()
@@ -135,7 +135,7 @@ namespace SrcMSTIdsql
         {
             _Id = 1003;
 
-            createObject(typeof(SrcMSTIDsql));
+            createObject(typeof(SrcMSTASUTPIDsql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

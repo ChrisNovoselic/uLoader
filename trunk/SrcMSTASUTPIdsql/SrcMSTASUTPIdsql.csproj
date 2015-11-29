@@ -40,8 +40,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="SrcMSTIdsql.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SrcMSTASUTPIdsql.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\HClassLibrary\HClassLibrary.csproj">
