@@ -70,12 +70,12 @@ namespace SrcMSTKKSNAMEsql
                     ;
             }
 
-            private int getIdMain (string id_mst)
+            protected override object getIdMain (object id_mst)
             {
                 int iRes = -1;
 
                 foreach (SIGNALMSTKKSNAMEsql sgnl in m_arSignals)
-                    if (sgnl.m_kks_name == id_mst)
+                    if (sgnl.m_kks_name == (string)id_mst)
                     {
                         iRes = sgnl.m_idMain;
 

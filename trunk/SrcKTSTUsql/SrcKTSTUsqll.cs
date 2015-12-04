@@ -72,6 +72,11 @@ namespace SrcKTSTUsql
                     + @"@idReq=" + idReq
                     + @";";
             }
+
+            protected override object getIdMain(object id_link)
+            {
+                throw new NotImplementedException();
+            }
         }
 
         protected override HHandlerDbULoader.GroupSignals createGroupSignals(int id, object[] objs)

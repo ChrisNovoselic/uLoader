@@ -102,6 +102,11 @@ namespace SrcBiyskTMLastora
                 //ID_MAIN, TAG
                 return new SIGNALBiyskTMoraSrc((int)objs[0], objs[2] as string);
             }
+
+            protected override object getIdMain(object id_link)
+            {
+                throw new NotImplementedException();
+            }
         }
 
         protected override HHandlerDbULoader.GroupSignals createGroupSignals(int id, object[] objs)

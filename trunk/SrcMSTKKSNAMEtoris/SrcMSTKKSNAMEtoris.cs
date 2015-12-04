@@ -85,12 +85,12 @@ namespace SrcMSTKKSNAMEtoris
                 ;
             }
 
-            private int getIdMain (string id_mst)
+            protected override object getIdMain (object id_mst)
             {
                 int iRes = -1;
 
                 foreach (SIGNALMSTKKSNAMEsql sgnl in m_arSignals)
-                    if (sgnl.m_kks_name == id_mst)
+                    if (sgnl.m_kks_name.Equals((string)id_mst) == true)
                     {
                         iRes = sgnl.m_idMain;
 
@@ -585,7 +585,7 @@ namespace SrcMSTKKSNAMEtoris
         public PlugIn()
             : base()
         {
-            _Id = 1005;
+            _Id = 1007;
 
             createObject(typeof(SrcMSTKKSNAMEtoris));
         }

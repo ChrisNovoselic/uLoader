@@ -286,20 +286,32 @@ namespace uLoaderCommon
                 m_msecRemaindToActivate = 0;
                 m_iRowCountRecieved = -1;
             }
-
-            //protected bool m_bIsUpdateQuery;
-
+            /// <summary>
+            /// Возвратить признак необходимости обновления содержания запроса
+            ///  (составляющая дата/время)
+            /// </summary>
+            /// <param name="cntRec">Количество записей в крайней (по времени) полуенной таблице-рез-те</param>
+            /// <returns>Признак необходимости обновления содержания запроса</returns>
             protected virtual bool isUpdateQuery (int cntRec)
             {
                 return true;
             }
-
+            /// <summary>
+            /// Установить содержание для запроса
+            /// </summary>
             protected abstract void setQuery();
+            /// <summary>
+            /// Возвратить основной идентификатор по вспомогательному
+            ///  , указыаются в файле конфигурации для каждого сигнала отдельно
+            /// </summary>
+            /// <param name="id_link">Вспомогательный идентификатор</param>
+            /// <returns>Основной идентификатор</returns>
+            protected abstract object getIdMain(object id_link);
         }
         /// <summary>
         /// Добавить все известные состояния для обработки
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Результат выполнения</returns>
         protected override int addAllStates()
         {
             int iRes = 0;
@@ -717,7 +729,9 @@ namespace uLoaderCommon
 
                 return bRes;
             }
-
+            /// <summary>
+            /// Событие для инициирования процесса актуализации даты/времени объекта
+            /// </summary>
             private event IntDelegateFunc EvtActualizeDateTimeBegin;
             /// <summary>
             /// Установить метод для актуализации начальной даты/времени для опроса
@@ -1047,6 +1061,91 @@ namespace uLoaderCommon
                     //Console.WriteLine(@"DateTimeBegin=" + DateTimeBeginFormat + @"; DateTimeEndFormat=" + strRes);
 
                     return strRes;
+                }
+            }
+        }
+    }
+
+    public abstract class HHandlerDbULoaderMSTIDsql : HHandlerDbULoaderDatetimeSrc
+    {
+        public HHandlerDbULoaderMSTIDsql()
+            : base(@"yyyyMMdd HH:mm:ss")
+        {
+        }
+
+        public HHandlerDbULoaderMSTIDsql(IPlugIn iPlugIn)
+            : base(iPlugIn, @"yyyyMMdd HH:mm:ss")
+        {
+        }        
+
+        public override void ClearValues()
+        {
+        }
+
+        protected abstract class GroupSignalsMSTIDsql : GroupSignalsDatetimeSrc
+        {
+            public GroupSignalsMSTIDsql(HHandlerDbULoader parent, int id, object[] pars)
+                : base(parent, id, pars)
+            {
+            }
+
+            public class SIGNALMSTIDsql : SIGNAL
+            {
+                public int m_id;
+
+                public SIGNALMSTIDsql(int idMain, int id)
+                    : base(idMain)
+                {
+                    m_id = id;
+                }
+            }
+
+            protected override GroupSignals.SIGNAL createSignal(object[] objs)
+            {
+                return new SIGNALMSTIDsql((int)objs[0], (int)objs[2]);
+            }
+
+            protected override object getIdMain(object id_mst)
+            {
+                int iRes = -1;
+
+                foreach (SIGNALMSTIDsql sgnl in m_arSignals)
+                    if (sgnl.m_id == (int)id_mst)
+                    {
+                        iRes = sgnl.m_idMain;
+
+                        break;
+                    }
+                    else
+                        ;
+
+                return iRes;
+            }
+
+            public override DataTable TableRecieved
+            {
+                get { return base.TableRecieved; }
+
+                set
+                {
+                    //Требуется добавить идентификаторы 'id_main'
+                    if ((!(value == null)) && (!(value.Columns.IndexOf(@"ID") < 0)))
+                    {
+                        DataTable tblVal = value.Copy();
+                        tblVal.Columns.Add(@"ID_MST", typeof(int));
+
+                        foreach (DataRow r in tblVal.Rows)
+                        {
+                            r[@"ID_MST"] = r[@"ID"];
+                            r[@"ID"] = getIdMain((int)r[@"ID_MST"]);
+                        }
+
+                        base.TableRecieved = tblVal;
+                    }
+                    else
+                    {
+                        base.TableRecieved = value;
+                    }
                 }
             }
         }

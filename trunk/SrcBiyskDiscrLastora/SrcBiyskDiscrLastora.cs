@@ -58,12 +58,12 @@ namespace SrcBiyskDiscrLastora
                 ;
             }
 
-            protected object getIdMain(string tag)
+            protected override object getIdMain(object tag)
             {
                 int iRes = -1;
 
                 foreach (SIGNAL s in m_arSignals)
-                    if ((s as SIGNALBiyskTMoraSrc).m_NameTable.Equals(tag) == true)
+                    if ((s as SIGNALBiyskTMoraSrc).m_NameTable.Equals((string)tag) == true)
                     {
                         iRes = s.m_idMain;
 
