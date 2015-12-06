@@ -44,9 +44,14 @@ namespace uLoader
 
             InitializeComponent();
         }
-
+        /// <summary>
+        /// обработчик события - изменение текста нового элемента
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
         private void PanelListEdit_NewItemTextChanged(object obj, EventArgs ev)
         {
+            //Изменить доступность кнопки добавить
             m_linkBtnAdding.Enabled = m_linkTextBoxNewItem.Text.Length > 0;
         }
     }

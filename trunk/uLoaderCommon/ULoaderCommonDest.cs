@@ -125,8 +125,10 @@ namespace uLoaderCommon
                     lock (this)
                     {
                         return
-                            m_queueTableRec.Count > 0 ? m_queueTableRec.Peek() : m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT];
-                            ;
+                            m_queueTableRec.Count > 0 ?
+                                m_queueTableRec.Peek() :
+                                m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT]
+                                ;
                     } 
                 }
 
@@ -138,8 +140,8 @@ namespace uLoaderCommon
                             && (value.Rows.Count > 0))
                         {
                             // т.к. записи в таблице отсортированы по [DATE_TIME]
-                            DateTimeRangeRecieved.Set((DateTime)value.Rows[0][@"DATE_TIME"]
-                                , (DateTime)value.Rows[value.Rows.Count - 1][@"DATE_TIME"]);
+                            DateTimeRangeRecieved.Set((DateTime)value.Rows[0][@"DATETIME"]
+                                , (DateTime)value.Rows[value.Rows.Count - 1][@"DATETIME"]);
                         }
                         else
                             ;

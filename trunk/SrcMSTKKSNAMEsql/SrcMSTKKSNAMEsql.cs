@@ -13,19 +13,19 @@ using uLoaderCommon;
 
 namespace SrcMSTKKSNAMEsql
 {
-    public class SrcMSTKKSNAMEsql : HHandlerDbULoaderMSTTMSrc
+    public class SrcMSTKKSNAMEsql : HHandlerDbULoaderDatetimeSrc
     {
         public SrcMSTKKSNAMEsql()
-            : base()
+            : base(@"yyyy/MM/dd HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.HALF_PERIOD)
         {
         }
 
         public SrcMSTKKSNAMEsql(IPlugIn iPlugIn)
-            : base(iPlugIn)
+            : base(iPlugIn, @"yyyy/MM/dd HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.HALF_PERIOD)
         {
         }
 
-        private class GroupSignalsMSTKKSNAMEsql : GroupSignalsMSTTMSrc
+        private class GroupSignalsMSTKKSNAMEsql : GroupSignalsDatetimeSrc
         {
             public GroupSignalsMSTKKSNAMEsql(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)

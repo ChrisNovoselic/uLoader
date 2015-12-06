@@ -64,7 +64,7 @@ namespace DestTEP32sql
                         //strRow += (_parent as HHandlerDbULoaderStatTMDest).m_strIdTEC + @",";
                         strRow += 0.ToString() + @","; //ID_USER
                         strRow += 0.ToString() + @","; //ID_SOURCE
-                        strRow += @"'" + ((DateTime)row[@"DATE_TIME"]).AddHours(0).ToString(s_strFormatDbDateTime) + @"',";
+                        strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(0).ToString(s_strFormatDbDateTime) + @"',";
                         strRow += 0.ToString() + @","; //QUALITY
                         strRow += ((double)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";                        
                         strRow += @"GETDATE()";

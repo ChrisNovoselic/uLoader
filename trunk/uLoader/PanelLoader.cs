@@ -315,10 +315,13 @@ namespace uLoader
                 objDepenceded.m_iAutoStart = ((bool)((obj.Rows[indxRow].Cells[(int)DGV_GROUP_SIGNALS_COL_INDEX.AUTO_START]).Value) == true) ? 1 : 0;
 
                 objDepenceded.m_arWorkIntervals[(int)modeWork].m_dtStart = (GetWorkingItem(KEY_CONTROLS.CALENDAR_START_DATE) as DateTimePicker).Value.Date;
-                objDepenceded.m_arWorkIntervals[(int)modeWork].m_dtStart += fromMaskedTextBox(KEY_CONTROLS.MTBX_START_TIME);
-                objDepenceded.m_arWorkIntervals[(int)modeWork].m_tsPeriodMain = fromMaskedTextBox(KEY_CONTROLS.MTBX_PERIOD_MAIN);
-                objDepenceded.m_arWorkIntervals[(int)modeWork].m_tsPeriodLocal = this is PanelLoaderSource ? fromMaskedTextBox(KEY_CONTROLS.MTBX_PERIOD_LOCAL) : TimeSpan.Zero;
-                objDepenceded.m_arWorkIntervals[(int)modeWork].m_iIntervalLocal = this is PanelLoaderSource ? Int32.Parse((GetWorkingItem(KEY_CONTROLS.TBX_INTERVAL) as TextBox).Text) : 0;
+                objDepenceded.m_arWorkIntervals[(int)modeWork].m_dtStart += fromMaskedTextBox(KEY_CONTROLS.MTBX_START_TIME).Value;
+                objDepenceded.m_arWorkIntervals[(int)modeWork].m_tsPeriodMain =
+                    fromMaskedTextBox(KEY_CONTROLS.MTBX_PERIOD_MAIN);
+                objDepenceded.m_arWorkIntervals[(int)modeWork].m_tsPeriodLocal =
+                    this is PanelLoaderSource ? fromMaskedTextBox(KEY_CONTROLS.MTBX_PERIOD_LOCAL) : HTimeSpan.NotValue;
+                objDepenceded.m_arWorkIntervals[(int)modeWork].m_tsIntervalLocal.Text =
+                    this is PanelLoaderSource ? (GetWorkingItem(KEY_CONTROLS.TBX_INTERVAL) as TextBox).Text : @"-ms1";
 
                 arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJ] = KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS; // обязательно для switch
                 arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] = getGroupId(KEY_CONTROLS.DGV_GROUP_SOURCES);
@@ -520,13 +523,13 @@ namespace uLoader
             /// </summary>
             /// <param name="key">Идентификатор элемента управления со значением для преобразования</param>
             /// <returns>Преобразованное значение</returns>
-            protected TimeSpan fromMaskedTextBox (KEY_CONTROLS key)
+            protected HTimeSpan fromMaskedTextBox (KEY_CONTROLS key)
             {
-                TimeSpan tsRes = TimeSpan.Zero;
+                HTimeSpan tsRes = HTimeSpan.NotValue;
                 string []vals;
 
                 vals = (GetWorkingItem(key) as MaskedTextBox).Text.Split (new char [] {':'});
-                tsRes = TimeSpan.FromMinutes (Int32.Parse (vals[0]) * 60 + Int32.Parse(vals[1]));
+                tsRes = HTimeSpan.FromMinutes (Int32.Parse (vals[0]) * 60 + Int32.Parse(vals[1]));
 
                 return tsRes;
             }
@@ -765,8 +768,8 @@ namespace uLoader
                 //??? Отобразить период опроса (основной)
                 key = PanelLoader.KEY_CONTROLS.MTBX_PERIOD_MAIN;
                 workItem = GetWorkingItem(key);
-                (workItem as MaskedTextBox).Text = pars.m_tsPeriodMain.Hours.ToString(@"00")
-                    + @":" + pars.m_tsPeriodMain.Minutes.ToString(@"00")
+                (workItem as MaskedTextBox).Text = pars.m_tsPeriodMain.Value.Hours.ToString(@"00")
+                    + @":" + pars.m_tsPeriodMain.Value.Minutes.ToString(@"00")
                     //+ @":" + grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.Seconds
                     ;
 
@@ -775,14 +778,14 @@ namespace uLoader
                     //??? Отобразить период опроса (локальный)
                     key = PanelLoader.KEY_CONTROLS.MTBX_PERIOD_LOCAL;
                     workItem = GetWorkingItem(key);
-                    (workItem as MaskedTextBox).Text = pars.m_tsPeriodLocal.Hours.ToString(@"00")
-                        + @":" + pars.m_tsPeriodLocal.Minutes.ToString(@"00")
+                    (workItem as MaskedTextBox).Text = pars.m_tsPeriodLocal.Value.Hours.ToString(@"00")
+                        + @":" + pars.m_tsPeriodLocal.Value.Minutes.ToString(@"00")
                         ;
 
                     //Отобразить шаг опроса для режима 'COSTUMIZE'
                     key = PanelLoader.KEY_CONTROLS.TBX_INTERVAL;
                     workItem = GetWorkingItem(key);
-                    (workItem as TextBox).Text = pars.m_iIntervalLocal.ToString();
+                    (workItem as TextBox).Text = pars.m_tsIntervalLocal.ToString();
                 }
                 else
                     ; //Не 'Source'

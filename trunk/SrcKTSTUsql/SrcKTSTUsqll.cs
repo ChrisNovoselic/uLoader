@@ -12,12 +12,12 @@ namespace SrcKTSTUsql
     public class SrcKTSTUsql : HHandlerDbULoaderDatetimeSrc
     {
         public SrcKTSTUsql()
-            : base(@"dd/MM/yyyy HH:mm:ss")
+            : base(@"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.FULL_PERIOD)
         {
         }
 
         public SrcKTSTUsql(IPlugIn iPlugIn)
-            : base(iPlugIn, @"dd/MM/yyyy HH:mm:ss")
+            : base(iPlugIn, @"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.FULL_PERIOD)
         {
         }
 
@@ -30,8 +30,8 @@ namespace SrcKTSTUsql
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
-                //ID_MAIN
-                return new SIGNALKTSTUsql((int)objs[0], (int)objs[2], bool.Parse((string)objs[3]));
+                //ID_MAIN, ID_LOCAL, AVG
+                return new SIGNALIdsql((int)objs[0], (int)objs[2], bool.Parse((string)objs[3]));
             }
 
             protected override void setQuery()
@@ -42,7 +42,7 @@ namespace SrcKTSTUsql
                     string.Empty;
                 //Формировать запрос
                 i = 0;
-                foreach (GroupSignalsKTSTUsql.SIGNALKTSTUsql s in m_arSignals)
+                foreach (GroupSignalsKTSTUsql.SIGNALIdsql s in m_arSignals)
                 {
                     if (i == 0)
                         cmd = @"List";
@@ -53,7 +53,7 @@ namespace SrcKTSTUsql
                             ; // оставить без изменений
 
                     m_strQuery += @"exec e6work.dbo.ep_AskVTIdata @cmd='" + cmd + @"',"
-                        + @"@idVTI=" + s.m_iIdKTS + @","
+                        + @"@idVTI=" + s.m_iIdLocal + @","
                         + @"@TimeStart='" + DateTimeBeginFormat + @"',"
                         + @"@TimeEnd='" + DateTimeEndFormat + @"',"
                         + @"@idReq=" + idReq
@@ -90,10 +90,8 @@ namespace SrcKTSTUsql
 
             DataTable tblRes = new DataTable ();
             DataRow[] rowsSgnl = null;
-            //DataRow rowIns = null;
             DateTime dtValue;
             double dblSumValue = -1F;
-            //int cntRec = -1;
 
             tblRes.Columns.AddRange(new DataColumn [] {
                 new DataColumn (@"ID", typeof (int))
@@ -101,9 +99,9 @@ namespace SrcKTSTUsql
                 , new DataColumn (@"VALUE", typeof (float))
             });
 
-            foreach (GroupSignalsKTSTUsql.SIGNALKTSTUsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
+            foreach (GroupSignalsKTSTUsql.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
             {
-                rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdKTS, @"DATETIME");
+                rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal, @"DATETIME");
 
                 if ((rowsSgnl.Length > 0)
                     && (rowsSgnl.Length % 2 == 0))
@@ -117,6 +115,7 @@ namespace SrcKTSTUsql
                         //Вычислить суммарное значение для сигнала
                         dblSumValue = 0F;
                         //cntRec = 0;
+                        //??? обработка всех последующих строк, а если строк > 2
                         foreach (DataRow r in rowsSgnl)
                         {
                             dblSumValue += (double)r[@"VALUE"];
@@ -147,88 +146,88 @@ namespace SrcKTSTUsql
             TableRecieved = tblRes;
         }
 
-        /// <summary>
-        /// Актулизировать дату/время начала опроса
-        /// </summary>
-        /// <returns>Признак изменения даты/времени начала опроса</returns>
-        protected override int actualizeDateTimeBegin()
-        {
-            int iRes = 0;
-            if (Mode == MODE_WORK.CUR_INTERVAL)
-                //Проверить признак 1-го запуска (в режиме CUR_INTERVAL)
-                if (DateTimeBegin == DateTime.MinValue)
-                {
-                    if (s_modeCurInterval == MODE_CURINTERVAL.CAUSE_PERIOD)
-                    {
-                        //Выравнивание по "час"
-                        DateTimeBegin = m_dtServer.AddMilliseconds(-1 * (m_dtServer.Second * 1000 + m_dtServer.Millisecond));
-                        DateTimeBegin = DateTimeBegin.AddSeconds(-1 * (m_dtServer.Minute * 60 + m_dtServer.Second));
-                    }
-                    else
-                        if (s_modeCurInterval == MODE_CURINTERVAL.CAUSE_NOT)
-                            DateTimeBegin = m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds);
-                        else
-                            ;
+        ///// <summary>
+        ///// Актулизировать дату/время начала опроса
+        ///// </summary>
+        ///// <returns>Признак изменения даты/времени начала опроса</returns>
+        //protected override int actualizeDateTimeBegin()
+        //{
+        //    int iRes = 0;
+        //    if (Mode == MODE_WORK.CUR_INTERVAL)
+        //        //Проверить признак 1-го запуска (в режиме CUR_INTERVAL)
+        //        if (DateTimeBegin == DateTime.MinValue)
+        //        {
+        //            if (m_modeCurInterval == MODE_CURINTERVAL.CAUSE_PERIOD)
+        //            {
+        //                //Выравнивание по "час"
+        //                DateTimeBegin = m_dtServer.AddMilliseconds(-1 * (m_dtServer.Second * 1000 + m_dtServer.Millisecond));
+        //                DateTimeBegin = DateTimeBegin.AddSeconds(-1 * (m_dtServer.Minute * 60 + m_dtServer.Second));
+        //            }
+        //            else
+        //                if (m_modeCurInterval == MODE_CURINTERVAL.CAUSE_NOT)
+        //                    DateTimeBegin = m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds);
+        //                else
+        //                    ;
 
-                    iRes = 1;
-                }
-                else
-                    //Переход на очередной интервал (повторный опрос)
-                    switch (s_modeCurInterval)
-                    {
-                        case MODE_CURINTERVAL.CAUSE_PERIOD:
-                            //Проверить необходимость изменения даты/времени
-                            if ((m_dtServer - DateTimeBegin.AddSeconds(PeriodLocal.TotalSeconds)).TotalMilliseconds > MSecIntervalLocal)
-                            {
-                                DateTimeBegin = DateTimeBegin.AddSeconds(PeriodLocal.TotalSeconds);
-                                //CountMSecInterval++;
-                                //Установить признак перехода
-                                iRes = 1;
-                            }
-                            else
-                                ;
-                            break;
-                        case MODE_CURINTERVAL.CAUSE_NOT:
-                            DateTimeBegin = m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds);
-                            //Установить признак перехода
-                            iRes = 1;
-                            break;
-                        default:
-                            break;
-                    }
-            else
-                if (Mode == MODE_WORK.COSTUMIZE)
-                {
-                    //Проверить признак 1-го запуска (в режиме COSTUMIZE)
-                    if (DateTimeBegin == DateTime.MinValue)
-                    {
-                        //Проверить указано ли дата/время начала опроса
-                        if (DateTimeStart == DateTime.MinValue)
-                            //Не указано - опросить ближайший к текущей дате/времени период
-                            DateTimeStart = m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds);
-                        else
-                            ;
+        //            iRes = 1;
+        //        }
+        //        else
+        //            //Переход на очередной интервал (повторный опрос)
+        //            switch (m_modeCurInterval)
+        //            {
+        //                case MODE_CURINTERVAL.CAUSE_PERIOD:
+        //                    //Проверить необходимость изменения даты/времени
+        //                    if ((m_dtServer - DateTimeBegin.AddSeconds(PeriodLocal.TotalSeconds)).TotalMilliseconds > MSecIntervalLocal)
+        //                    {
+        //                        DateTimeBegin = DateTimeBegin.AddSeconds(PeriodLocal.TotalSeconds);
+        //                        //CountMSecInterval++;
+        //                        //Установить признак перехода
+        //                        iRes = 1;
+        //                    }
+        //                    else
+        //                        ;
+        //                    break;
+        //                case MODE_CURINTERVAL.CAUSE_NOT:
+        //                    DateTimeBegin = m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds);
+        //                    //Установить признак перехода
+        //                    iRes = 1;
+        //                    break;
+        //                default:
+        //                    break;
+        //            }
+        //    else
+        //        if (Mode == MODE_WORK.COSTUMIZE)
+        //        {
+        //            //Проверить признак 1-го запуска (в режиме COSTUMIZE)
+        //            if (DateTimeBegin == DateTime.MinValue)
+        //            {
+        //                //Проверить указано ли дата/время начала опроса
+        //                if (DateTimeStart == DateTime.MinValue)
+        //                    //Не указано - опросить ближайший к текущей дате/времени период
+        //                    DateTimeStart = m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds);
+        //                else
+        //                    ;
 
-                        DateTimeBegin = DateTimeStart;
-                    }
-                    else
-                        //Повторный опрос
-                        DateTimeBegin = DateTimeBegin.AddMilliseconds(PeriodLocal.TotalMilliseconds);
+        //                DateTimeBegin = DateTimeStart;
+        //            }
+        //            else
+        //                //Повторный опрос
+        //                DateTimeBegin = DateTimeBegin.AddMilliseconds(PeriodLocal.TotalMilliseconds);
 
-                    iRes = 1;
-                }
-                else
-                    throw new Exception(@"HHandlerDbULoaderDatetimeSrc::actualizeDateTimeStart () - неизвестный режим ...");
+        //            iRes = 1;
+        //        }
+        //        else
+        //            throw new Exception(@"HHandlerDbULoaderDatetimeSrc::actualizeDateTimeStart () - неизвестный режим ...");
 
-            Logging.Logg().Debug(@"HHandlerDbULoader::actualizeDateTimeStart () - "
-                                + @"[" + PlugInId + @", key=" + IdGroupSignalsCurrent + @"]"
-                                + @", m_dtServer=" + m_dtServer.ToString(@"dd.MM.yyyy HH:mm.ss.fff")
-                                + @", DateTimeBegin=" + DateTimeBegin.ToString(@"dd.MM.yyyy HH:mm.ss.fff")
-                                + @", iRes=" + iRes
-                                + @"...", Logging.INDEX_MESSAGE.NOT_SET);
+        //    Logging.Logg().Debug(@"HHandlerDbULoader::actualizeDateTimeStart () - "
+        //                        + @"[" + PlugInId + @", key=" + IdGroupSignalsCurrent + @"]"
+        //                        + @", m_dtServer=" + m_dtServer.ToString(@"dd.MM.yyyy HH:mm.ss.fff")
+        //                        + @", DateTimeBegin=" + DateTimeBegin.ToString(@"dd.MM.yyyy HH:mm.ss.fff")
+        //                        + @", iRes=" + iRes
+        //                        + @"...", Logging.INDEX_MESSAGE.NOT_SET);
 
-            return iRes;
-        }
+        //    return iRes;
+        //}
     }
 
     public class PlugIn : PlugInULoader

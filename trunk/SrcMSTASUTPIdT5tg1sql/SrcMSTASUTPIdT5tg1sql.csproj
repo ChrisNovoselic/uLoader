@@ -8,8 +8,8 @@
     <ProjectGuid>{C1724DDE-3900-B92D-47BF-40344CF96533}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SrcMSTASUTTPIdsql</RootNamespace>
-    <AssemblyName>SrcMSTASUTPIdsql</AssemblyName>
+    <RootNamespace>SrcMSTASUTPIDT5tg1sql</RootNamespace>
+    <AssemblyName>SrcMSTASUTPIDT5tg1sql</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

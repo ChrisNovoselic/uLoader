@@ -8,6 +8,166 @@ using HClassLibrary;
 
 namespace uLoaderCommon
 {
+    public class HTimeSpan : object
+    {
+        private bool bError
+        {
+            get
+            {
+                return (_value == TimeSpan.Zero)
+                    || (! (_prefix.Length == 2));
+            }
+        }
+        
+        public HTimeSpan(string value)
+        {
+            Text = value;
+        }
+
+        private string _prefix;
+        private TimeSpan _value;
+        public TimeSpan Value { get { return _value; } }
+
+        public string Text
+        {
+            set
+            {
+                _value = parse(value, out _prefix);
+
+                if (bError == true)
+                    throw new Exception(@"HTimeSpan::ctor () - error parsing value ...");
+                else
+                    ;
+            }
+        }
+
+        public override string ToString()
+        {
+            string strRes = string.Empty;
+            int iSign = 0
+                , iValue = 0;
+
+            if (bError == false)
+            {
+                iSign = _value.TotalMilliseconds < 0 ? -1 : 0;
+
+                switch (_prefix)
+                {
+                    case @"ms":
+                        iValue = (int)_value.TotalMilliseconds;
+                        break;
+                    case @"ss":
+                        iValue = (int)_value.TotalSeconds;
+                        break;
+                    case @"mi":
+                        iValue = (int)_value.TotalMinutes;
+                        break;
+                    case @"hh":
+                        iValue = (int)_value.TotalHours;
+                        break;
+                    default:
+                        break;
+                }
+
+                if (iSign < 0)
+                    strRes = "-";
+                else
+                    ;
+
+                strRes += _prefix + iValue.ToString();
+            }
+            else
+                ;
+
+            return strRes;
+        }
+
+        private HTimeSpan(string prefix, int iValue)
+            : this((iValue < 0 ? @"-" : string.Empty) + prefix + Math.Abs(iValue).ToString ())
+        {
+        }
+
+        private static TimeSpan parse(string value, out string prefix)
+        {
+            prefix = string.Empty;
+
+            TimeSpan tsRes = TimeSpan.MinValue;
+            Char ch = Char.MinValue;
+            int iSign = 0
+                , iValue = 0;
+
+            if (value.Length > 0)
+            {
+                ch = value[0];
+                iSign = iSign = (ch.Equals('+') == true) ? 1 : (ch.Equals('-') == true) ? -1 : 0;
+            }
+            else
+                // признак ошибки
+                tsRes = TimeSpan.Zero;
+
+            if (tsRes == TimeSpan.MinValue)
+                if (value.Length > (Math.Abs(iSign) + 2))
+                {
+                    prefix = value.Substring(Math.Abs(iSign), 2);
+                    iValue = Int32.Parse(value.Substring(Math.Abs(iSign) + 2));
+
+                    switch (prefix)
+                    {
+                        case @"ms":
+                            tsRes = TimeSpan.FromMilliseconds(iValue);
+                            break;
+                        case @"ss":
+                            tsRes = TimeSpan.FromSeconds(iValue);
+                            break;
+                        case @"mi":
+                            tsRes = TimeSpan.FromMinutes(iValue);
+                            break;
+                        case @"hh":
+                            tsRes = TimeSpan.FromHours(iValue);
+                            break;
+                        default:
+                            // признак ошибки
+                            tsRes = TimeSpan.Zero;
+                            break;
+                    }
+
+                    if (iSign < 0)
+                        tsRes = TimeSpan.Zero - tsRes;
+                    else
+                        ;
+                }
+                else
+                    // признак ошибки
+                    tsRes = TimeSpan.Zero;
+            else
+                ;
+
+            return tsRes;
+        }
+
+        public static HTimeSpan NotValue { get { return HTimeSpan.FromMilliseconds(-1); } }
+
+        public static HTimeSpan FromMilliseconds(int msecs)
+        {
+            return new HTimeSpan(@"ms", msecs);
+        }
+        
+        public static HTimeSpan FromSeconds(int secs)
+        {
+            return new HTimeSpan(@"ss", secs);
+        }
+
+        public static HTimeSpan FromMinutes(int mins)
+        {
+            return new HTimeSpan(@"mi", mins);
+        }
+
+        public static HTimeSpan FromHours(int hours)
+        {
+            return new HTimeSpan(@"hh", hours);
+        }
+    }
+    
     public interface ILoader
     {
         void Start();
@@ -27,7 +187,6 @@ namespace uLoaderCommon
         //void ChangeState ();
         void Start(int id);
     }
-
     /// <summary>
     /// Перечисление (дата/время) константы по умолчанию
     /// </summary>

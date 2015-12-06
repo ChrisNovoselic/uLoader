@@ -9,7 +9,7 @@ using uLoaderCommon;
 
 namespace SrcMSTKKSNAMEtoris
 {
-    public class SrcMSTKKSNAMEtoris : HHandlerDbULoaderMSTTMSrc
+    public class SrcMSTKKSNAMEtoris : HHandlerDbULoaderDatetimeSrc
     {
         enum StatesMachine
         {
@@ -20,13 +20,15 @@ namespace SrcMSTKKSNAMEtoris
         TORISLib.TorISData m_torIsData;
 
         public SrcMSTKKSNAMEtoris()
-            : base()
+            //??? аргументы лишние, кроме 1-го
+            : base(string.Empty, MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.HALF_PERIOD)
         {
             initialize();
         }
 
         public SrcMSTKKSNAMEtoris(IPlugIn iPlugIn)
-            : base(iPlugIn)
+            //??? аргументы лишние, кроме 1-го
+            : base(iPlugIn, string.Empty, MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.HALF_PERIOD)
         {
             initialize();
         }
@@ -38,7 +40,7 @@ namespace SrcMSTKKSNAMEtoris
             lockAdvisedItems = new object();
         }
 
-        private class GroupSignalsMSTKKSNAMEtoris : GroupSignalsMSTTMSrc
+        private class GroupSignalsMSTKKSNAMEtoris : GroupSignalsDatetimeSrc
         {
             public DataTable m_tableTorIs;
             //public DataTable TableTorIs { get { return m_tableTorIs; } }
@@ -191,7 +193,7 @@ namespace SrcMSTKKSNAMEtoris
             }
         }
 
-        protected override HHandlerDbULoaderMSTTMSrc.GroupSignals createGroupSignals(int id, object[] objs)
+        protected override HHandlerDbULoaderDatetimeSrc.GroupSignals createGroupSignals(int id, object[] objs)
         {
             GroupSignalsMSTKKSNAMEtoris grpRes = new GroupSignalsMSTKKSNAMEtoris(this, id, objs);
 

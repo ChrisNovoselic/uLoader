@@ -196,15 +196,15 @@ namespace uLoaderCommon
                 }
             }
 
-            public class SIGNALKTSTUsql : SIGNAL
+            public class SIGNALIdsql : SIGNAL
             {
-                public int m_iIdKTS;
+                public int m_iIdLocal;
                 public bool m_bAVG;
 
-                public SIGNALKTSTUsql(int idMain, int idKTS, bool bAVG)
+                public SIGNALIdsql(int idMain, int idLocal, bool bAVG)
                     : base(idMain)
                 {
-                    m_iIdKTS = idKTS;
+                    m_iIdLocal = idLocal;
                     m_bAVG = bAVG;
                 }
             }
@@ -577,33 +577,45 @@ namespace uLoaderCommon
 
     public abstract class HHandlerDbULoaderDatetimeSrc : HHandlerDbULoaderSrc
     {
+        public HTimeSpan m_tsCurIntervalOffset
+            , m_tsUTCOffset;
+
         protected string m_strDateTimeDBFormat;
+
+        public enum INDEX_MODE_CURINTERVAL { CAUSE, NEXTSTEP, COUNT };
         /// <summary>
         /// Перечисление - идентификаторы режимов вычисления даты/времени начала опроса
         /// </summary>
-        public enum MODE_CURINTERVAL { CAUSE_PERIOD /*округление до ПЕРИОД, ожидание полного набора записей за ПЕРИОД*/, CAUSE_NOT /*текущее время сервера*/ };
-        public static MODE_CURINTERVAL s_modeCurInterval = MODE_CURINTERVAL.CAUSE_NOT;
+        public enum MODE_CURINTERVAL
+        {
+            CAUSE_PERIOD_MINUTE, CAUSE_PERIOD_HOUR /*округление до ПЕРИОД, ожидание полного набора записей за ПЕРИОД*/
+            , CAUSE_NOT /*текущее время сервера*/
+            , HALF_PERIOD, FULL_PERIOD
+        };
+        public MODE_CURINTERVAL [] m_modeCurIntervals;
 
-        public HHandlerDbULoaderDatetimeSrc(string dtDBFormat)
+        public HHandlerDbULoaderDatetimeSrc(string dtDBFormat, params MODE_CURINTERVAL [] modeCurIntervals)
             : base()
         {
             m_strDateTimeDBFormat = dtDBFormat;
+            m_modeCurIntervals = new MODE_CURINTERVAL[(int)INDEX_MODE_CURINTERVAL.COUNT];
+            m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] = modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE];
+            m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.NEXTSTEP] = modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.NEXTSTEP];
         }
 
-        public HHandlerDbULoaderDatetimeSrc(IPlugIn iPlugIn, string dtDBFormat)
+        public HHandlerDbULoaderDatetimeSrc(IPlugIn iPlugIn, string dtDBFormat, params MODE_CURINTERVAL [] modeCurIntervals)
             : base(iPlugIn)
         {
             m_strDateTimeDBFormat = dtDBFormat;
+            m_modeCurIntervals = new MODE_CURINTERVAL[(int)INDEX_MODE_CURINTERVAL.COUNT];
+            m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] = modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE];
+            m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.NEXTSTEP] = modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.NEXTSTEP];
         }
-
         /// <summary>
         /// Класс для описания группы сигналов источника
         /// </summary>
         protected abstract class GroupSignalsDatetimeSrc : GroupSignalsSrc
         {
-            //private long m_lCountMSecInterval;
-            //public long CountMSecInterval { get { return m_lCountMSecInterval; } set { m_lCountMSecInterval = value; } }
-
             private DateTime m_dtStart;
             public DateTime DateTimeStart { get { return m_dtStart; } set { m_dtStart = value; } }
             private DateTime m_dtBegin;
@@ -627,7 +639,6 @@ namespace uLoaderCommon
                 DateTimeBegin =
                     DateTime.MinValue;
             }
-
             /// <summary>
             /// Строка для условия "по дате/времени"
             ///  - начало
@@ -637,30 +648,31 @@ namespace uLoaderCommon
                 get
                 {
                     string strRes = string.Empty;
+                    long msec = -1L
+                        , msecDiff = -1L;
+
+                    msec = (long)(_parent as HHandlerDbULoaderDatetimeSrc).m_tsUTCOffset.Value.TotalMilliseconds;
+                    if (Math.Abs(msec) > 1)
+                        msecDiff = msec;
+                    else
+                        msecDiff = 0L;
 
                     switch (Mode)
                     {
                         case MODE_WORK.CUR_INTERVAL:
-                            strRes = DateTimeBegin.ToString((_parent as HHandlerDbULoaderDatetimeSrc).m_strDateTimeDBFormat, CultureInfo.InvariantCulture);
-                            //switch (
-                            //    //((HHandlerDbULoaderDatetimeSrc)_parent).s_modeCurInterval
-                            //    HHandlerDbULoaderDatetimeSrc.s_modeCurInterval
-                            //    )
-                            //{
-                            //    case MODE_CURINTERVAL.CAUSE_PERIOD:
-                            //        break;
-                            //    case MODE_CURINTERVAL.CAUSE_NOT:
-                            //        break;
-                            //    default:
-                            //        break;
-                            //}
+                            msec = (long)(_parent as HHandlerDbULoaderDatetimeSrc).m_tsCurIntervalOffset.Value.TotalMilliseconds;
+                            if (Math.Abs(msec) > 1)
+                                msecDiff += msec;
+                            else
+                                ;
                             break;
                         case MODE_WORK.COSTUMIZE:
-                            strRes = DateTimeBegin.ToString((_parent as HHandlerDbULoaderDatetimeSrc).m_strDateTimeDBFormat, CultureInfo.InvariantCulture);
                             break;
                         default:
                             break;
                     }
+
+                    strRes = DateTimeBegin.AddMilliseconds(msecDiff).ToString((_parent as HHandlerDbULoaderDatetimeSrc).m_strDateTimeDBFormat, CultureInfo.InvariantCulture);
 
                     return strRes;
                 }
@@ -674,24 +686,27 @@ namespace uLoaderCommon
                 get
                 {
                     string strRes = string.Empty;
-                    long msecDiff = -1;
+                    long msec = -1L
+                        , msecDiff = -1L;
+
+                    msec = (long)(_parent as HHandlerDbULoaderDatetimeSrc).m_tsUTCOffset.Value.TotalMilliseconds;
+                    if (Math.Abs(msec) > 1)
+                        msecDiff = msec;
+                    else
+                        msecDiff = 0L;
 
                     switch (Mode)
                     {
                         case MODE_WORK.CUR_INTERVAL:
-                            msecDiff = (long)(PeriodMain.TotalMilliseconds); //'PeriodLocal' тоже валиден, т.к. они равны
-                            //switch (HHandlerDbULoaderDatetimeSrc.s_modeCurInterval)
-                            //{
-                            //    case MODE_CURINTERVAL.CAUSE_PERIOD:
-                            //        break;
-                            //    case MODE_CURINTERVAL.CAUSE_NOT:
-                            //        break;
-                            //    default:
-                            //        break;
-                            //}                            
+                            msec = (long)(_parent as HHandlerDbULoaderDatetimeSrc).m_tsCurIntervalOffset.Value.TotalMilliseconds;
+                            if (Math.Abs(msec) > 1)
+                                msecDiff += msec;
+                            else
+                                ;
+                            msecDiff += (long)(PeriodMain.TotalMilliseconds); //'PeriodLocal' тоже валиден, т.к. они равны                         
                             break;
                         case MODE_WORK.COSTUMIZE:
-                            msecDiff = (long)(PeriodLocal.TotalMilliseconds);
+                            msecDiff += (long)(PeriodLocal.TotalMilliseconds);
                             break;
                         default:
                             break;
@@ -711,10 +726,11 @@ namespace uLoaderCommon
                 switch (Mode)
                 {
                     case MODE_WORK.CUR_INTERVAL:
-                        if (s_modeCurInterval == MODE_CURINTERVAL.CAUSE_PERIOD)
+                        if (((_parent as HHandlerDbULoaderDatetimeSrc).m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] == MODE_CURINTERVAL.CAUSE_PERIOD_HOUR)
+                            || ((_parent as HHandlerDbULoaderDatetimeSrc).m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] == MODE_CURINTERVAL.CAUSE_PERIOD_MINUTE))
                             bRes = ((RowCountRecieved < 0) || (RowCountRecieved == cntRec)) && ((!(EvtActualizeDateTimeBegin == null)) && (EvtActualizeDateTimeBegin() == 1));
                         else
-                            if (s_modeCurInterval == MODE_CURINTERVAL.CAUSE_NOT)
+                            if ((_parent as HHandlerDbULoaderDatetimeSrc).m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] == MODE_CURINTERVAL.CAUSE_NOT)
                                 bRes = (!(EvtActualizeDateTimeBegin == null)) && (EvtActualizeDateTimeBegin() == 1);
                             else
                                 ; //throw new Exception (@"Неизвестный режим...")
@@ -800,6 +816,20 @@ namespace uLoaderCommon
             else
                 ;
 
+            // = Convert.ToInt32(m_dictAdding[@"UTC_OFFSET"]);
+            m_tsUTCOffset = HTimeSpan.NotValue;
+            if (m_dictAdding.ContainsKey(@"UTC_OFFSET") == true)
+                m_tsUTCOffset = new HTimeSpan(m_dictAdding[@"UTC_OFFSET"]);
+            else
+                ;
+            
+            // = Convert.ToInt32(m_dictAdding[@"CUR_INTERVAL_OFFSET"]);
+            m_tsCurIntervalOffset = HTimeSpan.NotValue;
+            if (m_dictAdding.ContainsKey(@"CUR_INTERVAL_OFFSET") == true)
+                m_tsCurIntervalOffset = new HTimeSpan(m_dictAdding[@"CUR_INTERVAL_OFFSET"]);
+            else
+                ;
+
             return iRes;
         }
 
@@ -821,7 +851,6 @@ namespace uLoaderCommon
         //            throw new Exception(@"ULoaderCommon::CountMSecInterval.set ...");
         //    }
         //}
-
         /// <summary>
         /// Дата/время начала опроса для текущей (обрабатываемой) группы
         /// </summary>
@@ -845,7 +874,6 @@ namespace uLoaderCommon
                     throw new Exception(@"ULoaderCommon::DateTimeStart.set ...");
             }
         }
-
         /// <summary>
         /// Дата/время начала опроса для текущей (обрабатываемой) группы
         /// </summary>
@@ -869,37 +897,54 @@ namespace uLoaderCommon
                     throw new Exception(@"ULoaderCommon::DateTimeBegin.set ...");
             }
         }
-
         /// <summary>
         /// Актулизировать дату/время начала опроса
         /// </summary>
         /// <returns>Признак изменения даты/времени начала опроса</returns>
         protected virtual int actualizeDateTimeBegin()
         {
-            int iRes = 0;
+            int iRes = 0
+                , denum = 0;
+
+            if (m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.NEXTSTEP] == MODE_CURINTERVAL.FULL_PERIOD)
+                // использовать полный период
+                denum = 1;
+            else
+                if (m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.NEXTSTEP] == MODE_CURINTERVAL.HALF_PERIOD)
+                    // использовать полу/период
+                    denum = 2;
+                else
+                    ;
+
             if (Mode == MODE_WORK.CUR_INTERVAL)
                 //Проверить признак 1-го запуска (в режиме CUR_INTERVAL)
                 if (DateTimeBegin == DateTime.MinValue)
                 {
-                    if (s_modeCurInterval == MODE_CURINTERVAL.CAUSE_PERIOD)
-                    {
-                        //Выравнивание по "минуте"
-                        DateTimeBegin = m_dtServer.AddMilliseconds(-1 * (m_dtServer.Second * 1000 + m_dtServer.Millisecond));
-                        //CountMSecInterval = 0;
-                    }
+                    if (m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] == MODE_CURINTERVAL.CAUSE_NOT)
+                        DateTimeBegin = m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds / denum);
                     else
-                        if (s_modeCurInterval == MODE_CURINTERVAL.CAUSE_NOT)
-                            DateTimeBegin = m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds / 2);
+                    {
+                        DateTimeBegin = m_dtServer.AddMilliseconds(-1 * (m_dtServer.Second * 1000 + m_dtServer.Millisecond));
+
+                        if (m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] == MODE_CURINTERVAL.CAUSE_PERIOD_MINUTE)
+                            //Выравнивание по "минуте"
+                            ; // уже выполнено
                         else
-                            ;
-                    
+                            if (m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] == MODE_CURINTERVAL.CAUSE_PERIOD_HOUR)
+                                //Выравнивание по "час"
+                                DateTimeBegin = DateTimeBegin.AddSeconds(-1 * (DateTimeBegin.Minute * 60 + DateTimeBegin.Second));
+                            else
+                                ;
+                    }
+                    //Установить признак перехода
                     iRes = 1;
                 }
                 else
                     //Переход на очередной интервал (повторный опрос)
-                    switch (s_modeCurInterval)
+                    switch (m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE])
                     {
-                        case MODE_CURINTERVAL.CAUSE_PERIOD:
+                        case MODE_CURINTERVAL.CAUSE_PERIOD_HOUR:
+                        case MODE_CURINTERVAL.CAUSE_PERIOD_MINUTE:
                             //Проверить необходимость изменения даты/времени
                             if ((m_dtServer - DateTimeBegin.AddSeconds(PeriodLocal.TotalSeconds)).TotalMilliseconds > MSecIntervalLocal)
                             {
@@ -912,7 +957,7 @@ namespace uLoaderCommon
                                 ;
                             break;
                         case MODE_CURINTERVAL.CAUSE_NOT:
-                            DateTimeBegin = m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds / 2);
+                            DateTimeBegin = m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds / denum);
                             //Установить признак перехода
                             iRes = 1;
                             break;
@@ -975,142 +1020,133 @@ namespace uLoaderCommon
         }
     }
 
-    public abstract class HHandlerDbULoaderMSTTMSrc : HHandlerDbULoaderDatetimeSrc
-    {
-        public int m_iCurIntervalShift;
+    //public abstract class HHandlerDbULoaderMSTTMSrc : HHandlerDbULoaderDatetimeSrc
+    //{
+    //    public TimeSpan m_tsCurIntervalOffset
+    //        , m_tsUTCOffset;
 
-        public HHandlerDbULoaderMSTTMSrc()
-            : base(@"yyyy/MM/dd HH:mm:ss")
-        {
-        }
+    //    public HHandlerDbULoaderMSTTMSrc()
+    //        : base(@"yyyy/MM/dd HH:mm:ss")
+    //    {
+    //    }
 
-        public HHandlerDbULoaderMSTTMSrc(IPlugIn iPlugIn)
-            : base(iPlugIn, @"yyyy/MM/dd HH:mm:ss")
-        {
-        }
+    //    public HHandlerDbULoaderMSTTMSrc(IPlugIn iPlugIn)
+    //        : base(iPlugIn, @"yyyy/MM/dd HH:mm:ss")
+    //    {
+    //    }
 
-        public override int Initialize(object[] pars)
-        {
-            int iRes = base.Initialize(pars);
+    //    public override int Initialize(object[] pars)
+    //    {
+    //        int iRes = base.Initialize(pars);
 
-            if (m_dictAdding.ContainsKey(@"CUR_INTERVAL_SHIFT") == true)
-                m_iCurIntervalShift = Convert.ToInt32(m_dictAdding[@"CUR_INTERVAL_SHIFT"]);
-            else
-                ;
+    //        if (m_dictAdding.ContainsKey(@"CUR_INTERVAL_OFFSET") == true)
+    //            m_iCurIntervalShift = Convert.ToInt32(m_dictAdding[@"CUR_INTERVAL_OFFSET"]);
+    //        else
+    //            ;
 
-            return iRes;
-        }
+    //        return iRes;
+    //    }
 
-        protected abstract class GroupSignalsMSTTMSrc : GroupSignalsDatetimeSrc
-        {
-            public GroupSignalsMSTTMSrc(HHandlerDbULoader parent, int id, object[] pars)
-                : base(parent, id, pars)
-            {
-            }
-            /// <summary>
-            /// Строки для условия "по дате/времени" - начало
-            /// </summary>
-            protected override string DateTimeBeginFormat
-            {
-                get
-                {
-                    string strRes = string.Empty;
-                    long msecDiff = -1;
+    //    protected abstract class GroupSignalsMSTTMSrc : GroupSignalsDatetimeSrc
+    //    {
+    //        public GroupSignalsMSTTMSrc(HHandlerDbULoader parent, int id, object[] pars)
+    //            : base(parent, id, pars)
+    //        {
+    //        }
+    //        /// <summary>
+    //        /// Строки для условия "по дате/времени" - начало
+    //        /// </summary>
+    //        protected override string DateTimeBeginFormat
+    //        {
+    //            get
+    //            {
+    //                string strRes = string.Empty;
+    //                long msecDiff = -1;
 
-                    switch (Mode)
-                    {
-                        case MODE_WORK.CUR_INTERVAL:
-                            msecDiff = (long)(1000 * (_parent as HHandlerDbULoaderMSTTMSrc).m_iCurIntervalShift * (int)PeriodLocal.TotalSeconds);                          
-                            break;
-                        case MODE_WORK.COSTUMIZE:
-                            msecDiff = 0; //MSecInterval;
-                            break;
-                        default:
-                            break;
-                    }
+    //                switch (Mode)
+    //                {
+    //                    case MODE_WORK.CUR_INTERVAL:
+    //                        msecDiff = (long)((_parent as HHandlerDbULoaderMSTTMSrc).m_tsCurIntervalOffset.TotalMilliseconds);
+    //                        break;
+    //                    case MODE_WORK.COSTUMIZE:
+    //                        msecDiff = 0; //MSecInterval;
+    //                        break;
+    //                    default:
+    //                        break;
+    //                }
 
-                    strRes = DateTimeBegin.AddHours(-6).AddMilliseconds(msecDiff).ToString((_parent as HHandlerDbULoaderMSTTMSrc).m_strDateTimeDBFormat);
-                    //Console.WriteLine(@"DateTimeBegin=" + DateTimeBeginFormat + @"; DateTimeEndFormat=" + strRes);
+    //                strRes = DateTimeBegin.AddSeconds(m_tsUTCOffset.TotalSeconds).AddMilliseconds(msecDiff).ToString((_parent as HHandlerDbULoaderMSTTMSrc).m_strDateTimeDBFormat);
+    //                //Console.WriteLine(@"DateTimeBegin=" + DateTimeBeginFormat + @"; DateTimeEndFormat=" + strRes);
 
-                    return strRes;
-                }
-            }
-            /// <summary>
-            /// Строки для условия "по дате/времени" - окончание
-            /// </summary>
-            protected override string DateTimeEndFormat
-            {
-                get
-                {
-                    string strRes = string.Empty;
-                    long msecDiff = -1;
+    //                return strRes;
+    //            }
+    //        }
+    //        /// <summary>
+    //        /// Строки для условия "по дате/времени" - окончание
+    //        /// </summary>
+    //        protected override string DateTimeEndFormat
+    //        {
+    //            get
+    //            {
+    //                string strRes = string.Empty;
+    //                long msecDiff = -1;
 
-                    switch (Mode)
-                    {
-                        case MODE_WORK.CUR_INTERVAL:
-                            msecDiff = 0;                          
-                            break;
-                        case MODE_WORK.COSTUMIZE:
-                            msecDiff = (int)PeriodLocal.TotalMilliseconds;
-                            break;
-                        default:
-                            break;
-                    }
+    //                switch (Mode)
+    //                {
+    //                    case MODE_WORK.CUR_INTERVAL:
+    //                        msecDiff = 0;                          
+    //                        break;
+    //                    case MODE_WORK.COSTUMIZE:
+    //                        msecDiff = (int)PeriodLocal.TotalMilliseconds;
+    //                        break;
+    //                    default:
+    //                        break;
+    //                }
 
-                    strRes = DateTimeBegin.AddHours(-6).AddMilliseconds(msecDiff).ToString((_parent as HHandlerDbULoaderMSTTMSrc).m_strDateTimeDBFormat);
-                    //Console.WriteLine(@"DateTimeBegin=" + DateTimeBeginFormat + @"; DateTimeEndFormat=" + strRes);
+    //                strRes = DateTimeBegin.AddHours(-6).AddMilliseconds(msecDiff).ToString((_parent as HHandlerDbULoaderMSTTMSrc).m_strDateTimeDBFormat);
+    //                //Console.WriteLine(@"DateTimeBegin=" + DateTimeBeginFormat + @"; DateTimeEndFormat=" + strRes);
 
-                    return strRes;
-                }
-            }
-        }
-    }
+    //                return strRes;
+    //            }
+    //        }
+    //    }
+    //}
 
     public abstract class HHandlerDbULoaderMSTIDsql : HHandlerDbULoaderDatetimeSrc
     {
-        public HHandlerDbULoaderMSTIDsql()
-            : base(@"yyyyMMdd HH:mm:ss")
+        public HHandlerDbULoaderMSTIDsql(params MODE_CURINTERVAL [] modeCurIntervals)
+            : base(@"yyyyMMdd HH:mm:ss", modeCurIntervals)
         {
         }
 
-        public HHandlerDbULoaderMSTIDsql(IPlugIn iPlugIn)
-            : base(iPlugIn, @"yyyyMMdd HH:mm:ss")
+        public HHandlerDbULoaderMSTIDsql(IPlugIn iPlugIn, params MODE_CURINTERVAL [] modeCurIntervals)
+            : base(iPlugIn, @"yyyyMMdd HH:mm:ss", modeCurIntervals)
         {
         }        
 
         public override void ClearValues()
         {
-        }
+        }        
 
         protected abstract class GroupSignalsMSTIDsql : GroupSignalsDatetimeSrc
         {
             public GroupSignalsMSTIDsql(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
-            }
-
-            public class SIGNALMSTIDsql : SIGNAL
-            {
-                public int m_id;
-
-                public SIGNALMSTIDsql(int idMain, int id)
-                    : base(idMain)
-                {
-                    m_id = id;
-                }
-            }
+            }            
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
-                return new SIGNALMSTIDsql((int)objs[0], (int)objs[2]);
+                //ID_MAIN, ID_LOCAL, AVG
+                return new SIGNALIdsql((int)objs[0], (int)objs[2], bool.Parse((string)objs[3]));
             }
 
             protected override object getIdMain(object id_mst)
             {
                 int iRes = -1;
 
-                foreach (SIGNALMSTIDsql sgnl in m_arSignals)
-                    if (sgnl.m_id == (int)id_mst)
+                foreach (SIGNALIdsql sgnl in m_arSignals)
+                    if (sgnl.m_iIdLocal == (int)id_mst)
                     {
                         iRes = sgnl.m_idMain;
 
@@ -1122,32 +1158,32 @@ namespace uLoaderCommon
                 return iRes;
             }
 
-            public override DataTable TableRecieved
-            {
-                get { return base.TableRecieved; }
+            //public override DataTable TableRecieved
+            //{
+            //    get { return base.TableRecieved; }
 
-                set
-                {
-                    //Требуется добавить идентификаторы 'id_main'
-                    if ((!(value == null)) && (!(value.Columns.IndexOf(@"ID") < 0)))
-                    {
-                        DataTable tblVal = value.Copy();
-                        tblVal.Columns.Add(@"ID_MST", typeof(int));
+            //    set
+            //    {
+            //        //Требуется добавить идентификаторы 'id_main'
+            //        if ((!(value == null)) && (!(value.Columns.IndexOf(@"ID") < 0)))
+            //        {
+            //            DataTable tblVal = value.Copy();
+            //            tblVal.Columns.Add(@"ID_MST", typeof(int));
 
-                        foreach (DataRow r in tblVal.Rows)
-                        {
-                            r[@"ID_MST"] = r[@"ID"];
-                            r[@"ID"] = getIdMain((int)r[@"ID_MST"]);
-                        }
+            //            foreach (DataRow r in tblVal.Rows)
+            //            {
+            //                r[@"ID_MST"] = r[@"ID"];
+            //                r[@"ID"] = getIdMain((int)r[@"ID_MST"]);
+            //            }
 
-                        base.TableRecieved = tblVal;
-                    }
-                    else
-                    {
-                        base.TableRecieved = value;
-                    }
-                }
-            }
+            //            base.TableRecieved = tblVal;
+            //        }
+            //        else
+            //        {
+            //            base.TableRecieved = value;
+            //        }
+            //    }
+            //}
         }
     }
 }

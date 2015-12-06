@@ -90,9 +90,9 @@ namespace uLoader
             // округлить по 0-ой минуте
             m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.AddMinutes(-1 * m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.Minute);
             m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.AddMilliseconds(-1 * m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.Second * 1000 + m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.Millisecond);
-            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriodMain = TimeSpan.FromHours(1);
-            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriodLocal = TimeSpan.FromMinutes(1);
-            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_iIntervalLocal = (int)DATETIME.MSEC_INTERVAL_DEFAULT;
+            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriodMain = HTimeSpan.FromHours(1);
+            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriodLocal = HTimeSpan.FromMinutes(1);
+            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsIntervalLocal = HTimeSpan.FromMilliseconds((int)DATETIME.MSEC_INTERVAL_DEFAULT);
         }
     }
     /// <summary>
@@ -119,8 +119,8 @@ namespace uLoader
             m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart.AddMilliseconds(-1 * m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart.Second * 1000 + m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart.Millisecond);
             m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodMain =
             m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodLocal =
-                TimeSpan.FromSeconds((int)DATETIME.SEC_SPANPERIOD_DEFAULT);
-            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iIntervalLocal = (int)DATETIME.MSEC_INTERVAL_DEFAULT;
+                HTimeSpan.FromSeconds((int)DATETIME.SEC_SPANPERIOD_DEFAULT);
+            m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsIntervalLocal = HTimeSpan.FromMilliseconds((int)DATETIME.MSEC_INTERVAL_DEFAULT);
         }
     }
     /// <summary>
@@ -165,7 +165,7 @@ namespace uLoader
         /// <summary>
         /// Длительность интервала (секунды)
         /// </summary>
-        public int m_iIntervalLocal;
+        public HTimeSpan m_tsIntervalLocal;
         /// <summary>
         /// Начало интервала
         /// </summary>
@@ -173,22 +173,22 @@ namespace uLoader
         /// <summary>
         /// Окончание интервала (зависит от начала и длительности)
         /// </summary>
-        public TimeSpan m_tsPeriodMain;
+        public HTimeSpan m_tsPeriodMain;
         /// <summary>
         /// Окончание интервала (зависит от начала и длительности)
         ///  для "текущ./интервала" равен 'm_tsPeriodMain'
         /// </summary>
-        public TimeSpan m_tsPeriodLocal;
+        public HTimeSpan m_tsPeriodLocal;
         /// <summary>
         /// Конструктор - основной (без параметров)
         /// </summary>
         public DATETIME_WORK ()
         {
-            m_iIntervalLocal = -1;
             m_dtStart = new DateTime ();
             m_tsPeriodMain =
             m_tsPeriodLocal =
-                TimeSpan.FromSeconds((int)DATETIME.SEC_SPANPERIOD_DEFAULT);
+                HTimeSpan.FromSeconds((int)DATETIME.SEC_SPANPERIOD_DEFAULT);
+            m_tsIntervalLocal = HTimeSpan.NotValue;
         }
         ///// <summary>
         ///// Установить значения для интервала
@@ -263,8 +263,8 @@ namespace uLoader
         private static Type getTypeGroupSignals(List<string> pars)
         {
             Type typeRes = Type.Missing as Type;
-            if ((!(pars.IndexOf(@"CUR_INTERVAL_PERIOD") < 0))
-                && (!(pars.IndexOf(@"CUR_INTERVAL_VALUE") < 0)))
+            if ((!(pars.IndexOf(@"CURINTERVAL_PERIODMAIN") < 0))
+                && (!(pars.IndexOf(@"CURINTERVAL_PERIODLOCAL") < 0)))
                 typeRes = typeof(GROUP_SIGNALS_SRC_PARS);
             else
                 if (!(pars.IndexOf(@"ID_GS") < 0))
@@ -304,9 +304,8 @@ namespace uLoader
             if (item is GROUP_SIGNALS_SRC_PARS)
             {
                 item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodMain =
-                item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodLocal =
-                    TimeSpan.FromSeconds(Int32.Parse(vals[pars.IndexOf(@"CUR_INTERVAL_PERIOD")])); //CUR_INTERVAL_PERIOD                                
-                item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iIntervalLocal = Int32.Parse(vals[pars.IndexOf(@"CUR_INTERVAL_VALUE")]); //CUR_INTERVAL_VALUE
+                item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodLocal = new HTimeSpan(vals[pars.IndexOf(@"CURINTERVAL_PERIODMAIN")]); //CURINTERVAL_PERIODMAIN
+                item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsIntervalLocal = new HTimeSpan(vals[pars.IndexOf(@"CURINTERVAL_PERIODLOCAL")]); //CURINTERVAL_PERIODLOCAL
             }
             else
                 if (item is GROUP_SIGNALS_DEST_PARS)
@@ -341,8 +340,8 @@ namespace uLoader
                     pars.m_arWorkIntervals[(int)mode].m_tsPeriodLocal;
 
                 //if (mode == MODE_WORK.CUR_INTERVAL)
-                    m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)mode].m_iIntervalLocal =
-                        pars.m_arWorkIntervals[(int)mode].m_iIntervalLocal;
+                    m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)mode].m_tsIntervalLocal =
+                        pars.m_arWorkIntervals[(int)mode].m_tsIntervalLocal;
                 //else ;
             }
             else
@@ -936,9 +935,9 @@ namespace uLoader
                             {
                                 mode
                                 , grpSgnlsPars.m_arWorkIntervals[(int)mode].m_dtStart
-                                , TimeSpan.FromSeconds(grpSgnlsPars.m_arWorkIntervals [(int)mode].m_tsPeriodMain.TotalSeconds)
-                                , TimeSpan.FromSeconds(grpSgnlsPars.m_arWorkIntervals [(int)mode].m_tsPeriodLocal.TotalSeconds)
-                                , grpSgnlsPars.m_arWorkIntervals [(int)mode].m_iIntervalLocal
+                                , TimeSpan.FromSeconds(grpSgnlsPars.m_arWorkIntervals [(int)mode].m_tsPeriodMain.Value.TotalSeconds)
+                                , TimeSpan.FromSeconds(grpSgnlsPars.m_arWorkIntervals [(int)mode].m_tsPeriodLocal.Value.TotalSeconds)
+                                , (int)grpSgnlsPars.m_arWorkIntervals [(int)mode].m_tsIntervalLocal.Value.TotalMilliseconds
                             }
                         };
                 }

@@ -156,9 +156,9 @@ namespace uLoader
                 int iRes = 0;
 
                 dtWorkRes.m_dtStart = DateTime.Now;
-                dtWorkRes.m_tsPeriodMain = TimeSpan.FromSeconds (60);
-                dtWorkRes.m_tsPeriodLocal = TimeSpan.FromSeconds(60);
-                dtWorkRes.m_iIntervalLocal = -1;
+                dtWorkRes.m_tsPeriodMain = HTimeSpan.FromSeconds (60);
+                dtWorkRes.m_tsPeriodLocal = HTimeSpan.FromSeconds(60);
+                dtWorkRes.m_tsIntervalLocal = HTimeSpan.NotValue;
 
                 return iRes;
             }
@@ -248,7 +248,7 @@ namespace uLoader
                         itemSrc = new GROUP_SIGNALS_SRC();
                         //(itemSrc as GROUP_SIGNALS_SRC).m_iAutoStart = bool.Parse(GetSecValueOfKey(secGroup, @"AUTO_START")) == true ? 1 : 0;
                         //(itemSrc as GROUP_SIGNALS_SRC).m_mode = bool.Parse(GetSecValueOfKey(secGroup, @"CUR_INTERVAL_STATE")) == true ? MODE_WORK.CUR_INTERVAL : MODE_WORK.COSTUMIZE;
-                        //if (Int32.TryParse(GetSecValueOfKey(secGroup, @"CUR_INTERVAL_VALUE"), out (itemSrc as GROUP_SIGNALS_SRC).m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval) == false)
+                        //if (Int32.TryParse(GetSecValueOfKey(secGroup, @"CURINTERVAL_PERIODLOCAL"), out (itemSrc as GROUP_SIGNALS_SRC).m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval) == false)
                         //    (itemSrc as GROUP_SIGNALS_SRC).m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval = -1;
                         //else
                         //    ;
@@ -855,19 +855,19 @@ namespace uLoader
                             break;
                         case @"TOOLS_ENABLED": //Не устанавливается с помощью GUI
                             break;
-                        case @"CUR_INTERVAL_PERIOD":
+                        case @"CURINTERVAL_PERIODMAIN":
                             if ((type == (int)INDEX_SRC.SOURCE)
                                 && ((parValues as GROUP_SIGNALS_SRC_PARS).m_mode == MODE_WORK.CUR_INTERVAL))
                                 //Только для источника
-                                listParValues[indxPar] = parValues.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodMain.TotalSeconds.ToString ();
+                                listParValues[indxPar] = parValues.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodMain.Value.TotalSeconds.ToString ();
                             else
                                 ;
                             break;
-                        case @"CUR_INTERVAL_VALUE":
+                        case @"CURINTERVAL_PERIODLOCAL":
                             if ((type == (int)INDEX_SRC.SOURCE)
                                 && ((parValues as GROUP_SIGNALS_SRC_PARS).m_mode == MODE_WORK.CUR_INTERVAL))
                                 //Только для источника
-                                listParValues[indxPar] = parValues.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iIntervalLocal.ToString();
+                                listParValues[indxPar] = parValues.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsIntervalLocal.ToString();
                             else
                                 ;
                             break;
