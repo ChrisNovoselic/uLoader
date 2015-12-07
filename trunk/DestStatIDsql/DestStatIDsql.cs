@@ -60,7 +60,7 @@ namespace DestStatIDsql
                         strRow = @"(";
 
                         strRow += row[@"ID_MST"] + @",";
-                        strRow += (_parent as HHandlerDbULoaderStatTMDest).m_strIdTEC + @",";
+                        strRow += m_IdSourceTEC + @",";
                         strRow += ((double)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
                         strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(0).ToString(s_strFormatDbDateTime) + @"',";
                         strRow += row[@"tmdelta"] + @",";

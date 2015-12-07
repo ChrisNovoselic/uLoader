@@ -809,7 +809,19 @@ namespace uLoader
                             string secGroup = SEC_SRC_TYPES[(int)type] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup;
                             //Получить ниаменования параметров для групп сигналов
                             List<string> pars = GetSecValueOfKey(secGroup, KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + @"PARS").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]).ToList<string>();
-                            grpSrc.SetGroupSignalsPars (pars, val.Split(new char[] { s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL] }));
+                            try
+                            {
+                                grpSrc.SetGroupSignalsPars(pars, val.Split(new char[] { s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL] }));
+                            }
+                            catch (Exception e)
+                            {
+                                Logging.Logg().Exception(e
+                                    , @"FileINI::UpdateParameter (idGroup=" + strIdGroup
+                                        + @", par=" + par
+                                        + @", value=" + val
+                                        + @") - ..."
+                                    , Logging.INDEX_MESSAGE.NOT_SET);
+                            }
                             SetSecValueOfKey(secGroup
                                 , par
                                 , val);
@@ -859,7 +871,7 @@ namespace uLoader
                             if ((type == (int)INDEX_SRC.SOURCE)
                                 && ((parValues as GROUP_SIGNALS_SRC_PARS).m_mode == MODE_WORK.CUR_INTERVAL))
                                 //Только для источника
-                                listParValues[indxPar] = parValues.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodMain.Value.TotalSeconds.ToString ();
+                                listParValues[indxPar] = parValues.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodMain.Text;
                             else
                                 ;
                             break;
@@ -867,7 +879,7 @@ namespace uLoader
                             if ((type == (int)INDEX_SRC.SOURCE)
                                 && ((parValues as GROUP_SIGNALS_SRC_PARS).m_mode == MODE_WORK.CUR_INTERVAL))
                                 //Только для источника
-                                listParValues[indxPar] = parValues.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsIntervalLocal.ToString();
+                                listParValues[indxPar] = parValues.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsIntervalLocal.ToString ();
                             else
                                 ;
                             break;

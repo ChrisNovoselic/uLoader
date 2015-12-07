@@ -10,7 +10,7 @@ namespace uLoaderCommon
 {
     public class HTimeSpan : object
     {
-        private bool bError
+        private bool isError
         {
             get
             {
@@ -30,11 +30,13 @@ namespace uLoaderCommon
 
         public string Text
         {
+            get { return ToString(); }
+            
             set
             {
                 _value = parse(value, out _prefix);
 
-                if (bError == true)
+                if (isError == true)
                     throw new Exception(@"HTimeSpan::ctor () - error parsing value ...");
                 else
                     ;
@@ -47,7 +49,7 @@ namespace uLoaderCommon
             int iSign = 0
                 , iValue = 0;
 
-            if (bError == false)
+            if (isError == false)
             {
                 iSign = _value.TotalMilliseconds < 0 ? -1 : 0;
 
@@ -1009,7 +1011,7 @@ namespace uLoaderCommon
             }
             //Освободить ресурс ядра ОС
             //??? "везде" 'true'
-            if (bRes == true)
+            if (bRes == false)
                 try
                 {
                     //m_semaQueue.Release(1);
@@ -1025,10 +1027,24 @@ namespace uLoaderCommon
         /// <summary>
         /// Возвратить массив объектов для передачи клиенту
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Массив объектов для передачи сообщения серверу</returns>
         protected virtual object [] getDataAskedHost ()
         {
+            // null - для передачи дополнительной информации
+            //Для передачи дополнительной информации - переопределить метод, заполнить 'array[3]'
             return new object[] { ID_DATA_ASKED_HOST.TABLE_RES, IdGroupSignalsCurrent, TableRecieved, null };
+        }
+
+        protected virtual object[] getConfirmStartAskedHost(int id)
+        {
+            // null - для передачи дополнительной информации
+            //Для передачи дополнительной информации - переопределить метод, заполнить 'array[3]'
+            return new object[]
+                        { ID_DATA_ASKED_HOST.START,
+                            id
+                            , ID_HEAD_ASKED_HOST.CONFIRM
+                            , null
+                        };
         }
         /// <summary>
         /// Старт потоков для обмена данными с источниками информации
@@ -1185,9 +1201,9 @@ namespace uLoaderCommon
             {
                 register(id, 0, m_connSett, string.Empty);
 
-                if (! (_iPlugin == null))
+                if (!(_iPlugin == null))
                     //Подтвердить клиенту изменение состояние
-                    (_iPlugin as PlugInBase).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.START, id, ID_HEAD_ASKED_HOST.CONFIRM });
+                    (_iPlugin as PlugInBase).DataAskedHost(getConfirmStartAskedHost(id));
                 else
                     ;
             }
@@ -1226,7 +1242,7 @@ namespace uLoaderCommon
         /// Остановить группу сигналов по указанному идентификатору
         /// </summary>
         /// <param name="id">Идентификатор группы сигналов</param>
-        public virtual void Stop(int id)
+        public virtual void Stop(int id, ID_HEAD_ASKED_HOST direct)
         {
             int iNeedStopped = 0; //Признак необходимости останова "родительского" объекта
 
@@ -1252,7 +1268,7 @@ namespace uLoaderCommon
             {
                 if (! (_iPlugin == null))
                     //Подтвердить клиенту останов группы сигналов
-                    (_iPlugin as PlugInBase).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.STOP, id, ID_HEAD_ASKED_HOST.CONFIRM });
+                    (_iPlugin as PlugInBase).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.STOP, id, direct });
                 else
                     ;
 
@@ -1444,7 +1460,7 @@ namespace uLoaderCommon
                         ;
                     break;
                 case (int)ID_DATA_ASKED_HOST.STOP:
-                    target.Stop((int)(ev.par as object[])[0]);
+                    target.Stop((int)(ev.par as object[])[0], ID_HEAD_ASKED_HOST.CONFIRM);
                     break;
                 default:
                     break;

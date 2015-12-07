@@ -973,7 +973,7 @@ namespace uLoader
         /// <summary>
         /// Обработка сообщений "от" библиотеки
         /// </summary>
-        /// <param name="obj"></param>
+        /// <param name="obj">Сообщение "от" библиотеки</param>
         private void plugIn_OnEvtDataAskedHost  (object obj)
         {
             EventArgsDataHost ev = obj as EventArgsDataHost;
@@ -1049,6 +1049,7 @@ namespace uLoader
                         break;
                     case ID_DATA_ASKED_HOST.START:
                     case ID_DATA_ASKED_HOST.STOP:
+                        bool bSemaStateChange = true;
                         //m_semaStateChange.Release (1);
                         //Вариант №2 (пост-установка)
                         grpSgnls.StateChange();
@@ -1058,9 +1059,31 @@ namespace uLoader
                         else
                             ;
 
+                        if (grpSgnls.State == STATE.STOPPED)
+                        {
+                            m_evtInitSource.Reset();
+
+                            bSemaStateChange = (ID_HEAD_ASKED_HOST)pars[2] == ID_HEAD_ASKED_HOST.CONFIRM;
+                        }
+                        else
+                            ;
+
                         msgDebugLog = @"подтверждено: " + ((ID_DATA_ASKED_HOST)pars[0]).ToString();
-                        //Разрешить очередную команду на изменение состояния
-                        m_semaStateChange.Release (1);
+
+                        if (bSemaStateChange == true)
+                            //Разрешить очередную команду на изменение состояния
+                            try
+                            {
+                                m_semaStateChange.Release(1);
+                            }
+                            catch (Exception e)
+                            {
+                                Logging.Logg().Exception(e
+                                    , @"GroupSources::plugIn_OnEvtDataAskedHost () - idGroupSgnls=" + iIDGroupSignals + @" ..."
+                                    , Logging.INDEX_MESSAGE.NOT_SET);
+                            }
+                        else
+                            ;
                         break;
                     case ID_DATA_ASKED_HOST.ERROR:
                         //???
@@ -1570,6 +1593,7 @@ namespace uLoader
             //pars[2] - таблица с данными для "вставки"
             //??? pars[3] - object [] с доп./параметрами, для ретрансляции
             object[] pars = (ev.par as object[])[0] as object[];
+            object[] parsToSend = null;
 
             //pars[0] - идентификатор события
             switch ((ID_DATA_ASKED_HOST)pars[0])
@@ -1579,12 +1603,14 @@ namespace uLoader
                 case ID_DATA_ASKED_HOST.INIT_SIGNALS: //Получен запрос на обрабатываемую группу сигналов
                     break;
                 case ID_DATA_ASKED_HOST.TABLE_RES:
-                    object[] parsToSend = new object[pars.Length - 1];
+                    parsToSend = new object[pars.Length - 1];
                     //Заполнить для передачи основные параметры - таблицу
                     parsToSend[1] = (pars[2] as DataTable).Copy();
-                    //Проверить наличие дополнительныз параметров
+                    //Проверить наличие дополнительных параметров
+                    //??? 07.12.2015 лишнее 'Dest' не обрабатывает - см. TO_START
                     if ((parsToSend.Length > 2)
-                        && (pars.Length > 3))
+                        && (pars.Length > 3)
+                        && (! (pars[3] == null)))
                     {
                         parsToSend[2] = new object[(pars[3] as object[]).Length];
                         //Заполнить для передачи дополнительные параметры - массив объектов
@@ -1608,12 +1634,33 @@ namespace uLoader
                         else
                             ;
                     break;
-                case ID_DATA_ASKED_HOST.STOP:
+                case ID_DATA_ASKED_HOST.START:
+                    parsToSend = new object[(pars[3] as object[]).Length + 1]; // '+1' для идентификатора группы сигналов
                     //Установить взаимосвязь между полученными значениями группы сигналов и группой сигналов назначения
                     foreach (GroupSignalsDest grpSgnls in m_listGroupSignals)
                         if (!(grpSgnls.GetListNeededIndexGroupSignals().IndexOf((int)pars[1]) < 0))
+                        {//Да, группа сигналов 'grpSgnls' ожидает значения от группы сигналов '(int)pars[1]'
+                            parsToSend [0] = FormMain.FileINI.GetIDIndex(grpSgnls.m_strID);
+                            parsToSend[1] = (MODE_WORK)(pars[3] as object[])[0]; //MODE_WORK
+                            parsToSend[2] = (int)(pars[3] as object[])[1]; //IdSourceConnSett
+                            parsToSend[3] = (int)(pars[3] as object[])[2]; //ID_TEC
+                            PerformDataAskedHostPlugIn(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.TO_START, parsToSend));
+
+                            //Logging.Logg().Debug(@"GroupSources::Clone_OnEvtDataAskedHost () - NAME=" + m_strShrName + @", от [ID=" + (int)pars[1] + @"] для [ID=" + parsToSend[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
+                        }
+                        else
+                            ;
+                    break;
+                case ID_DATA_ASKED_HOST.STOP:
+                    parsToSend = new object [1];
+                    //Установить взаимосвязь между полученными значениями группы сигналов и группой сигналов назначения
+                    foreach (GroupSignalsDest grpSgnls in m_listGroupSignals)
+                        if (!(grpSgnls.GetListNeededIndexGroupSignals().IndexOf((int)pars[1]) < 0))
+                        {
+                            parsToSend[0] = FormMain.FileINI.GetIDIndex(grpSgnls.m_strID);
                             //Да, группа сигналов 'grpSgnls' ожидает значения от группы сигналов '(int)pars[1]';
-                            PerformDataAskedHostPlugIn(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.TO_CLEAR, new object [] { FormMain.FileINI.GetIDIndex(grpSgnls.m_strID) }));
+                            PerformDataAskedHostPlugIn(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.TO_STOP, parsToSend));
+                        }
                         else
                             ;
                     break;

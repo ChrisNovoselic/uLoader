@@ -49,6 +49,53 @@ namespace uLoaderCommon
             return iRes;
         }
 
+        public override int Initialize(object[] pars)
+        {
+            int iRes = base.Initialize(pars);
+
+            string[] arDictAddingKeys = new string[] { @"ID_TEC" };
+
+            foreach (string key in arDictAddingKeys)
+                if (m_dictAdding.ContainsKey(key) == true)
+                    switch (key)
+                    {
+                        case @"ID_TEC":
+                            //m_IdSourceTEC = Int32.Parse(m_dictAdding[key]);
+                            break;
+                        default:
+                            iRes = 1; // необрабатываемый параметр
+                            break;
+                    }
+                else
+                    switch (key)
+                    {
+                        case @"NAME_TABLE":
+                            iRes = -1;
+                            break;
+                        case @"ID_TEC":
+                            //m_IdSourceTEC = -1;
+                            break;
+                        default: ;
+                            break;
+                    }
+
+            return iRes;
+        }
+
+        protected override object[] getConfirmStartAskedHost(int id)
+        {
+            object[] objRes = base.getConfirmStartAskedHost(id);
+
+            objRes[3] = new object []
+                {
+                    m_dictGroupSignals[id].Mode
+                    , m_connSett.id
+                    , ((m_dictAdding.ContainsKey(@"ID_TEC") == true) ? Int32.Parse(m_dictAdding[@"ID_TEC"]) : -1)
+                };
+
+            return objRes;
+        }
+
         protected override GroupSignals.STATE State
         {
             get { return base.State; }
@@ -565,14 +612,14 @@ namespace uLoaderCommon
             return curCount == 0;
         }
 
-        protected override object[] getDataAskedHost()
-        {
-            object[] arObjToSend = base.getDataAskedHost ();
+        //protected override object[] getDataAskedHost()
+        //{
+        //    object[] arObjToSend = base.getDataAskedHost ();
 
-            arObjToSend [arObjToSend.Length - 1] = new object [] { m_connSett.id };
+        //    arObjToSend [arObjToSend.Length - 1] = new object [] { m_connSett.id };
 
-            return arObjToSend;
-        }
+        //    return arObjToSend;
+        //}
     }
 
     public abstract class HHandlerDbULoaderDatetimeSrc : HHandlerDbULoaderSrc
@@ -1016,7 +1063,7 @@ namespace uLoaderCommon
 
         private void stop (object id)
         {
-            Stop ((int)id);
+            Stop ((int)id, ID_HEAD_ASKED_HOST.GET);
         }
     }
 

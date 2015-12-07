@@ -47,11 +47,12 @@ namespace DestTechSiteLastsql
                 string strRes = string.Empty
                     , strRow = string.Empty;
                 Type typeVal = tblRes.Columns[@"VALUE"].DataType;
+                int idSrvTM = (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).GetIdSrvTM(m_IdSourceConnSett);
 
                 //Logging.Logg().Debug(@"GroupSignalsStatKKSNAMEsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 strRow = @"UPDATE [" + (_parent as HHandlerDbULoaderDest).m_strNameTable + @"]"
-                                    + @"SET [ID_SRV_TM]=" + (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).m_strIdSrvTM + @",";
+                                    + @"SET [ID_SRV_TM]=" + idSrvTM + @",";
 
                 foreach (DataRow row in tblRes.Rows)
                 {

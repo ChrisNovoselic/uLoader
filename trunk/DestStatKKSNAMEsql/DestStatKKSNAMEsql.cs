@@ -37,6 +37,7 @@ namespace DestStatKKSNAMEsql
             {
                 string strRes = string.Empty
                     , strRow = string.Empty;
+                int idSrvTM = (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).GetIdSrvTM(m_IdSourceConnSett);
 
                 //Logging.Logg().Debug(@"GroupSignalsStatKKSNAMEsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -58,13 +59,13 @@ namespace DestStatKKSNAMEsql
                         strRow = @"(";
 
                         strRow += @"'" + row[@"KKSNAME_MST"] + @"'" + @",";
-                        strRow += (_parent as HHandlerDbULoaderStatTMDest).m_strIdTEC + @",";
+                        strRow += m_IdSourceTEC + @",";
                         strRow += ((double)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
                         strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(0).ToString(s_strFormatDbDateTime) + @"',";
                         strRow += row[@"tmdelta"] + @",";
                         strRow += @"GETDATE()" + @",";
-                        strRow += (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).m_strIdSource + @",";
-                        strRow += (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).m_strIdSrvTM;
+                        strRow += m_IdSourceConnSett + @",";
+                        strRow += idSrvTM;
 
                         strRow += @"),";
 

@@ -42,6 +42,7 @@ namespace DestBiTECStatKKSNAMEsql
             {
                 string strRes = string.Empty
                     , strRow = string.Empty;
+                int idSrvTM = (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).GetIdSrvTM(m_IdSourceConnSett);
 
                 strRes = @"INSERT INTO [dbo].[" + (_parent as HHandlerDbULoaderDest).m_strNameTable + @"] ("
                     + @"[KKS_NAME]"
@@ -59,13 +60,13 @@ namespace DestBiTECStatKKSNAMEsql
                     strRow = @"(";
 
                     strRow += @"'" + getIdToInsert(Int32.Parse(row[@"ID"].ToString().Trim())) + @"'" + @",";
-                    strRow += (_parent as HHandlerDbULoaderStatTMDest).m_strIdTEC + @",";
+                    strRow += m_IdSourceTEC + @",";
                     strRow += ((decimal)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
                     strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(-6).ToString(s_strFormatDbDateTime) + @"',";
                     strRow += row[@"tmdelta"] + @",";
                     strRow += @"GETDATE()" + @",";
-                    strRow += (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).m_strIdSource + @",";
-                    strRow += (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).m_strIdSrvTM;
+                    strRow += m_IdSourceConnSett + @",";
+                    strRow += idSrvTM;
 
                     strRow += @"),";
 

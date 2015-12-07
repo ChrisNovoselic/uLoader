@@ -56,7 +56,7 @@ namespace DestBiTECStatIDsql
                     strRow = @"(";
 
                     strRow += getIdToInsert(Int32.Parse(row[@"ID"].ToString().Trim())) + @",";
-                    strRow += (_parent as HHandlerDbULoaderStatTMDest).m_strIdTEC + @",";
+                    strRow += m_IdSourceTEC + @",";
                     strRow += ((decimal)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
                     strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(-6).ToString(s_strFormatDbDateTime) + @"',";
                     strRow += row[@"tmdelta"] + @",";

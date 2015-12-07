@@ -269,7 +269,7 @@ namespace SrcMSTKKSNAMEtoris
             ((HHandler)this).Stop();
         }
 
-        public override void Stop(int key)
+        public override void Stop(int key, ID_HEAD_ASKED_HOST direct)
         {
             if (IsStarted == true)
             {
@@ -281,7 +281,7 @@ namespace SrcMSTKKSNAMEtoris
                         ;
                 }
 
-                base.Stop(key);
+                base.Stop(key, direct);
             }
             else
                 ;

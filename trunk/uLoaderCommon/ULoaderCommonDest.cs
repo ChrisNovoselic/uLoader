@@ -11,9 +11,11 @@ namespace uLoaderCommon
 {
     public abstract class HHandlerDbULoaderDest : HHandlerDbULoader, ILoader
     {
+        private static string[] s_arDictAddingKeys = { @"NAME_TABLE" };
+        
         private const int MAX_QUEUECOUNT_OF_KEY = 16;
 
-        public string m_strNameTable;
+        public string m_strNameTable;        
 
         enum StatesMachine
         {
@@ -37,13 +39,36 @@ namespace uLoaderCommon
         {
             int iRes = base.Initialize(pars);
 
-            m_strNameTable = m_dictAdding[@"NAME_TABLE"];
+            foreach (string key in s_arDictAddingKeys)
+                if (m_dictAdding.ContainsKey(key) == true)
+                    switch (key)
+                    {
+                        case @"NAME_TABLE":
+                            m_strNameTable = m_dictAdding[key];
+                            break;
+                        default:
+                            iRes = 1; // необрабатываемый параметр
+                            break;
+                    }                    
+                else
+                    switch (key)
+                    {
+                        case @"NAME_TABLE":
+                            iRes = -1;
+                            break;
+                        default:
+                            break;
+                    }
 
             return iRes;
         }
 
         public abstract class GroupSignalsDest : GroupSignals
         {
+            protected MODE_WORK m_modeSource;
+            protected int m_IdSourceConnSett
+                , m_IdSourceTEC;
+            
             public enum INDEX_DATATABLE_RES
             {
                 PREVIOUS,
@@ -60,6 +85,13 @@ namespace uLoaderCommon
                 {
                     this.m_idLink = idLink;
                 }
+            }
+
+            public void InitSource(params object []pars)
+            {
+                m_modeSource = (MODE_WORK)pars[0];
+                m_IdSourceConnSett = (int)pars[1];
+                m_IdSourceTEC = (int)pars[2];
             }
 
             protected static string s_strFormatDbDateTime = @"yyyyMMdd HH:mm:ss.fffffff";
@@ -216,7 +248,7 @@ namespace uLoaderCommon
                 //}
             }
             /// <summary>
-            /// Дата/время начала интервала (минимальное значение), за который получен набор значений для всавки в целевую таблицу
+            /// Дата/время начала интервала (минимальное значение), за который получен набор значений для вставки в целевую таблицу
             /// </summary>
             public DateTimeRange DateTimeRangeRecieved;            
             /// <summary>
@@ -329,6 +361,11 @@ namespace uLoaderCommon
             }
 
             protected abstract DataTable getTableRes();
+
+            public void Clear ()
+            {
+                TableRecievedPrev.Rows.Clear();
+            }
         }
 
         protected virtual void previousValues(DataTable tableRes)
@@ -422,7 +459,7 @@ namespace uLoaderCommon
         /// <param name="tableIn">Таблица, содержащая записи для вставки</param>
         /// <param name="pars">Массив допю/параметров</param>
         /// <returns>Результат постановки в очередьь обработки событий</returns>
-        public virtual int Insert(int id, DataTable tableIn, object []pars)
+        public virtual int Insert(int id, DataTable tableIn/*, object []pars*/)
         {
             int iRes = 0
                 , keyQueueCount = -1;
@@ -457,9 +494,14 @@ namespace uLoaderCommon
             return iRes;
         }
 
+        public void InitSource(object [] pars)
+        {
+            (m_dictGroupSignals[(int)pars[0]] as GroupSignalsDest).InitSource(pars[1], pars[2], pars[3]);
+        }
+
         public void Clear(int id)
         {
-            (m_dictGroupSignals[id] as GroupSignalsDest).TableRecievedPrev.Rows.Clear();
+            (m_dictGroupSignals[id] as GroupSignalsDest).Clear ();
         }
 
         protected GroupSignalsDest.DateTimeRange DateTimeRangeRecieved
@@ -514,7 +556,7 @@ namespace uLoaderCommon
 
     public abstract class HHandlerDbULoaderStatTMDest : HHandlerDbULoaderDest
     {
-        public string m_strIdTEC;
+        //public string m_strIdTEC;
 
         public HHandlerDbULoaderStatTMDest()
             : base()
@@ -526,14 +568,14 @@ namespace uLoaderCommon
         {
         }
 
-        public override int Initialize(object[] pars)
-        {
-            int iRes = base.Initialize(pars);
+        //public override int Initialize(object[] pars)
+        //{
+        //    int iRes = base.Initialize(pars);
 
-            m_strIdTEC = m_dictAdding[@"ID_TEC"];
+        //    m_strIdTEC = m_dictAdding[@"ID_TEC"];
 
-            return iRes;
-        }
+        //    return iRes;
+        //}
 
         public abstract class GroupSignalsStatTMDest : GroupSignalsDest
         {
@@ -845,8 +887,7 @@ namespace uLoaderCommon
 
     public abstract class HHandlerDbULoaderStatTMKKSNAMEDest : HHandlerDbULoaderStatTMDest
     {
-        public string m_strIdSource
-            , m_strIdSrvTM;
+        //public int m_IdSrvTM;
 
         public HHandlerDbULoaderStatTMKKSNAMEDest()
             : base()
@@ -858,29 +899,19 @@ namespace uLoaderCommon
         {
         }
 
-        private string getIdSrvTM(int id)
+        public int GetIdSrvTM(int id)
         {
-            return ((id % 10) - 1).ToString();
+            return ((id % 10) - 1);
         }
         
         //public override int Initialize(object[] pars)
         //{
         //    int iRes = base.Initialize(pars);
 
-        //    m_strIdSrvTM = 
+        //    m_IdSrvTM = getIdSrvTM(m_IdSourceTEC);
 
         //    return iRes;
         //}
-
-        public override int Insert(int id, DataTable tableIn, object[] pars)
-        {
-            int iRes = base.Insert(id, tableIn, pars);
-
-            m_strIdSource = ((int)pars[0]).ToString();
-            m_strIdSrvTM = getIdSrvTM((int)pars[0]);
-
-            return iRes;
-        }
 
         protected abstract class GroupSignalsStatTMKKSNAMEDest : GroupSignalsStatTMDest
         {
@@ -945,9 +976,12 @@ namespace uLoaderCommon
             switch (ev.id)
             {
                 case (int)ID_DATA_ASKED_HOST.TO_INSERT:
-                    target.Insert((int)(ev.par as object[])[0], (ev.par as object[])[1] as DataTable, (ev.par as object[])[2] as object[]);
+                    target.Insert((int)(ev.par as object[])[0], (ev.par as object[])[1] as DataTable/*, (ev.par as object[])[2] as object[]*/);
                     break;
-                case (int)ID_DATA_ASKED_HOST.TO_CLEAR:
+                case (int)ID_DATA_ASKED_HOST.TO_START:
+                    target.InitSource(ev.par);
+                    break;
+                case (int)ID_DATA_ASKED_HOST.TO_STOP:
                     target.Clear((int)(ev.par as object[])[0]); 
                     break;
                 default:
