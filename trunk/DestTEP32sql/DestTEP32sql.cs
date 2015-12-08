@@ -137,7 +137,8 @@ namespace DestTEP32sql
                         + @", [DATE_TIME] as [DATETIME]"
                         + @", [QUALITY]"
                         + @" FROM [" + (_parent as DestTEP32sql).GetNameTable(dtToSelect.GetValueOrDefault()) + @"]"
-                        + @" WHERE [DATE_TIME]='" + dtToSelect.GetValueOrDefault().ToString(s_strFormatDbDateTime) + @"'";
+                        + @" WHERE [DATE_TIME]='" + dtToSelect.GetValueOrDefault().ToString(s_strFormatDbDateTime) + @"'"
+                            + @" AND [ID_SOURCE]=" + m_IdSourceConnSett;
                 }
                 else
                     ;
