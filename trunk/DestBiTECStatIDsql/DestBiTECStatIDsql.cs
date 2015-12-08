@@ -10,7 +10,7 @@ using uLoaderCommon;
 
 namespace DestBiTECStatIDsql
 {
-    public class DestBiTECStatIDsql : HHandlerDbULoaderStatTMMSTDest //HHandlerDbULoaderStatTMIDDest
+    public class DestBiTECStatIDsql : HHandlerDbULoaderStatTMDest
     {
         //private static string s_strNameDestTable = @"ALL_PARAM_SOTIASSO"
         //    , s_strIdTEC = @"6";
@@ -25,19 +25,26 @@ namespace DestBiTECStatIDsql
         {
         }
 
-        private class GroupSignalsStatIDsql : GroupSignalsStatTMMSTDest //GroupSignalsStatTMIDDest
+        private class GroupSignalsStatIDsql : GroupSignalsStatTMDest
         {
             public GroupSignalsStatIDsql(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
             }
 
-            protected override DataTable getTableIns(ref DataTable table)
+            protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
-                return new TableInsTMDelta(table, TableRecievedPrev, Signals).Result;
+                return new GroupSignalsDest.SIGNALIDsql((int)objs[0], (int)objs[1], (int)objs[3]);
             }
 
-            protected override string getInsertValuesQuery(DataTable tblRes)
+            protected override void setTableRes()
+            {
+                base.setTableRes();
+
+                (m_DupTables as DataTableDuplicateTMDelta).Convert(TableRecievedPrev, Signals);
+            }
+
+            protected override string getTargetValuesQuery()
             {
                 string strRes = string.Empty
                     , strRow = string.Empty;
@@ -51,7 +58,7 @@ namespace DestBiTECStatIDsql
                     + @",[INSERT_DATETIME]"
                         + @") VALUES";
 
-                foreach (DataRow row in tblRes.Rows)
+                foreach (DataRow row in m_DupTables.TableDistinct.Rows)
                 {
                     strRow = @"(";
 

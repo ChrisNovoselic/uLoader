@@ -10,7 +10,7 @@ using uLoaderCommon;
 
 namespace DestStatKKSNAMEsql
 {
-    public class DestStatKKSNAMEsql : HHandlerDbULoaderStatTMKKSNAMEDest
+    public class DestStatKKSNAMEsql : HHandlerDbULoaderStatTMKKSNAMEDest //HHandlerDbULoaderStatTMKKSNAMEDest
     {
         //private static string s_strNameDestTable = @"ALL_PARAM_SOTIASSO_KKS"
         //    , s_strIdTEC = @"6"
@@ -26,14 +26,14 @@ namespace DestStatKKSNAMEsql
         {
         }
 
-        private class GroupSignalsStatKKSNAMEsql : HHandlerDbULoaderStatTMMSTDest.GroupSignalsStatTMMSTDest
+        private class GroupSignalsStatKKSNAMEsql : HHandlerDbULoaderStatTMKKSNAMEDest.GroupSignalsStatTMKKSNAMEDest
         {
             public GroupSignalsStatKKSNAMEsql(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
             }
 
-            protected override string getInsertValuesQuery(DataTable tblRes)
+            protected override string getTargetValuesQuery()
             {
                 string strRes = string.Empty
                     , strRow = string.Empty;
@@ -52,7 +52,7 @@ namespace DestStatKKSNAMEsql
                     + @",[ID_SRV_TM]"
                         + @") VALUES";
 
-                foreach (DataRow row in tblRes.Rows)
+                foreach (DataRow row in m_DupTables.TableDistinct.Rows)
                 {
                     if (((int)getIdToInsert(Int32.Parse(row[@"ID"].ToString().Trim()))) > 0)
                     {

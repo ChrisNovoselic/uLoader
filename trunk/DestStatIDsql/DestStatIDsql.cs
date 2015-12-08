@@ -10,7 +10,7 @@ using uLoaderCommon;
 
 namespace DestStatIDsql
 {
-    public class DestStatIDsql : HHandlerDbULoaderStatTMMSTDest
+    public class DestStatIDsql : HHandlerDbULoaderIDDest
     {
         //private static string s_strNameDestTable = @"ALL_PARAM_SOTIASSO"
         //    , s_strIdTEC = @"6";
@@ -30,14 +30,14 @@ namespace DestStatIDsql
         {
         }
 
-        private class GroupSignalsStatIDsql : GroupSignalsStatTMMSTDest
+        private class GroupSignalsStatIDsql : GroupSignalsIDDest
         {
             public GroupSignalsStatIDsql(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
             }
 
-            protected override string getInsertValuesQuery(DataTable tblRes)
+            protected override string getTargetValuesQuery()
             {
                 string strRes = string.Empty
                     , strRow = string.Empty;
@@ -53,7 +53,7 @@ namespace DestStatIDsql
                     + @",[INSERT_DATETIME]"
                         + @") VALUES";
 
-                foreach (DataRow row in tblRes.Rows)
+                foreach (DataRow row in m_DupTables.TableDistinct.Rows)
                 {
                     if (((int)getIdToInsert(Int32.Parse(row[@"ID"].ToString().Trim()))) > 0)
                     {

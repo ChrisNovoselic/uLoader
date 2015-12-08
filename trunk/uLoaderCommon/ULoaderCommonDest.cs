@@ -87,6 +87,28 @@ namespace uLoaderCommon
                 }
             }
 
+            protected class SIGNALIDsql : GroupSignalsDest.SIGNALDest
+            {
+                public int m_idTarget;
+
+                public SIGNALIDsql(int idMain, int idLink, int idTarget)
+                    : base(idMain, idLink)
+                {
+                    m_idTarget = idTarget;
+                }
+            }
+
+            protected class SIGNALStatKKSNAMEsql : GroupSignalsDest.SIGNALDest
+            {
+                public string m_strStatKKSName;
+
+                public SIGNALStatKKSNAMEsql(int idMain, int idLink, string statKKSName)
+                    : base(idMain, idLink)
+                {
+                    m_strStatKKSName = statKKSName;
+                }
+            }
+
             public void InitSource(params object []pars)
             {
                 m_modeSource = (MODE_WORK)pars[0];
@@ -94,9 +116,11 @@ namespace uLoaderCommon
                 m_IdSourceTEC = (int)pars[2];
             }
 
-            protected static string s_strFormatDbDateTime = @"yyyyMMdd HH:mm:ss.fffffff";
+            protected static string s_strFormatDbDateTime/*ToInsert*/ = @"yyyyMMdd HH:mm:ss.fffffff"
+                //, s_strFormatDbDateTimeToSelect = @"yyyyMMdd HH:mm:ss"
+                ;
 
-            protected int dequeue()
+            public int Dequeue()
             {
                 int iRes = 0
                     , cntPrev = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Rows.Count
@@ -168,15 +192,16 @@ namespace uLoaderCommon
                 {
                     lock (this)
                     {
-                        if ((!(value == null))
-                            && (value.Rows.Count > 0))
-                        {
-                            // т.к. записи в таблице отсортированы по [DATE_TIME]
-                            DateTimeRangeRecieved.Set((DateTime)value.Rows[0][@"DATETIME"]
-                                , (DateTime)value.Rows[value.Rows.Count - 1][@"DATETIME"]);
-                        }
-                        else
-                            ;
+                        ////Установить значения диапазона даты/времени
+                        //if ((!(value == null))
+                        //    && (value.Rows.Count > 0))
+                        //{
+                        //    // т.к. записи в таблице отсортированы по [DATE_TIME]
+                        //    DateTimeRangeRecieved.Set((DateTime)value.Rows[0][@"DATETIME"]
+                        //        , (DateTime)value.Rows[value.Rows.Count - 1][@"DATETIME"]);
+                        //}
+                        //else
+                        //    ;
                         
                         //Добавить элемент в очередь
                         m_queueTableRec.Enqueue (value);
@@ -247,10 +272,10 @@ namespace uLoaderCommon
                 //    get { return (Begin.Equals(DateTime.MinValue) == true) && (End.Equals(DateTime.MaxValue) == true); }
                 //}
             }
-            /// <summary>
-            /// Дата/время начала интервала (минимальное значение), за который получен набор значений для вставки в целевую таблицу
-            /// </summary>
-            public DateTimeRange DateTimeRangeRecieved;            
+            ///// <summary>
+            ///// Дата/время начала интервала (минимальное значение), за который получен набор значений для вставки в целевую таблицу
+            ///// </summary>
+            //public DateTimeRange DateTimeRangeRecieved;            
             /// <summary>
             /// Состояние группы сигналов
             /// </summary>
@@ -289,26 +314,50 @@ namespace uLoaderCommon
 
                 m_queueTableRec = new Queue<DataTable>();
 
-                DateTimeRangeRecieved = new DateTimeRange ();
+                //DateTimeRangeRecieved = new DateTimeRange ();
+
+                m_DupTables = createDupTables();
             }
             /// <summary>
-            /// Получить таблицу для вставки значений в целевую БД
+            /// Возвратить идентификатор для вставки строки в целевую таблицу
             /// </summary>
-            /// <param name="table">Ссылка на таблицу</param>
-            /// <returns>Таблица для вставки</returns>
-            protected abstract DataTable getTableIns(ref DataTable table);
-            /// <summary>
-            /// Получить идентификатор
-            /// </summary>
-            /// <param name="idLink">Идентификатор, устанавливающий связь</param>
-            /// <returns>Идентификатор для поля в таблице для вставки</returns>
-            protected abstract object getIdToInsert(int idLink);
+            /// <param name="idLink">Идентификатор источника сигнала</param>
+            /// <returns>Идентификатор сигнала в целевой таблице</returns>
+            protected virtual object getIdToInsert(int idLink)
+            {
+                int iRes = -1;
+
+                foreach (SIGNALDest sgnl in m_arSignals)
+                    if (sgnl.m_idLink == idLink)
+                    {
+                        iRes = sgnl.m_idMain;
+
+                        break;
+                    }
+                    else
+                        ;
+
+                if (iRes < 0)
+                    Logging.Logg().Warning(@"GroupSignlasDest::getIdToInsert (idLink=" + idLink + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                else
+                    ;
+
+                return iRes;
+            }            
+
+            protected DataTableDuplicate m_DupTables;
+
+            protected virtual void setTableRes()
+            {
+                //Сравнить (удалить дублирующие записи) предыдущую и текущую таблицы
+                m_DupTables.Determine(TableRecievedPrev.Copy(), TableRecieved.Copy());
+            }
             /// <summary>
             /// Получить строку с запросом на вставку значений
             /// </summary>
             /// <param name="tblRes">Таблица, использующуюся для формирования строки запроса</param>
             /// <returns>Строка с запросом на вставку значений</returns>
-            protected abstract string getInsertValuesQuery(DataTable tblRes);
+            protected abstract string getTargetValuesQuery();
             /// <summary>
             /// Получить строку с запросом текущих записей в целевой таблице
             /// </summary>
@@ -318,23 +367,20 @@ namespace uLoaderCommon
             /// Получить строку с запросом на вставку значений
             /// </summary>
             /// <returns>Строка с запросом на вставку значений</returns>
-            public string GetInsertValuesQuery()
+            public string GetTargetValuesQuery()
             {
                 string strRes = string.Empty;
 
-                DataTable tblRes = getTableRes();
+                setTableRes();
 
-                if (!(tblRes == null))
-                {
-                    if (tblRes.Rows.Count > 0)
-                        strRes = getInsertValuesQuery(tblRes);
-                    else
-                        ;
-
-                    Logging.Logg().Debug(@"Строк для вставки [ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HHandlerDbULoaderDest).IdGroupSignalsCurrent + @"]: " + tblRes.Rows.Count, Logging.INDEX_MESSAGE.NOT_SET);
-                }
+                if (m_DupTables.IsDeterminate == true)
+                    strRes = getTargetValuesQuery();
                 else
                     ;
+
+                Logging.Logg().Debug(@"Строк для вставки [ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id
+                        + @", key=" + (_parent as HHandlerDbULoaderDest).IdGroupSignalsCurrent + @"]: " + m_DupTables.TableDistinct.Rows.Count
+                    , Logging.INDEX_MESSAGE.NOT_SET);
 
                 return
                     //string.Empty
@@ -360,11 +406,14 @@ namespace uLoaderCommon
                 base.Stop();
             }
 
-            protected abstract DataTable getTableRes();
-
             public void Clear ()
             {
                 TableRecievedPrev.Rows.Clear();
+            }
+
+            protected virtual DataTableDuplicate createDupTables()
+            {
+                return new DataTableDuplicate();
             }
         }
 
@@ -385,25 +434,26 @@ namespace uLoaderCommon
                         GetCurrentTimeRequest(DbInterface.DB_TSQL_INTERFACE_TYPE.MSSQL, m_dictIdListeners[IdGroupSignalsCurrent][0]);                    
                         break;
                     case StatesMachine.Values:
+                        query = (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).GetExistsValuesQuery();
+                        break;
                     case StatesMachine.Insert:
-                        if ((StatesMachine)state == StatesMachine.Values)
-                            query = (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).GetExistsValuesQuery();
-                        else
-                            if ((StatesMachine)state == StatesMachine.Insert)
-                                query = (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).GetInsertValuesQuery();
-                            else
-                                ;
-
-                        if (query.Equals(string.Empty) == false)
-                            Request(m_dictIdListeners[IdGroupSignalsCurrent][0], query);
-                        else
-                            ;
+                        query = (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).GetTargetValuesQuery();
                         break;
                     default:
                         break;
                 }
             else
                 throw new Exception(@"HHandlerDbULoaderDest::StateRequest () - state=" + state.ToString() + @"...");
+
+            if (isLastState(state) == true)
+                (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).Dequeue();
+            else
+                ;
+
+            if (query.Equals(string.Empty) == false)
+                Request(m_dictIdListeners[IdGroupSignalsCurrent][0], query);
+            else
+                ;
 
             return iRes;
         }
@@ -493,27 +543,37 @@ namespace uLoaderCommon
 
             return iRes;
         }
-
+        /// <summary>
+        /// Инициализация группы сигналов условно-постоянными значениями
+        ///  при старте связанной группы сигналов источника
+        /// </summary>
+        /// <param name="pars">Массив усовно-постоянных значений</param>
         public void InitSource(object [] pars)
         {
+            //0 - идентификатор группы сигналов назначения
+            //1 - режим работы, 2 - иднтификатор источника значений, идентификатор ТЭЦ (при наличии)
             (m_dictGroupSignals[(int)pars[0]] as GroupSignalsDest).InitSource(pars[1], pars[2], pars[3]);
         }
-
+        /// <summary>
+        /// Очистить усорвно-постоянные значения
+        ///  при останове связанной группы сигналов источника
+        /// </summary>
+        /// <param name="id">Идентификатор группы сигналов назначения</param>
         public void Clear(int id)
         {
             (m_dictGroupSignals[id] as GroupSignalsDest).Clear ();
         }
 
-        protected GroupSignalsDest.DateTimeRange DateTimeRangeRecieved
-        {
-            get
-            {
-                if (!(IdGroupSignalsCurrent < 0))
-                    return (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).DateTimeRangeRecieved;
-                else
-                    throw new Exception(@"ULoaderCommonDest::DateTimeRangeRecieved.get ...");
-            }
-        }
+        //protected GroupSignalsDest.DateTimeRange DateTimeRangeRecieved
+        //{
+        //    get
+        //    {
+        //        if (!(IdGroupSignalsCurrent < 0))
+        //            return (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).DateTimeRangeRecieved;
+        //        else
+        //            throw new Exception(@"ULoaderCommonDest::DateTimeRangeRecieved.get ...");
+        //    }
+        //}
 
         protected DataTable TableRecievedPrev
         {
@@ -582,47 +642,21 @@ namespace uLoaderCommon
             public GroupSignalsStatTMDest(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
-            }            
-
-            protected override DataTable getTableRes()
-            {
-                DataTable tblRec = new DataTable()
-                    , tblDiff
-                    , tblRes = new DataTable ();
-
-                lock (this)
-                {
-                    if (! (TableRecieved == null))
-                        tblRec = TableRecieved.Copy();
-                    else
-                        ;
-                }
-
-                tblDiff = clearDupValues(TableRecievedPrev.Copy(), tblRec);
-                tblRes = getTableIns(ref tblDiff);
-
-                dequeue();
-
-                return tblRes;
             }
 
-            protected override DataTable getTableIns(ref DataTable table)
-            {
-                return table;
-            }
-
-            protected class TableInsTMDelta : object
+            protected class DataTableDuplicateTMDelta : DataTableDuplicate
             {
                 private DataTable m_tblPrevRecieved;
-                private DataTable m_tblRes;
 
-                private TableInsTMDelta()
+                public DataTableDuplicateTMDelta()
                 {
-                    m_tblRes = null; // new DataTable();
                 }
 
-                public TableInsTMDelta(DataTable tblCur, DataTable tblPrev, GroupSignalsDest.SIGNAL[] arSignals)
+                public void Convert(DataTable tblPrev, GroupSignalsDest.SIGNAL[] arSignals)
                 {
+                    DataTable tblCur = TableDistinct.Copy();
+                    TableDistinct = null;
+
                     DataRow[] arSelIns = null;
                     DataRow rowCur = null
                         , rowAdd
@@ -633,11 +667,12 @@ namespace uLoaderCommon
 
                     m_tblPrevRecieved = tblPrev.Copy();
 
+                    //tblCur = TableDistinct
                     if ((tblCur.Columns.Count > 2)
                         && ((!(tblCur.Columns.IndexOf(@"ID") < 0)) && (!(tblCur.Columns.IndexOf(@"DATETIME") < 0))))
                     {
                         tblCur.Columns.Add(@"tmdelta", typeof(int));
-                        m_tblRes = tblCur.Clone();
+                        TableDistinct = tblCur.Clone();
 
                         for (int s = 0; s < arSignals.Length; s++)
                         {
@@ -658,8 +693,8 @@ namespace uLoaderCommon
                                 {
                                     if (i < (arSelIns.Length - 1))
                                     {
-                                        m_tblRes.ImportRow(arSelIns[i]);
-                                        rowCur = m_tblRes.Rows[m_tblRes.Rows.Count - 1];
+                                        TableDistinct.ImportRow(arSelIns[i]);
+                                        rowCur = TableDistinct.Rows[TableDistinct.Rows.Count - 1];
                                     }
                                     else
                                         //Не вставлять без известной 'tmdelta'
@@ -677,9 +712,9 @@ namespace uLoaderCommon
                                             && (tmDelta > 0))
                                         {
                                             //Добавить из предыдущего опроса
-                                            rowAdd = m_tblRes.Rows.Add();
+                                            rowAdd = TableDistinct.Rows.Add();
                                             //Скопировать все значения
-                                            foreach (DataColumn col in m_tblRes.Columns)
+                                            foreach (DataColumn col in TableDistinct.Columns)
                                             {
                                                 if (col.ColumnName.Equals(@"tmdelta") == true)
                                                     //Для "нового" столбца - найденное значение
@@ -733,12 +768,7 @@ namespace uLoaderCommon
                     else
                         ; //Отсутствуют необходимые столбцы (т.е. у таблицы нет структуры)
 
-                    m_tblRes.AcceptChanges();
-                }
-
-                public DataTable Result
-                {
-                    get { return m_tblRes;  }
+                    TableDistinct.AcceptChanges();
                 }
 
                 private DataRow setTMDelta(int id, DateTime dtCurrent, out int tmDelta)
@@ -769,46 +799,74 @@ namespace uLoaderCommon
                     return rowRes;
                 }
             }
+
+            protected override DataTableDuplicate createDupTables()
+            {
+                return new DataTableDuplicateTMDelta();
+            }
         }
     }
 
-    public abstract class HHandlerDbULoaderStatTMMSTDest : HHandlerDbULoaderStatTMDest
+    //public abstract class HHandlerDbULoaderStatTMMSTDest : HHandlerDbULoaderStatTMDest
+    //{
+    //    public HHandlerDbULoaderStatTMMSTDest()
+    //        : base()
+    //    {
+    //    }
+
+    //    public HHandlerDbULoaderStatTMMSTDest(IPlugIn iPlugIn)
+    //        : base(iPlugIn)
+    //    {
+    //    }
+
+    //    public abstract class GroupSignalsStatTMMSTDest : GroupSignalsStatTMDest
+    //    {
+    //        public GroupSignalsStatTMMSTDest(HHandlerDbULoader parent, int id, object[] pars)
+    //            : base(parent, id, pars)
+    //        {
+    //        }
+
+    //        protected override GroupSignals.SIGNAL createSignal(object[] objs)
+    //        {
+    //            //ID_MAIN, ID_SRC_SGNL
+    //            return new SIGNALDest((int)objs[0], (int)objs[1]);
+    //        }            
+    //    }
+    //}
+
+    public abstract class HHandlerDbULoaderIDDest : HHandlerDbULoaderDest
     {
-        public HHandlerDbULoaderStatTMMSTDest()
+        public HHandlerDbULoaderIDDest()
             : base()
         {
         }
 
-        public HHandlerDbULoaderStatTMMSTDest(IPlugIn iPlugIn)
+        public HHandlerDbULoaderIDDest(IPlugIn iPlugIn)
             : base(iPlugIn)
         {
         }
 
-        public abstract class GroupSignalsStatTMMSTDest : GroupSignalsStatTMDest
+        protected abstract class GroupSignalsIDDest : GroupSignalsDest
         {
-            public GroupSignalsStatTMMSTDest(HHandlerDbULoader parent, int id, object[] pars)
+            public GroupSignalsIDDest(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
             }
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
-                //ID_MAIN, ID_SRC_SGNL
-                return new SIGNALDest((int)objs[0], (int)objs[1]);
+                //ID_MAIN, ID_SRC_SGNL, ID_STAT
+                return new SIGNALIDsql((int)objs[0], (int)objs[1], (int)objs[3]);
             }
-            /// <summary>
-            /// Возвраить идентификатор для вставки строки в целевую таблицу
-            /// </summary>
-            /// <param name="idLink">Идентификатор источника сигнала</param>
-            /// <returns>Идентификатор сигнала в целевой таблице</returns>
+
             protected override object getIdToInsert(int idLink)
             {
                 int iRes = -1;
 
-                foreach (SIGNALDest sgnl in m_arSignals)
+                foreach (SIGNALIDsql sgnl in m_arSignals)
                     if (sgnl.m_idLink == idLink)
                     {
-                        iRes = sgnl.m_idMain;
+                        iRes = sgnl.m_idTarget;
 
                         break;
                     }
@@ -816,7 +874,7 @@ namespace uLoaderCommon
                         ;
 
                 if (iRes < 0)
-                    throw new Exception(@"GroupSignlasStatTMIDDest::getIdToInsert (idLink=" + idLink + @") - ...");
+                    throw new Exception(@"GroupSignlasIDDest::getIdToInsert (idLink=" + idLink + @") - ...");
                 else
                     ;
 
@@ -824,66 +882,6 @@ namespace uLoaderCommon
             }
         }
     }
-
-    //public abstract class HHandlerDbULoaderStatTMIDDest : HHandlerDbULoaderStatTMDest
-    //{
-    //    public HHandlerDbULoaderStatTMIDDest()
-    //        : base()
-    //    {
-    //    }
-
-    //    public HHandlerDbULoaderStatTMIDDest(IPlugIn iPlugIn)
-    //        : base(iPlugIn)
-    //    {
-    //    }
-
-    //    protected abstract class GroupSignalsStatTMIDDest : GroupSignalsStatTMDest
-    //    {
-    //        public GroupSignalsStatTMIDDest(HHandlerDbULoader parent, int id, object[] pars)
-    //            : base(parent, id, pars)
-    //        {
-    //        }
-
-    //        protected class SIGNALStatIDsql : GroupSignalsDest.SIGNALDest
-    //        {
-    //            public int m_idStat;
-
-    //            public SIGNALStatIDsql(int idMain, int idLink, int idStat)
-    //                : base(idMain, idLink)
-    //            {
-    //                m_idStat = idStat;
-    //            }
-    //        }
-
-    //        protected override GroupSignals.SIGNAL createSignal(object[] objs)
-    //        {
-    //            //ID_MAIN, ID_SRC_SGNL, ID_STAT
-    //            return new SIGNALStatIDsql((int)objs[0], (int)objs[1], (int)objs[3]);
-    //        }
-
-    //        protected override object getIdToInsert(int idLink)
-    //        {
-    //            int iRes = -1;
-
-    //            foreach (SIGNALStatIDsql sgnl in m_arSignals)
-    //                if (sgnl.m_idLink == idLink)
-    //                {
-    //                    iRes = sgnl.m_idStat;
-
-    //                    break;
-    //                }
-    //                else
-    //                    ;
-
-    //            if (iRes < 0)
-    //                throw new Exception(@"GroupSignlasStatTMIDDest::getIdToInsert (idLink=" + idLink + @") - ...");
-    //            else
-    //                ;
-
-    //            return iRes;
-    //        }
-    //    }
-    //}
 
     public abstract class HHandlerDbULoaderStatTMKKSNAMEDest : HHandlerDbULoaderStatTMDest
     {
@@ -918,17 +916,6 @@ namespace uLoaderCommon
             public GroupSignalsStatTMKKSNAMEDest(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
-            }
-
-            protected class SIGNALStatKKSNAMEsql : GroupSignalsDest.SIGNALDest
-            {
-                public string m_strStatKKSName;
-
-                public SIGNALStatKKSNAMEsql(int idMain, int idLink, string statKKSName)
-                    : base(idMain, idLink)
-                {
-                    m_strStatKKSName = statKKSName;
-                }
             }
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)

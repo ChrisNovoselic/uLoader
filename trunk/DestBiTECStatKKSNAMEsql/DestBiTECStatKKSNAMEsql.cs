@@ -33,12 +33,14 @@ namespace DestBiTECStatKKSNAMEsql
             {
             }
 
-            protected override DataTable getTableIns(ref DataTable table)
+            protected override void setTableRes()
             {
-                return new TableInsTMDelta(table, TableRecievedPrev, Signals).Result;
+                base.setTableRes();
+
+                (m_DupTables as DataTableDuplicateTMDelta).Convert(TableRecievedPrev, Signals);
             }
 
-            protected override string getInsertValuesQuery(DataTable tblRes)
+            protected override string getTargetValuesQuery()
             {
                 string strRes = string.Empty
                     , strRow = string.Empty;
@@ -55,7 +57,7 @@ namespace DestBiTECStatKKSNAMEsql
                     + @",[ID_SRV_TM]"
                         + @") VALUES";
 
-                foreach (DataRow row in tblRes.Rows)
+                foreach (DataRow row in m_DupTables.TableDistinct.Rows)
                 {
                     strRow = @"(";
 

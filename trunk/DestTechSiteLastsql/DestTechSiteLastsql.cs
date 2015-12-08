@@ -42,11 +42,11 @@ namespace DestTechSiteLastsql
             //    throw new NotImplementedException();
             //}
 
-            protected override string getInsertValuesQuery(DataTable tblRes)
+            protected override string getTargetValuesQuery()
             {
                 string strRes = string.Empty
                     , strRow = string.Empty;
-                Type typeVal = tblRes.Columns[@"VALUE"].DataType;
+                Type typeVal = m_DupTables.TableDistinct.Columns[@"VALUE"].DataType;
                 int idSrvTM = (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).GetIdSrvTM(m_IdSourceConnSett);
 
                 //Logging.Logg().Debug(@"GroupSignalsStatKKSNAMEsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -54,7 +54,7 @@ namespace DestTechSiteLastsql
                 strRow = @"UPDATE [" + (_parent as HHandlerDbULoaderDest).m_strNameTable + @"]"
                                     + @"SET [ID_SRV_TM]=" + idSrvTM + @",";
 
-                foreach (DataRow row in tblRes.Rows)
+                foreach (DataRow row in m_DupTables.TableDistinct.Rows)
                 {
                     strRes += strRow;
 

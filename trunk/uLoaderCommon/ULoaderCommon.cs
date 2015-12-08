@@ -399,123 +399,149 @@ namespace uLoaderCommon
                 return stateRes;
             }
 
-            /// <summary>
-            /// Очистить "текущую" таблицу от записей,
-            ///  содержащихся в "предыдущей" таблице
-            /// </summary>
-            /// <param name="tblPrev">"Предыдущая таблица"</param>
-            /// <param name="tblRes">"Текущая" таблица</param>
-            /// <returns>Таблица без "дублирующих" записей</returns>
-            public static DataTable clearDupValues(DataTable tblPrev, DataTable tblRes)
+            public class DataTableDuplicate
             {
-                int iDup = 0;
+                private enum INDEX_RESULT { UNKNOWN = -1, EQUALE, DISTINCT, COUNT };
+                private DataTable[] _arTables;
 
-                if (((!(tblRes.Columns.IndexOf(@"ID") < 0)) && (!(tblRes.Columns.IndexOf(@"DATETIME") < 0)))
-                    && (tblRes.Rows.Count > 0))
+                public DataTable TableEquale { get { return _arTables[(int)INDEX_RESULT.EQUALE]; } set { _arTables[(int)INDEX_RESULT.EQUALE] = value; } }
+                public DataTable TableDistinct { get { return _arTables[(int)INDEX_RESULT.DISTINCT]; } set { _arTables[(int)INDEX_RESULT.DISTINCT] = value; } }
+
+                public DataTableDuplicate()
                 {
-                    DataRow[] arSel;
-                    foreach (DataRow rRes in tblPrev.Rows)
-                    {
-                        arSel = (tblRes as DataTable).Select(@"ID=" + rRes[@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fffffff") + @"'");
-                        iDup += arSel.Length;
-                        foreach (DataRow rDel in arSel)
-                            (tblRes as DataTable).Rows.Remove(rDel);
-                        tblRes.AcceptChanges();
-                    }
-
-                    //!!! См. ВНИМАТЕЛЬНО файл конфигурации - ИДЕНТИФИКАТОРЫ д.б. уникальные
-                    //int cnt = -1;
-                    //List <int>listDel = new List<int>();
-                    //foreach (DataRow rRes in table.Rows)
-                    //{
-                    //    arSel = (table as DataTable).Select(@"ID=" + rRes[@"ID"]
-                    //        + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
-                    //    if (arSel.Length > 1)
-                    //    {
-                    //        iRes ++;
-                    //        //Logging.Logg().Error(@"HHandlerDbULoader::clearDupValues () - "
-                    //        //    + @"ID=" + rRes[@"ID"]
-                    //        //    + @", " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
-                    //        //    + @", " + @"QUALITY[" + arSel[0][@"QUALITY"] + @"," + arSel[1][@"QUALITY"] + @"]"
-                    //        //, Logging.INDEX_MESSAGE.NOT_SET);
-                    //        cnt = listDel.Count + arSel.Length;
-                    //        foreach (DataRow rDel in arSel)
-                    //            if (listDel.Count < (cnt - 1))
-                    //                listDel.Add(table.Rows.IndexOf(rDel));
-                    //            else
-                    //                break;
-                    //    }
-                    //    else
-                    //        ;
-                    //}
-
-                    //foreach (int indx in listDel)
-                    //    //(table as DataTable).Rows.Remove(rDel);
-                    //    (table as DataTable).Rows.RemoveAt(indx);
-                    //table.AcceptChanges();
+                    _arTables = new DataTable[(int)INDEX_RESULT.COUNT];
                 }
-                else
-                    ;
 
-                return tblRes;
-            }
-            /// <summary>
-            /// Удалить дублированные записи из таблицы
-            /// </summary>
-            /// <param name="tblDup">Таблица, содержащая дублирующие записи</param>
-            /// <returns>Таблица без дублирующих записей</returns>
-            public static DataTable clearDupValues(DataTable tblDup)
-            {
-                DataTable tblRes = tblDup.Clone();
-                //Список индексов строк для удаления
-                List<int> listIndxToDelete = new List<int>();
-                //Массив дублированных строк
-                DataRow[] arDup = null;
-                //Признак наличия кавычек для значений в поле [ID]
-                bool bQuote = !tblDup.Columns[@"ID"].DataType.IsPrimitive;
-                //Строка запроса для поиска дублирующих записей
-                string strSel = string.Empty;
-
-                try
+                public void Determine(DataTable tablePrev, DataTable tableCur)
                 {
-                    foreach (DataRow r in tblDup.Rows)
+                    clearDupValues(tablePrev.Copy(), tableCur.Copy());
+                }
+
+                public bool IsDeterminate { get { return TableDistinct.Rows.Count > 0; } }
+                /// <summary>
+                /// Очистить "текущую" таблицу от записей,
+                ///  содержащихся в "предыдущей" таблице
+                /// </summary>
+                /// <param name="tblPrev">"Предыдущая таблица"</param>
+                /// <param name="tblRes">"Текущая" таблица</param>
+                /// <returns>Таблица без "дублирующих" записей</returns>
+                public void clearDupValues(DataTable tblPrev, DataTable tblCur)
+                {
+                    int iDup = 0;
+
+                    _arTables[(int)INDEX_RESULT.DISTINCT] = tblCur.Clone();
+                    _arTables[(int)INDEX_RESULT.DISTINCT] = tblCur.Copy();
+
+                    if (((!(tblCur.Columns.IndexOf(@"ID") < 0)) && (!(tblCur.Columns.IndexOf(@"DATETIME") < 0)))
+                        && (tblCur.Rows.Count > 0))
                     {
-                        //Проверить наличие индекса строки в уже найденных (как дублированные)
-                        if (listIndxToDelete.IndexOf (tblDup.Rows.IndexOf(r)) < 0)
+                        DataRow[] arSel;
+                        foreach (DataRow rRes in tblPrev.Rows)
                         {
-                            //Сформировать строку запроса
-                            strSel = @"ID=" + (bQuote == true ? @"'" : string.Empty) + r[@"ID"] + (bQuote == true ? @"'" : string.Empty) + @" AND " + @"DATETIME='" + ((DateTime)r[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fffffff") + @"'";
-                            arDup = (tblDup as DataTable).Select(strSel);
-                            //Проверить наличие дублирующих записей
-                            if (arDup.Length > 1)
-                                //Добавить индексы всех найденных дублирующих строк в список для удаления
-                                // , КРОМЕ 1-ой!
-                                for (int i = 1; i < arDup.Length; i ++)
-                                    listIndxToDelete.Add(tblDup.Rows.IndexOf(arDup[i]));
-                            else
-                                if (arDup.Length == 0)
-                                    throw new Exception("HHandlerDbULoader.GroupSignals.clearDupValues () - в таблице не найдена \"собственная\" строка...");
-                                else
-                                    ;
+                            arSel = (tblCur as DataTable).Select(@"ID=" + rRes[@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fffffff") + @"'");
+                            iDup += arSel.Length;
+                            foreach (DataRow rDel in arSel)
+                            {
+                                _arTables[(int)INDEX_RESULT.EQUALE].ImportRow(rDel);
+                                _arTables[(int)INDEX_RESULT.DISTINCT].Rows.Remove(rDel);
+                            }
 
-                            //Добавить строку в таблицу-результат
-                            tblRes.ImportRow(arDup[0]);                            
+                            _arTables[(int)INDEX_RESULT.EQUALE].AcceptChanges();
+                            _arTables[(int)INDEX_RESULT.DISTINCT].AcceptChanges();
                         }
-                        else
-                            ;
+
+                        //!!! См. ВНИМАТЕЛЬНО файл конфигурации - ИДЕНТИФИКАТОРЫ д.б. уникальные
+                        //int cnt = -1;
+                        //List <int>listDel = new List<int>();
+                        //foreach (DataRow rRes in table.Rows)
+                        //{
+                        //    arSel = (table as DataTable).Select(@"ID=" + rRes[@"ID"]
+                        //        + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
+                        //    if (arSel.Length > 1)
+                        //    {
+                        //        iRes ++;
+                        //        //Logging.Logg().Error(@"HHandlerDbULoader::clearDupValues () - "
+                        //        //    + @"ID=" + rRes[@"ID"]
+                        //        //    + @", " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
+                        //        //    + @", " + @"QUALITY[" + arSel[0][@"QUALITY"] + @"," + arSel[1][@"QUALITY"] + @"]"
+                        //        //, Logging.INDEX_MESSAGE.NOT_SET);
+                        //        cnt = listDel.Count + arSel.Length;
+                        //        foreach (DataRow rDel in arSel)
+                        //            if (listDel.Count < (cnt - 1))
+                        //                listDel.Add(table.Rows.IndexOf(rDel));
+                        //            else
+                        //                break;
+                        //    }
+                        //    else
+                        //        ;
+                        //}
+
+                        //foreach (int indx in listDel)
+                        //    //(table as DataTable).Rows.Remove(rDel);
+                        //    (table as DataTable).Rows.RemoveAt(indx);
+                        //table.AcceptChanges();
                     }
+                    else
+                        ;
                 }
-                catch (Exception e)
+                /// <summary>
+                /// Удалить дублированные записи из таблицы
+                /// </summary>
+                /// <param name="tblDup">Таблица, содержащая дублирующие записи</param>
+                /// <returns>Таблица без дублирующих записей</returns>
+                public static DataTable clearDupValues(DataTable tblDup)
                 {
-                    Logging.Logg().Exception(e, @"HHandlerDbULoader::GroupSignals::clearDupValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                    DataTable tblRes = tblDup.Clone();
+                    //Список индексов строк для удаления
+                    List<int> listIndxToDelete = new List<int>();
+                    //Массив дублированных строк
+                    DataRow[] arDup = null;
+                    //Признак наличия кавычек для значений в поле [ID]
+                    bool bQuote = !tblDup.Columns[@"ID"].DataType.IsPrimitive;
+                    //Строка запроса для поиска дублирующих записей
+                    string strSel = string.Empty;
 
-                    tblRes.Clear ();
+                    try
+                    {
+                        foreach (DataRow r in tblDup.Rows)
+                        {
+                            //Проверить наличие индекса строки в уже найденных (как дублированные)
+                            if (listIndxToDelete.IndexOf(tblDup.Rows.IndexOf(r)) < 0)
+                            {
+                                //Сформировать строку запроса
+                                strSel = @"ID=" + (bQuote == true ? @"'" : string.Empty) + r[@"ID"] + (bQuote == true ? @"'" : string.Empty) + @" AND " + @"DATETIME='" + ((DateTime)r[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fffffff") + @"'";
+                                arDup = (tblDup as DataTable).Select(strSel);
+                                //Проверить наличие дублирующих записей
+                                if (arDup.Length > 1)
+                                    //Добавить индексы всех найденных дублирующих строк в список для удаления
+                                    // , КРОМЕ 1-ой!
+                                    for (int i = 1; i < arDup.Length; i++)
+                                        listIndxToDelete.Add(tblDup.Rows.IndexOf(arDup[i]));
+                                else
+                                    if (arDup.Length == 0)
+                                        throw new Exception("HHandlerDbULoader.GroupSignals.clearDupValues () - в таблице не найдена \"собственная\" строка...");
+                                    else
+                                        ;
+
+                                //Добавить строку в таблицу-результат
+                                tblRes.ImportRow(arDup[0]);
+                            }
+                            else
+                                ;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Logging.Logg().Exception(e, @"HHandlerDbULoader::GroupSignals::clearDupValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+
+                        tblRes.Clear();
+                    }
+
+                    //Принять внесенные изменения в таблицу-результат
+                    tblRes.AcceptChanges();
+
+                    return tblRes;
                 }
-
-                //Принять внесенные изменения в таблицу-результат
-                tblRes.AcceptChanges();
-
-                return tblRes;
             }
         }
         /// <summary>

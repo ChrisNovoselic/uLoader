@@ -478,7 +478,7 @@ namespace uLoaderCommon
             else
                 ;
 
-            TableRecieved = GroupSignals.clearDupValues(table);
+            TableRecieved = GroupSignals.DataTableDuplicate.clearDupValues(table);
         }
 
         protected override int StateRequest(int state)
