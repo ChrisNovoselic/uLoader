@@ -10,7 +10,7 @@ using uLoaderCommon;
 
 namespace DestTEP32sql
 {
-    public class DestTEP32sql : HHandlerDbULoaderDest //HHandlerDbULoaderStatTMMSTDest
+    public class DestTEP32sql : HHandlerDbULoaderIDDest //HHandlerDbULoaderStatTMMSTDest
     {
         /// <summary>
         /// Конструктор - вспомогательный (статическая сборка)
@@ -28,7 +28,7 @@ namespace DestTEP32sql
         {
         }
 
-        private class GroupSignalsTEP32sql : GroupSignalsDest //GroupSignalsStatTMMSTDest
+        private class GroupSignalsTEP32sql : GroupSignalsIDDest //GroupSignalsStatTMMSTDest
         {
             public GroupSignalsTEP32sql(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
@@ -43,60 +43,74 @@ namespace DestTEP32sql
             protected override string getTargetValuesQuery()
             {
                 string strRes = string.Empty
+                    , strRows = string.Empty
                     , strRow = string.Empty;
                 int iIdToInsert = -1;
                 DateTime? dtToInsert = null;
 
                 //Logging.Logg().Debug(@"GroupSignalsStatIDsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
-                strRes = @"INSERT INTO [dbo].[NAMETABLE_INSERT_INTO] ("
-                    + @"[ID_INPUT]"
-                    + @",[ID_USER]"
-                    + @",[ID_SOURCE]"
-                    + @",[DATE_TIME]"
-                    + @",[QUALITY]"
-                    + @",[VALUE]"
-                    + @",[WR_DATETIME]"
-                        + @") VALUES";
-
-                foreach (DataRow row in m_DupTables.TableDistinct.Rows)
+                if (m_DupTables.TableDistinct.Rows.Count > 0)
                 {
-                    iIdToInsert = (int)getIdToInsert(Int32.Parse(row[@"ID"].ToString().Trim()));
-                    if (dtToInsert == null)
-                        dtToInsert = ((DateTime)row[@"DATETIME"]).AddHours(0);
-                    else
-                        if (dtToInsert.Equals(((DateTime)row[@"DATETIME"]).AddHours(0)) == false)
-                        {
-                            Logging.Logg().Error(@"GroupSignalsTEP32sql::getInsertValuesQuery () - в наборе различные дата/время...", Logging.INDEX_MESSAGE.NOT_SET);
+                    strRes = @"INSERT INTO [dbo].[NAMETABLE_INSERT_INTO] ("
+                        + @"[ID_INPUT]"
+                        + @",[ID_USER]"
+                        + @",[ID_SOURCE]"
+                        + @",[DATE_TIME]"
+                        + @",[QUALITY]"
+                        + @",[VALUE]"
+                        + @",[WR_DATETIME]"
+                            + @") VALUES";
 
-                            break;
+                    foreach (DataRow row in m_DupTables.TableDistinct.Rows)
+                    {
+                        iIdToInsert = (int)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim()));
+                        if (dtToInsert == null)
+                            dtToInsert = ((DateTime)row[@"DATETIME"]).AddHours(0);
+                        else
+                            if (dtToInsert.Equals(((DateTime)row[@"DATETIME"]).AddHours(0)) == false)
+                            {
+                                Logging.Logg().Error(@"GroupSignalsTEP32sql::getInsertValuesQuery () - в наборе различные дата/время...", Logging.INDEX_MESSAGE.NOT_SET);
+
+                                break;
+                            }
+                            else
+                                ;
+
+                        if (iIdToInsert > 0)
+                        {
+                            strRow = @"(";
+
+                            strRow += iIdToInsert + @",";
+                            //strRow += (_parent as HHandlerDbULoaderStatTMDest).m_strIdTEC + @",";
+                            strRow += 0.ToString() + @","; //ID_USER
+                            strRow += m_IdSourceConnSett + @","; //ID_SOURCE
+                            strRow += @"'" + dtToInsert.GetValueOrDefault().ToString(s_strFormatDbDateTime) + @"',";
+                            strRow += 0.ToString() + @","; //QUALITY
+                            strRow += ((float)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
+                            strRow += @"GETDATE()";
+
+                            strRow += @"),";
+
+                            strRows += strRow;
                         }
                         else
-                            ;
+                            ; // не найдено соответствие с Id источника
+                    }
 
-                    if (iIdToInsert > 0)
+                    if (strRows.Equals(string.Empty) == false)
                     {
-                        strRow = @"(";
+                        strRes += strRows;
 
-                        strRow += iIdToInsert + @",";
-                        //strRow += (_parent as HHandlerDbULoaderStatTMDest).m_strIdTEC + @",";
-                        strRow += 0.ToString() + @","; //ID_USER
-                        strRow += m_IdSourceConnSett + @","; //ID_SOURCE
-                        strRow += @"'" + dtToInsert.GetValueOrDefault().ToString(s_strFormatDbDateTime) + @"',";
-                        strRow += 0.ToString() + @","; //QUALITY
-                        strRow += ((float)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";                        
-                        strRow += @"GETDATE()";
-
-                        strRow += @"),";
-
-                        strRes += strRow;
+                        strRes = strRes.Replace(@"NAMETABLE_INSERT_INTO", (_parent as DestTEP32sql).GetNameTable(dtToInsert.GetValueOrDefault()));
+                        //Лишняя ','
+                        strRes = strRes.Substring(0, strRes.Length - 1);
                     }
                     else
-                        ; // не найдено соответствие с Id источника
+                        strRes = string.Empty;
                 }
-                strRes = strRes.Replace(@"NAMETABLE_INSERT_INTO", (_parent as DestTEP32sql).GetNameTable(dtToInsert.GetValueOrDefault ()));
-                //Лишняя ','
-                strRes = strRes.Substring(0, strRes.Length - 1);
+                else
+                    ; // нет строк для вставки
 
                 return
                     //string.Empty
@@ -107,14 +121,24 @@ namespace DestTEP32sql
             protected override string getExistsValuesQuery()
             {
                 string strRes = string.Empty;
+
+                DateTime? dtToSelect = null;
                 //    // т.к. записи в таблице отсортированы по [DATE_TIME]
                 //    DateTimeRangeRecieved.Set((DateTime)value.Rows[0][@"DATETIME"]
                 //        , (DateTime)value.Rows[value.Rows.Count - 1][@"DATETIME"]);                
                 if ((!(TableRecieved == null))
                     && (TableRecieved.Rows.Count > 0)
                     && (TableRecieved.Columns.Contains(@"DATETIME") == true))
-                    //??? дата/время можно взять из любой строки
-                    strRes = @"SELECT * FROM [inval_201512] WHERE [DATE_TIME]='" + ((DateTime)TableRecieved.Rows[0][@"DATETIME"]).ToString(s_strFormatDbDateTime) + @"'";
+                {                    
+                    dtToSelect = ((DateTime)TableRecieved.Rows[0][@"DATETIME"]);
+
+                    strRes = @"SELECT [ID] as [ID_REC]"
+                        + @", [ID_INPUT] as [ID]"
+                        + @", [DATE_TIME] as [DATETIME]"
+                        + @", [QUALITY]"
+                        + @" FROM [" + (_parent as DestTEP32sql).GetNameTable(dtToSelect.GetValueOrDefault()) + @"]"
+                        + @" WHERE [DATE_TIME]='" + dtToSelect.GetValueOrDefault().ToString(s_strFormatDbDateTime) + @"'";
+                }
                 else
                     ;
 

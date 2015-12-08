@@ -144,6 +144,14 @@ namespace uLoaderCommon
                     m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS] = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Copy();
                 else
                     ;
+                //Очистить предыдущую таблицу, чтобы при очередной итерации
+                // опросить целевую таблицу на наличие значений
+                // т.к. в режиме 'MODE_WORK.COSTUMIZE' интервалы времени не пересекаются
+                // , и записи предыдущей таблицы становятся не актуальными
+                if (m_modeSource == MODE_WORK.COSTUMIZE)
+                    Clear();
+                else
+                    ;
 
                 string msg = @"HHandlerDbULoaderDest.GroupSignalsDest::dequeue () - DEQUEUE!"
                         + @" [ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HHandlerDbULoaderDest).IdGroupSignalsCurrent
@@ -223,55 +231,59 @@ namespace uLoaderCommon
 
                 set { m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS] = value; }
             }
+            /// <summary>
+            /// Объект для сравнения предыдущей и текущей таблиц
+            /// </summary>
+            protected DataTableDuplicate m_DupTables;
 
-            public class DateTimeRange
-            {
-                public DateTimeRange()
-                {
-                    clear();
-                }
+            //public class DateTimeRange
+            //{
+            //    public DateTimeRange()
+            //    {
+            //        clear();
+            //    }
 
-                public DateTimeRange(DateTime begin, DateTime end)
-                {
-                    Begin = begin;
-                    End = end;
-                }
+            //    public DateTimeRange(DateTime begin, DateTime end)
+            //    {
+            //        Begin = begin;
+            //        End = end;
+            //    }
 
-                public void Set(DateTime begin, DateTime end)
-                {
-                    Begin = begin;
-                    End = end;
-                }
+            //    public void Set(DateTime begin, DateTime end)
+            //    {
+            //        Begin = begin;
+            //        End = end;
+            //    }
 
-                public DateTime Begin { get; private set; }
-                public DateTime End { get; private set; }
+            //    public DateTime Begin { get; private set; }
+            //    public DateTime End { get; private set; }
 
-                public bool Includes(DateTime value)
-                {
-                    return (Begin <= value) && (value <= End);
-                }
+            //    public bool Includes(DateTime value)
+            //    {
+            //        return (Begin <= value) && (value <= End);
+            //    }
 
-                public bool Includes(DateTimeRange range)
-                {
-                    return (Begin <= range.Begin) && (range.End <= End);
-                }
+            //    public bool Includes(DateTimeRange range)
+            //    {
+            //        return (Begin <= range.Begin) && (range.End <= End);
+            //    }
 
-                //public void Clear()
-                //{
-                //    clear();
-                //}
+            //    //public void Clear()
+            //    //{
+            //    //    clear();
+            //    //}
 
-                private void clear()
-                {
-                    Begin = DateTime.MinValue;
-                    End = DateTime.MaxValue;
-                }
+            //    private void clear()
+            //    {
+            //        Begin = DateTime.MinValue;
+            //        End = DateTime.MaxValue;
+            //    }
 
-                //public bool IsEmpty
-                //{
-                //    get { return (Begin.Equals(DateTime.MinValue) == true) && (End.Equals(DateTime.MaxValue) == true); }
-                //}
-            }
+            //    //public bool IsEmpty
+            //    //{
+            //    //    get { return (Begin.Equals(DateTime.MinValue) == true) && (End.Equals(DateTime.MaxValue) == true); }
+            //    //}
+            //}
             ///// <summary>
             ///// Дата/время начала интервала (минимальное значение), за который получен набор значений для вставки в целевую таблицу
             ///// </summary>
@@ -323,7 +335,7 @@ namespace uLoaderCommon
             /// </summary>
             /// <param name="idLink">Идентификатор источника сигнала</param>
             /// <returns>Идентификатор сигнала в целевой таблице</returns>
-            protected virtual object getIdToInsert(int idLink)
+            protected virtual object getIdTarget(int idLink)
             {
                 int iRes = -1;
 
@@ -338,14 +350,34 @@ namespace uLoaderCommon
                         ;
 
                 if (iRes < 0)
-                    Logging.Logg().Warning(@"GroupSignlasDest::getIdToInsert (idLink=" + idLink + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Warning(@"GroupSignlasDest::getIdTarget (idLink=" + idLink + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 else
                     ;
 
                 return iRes;
-            }            
+            }
 
-            protected DataTableDuplicate m_DupTables;
+            protected virtual object getIdLink(object idTarget)
+            {
+                int iRes = -1;
+
+                foreach (SIGNALDest sgnl in m_arSignals)
+                    if (sgnl.m_idMain == (int)idTarget)
+                    {
+                        iRes = sgnl.m_idLink;
+
+                        break;
+                    }
+                    else
+                        ;
+
+                if (iRes < 0)
+                    Logging.Logg().Warning(@"GroupSignlasDest::getIdLink (idTarget=" + (int)idTarget + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                else
+                    ;
+
+                return iRes;
+            }
 
             protected virtual void setTableRes()
             {
@@ -415,11 +447,14 @@ namespace uLoaderCommon
             {
                 return new DataTableDuplicate();
             }
-        }
 
-        protected virtual void previousValues(DataTable tableRes)
-        {
-            TableRecievedPrev = tableRes;
+            public void Convert(DataTable tablePrev)
+            {
+                foreach (DataRow r in tablePrev.Rows)
+                    r[@"ID"] = getIdLink(r[@"ID"]);
+
+                TableRecievedPrev = tablePrev;
+            }
         }
 
         protected override int StateRequest(int state)
@@ -475,7 +510,7 @@ namespace uLoaderCommon
                     break;
                 case StatesMachine.Values:
                     // ??? обработать результат запроса на получение текущих значений
-                    previousValues (obj as DataTable);
+                    (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).Convert(obj as DataTable);
                     break;
                 case StatesMachine.Insert:
                     break;
@@ -859,7 +894,7 @@ namespace uLoaderCommon
                 return new SIGNALIDsql((int)objs[0], (int)objs[1], (int)objs[3]);
             }
 
-            protected override object getIdToInsert(int idLink)
+            protected override object getIdTarget(int idLink)
             {
                 int iRes = -1;
 
@@ -874,7 +909,29 @@ namespace uLoaderCommon
                         ;
 
                 if (iRes < 0)
-                    throw new Exception(@"GroupSignlasIDDest::getIdToInsert (idLink=" + idLink + @") - ...");
+                    Logging.Logg().Warning(@"GroupSignalsIDDest::getIdTarget (idLink=" + idLink + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                else
+                    ;
+
+                return iRes;
+            }
+
+            protected override object getIdLink(object idTarget)
+            {
+                int iRes = -1;
+
+                foreach (SIGNALIDsql sgnl in m_arSignals)
+                    if (sgnl.m_idTarget == (int)idTarget)
+                    {
+                        iRes = sgnl.m_idLink;
+
+                        break;
+                    }
+                    else
+                        ;
+
+                if (iRes < 0)
+                    throw new Exception(@"GroupSignlasIDDest::getIdLink (idTarget=" + (int)idTarget + @") - ...");
                 else
                     ;
 
@@ -924,7 +981,7 @@ namespace uLoaderCommon
                 return new SIGNALStatKKSNAMEsql((int)objs[0], (int)objs[1], (string)objs[4]);
             }
 
-            protected override object getIdToInsert(int idLink)
+            protected override object getIdTarget(int idLink)
             {
                 string strRes = string.Empty;
 
@@ -939,11 +996,33 @@ namespace uLoaderCommon
                         ;
 
                 if (strRes.Equals (string.Empty) == true)
-                    throw new Exception(@"GroupSignlasStatTMKKSNAMEDest::getIdToInsert (idLink=" + idLink + @") - ...");
+                    Logging.Logg().Warning(@"GroupSignalsStatTMKKSNAMEDest::getIdTarget (idLink=" + idLink + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 else
                     ;
 
                 return strRes;
+            }
+
+            protected override object getIdLink(object idTarget)
+            {
+                int iRes = -1;
+
+                foreach (SIGNALStatKKSNAMEsql sgnl in m_arSignals)
+                    if (sgnl.m_strStatKKSName == (string)idTarget)
+                    {
+                        iRes = sgnl.m_idLink;
+
+                        break;
+                    }
+                    else
+                        ;
+
+                if (iRes < 0)
+                    throw new Exception(@"GroupSignlasStatTMKKSNAMEDest::getIdLink (idTarget=" + (string)idTarget + @") - ...");
+                else
+                    ;
+
+                return iRes;
             }
         }
     }

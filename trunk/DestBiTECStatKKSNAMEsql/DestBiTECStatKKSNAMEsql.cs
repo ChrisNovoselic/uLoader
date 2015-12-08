@@ -35,8 +35,9 @@ namespace DestBiTECStatKKSNAMEsql
 
             protected override void setTableRes()
             {
+                //Заполнить таблицы с повторяющимися/уникальными записями
                 base.setTableRes();
-
+                //добаить поле [tmdelta]
                 (m_DupTables as DataTableDuplicateTMDelta).Convert(TableRecievedPrev, Signals);
             }
 
@@ -61,7 +62,7 @@ namespace DestBiTECStatKKSNAMEsql
                 {
                     strRow = @"(";
 
-                    strRow += @"'" + getIdToInsert(Int32.Parse(row[@"ID"].ToString().Trim())) + @"'" + @",";
+                    strRow += @"'" + getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) + @"'" + @",";
                     strRow += m_IdSourceTEC + @",";
                     strRow += ((decimal)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
                     strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(-6).ToString(s_strFormatDbDateTime) + @"',";

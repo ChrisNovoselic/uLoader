@@ -67,7 +67,7 @@ namespace DestTechSiteLastsql
                     strRes += @"[DATETIME]='" + ((DateTime)row[@"DATETIME"]).AddHours(-6).ToString(s_strFormatDbDateTime) + @"'" + @",";
                     strRes += @"[UPDATE_DATETIME]=GETDATE()";
 
-                    strRes += @" WHERE [KKS_NAME]='" + (string)getIdToInsert(Int32.Parse(row[@"ID"].ToString().Trim())) + @"';";
+                    strRes += @" WHERE [KKS_NAME]='" + (string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) + @"';";
                 }
 
                 return

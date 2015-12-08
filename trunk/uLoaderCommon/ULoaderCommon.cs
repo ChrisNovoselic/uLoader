@@ -428,17 +428,18 @@ namespace uLoaderCommon
                 public void clearDupValues(DataTable tblPrev, DataTable tblCur)
                 {
                     int iDup = 0;
+                    DataRow[] arSel = null;
 
-                    _arTables[(int)INDEX_RESULT.DISTINCT] = tblCur.Clone();
-                    _arTables[(int)INDEX_RESULT.DISTINCT] = tblCur.Copy();
-
-                    if (((!(tblCur.Columns.IndexOf(@"ID") < 0)) && (!(tblCur.Columns.IndexOf(@"DATETIME") < 0)))
+                    if ((((!(tblCur.Columns.IndexOf(@"ID") < 0)) && (!(tblCur.Columns.IndexOf(@"DATETIME") < 0)))
                         && (tblCur.Rows.Count > 0))
+                        && (!(tblPrev.Columns.IndexOf(@"DATETIME") < 0)))
                     {
-                        DataRow[] arSel;
+                        _arTables[(int)INDEX_RESULT.EQUALE] = tblCur.Clone();
+                        _arTables[(int)INDEX_RESULT.DISTINCT] = tblCur.Copy();
+
                         foreach (DataRow rRes in tblPrev.Rows)
                         {
-                            arSel = (tblCur as DataTable).Select(@"ID=" + rRes[@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fffffff") + @"'");
+                            arSel = _arTables[(int)INDEX_RESULT.DISTINCT].Select(@"ID=" + rRes[@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fffffff") + @"'");
                             iDup += arSel.Length;
                             foreach (DataRow rDel in arSel)
                             {
