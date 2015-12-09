@@ -54,7 +54,7 @@ namespace SrcMSTASUTPIDT5tg6sql
                 {
                     dtValue = (DateTime)rowsSgnl[0][@"DATETIME"];
 
-                    dblValue = (float)rowsSgnl[0][@"VALUE"];
+                    dblValue = (double)rowsSgnl[0][@"VALUE"];
 
                     //// при необходимости найти среднее
                     //if (sgnl.m_bAVG == true)
@@ -71,6 +71,8 @@ namespace SrcMSTASUTPIDT5tg6sql
                 else
                     ; // не полные данные
             }
+
+            base.parseValues(tblRes);
         }
 
         private class GroupSignalsMSTASUTPT5tg6IDsql : GroupSignalsMSTIDsql

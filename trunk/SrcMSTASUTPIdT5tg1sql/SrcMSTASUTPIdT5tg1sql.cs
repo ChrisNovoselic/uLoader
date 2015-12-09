@@ -60,7 +60,7 @@ namespace SrcMSTASUTPIDT5tg1sql
                         , 0
                         , 0);
 
-                    dblSumValue = (float)rowsSgnl[0][@"VALUE"];
+                    dblSumValue = (double)rowsSgnl[0][@"VALUE"];
 
                     // при необходимости найти среднее
                     if (sgnl.m_bAVG == true)
@@ -77,6 +77,8 @@ namespace SrcMSTASUTPIDT5tg1sql
                 else
                     ; // не полные данные
             }
+
+            base.parseValues(tblRes);
         }
 
         private class GroupSignalsMSTASUTPT5tg1IDsql : GroupSignalsMSTIDsql
@@ -100,7 +102,7 @@ namespace SrcMSTASUTPIDT5tg1sql
 	                    + @", DATEPART(YEAR, [last_changed_at]) as [YEAR]"
 	                    + @", DATEPART(MONTH, [last_changed_at]) as [MONTH]"
 	                    + @", DATEPART(DAY, [last_changed_at]) as [DAY]"
-                        + @", DATEPART(HOUR, [last_changed_at]) as [HOUR]"
+                        + @", (DATEPART(HOUR, [last_changed_at]) + 1) as [HOUR]"
                     + @" FROM [dbo].[states_real_his_0]"
                     + @" WHERE"
                         + @" [last_changed_at] >='" + DateTimeBeginFormat + @"'"

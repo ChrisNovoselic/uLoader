@@ -141,9 +141,7 @@ namespace SrcKTSTUsql
                     ; // не полные данные
             }
 
-            RowCountRecieved = tblRes.Rows.Count;
-
-            TableRecieved = tblRes;
+            base.parseValues(tblRes);
         }
 
         ///// <summary>
