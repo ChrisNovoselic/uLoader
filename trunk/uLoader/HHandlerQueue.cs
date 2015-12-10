@@ -85,7 +85,7 @@ namespace uLoader
             setListGroupSources(INDEX_SRC.DEST, m_fileINI.AllObjectsDestGroupSources, m_fileINI.AllObjectsDestGroupSignals);
         }
         /// <summary>
-        /// Обработчик события '' для установления взаимосвязи между "связанными" (по конф./файлу) по "цепочке" сигналов - групп сигналов - групп источников
+        /// Обработчик события 'EvtDataAskedHostQueue' для установления взаимосвязи между "связанными" (по конф./файлу) по "цепочке" сигналов - групп сигналов - групп источников
         /// </summary>
         /// <param name="par">Параметры для установления соответствия</param>
         private void onEvtDataAskedHostQueue_GroupSourcesDest(object par)

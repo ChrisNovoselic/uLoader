@@ -573,7 +573,7 @@ namespace uLoaderCommon
         /// <summary>
         /// Режим работы текущей (обрабатываемой) группы сигналов
         /// </summary>
-        protected MODE_WORK Mode
+        public MODE_WORK Mode
         {
             get
             {

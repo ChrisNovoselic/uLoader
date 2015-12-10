@@ -16,12 +16,12 @@ namespace SrcMSTASUTPIDT5tg1sql
     public class SrcMSTASUTPIDT5tg1sql : HHandlerDbULoaderMSTIDsql
     {
         public SrcMSTASUTPIDT5tg1sql(IPlugIn plugIn)
-            : base(plugIn, MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(plugIn, MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
         {
         }
 
         public SrcMSTASUTPIDT5tg1sql()
-            : base(MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
         {
         }
         
@@ -92,6 +92,12 @@ namespace SrcMSTASUTPIDT5tg1sql
             {
                 m_strQuery = string.Empty;
                 string strIds = string.Empty;
+                int offsetHour = 0;
+
+                if ((_parent as HHandlerDbULoaderSrc).Mode == MODE_WORK.CUR_INTERVAL)
+                    offsetHour = -1;
+                else
+                    ;
 
                 foreach (SIGNALIdsql sgnl in m_arSignals)
                     strIds += sgnl.m_iIdLocal + @",";
@@ -105,8 +111,8 @@ namespace SrcMSTASUTPIDT5tg1sql
                         + @", (DATEPART(HOUR, [last_changed_at]) + 1) as [HOUR]"
                     + @" FROM [dbo].[states_real_his_0]"
                     + @" WHERE"
-                        + @" [last_changed_at] >='" + DateTimeBeginFormat + @"'"
-                        + @" AND [last_changed_at] <'" + DateTimeEndFormat + @"'"
+                        + @" [last_changed_at] >=DATEADD(HOUR, " + offsetHour + @", CAST('" + DateTimeBeginFormat + @"' as datetime))"
+                        + @" AND [last_changed_at] <DATEADD(HOUR, " + offsetHour + @", CAST('" + DateTimeEndFormat + @"' as datetime))"
                             + @" AND [ID] IN (" + strIds + @")"
                     + @" GROUP BY [ID]"
 	                    + @", DATEPART(YYYY, [last_changed_at])"

@@ -11,6 +11,12 @@ namespace uLoaderCommon
 {
     public abstract class HHandlerDbULoaderSrc : HHandlerDbULoader, ILoaderSrc
     {
+        /// <summary>
+        /// Идентификатор ТЭЦ
+        ///  (при наличии в файле конфигурации для группы источников)
+        /// </summary>
+        public int m_IdTEC;
+
         private int m_msecIntervalTimerActivate;
         private int m_msecCorrectTimerActivate;
         private
@@ -44,6 +50,8 @@ namespace uLoaderCommon
         {
             int iRes = 0;
 
+            m_IdTEC = -1;
+
             m_msecIntervalTimerActivate = (int)uLoaderCommon.DATETIME.MSEC_INTERVAL_TIMER_ACTIVATE;
 
             return iRes;
@@ -60,7 +68,7 @@ namespace uLoaderCommon
                     switch (key)
                     {
                         case @"ID_TEC":
-                            //m_IdSourceTEC = Int32.Parse(m_dictAdding[key]);
+                            m_IdTEC = Int32.Parse(m_dictAdding[key]);
                             break;
                         default:
                             iRes = 1; // необрабатываемый параметр
@@ -73,7 +81,7 @@ namespace uLoaderCommon
                             iRes = -1;
                             break;
                         case @"ID_TEC":
-                            //m_IdSourceTEC = -1;
+                            m_IdTEC = -1;
                             break;
                         default: ;
                             break;
@@ -223,7 +231,7 @@ namespace uLoaderCommon
         {
             protected class SIGNALBiyskTMoraSrc : SIGNAL
             {
-                public string m_NameTable;
+                public string m_NameTable;                
 
                 public SIGNALBiyskTMoraSrc(int idMain, string nameTable)
                     : base(idMain)
@@ -328,8 +336,6 @@ namespace uLoaderCommon
             public GroupSignalsSrc(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
-                //m_bIsUpdateQuery = true;
-                
                 m_msecRemaindToActivate = 0;
                 m_iRowCountRecieved = -1;
             }
@@ -612,14 +618,18 @@ namespace uLoaderCommon
             return curCount == 0;
         }
 
-        //protected override object[] getDataAskedHost()
-        //{
-        //    object[] arObjToSend = base.getDataAskedHost ();
+        protected override object[] getDataAskedHost()
+        {
+            object[] arObjToSend = base.getDataAskedHost();
 
-        //    arObjToSend [arObjToSend.Length - 1] = new object [] { m_connSett.id };
+            arObjToSend[arObjToSend.Length - 1] = new object[] {
+                Mode // MODE_WORK
+                , m_connSett.id //IdSourceConnSett
+                , m_IdTEC
+            };
 
-        //    return arObjToSend;
-        //}
+            return arObjToSend;
+        }
     }
 
     public abstract class HHandlerDbULoaderDatetimeSrc : HHandlerDbULoaderSrc

@@ -544,7 +544,7 @@ namespace uLoaderCommon
         /// <param name="tableIn">Таблица, содержащая записи для вставки</param>
         /// <param name="pars">Массив допю/параметров</param>
         /// <returns>Результат постановки в очередьь обработки событий</returns>
-        public virtual int Insert(int id, DataTable tableIn/*, object []pars*/)
+        public virtual int Insert(int id, DataTable tableIn, object []pars)
         {
             int iRes = 0
                 , keyQueueCount = -1;
@@ -556,6 +556,8 @@ namespace uLoaderCommon
                     && (m_dictGroupSignals.Keys.Contains(id) == true)
                     && (m_dictGroupSignals[id].IsStarted == true))
                 {
+                    //0 - режим работы, 1 - иднтификатор источника значений, 2 - идентификатор ТЭЦ (при наличии)
+                    (m_dictGroupSignals[id] as GroupSignalsDest).InitSource(pars[0], pars[1], pars[2]);             
                     m_dictGroupSignals[id].TableRecieved = tableIn.Copy();
 
                     keyQueueCount = push(id);
@@ -577,17 +579,6 @@ namespace uLoaderCommon
             ////Logging.Logg().Debug(@"HHandlerDbULoaderDest::Insert () - " + msg + @" " + PlugInId + @", key=" + id + @", от [ID_SOURCE=" + pars[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
 
             return iRes;
-        }
-        /// <summary>
-        /// Инициализация группы сигналов условно-постоянными значениями
-        ///  при старте связанной группы сигналов источника
-        /// </summary>
-        /// <param name="pars">Массив усовно-постоянных значений</param>
-        public void InitSource(object [] pars)
-        {
-            //0 - идентификатор группы сигналов назначения
-            //1 - режим работы, 2 - иднтификатор источника значений, идентификатор ТЭЦ (при наличии)
-            (m_dictGroupSignals[(int)pars[0]] as GroupSignalsDest).InitSource(pars[1], pars[2], pars[3]);
         }
         /// <summary>
         /// Очистить усорвно-постоянные значения
@@ -1042,11 +1033,11 @@ namespace uLoaderCommon
             switch (ev.id)
             {
                 case (int)ID_DATA_ASKED_HOST.TO_INSERT:
-                    target.Insert((int)(ev.par as object[])[0], (ev.par as object[])[1] as DataTable/*, (ev.par as object[])[2] as object[]*/);
+                    target.Insert((int)(ev.par as object[])[0], (ev.par as object[])[1] as DataTable, (ev.par as object[])[2] as object[]);
                     break;
-                case (int)ID_DATA_ASKED_HOST.TO_START:
-                    target.InitSource(ev.par);
-                    break;
+                //case (int)ID_DATA_ASKED_HOST.TO_START:
+                //    target.InitSource(ev.par);
+                //    break;
                 case (int)ID_DATA_ASKED_HOST.TO_STOP:
                     target.Clear((int)(ev.par as object[])[0]); 
                     break;
