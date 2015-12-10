@@ -57,6 +57,7 @@ namespace DestTEP32sql
                         + @",[ID_USER]"
                         + @",[ID_SOURCE]"
                         + @",[DATE_TIME]"
+                        + @",[ID_TIMEZONE]"
                         + @",[QUALITY]"
                         + @",[VALUE]"
                         + @",[WR_DATETIME]"
@@ -86,6 +87,7 @@ namespace DestTEP32sql
                             strRow += 0.ToString() + @","; //ID_USER
                             strRow += m_IdSourceConnSett + @","; //ID_SOURCE
                             strRow += @"'" + dtToInsert.GetValueOrDefault().ToString(s_strFormatDbDateTime) + @"',";
+                            strRow += 0.ToString() + @","; //ID_TIMEZONE = UTC
                             strRow += 0.ToString() + @","; //QUALITY
                             strRow += ((float)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
                             strRow += @"GETDATE()";
@@ -135,6 +137,7 @@ namespace DestTEP32sql
                     strRes = @"SELECT [ID] as [ID_REC]"
                         + @", [ID_INPUT] as [ID]"
                         + @", [DATE_TIME] as [DATETIME]"
+                        + @", [ID_TIMEZONE]"
                         + @", [QUALITY]"
                         + @" FROM [" + (_parent as DestTEP32sql).GetNameTable(dtToSelect.GetValueOrDefault()) + @"]"
                         + @" WHERE [DATE_TIME]='" + dtToSelect.GetValueOrDefault().ToString(s_strFormatDbDateTime) + @"'"
