@@ -94,11 +94,11 @@ namespace SrcMSTASUTPIDT5tg6sql
 
                 m_strQuery = @"SELECT [ID]"
                     + @", [VALUE]"
-                    + @", DATEADD(HOUR, 1, [dt]) as [DATETIME]"
+                    + @", DATEADD(HOUR, 0, [dtEnd]) as [DATETIME]"
                     + @" FROM [dbo].[tep_allcalcs_oper]"
                         + @" WHERE"
-                        + @" [dt] >='" + DateTimeBeginFormat + @"'"
-                        + @" AND [dt] <'" + DateTimeEndFormat + @"'"
+                        + @" [dtEnd] >='" + DateTimeBeginFormat + @"'"
+                        + @" AND [dtEnd] <'" + DateTimeEndFormat + @"'"
                             + @" AND [ID] IN (" + strIds + @")"
                     ;
             }
