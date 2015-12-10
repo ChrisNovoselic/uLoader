@@ -16,12 +16,12 @@ namespace SrcMSTASUTPIDT5tg6sql
     public class SrcMSTASUTPIDT5tg6sql : HHandlerDbULoaderMSTIDsql
     {
         public SrcMSTASUTPIDT5tg6sql(IPlugIn plugIn)
-            : base(plugIn, MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(plugIn, MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.FULL_PERIOD)
         {
         }
 
         public SrcMSTASUTPIDT5tg6sql()
-            : base(MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.FULL_PERIOD)
         {
         }
 
