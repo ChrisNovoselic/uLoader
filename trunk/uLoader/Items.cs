@@ -1040,9 +1040,15 @@ namespace uLoader
                         if ((!(grpSgnls == null))
                             && (!(pars[2] == null)))
                         {
-                            msgDebugLog = @"получено строк=" + (pars[2] as DataTable).Rows.Count;
+                            msgDebugLog = @"получено строк=";
 
-                            grpSgnls.m_tableData = (pars[2] as DataTable).Copy();                        
+                            if ((pars[2] as DataTable).Rows.Count > 0)
+                            {
+                                grpSgnls.m_tableData = (pars[2] as DataTable).Copy();
+                                msgDebugLog += grpSgnls.m_tableData.Rows.Count;
+                            }
+                            else
+                                msgDebugLog += 0.ToString();
                         }
                         else
                             ;
@@ -1373,10 +1379,11 @@ namespace uLoader
         public int Stop()
         {
             int iRes = 0;
-            
+
             foreach (GroupSignals grpSgnls in m_listGroupSignals)
                 if (grpSgnls.State == STATE.STARTED)
-                    sendState(FormMain.FileINI.GetIDIndex(grpSgnls.m_strID), STATE.STOPPED);
+                    //sendState(FormMain.FileINI.GetIDIndex(grpSgnls.m_strID), STATE.STOPPED);
+                    stateChange(FormMain.FileINI.GetIDIndex(grpSgnls.m_strID), STATE.STOPPED);
                 else
                     ;
 
@@ -1604,35 +1611,42 @@ namespace uLoader
                     break;
                 case ID_DATA_ASKED_HOST.TABLE_RES:
                     parsToSend = new object[pars.Length - 1];
-                    //Заполнить для передачи основные параметры - таблицу
-                    parsToSend[1] = (pars[2] as DataTable).Copy();
-                    //Проверить наличие дополнительных параметров
-                    //??? 07.12.2015 лишнее 'Dest' не обрабатывает - см. TO_START
-                    if ((parsToSend.Length > 2)
-                        && (pars.Length > 3)
-                        && (! (pars[3] == null)))
+                    //Проверить таблицу со значениями от библиотеки на 'null'
+                    if ((!(pars[2] == null))
+                        && ((pars[2] as DataTable).Rows.Count > 0))
                     {
-                        parsToSend[2] = new object[(pars[3] as object[]).Length];
-                        //Заполнить для передачи дополнительные параметры - массив объектов
-                        ////Вариант №1
-                        //for (int i = 0; i < (parsToSend[2] as object []).Length; i ++)
-                        //    (parsToSend[2] as object [])[i] = (pars[3] as object[])[i];
-                        //Вариант №2
-                        (pars[3] as object[]).CopyTo (parsToSend[2] as object [], 0);
-                    }
-                    else
-                        ;
-                    //Установить взаимосвязь между полученными значениями группы сигналов и группой сигналов назначения
-                    foreach (GroupSignalsDest grpSgnls in m_listGroupSignals)
-                        if (!(grpSgnls.GetListNeededIndexGroupSignals().IndexOf((int)pars[1]) < 0))
-                        {//Да, группа сигналов 'grpSgnls' ожидает значения от группы сигналов '(int)pars[1]'
-                            parsToSend [0] = FormMain.FileINI.GetIDIndex(grpSgnls.m_strID);
-                            PerformDataAskedHostPlugIn(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.TO_INSERT, parsToSend));
-
-                            //Logging.Logg().Debug(@"GroupSources::Clone_OnEvtDataAskedHost () - NAME=" + m_strShrName + @", от [ID=" + (int)pars[1] + @"] для [ID=" + parsToSend[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
+                        //Заполнить для передачи основные параметры - таблицу
+                        parsToSend[1] = (pars[2] as DataTable).Copy();
+                        //Проверить наличие дополнительных параметров
+                        //??? 07.12.2015 лишнее 'Dest' не обрабатывает - см. TO_START
+                        if ((parsToSend.Length > 2)
+                            && (pars.Length > 3)
+                            && (!(pars[3] == null)))
+                        {
+                            parsToSend[2] = new object[(pars[3] as object[]).Length];
+                            //Заполнить для передачи дополнительные параметры - массив объектов
+                            ////Вариант №1
+                            //for (int i = 0; i < (parsToSend[2] as object []).Length; i ++)
+                            //    (parsToSend[2] as object [])[i] = (pars[3] as object[])[i];
+                            //Вариант №2
+                            (pars[3] as object[]).CopyTo(parsToSend[2] as object[], 0);
                         }
                         else
                             ;
+                        //Установить взаимосвязь между полученными значениями группы сигналов и группой сигналов назначения
+                        foreach (GroupSignalsDest grpSgnls in m_listGroupSignals)
+                            if (!(grpSgnls.GetListNeededIndexGroupSignals().IndexOf((int)pars[1]) < 0))
+                            {//Да, группа сигналов 'grpSgnls' ожидает значения от группы сигналов '(int)pars[1]'
+                                parsToSend[0] = FormMain.FileINI.GetIDIndex(grpSgnls.m_strID);
+                                PerformDataAskedHostPlugIn(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.TO_INSERT, parsToSend));
+
+                                //Logging.Logg().Debug(@"GroupSources::Clone_OnEvtDataAskedHost () - NAME=" + m_strShrName + @", от [ID=" + (int)pars[1] + @"] для [ID=" + parsToSend[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
+                            }
+                            else
+                                ;
+                    }
+                    else
+                        ; // таблица со значениями от библиотеки = null
                     break;
                 //case ID_DATA_ASKED_HOST.START:
                 //    parsToSend = new object[(pars[3] as object[]).Length + 1]; // '+1' для идентификатора группы сигналов

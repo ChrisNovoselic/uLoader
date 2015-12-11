@@ -47,35 +47,42 @@ namespace SrcMSTASUTPIDT5tg1sql
 
             foreach (GroupSignalsMSTIDsql.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
             {
-                rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal);
+                try
+                {
+                    rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal);
 
-                if ((rowsSgnl.Length > 0)
-                    //??? если строк > 1
-                    && (((int)rowsSgnl[0][@"CNT"] % 60) == 0))
-                {// только при кол-ве записей = 60 (все минуты часа)
-                    dtValue = new DateTime((int)rowsSgnl[0][@"YEAR"]
-                        , (int)rowsSgnl[0][@"MONTH"]
-                        , (int)rowsSgnl[0][@"DAY"]
-                        , (int)rowsSgnl[0][@"HOUR"]
-                        , 0
-                        , 0);
+                    if ((rowsSgnl.Length > 0)
+                        //??? если строк > 1
+                        && (((int)rowsSgnl[0][@"CNT"] % 60) == 0))
+                    {// только при кол-ве записей = 60 (все минуты часа)
+                        dtValue = new DateTime((int)rowsSgnl[0][@"YEAR"]
+                            , (int)rowsSgnl[0][@"MONTH"]
+                            , (int)rowsSgnl[0][@"DAY"]
+                            , (int)rowsSgnl[0][@"HOUR"]
+                            , 0
+                            , 0);
 
-                    dblSumValue = (double)rowsSgnl[0][@"VALUE"];
+                        dblSumValue = (double)rowsSgnl[0][@"VALUE"];
 
-                    // при необходимости найти среднее
-                    if (sgnl.m_bAVG == true)
-                        dblSumValue /= 60; //cntRec
+                        // при необходимости найти среднее
+                        if (sgnl.m_bAVG == true)
+                            dblSumValue /= 60; //cntRec
+                        else
+                            ;
+                        // вставить строку
+                        tblRes.Rows.Add(new object[] {
+                            sgnl.m_idMain
+                            , dtValue
+                            , dblSumValue
+                        });
+                    }
                     else
-                        ;
-                    // вставить строку
-                    tblRes.Rows.Add(new object[] {
-                        sgnl.m_idMain
-                        , dtValue
-                        , dblSumValue
-                    });
+                        ; // не полные данные
                 }
-                else
-                    ; // не полные данные
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, @"SrcMSTASUTPIDT5tg1sql:: parseValues (sgnl.Id=" + sgnl.m_idMain + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
             }
 
             base.parseValues(tblRes);
@@ -101,7 +108,7 @@ namespace SrcMSTASUTPIDT5tg1sql
 
                 foreach (SIGNALIdsql sgnl in m_arSignals)
                     strIds += sgnl.m_iIdLocal + @",";
-                //удалить "лишнюю" запятую
+                // удалить "лишнюю" запятую
                 strIds = strIds.Substring(0, strIds.Length - 1);
 
                 m_strQuery = @"SELECT [ID], SUM([VALUE]) as [VALUE], COUNT(*) as [CNT]"

@@ -411,12 +411,10 @@ namespace uLoaderCommon
                 {
                     _arTables = new DataTable[(int)INDEX_RESULT.COUNT];
                 }
-
-                public void Determine(DataTable tablePrev, DataTable tableCur)
-                {
-                    clearDupValues(tablePrev.Copy(), tableCur.Copy());
-                }
-
+                /// <summary>
+                /// Признак наличия строк после удаления дублирующих
+                ///  по итогам сравнения предыдущей и текущей таблиц 
+                /// </summary>
                 public bool IsDeterminate { get { return TableDistinct.Rows.Count > 0; } }
                 /// <summary>
                 /// Очистить "текущую" таблицу от записей,
@@ -425,72 +423,80 @@ namespace uLoaderCommon
                 /// <param name="tblPrev">"Предыдущая таблица"</param>
                 /// <param name="tblRes">"Текущая" таблица</param>
                 /// <returns>Таблица без "дублирующих" записей</returns>
-                public void clearDupValues(DataTable tblPrev, DataTable tblCur)
+                public void Clear(DataTable tblPrev, DataTable tblCur)
                 {
                     int iDup = 0;
                     DataRow[] arSel = null;
 
-                    if ((((!(tblCur.Columns.IndexOf(@"ID") < 0)) && (!(tblCur.Columns.IndexOf(@"DATETIME") < 0)))
-                        && (tblCur.Rows.Count > 0))
-                        && (!(tblPrev.Columns.IndexOf(@"DATETIME") < 0)))
-                    {
-                        _arTables[(int)INDEX_RESULT.EQUALE] = tblCur.Clone();
-                        _arTables[(int)INDEX_RESULT.DISTINCT] = tblCur.Copy();
-
-                        foreach (DataRow rRes in tblPrev.Rows)
+                    if (!(tblCur == null))
+                        if ((((!(tblCur.Columns.IndexOf(@"ID") < 0)) && (!(tblCur.Columns.IndexOf(@"DATETIME") < 0)))
+                            && (tblCur.Rows.Count > 0)))
                         {
-                            arSel = _arTables[(int)INDEX_RESULT.DISTINCT].Select(@"ID=" + rRes[@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fffffff") + @"'");
-                            iDup += arSel.Length;
-                            foreach (DataRow rDel in arSel)
-                            {
-                                _arTables[(int)INDEX_RESULT.EQUALE].ImportRow(rDel);
-                                _arTables[(int)INDEX_RESULT.DISTINCT].Rows.Remove(rDel);
-                            }
+                            _arTables[(int)INDEX_RESULT.EQUALE] = tblCur.Clone();
+                            _arTables[(int)INDEX_RESULT.DISTINCT] = tblCur.Copy();
 
-                            _arTables[(int)INDEX_RESULT.EQUALE].AcceptChanges();
-                            _arTables[(int)INDEX_RESULT.DISTINCT].AcceptChanges();
+                            if (!(tblPrev == null))
+                                if (!(tblPrev.Columns.IndexOf(@"DATETIME") < 0))
+                                    foreach (DataRow rRes in tblPrev.Rows)
+                                    {
+                                        arSel = _arTables[(int)INDEX_RESULT.DISTINCT].Select(@"ID=" + rRes[@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fffffff") + @"'");
+                                        iDup += arSel.Length;
+                                        foreach (DataRow rDel in arSel)
+                                        {
+                                            _arTables[(int)INDEX_RESULT.EQUALE].ImportRow(rDel);
+                                            _arTables[(int)INDEX_RESULT.DISTINCT].Rows.Remove(rDel);
+                                        }
+
+                                        _arTables[(int)INDEX_RESULT.EQUALE].AcceptChanges();
+                                        _arTables[(int)INDEX_RESULT.DISTINCT].AcceptChanges();
+                                    }
+                                else
+                                    ;
+                            else
+                                ;
+
+                            //!!! См. ВНИМАТЕЛЬНО файл конфигурации - ИДЕНТИФИКАТОРЫ д.б. уникальные
+                            //int cnt = -1;
+                            //List <int>listDel = new List<int>();
+                            //foreach (DataRow rRes in table.Rows)
+                            //{
+                            //    arSel = (table as DataTable).Select(@"ID=" + rRes[@"ID"]
+                            //        + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
+                            //    if (arSel.Length > 1)
+                            //    {
+                            //        iRes ++;
+                            //        //Logging.Logg().Error(@"HHandlerDbULoader::clearDupValues () - "
+                            //        //    + @"ID=" + rRes[@"ID"]
+                            //        //    + @", " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
+                            //        //    + @", " + @"QUALITY[" + arSel[0][@"QUALITY"] + @"," + arSel[1][@"QUALITY"] + @"]"
+                            //        //, Logging.INDEX_MESSAGE.NOT_SET);
+                            //        cnt = listDel.Count + arSel.Length;
+                            //        foreach (DataRow rDel in arSel)
+                            //            if (listDel.Count < (cnt - 1))
+                            //                listDel.Add(table.Rows.IndexOf(rDel));
+                            //            else
+                            //                break;
+                            //    }
+                            //    else
+                            //        ;
+                            //}
+
+                            //foreach (int indx in listDel)
+                            //    //(table as DataTable).Rows.Remove(rDel);
+                            //    (table as DataTable).Rows.RemoveAt(indx);
+                            //table.AcceptChanges();
                         }
-
-                        //!!! См. ВНИМАТЕЛЬНО файл конфигурации - ИДЕНТИФИКАТОРЫ д.б. уникальные
-                        //int cnt = -1;
-                        //List <int>listDel = new List<int>();
-                        //foreach (DataRow rRes in table.Rows)
-                        //{
-                        //    arSel = (table as DataTable).Select(@"ID=" + rRes[@"ID"]
-                        //        + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'");
-                        //    if (arSel.Length > 1)
-                        //    {
-                        //        iRes ++;
-                        //        //Logging.Logg().Error(@"HHandlerDbULoader::clearDupValues () - "
-                        //        //    + @"ID=" + rRes[@"ID"]
-                        //        //    + @", " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
-                        //        //    + @", " + @"QUALITY[" + arSel[0][@"QUALITY"] + @"," + arSel[1][@"QUALITY"] + @"]"
-                        //        //, Logging.INDEX_MESSAGE.NOT_SET);
-                        //        cnt = listDel.Count + arSel.Length;
-                        //        foreach (DataRow rDel in arSel)
-                        //            if (listDel.Count < (cnt - 1))
-                        //                listDel.Add(table.Rows.IndexOf(rDel));
-                        //            else
-                        //                break;
-                        //    }
-                        //    else
-                        //        ;
-                        //}
-
-                        //foreach (int indx in listDel)
-                        //    //(table as DataTable).Rows.Remove(rDel);
-                        //    (table as DataTable).Rows.RemoveAt(indx);
-                        //table.AcceptChanges();
-                    }
+                        else
+                            ; // текущая таблица не имеет требуемую структуру
                     else
-                        ;
+                        ; // текущая таблица = null
                 }
                 /// <summary>
                 /// Удалить дублированные записи из таблицы
                 /// </summary>
                 /// <param name="tblDup">Таблица, содержащая дублирующие записи</param>
                 /// <returns>Таблица без дублирующих записей</returns>
-                public static DataTable clearDupValues(DataTable tblDup)
+                public static DataTable Clear(DataTable tblDup)
                 {
                     DataTable tblRes = tblDup.Clone();
                     //Список индексов строк для удаления

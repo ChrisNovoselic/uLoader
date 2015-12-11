@@ -44,7 +44,7 @@ namespace SrcBiyskDiscrLastora
                         m_strQuery += @"'" + s.m_NameTable + @"'" + strUnion;
                     }
 
-                    //Удалить "лишний" UNION
+                    // удалить "лишний" UNION
                     m_strQuery = m_strQuery.Substring(0, m_strQuery.Length - strUnion.Length);
 
                     m_strQuery += @")";

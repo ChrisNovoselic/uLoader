@@ -89,7 +89,7 @@ namespace SrcMSTASUTPIDT5tg6sql
 
                 foreach (GroupSignalsSrc.SIGNALIdsql sgnl in m_arSignals)
                     strIds += sgnl.m_iIdLocal + @",";
-                //удалить "лишнюю" запятую
+                // удалить "лишнюю" запятую
                 strIds = strIds.Substring(0, strIds.Length - 1);
 
                 m_strQuery = @"SELECT [ID]"

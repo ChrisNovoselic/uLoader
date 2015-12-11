@@ -564,7 +564,7 @@ namespace SrcMSTKKSNAMEtoris
                         else
                             ;
 
-                        TableRecieved = GroupSignals.DataTableDuplicate.clearDupValues(table);
+                        TableRecieved = GroupSignals.DataTableDuplicate.Clear(table);
                         break;
                     default:
                         break;

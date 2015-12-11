@@ -382,7 +382,7 @@ namespace uLoaderCommon
             protected virtual void setTableRes()
             {
                 //Сравнить (удалить дублирующие записи) предыдущую и текущую таблицы
-                m_DupTables.Determine(TableRecievedPrev.Copy(), TableRecieved.Copy());
+                m_DupTables.Clear(TableRecievedPrev, TableRecieved);
             }
             /// <summary>
             /// Получить строку с запросом на вставку значений
@@ -450,8 +450,15 @@ namespace uLoaderCommon
 
             public void Convert(DataTable tablePrev)
             {
-                foreach (DataRow r in tablePrev.Rows)
-                    r[@"ID"] = getIdLink(r[@"ID"]);
+                try
+                {
+                    foreach (DataRow r in tablePrev.Rows)
+                        r[@"ID"] = getIdLink(r[@"ID"]);
+                }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, @"GroupsignalsDest::Convert (IdGroupSgnls=" + m_Id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
 
                 TableRecievedPrev = tablePrev;
             }

@@ -49,7 +49,7 @@ namespace SrcBiyskTMLastora
                     ;
                 }
 
-                //Удалить "лишний" UNION
+                // удалить "лишний" UNION
                 m_strQuery = m_strQuery.Substring(0, m_strQuery.Length - strUnion.Length);
             }
 

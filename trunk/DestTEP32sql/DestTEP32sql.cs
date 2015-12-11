@@ -122,7 +122,13 @@ namespace DestTEP32sql
 
             protected override string getExistsValuesQuery()
             {
-                string strRes = string.Empty;
+                string strRes = string.Empty
+                    , strIds = string.Empty;
+
+                foreach (SIGNALIDsql sgnl in m_arSignals)
+                    strIds += sgnl.m_idTarget + @",";
+                // удалить "лишнюю" запятую
+                strIds = strIds.Substring(0, strIds.Length - 1);
 
                 DateTime? dtToSelect = null;
                 //    // т.к. записи в таблице отсортированы по [DATE_TIME]
@@ -141,7 +147,8 @@ namespace DestTEP32sql
                         + @", [QUALITY]"
                         + @" FROM [" + (_parent as DestTEP32sql).GetNameTable(dtToSelect.GetValueOrDefault()) + @"]"
                         + @" WHERE [DATE_TIME]='" + dtToSelect.GetValueOrDefault().ToString(s_strFormatDbDateTime) + @"'"
-                            + @" AND [ID_SOURCE]=" + m_IdSourceConnSett;
+                            + @" AND [ID_SOURCE]=" + m_IdSourceConnSett
+                            + @" AND [ID_INPUT] IN (" + strIds + @")";
                 }
                 else
                     ;

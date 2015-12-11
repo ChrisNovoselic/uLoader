@@ -49,7 +49,7 @@ namespace SrcBiyskTMora
                     ;
                 }
 
-                //Удалить "лишний" UNION
+                // удалить "лишний" UNION
                 m_strQuery = m_strQuery.Substring(0, m_strQuery.Length - strUnion.Length);
                 ////Установить сортировку
                 //m_strQuery += @" ORDER BY DATETIME DESC";

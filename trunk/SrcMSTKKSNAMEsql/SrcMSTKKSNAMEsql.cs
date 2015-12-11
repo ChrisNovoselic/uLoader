@@ -45,7 +45,7 @@ namespace SrcMSTKKSNAMEsql
 
                 foreach (SIGNALMSTKKSNAMEsql sgnl in m_arSignals)
                     strIds += @"'" + sgnl.m_kks_name + @"',";
-                //удалить "лишнюю" запятую
+                // удалить "лишнюю" запятую
                 strIds = strIds.Substring(0, strIds.Length - 1);
 
                 m_strQuery =
