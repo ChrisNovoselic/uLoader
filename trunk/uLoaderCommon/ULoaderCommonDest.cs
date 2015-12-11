@@ -452,8 +452,11 @@ namespace uLoaderCommon
             {
                 try
                 {
-                    foreach (DataRow r in tablePrev.Rows)
-                        r[@"ID"] = getIdLink(r[@"ID"]);
+                    if (!(tablePrev.Columns.IndexOf(@"ID") < 0))
+                        foreach (DataRow r in tablePrev.Rows)
+                            r[@"ID"] = getIdLink(r[@"ID"]);
+                    else
+                        ; // отсутствует необходимое поле "ID"
                 }
                 catch (Exception e)
                 {
@@ -811,7 +814,8 @@ namespace uLoaderCommon
                     DataRow[] arSelWas = null;
 
                     //Проверить наличие столбцов в результ./таблице (признак получения рез-та)
-                    if (m_tblPrevRecieved.Columns.Count > 0)
+                    if ((!(m_tblPrevRecieved.Columns.IndexOf(@"ID") < 0))
+                        && (!(m_tblPrevRecieved.Columns.IndexOf(@"DATETIME") < 0)))
                     {//Только при наличии результата
                         arSelWas = m_tblPrevRecieved.Select(@"ID=" + id, @"DATETIME DESC");
                         //Проверить результат для конкретного сигнала

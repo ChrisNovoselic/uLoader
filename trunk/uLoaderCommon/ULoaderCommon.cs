@@ -504,45 +504,52 @@ namespace uLoaderCommon
                     //Массив дублированных строк
                     DataRow[] arDup = null;
                     //Признак наличия кавычек для значений в поле [ID]
-                    bool bQuote = !tblDup.Columns[@"ID"].DataType.IsPrimitive;
+                    bool bQuote = false;
                     //Строка запроса для поиска дублирующих записей
                     string strSel = string.Empty;
 
-                    try
+                    if (!(tblDup.Columns.IndexOf(@"ID") < 0))
                     {
-                        foreach (DataRow r in tblDup.Rows)
+                        try
                         {
-                            //Проверить наличие индекса строки в уже найденных (как дублированные)
-                            if (listIndxToDelete.IndexOf(tblDup.Rows.IndexOf(r)) < 0)
-                            {
-                                //Сформировать строку запроса
-                                strSel = @"ID=" + (bQuote == true ? @"'" : string.Empty) + r[@"ID"] + (bQuote == true ? @"'" : string.Empty) + @" AND " + @"DATETIME='" + ((DateTime)r[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fffffff") + @"'";
-                                arDup = (tblDup as DataTable).Select(strSel);
-                                //Проверить наличие дублирующих записей
-                                if (arDup.Length > 1)
-                                    //Добавить индексы всех найденных дублирующих строк в список для удаления
-                                    // , КРОМЕ 1-ой!
-                                    for (int i = 1; i < arDup.Length; i++)
-                                        listIndxToDelete.Add(tblDup.Rows.IndexOf(arDup[i]));
-                                else
-                                    if (arDup.Length == 0)
-                                        throw new Exception("HHandlerDbULoader.GroupSignals.clearDupValues () - в таблице не найдена \"собственная\" строка...");
-                                    else
-                                        ;
+                            bQuote = !tblDup.Columns[@"ID"].DataType.IsPrimitive;
 
-                                //Добавить строку в таблицу-результат
-                                tblRes.ImportRow(arDup[0]);
+                            foreach (DataRow r in tblDup.Rows)
+                            {
+                                //Проверить наличие индекса строки в уже найденных (как дублированные)
+                                if (listIndxToDelete.IndexOf(tblDup.Rows.IndexOf(r)) < 0)
+                                {
+                                    //Сформировать строку запроса
+                                    strSel = @"ID=" + (bQuote == true ? @"'" : string.Empty) + r[@"ID"] + (bQuote == true ? @"'" : string.Empty) + @" AND " + @"DATETIME='" + ((DateTime)r[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fffffff") + @"'";
+                                    arDup = (tblDup as DataTable).Select(strSel);
+                                    //Проверить наличие дублирующих записей
+                                    if (arDup.Length > 1)
+                                        //Добавить индексы всех найденных дублирующих строк в список для удаления
+                                        // , КРОМЕ 1-ой!
+                                        for (int i = 1; i < arDup.Length; i++)
+                                            listIndxToDelete.Add(tblDup.Rows.IndexOf(arDup[i]));
+                                    else
+                                        if (arDup.Length == 0)
+                                            throw new Exception("HHandlerDbULoader.GroupSignals.clearDupValues () - в таблице не найдена \"собственная\" строка...");
+                                        else
+                                            ;
+
+                                    //Добавить строку в таблицу-результат
+                                    tblRes.ImportRow(arDup[0]);
+                                }
+                                else
+                                    ;
                             }
-                            else
-                                ;
+                        }
+                        catch (Exception e)
+                        {
+                            Logging.Logg().Exception(e, @"HHandlerDbULoader::GroupSignals::clearDupValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+
+                            tblRes.Clear();
                         }
                     }
-                    catch (Exception e)
-                    {
-                        Logging.Logg().Exception(e, @"HHandlerDbULoader::GroupSignals::clearDupValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-
-                        tblRes.Clear();
-                    }
+                    else
+                        ; // отсутствует необходимое поле "ID"
 
                     //Принять внесенные изменения в таблицу-результат
                     tblRes.AcceptChanges();
