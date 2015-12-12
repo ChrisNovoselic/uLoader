@@ -38,7 +38,8 @@ namespace SrcMSTASUTPIDT5tg1sql
             DataRow[] rowsSgnl = null;
             DateTime dtValue;
             double dblSumValue = -1F;
-            int iHour = -1;
+            int iHour = -1
+                ,iHourAdding = -1;
 
             tblRes.Columns.AddRange(new DataColumn[] {
                 new DataColumn (@"ID", typeof (int))
@@ -56,14 +57,20 @@ namespace SrcMSTASUTPIDT5tg1sql
                         //??? если строк > 1
                         && (((int)rowsSgnl[0][@"CNT"] % 60) == 0))
                     {// только при кол-ве записей = 60 (все минуты часа)
+                        iHourAdding = 0;
                         iHour = (int)rowsSgnl[0][@"HOUR"];
-                        if (iHour > 23) iHour -= 24; else ;
+                        if (iHour > 23)
+                            iHourAdding = 24;
+                        else
+                            ;
+                        iHour -= iHourAdding;
+
                         dtValue = new DateTime((int)rowsSgnl[0][@"YEAR"]
                             , (int)rowsSgnl[0][@"MONTH"]
                             , (int)rowsSgnl[0][@"DAY"]
                             , iHour
                             , 0
-                            , 0);
+                            , 0).AddHours(iHourAdding);
 
                         dblSumValue = (double)rowsSgnl[0][@"VALUE"];
 
