@@ -235,55 +235,6 @@ namespace uLoaderCommon
             /// Объект для сравнения предыдущей и текущей таблиц
             /// </summary>
             protected DataTableDuplicate m_DupTables;
-
-            //public class DateTimeRange
-            //{
-            //    public DateTimeRange()
-            //    {
-            //        clear();
-            //    }
-
-            //    public DateTimeRange(DateTime begin, DateTime end)
-            //    {
-            //        Begin = begin;
-            //        End = end;
-            //    }
-
-            //    public void Set(DateTime begin, DateTime end)
-            //    {
-            //        Begin = begin;
-            //        End = end;
-            //    }
-
-            //    public DateTime Begin { get; private set; }
-            //    public DateTime End { get; private set; }
-
-            //    public bool Includes(DateTime value)
-            //    {
-            //        return (Begin <= value) && (value <= End);
-            //    }
-
-            //    public bool Includes(DateTimeRange range)
-            //    {
-            //        return (Begin <= range.Begin) && (range.End <= End);
-            //    }
-
-            //    //public void Clear()
-            //    //{
-            //    //    clear();
-            //    //}
-
-            //    private void clear()
-            //    {
-            //        Begin = DateTime.MinValue;
-            //        End = DateTime.MaxValue;
-            //    }
-
-            //    //public bool IsEmpty
-            //    //{
-            //    //    get { return (Begin.Equals(DateTime.MinValue) == true) && (End.Equals(DateTime.MaxValue) == true); }
-            //    //}
-            //}
             ///// <summary>
             ///// Дата/время начала интервала (минимальное значение), за который получен набор значений для вставки в целевую таблицу
             ///// </summary>
