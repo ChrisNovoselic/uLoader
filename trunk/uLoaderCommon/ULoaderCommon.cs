@@ -543,13 +543,14 @@ namespace uLoaderCommon
                         }
                         catch (Exception e)
                         {
-                            Logging.Logg().Exception(e, @"HHandlerDbULoader::GroupSignals::clearDupValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                            Logging.Logg().Exception(e, @"HHandlerDbULoader.GroupSignals::clearDupValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                             tblRes.Clear();
                         }
                     }
                     else
-                        ; // отсутствует необходимое поле "ID"
+                        // отсутствует необходимое поле "ID"
+                        Logging.Logg().Warning(@"HHandlerDbULoader.GroupSignals::clearDupValues () - отсутствует необходимое поле [ID]...", Logging.INDEX_MESSAGE.NOT_SET);
 
                     //Принять внесенные изменения в таблицу-результат
                     tblRes.AcceptChanges();

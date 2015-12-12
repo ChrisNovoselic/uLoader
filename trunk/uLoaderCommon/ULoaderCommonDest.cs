@@ -456,7 +456,8 @@ namespace uLoaderCommon
                         foreach (DataRow r in tablePrev.Rows)
                             r[@"ID"] = getIdLink(r[@"ID"]);
                     else
-                        ; // отсутствует необходимое поле "ID"
+                        // отсутствует необходимое поле "ID"
+                        Logging.Logg().Warning(@"HHandlerDbULoader.GroupSignals::Convert (IdGroupSgls=" + m_Id +@") - отсутствует необходимое поле [ID]...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
                 catch (Exception e)
                 {
