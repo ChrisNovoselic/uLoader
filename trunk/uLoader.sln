@@ -1,17 +1,17 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "uLoader", "uLoader\uLoader.csproj", "{33C90FD1-85FE-41F0-84AD-712E89AD8F2D}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HClassLibrary", "..\HClassLibrary\HClassLibrary.csproj", "{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject_001", "TestProject_001\TestProject_001.csproj", "{C58DCFB6-6E0C-4743-9135-655B0DDF8E10}"
-EndProject
+# Visual Studio Express 2012 for Windows Desktop
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{90F49DC6-DE10-44E5-A9C5-BFAA7BC34C53}"
 	ProjectSection(SolutionItems) = preProject
 		Local.testsettings = Local.testsettings
 		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
 		uLoader.vsmdi = uLoader.vsmdi
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "uLoader", "uLoader\uLoader.csproj", "{33C90FD1-85FE-41F0-84AD-712E89AD8F2D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HClassLibrary", "..\HClassLibrary\HClassLibrary.csproj", "{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject_001", "TestProject_001\TestProject_001.csproj", "{C58DCFB6-6E0C-4743-9135-655B0DDF8E10}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestFunc", "TestFunc\TestFunc.csproj", "{FE9308E2-810E-4921-8F1A-55ED8CC9D460}"
 EndProject
