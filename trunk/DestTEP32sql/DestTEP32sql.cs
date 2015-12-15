@@ -57,6 +57,7 @@ namespace DestTEP32sql
                         + @",[ID_USER]"
                         + @",[ID_SOURCE]"
                         + @",[DATE_TIME]"
+                        + @",[ID_TIME]"
                         + @",[ID_TIMEZONE]"
                         + @",[QUALITY]"
                         + @",[VALUE]"
@@ -87,6 +88,7 @@ namespace DestTEP32sql
                             strRow += 0.ToString() + @","; //ID_USER
                             strRow += m_IdSourceConnSett + @","; //ID_SOURCE
                             strRow += @"'" + dtToInsert.GetValueOrDefault().ToString(s_strFormatDbDateTime) + @"',";
+                            strRow += 13.ToString() + @","; //ID_TIME = 1 ч
                             strRow += 0.ToString() + @","; //ID_TIMEZONE = UTC
                             strRow += 0.ToString() + @","; //QUALITY
                             strRow += ((float)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
