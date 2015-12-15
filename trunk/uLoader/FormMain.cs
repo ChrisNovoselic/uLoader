@@ -151,25 +151,34 @@ namespace uLoader
 
             HTabCtrlEx tabCtrl = obj as HTabCtrlEx;
             HPanelCommon panelCommon;
-
+            //Проверить наличие вкладки для деактивации перед активации выбранной пользователем
             if (!(tabCtrl.PrevSelectedIndex < 0)
                 && (tabCtrl.PrevSelectedIndex < tabCtrl.TabCount))
             {
+                // деактивировать предыдущую вкладку
                 panelCommon = (tabCtrl.TabPages[tabCtrl.PrevSelectedIndex].Controls[0] as HPanelCommon);
                 panelCommon.Activate(false);
             }
             else
                 ;
-
+            // активировать выбранную вкладку
             panelCommon = (tabCtrl.TabPages[tabCtrl.SelectedIndex].Controls[0] as HPanelCommon);
             panelCommon.Activate(true);
         }
-
+        /// <summary>
+        /// Обработчик события - изменения выбора вкладки
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие</param>
+        /// <param name="ev">Аргумент события</param>
         private void TabCtrl_OnSelectedIndexChanged(object obj, EventArgs ev)
         {
             (obj as HTabCtrlEx).PrevSelectedIndex = (obj as HTabCtrlEx).SelectedIndex;
         }
-
+        /// <summary>
+        /// Обработчик события - изменение состояния выбора п. меню "Конфигурация"
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие (п. меню)</param>
+        /// <param name="ev">Аргумент события</param>
         private void конфигурацияToolStripMenuItem_CheckStateChanged(object obj, EventArgs ev)
         {
             string strNameMenuItem = (obj as ToolStripMenuItem).Text;
@@ -187,12 +196,19 @@ namespace uLoader
 
             activateMenuItemConfig(конфигурацияToolStripMenuItem.Checked);
         }
-
+        /// <summary>
+        /// Иизменить доступность п. меню "Файл - конфигурация"
+        /// </summary>
+        /// <param name="activate">Признак доступности п. меню</param>
         private void activateMenuItemConfig(bool activate)
         {
             this.файлКонфигурацияToolStripMenuItem.Enabled = activate;
         }
-
+        /// <summary>
+        /// Обработчик события - выбор п. меню "О программе"
+        /// </summary>
+        /// <param name="sender">Объект, инициировавший событие (п. меню)</param>
+        /// <param name="e">Аргумент события</param>
         private void оПрограммеToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using (FormAbout fAbout = new FormAbout())
@@ -200,14 +216,20 @@ namespace uLoader
                 fAbout.ShowDialog();
             }
         }
-
+        /// <summary>
+        /// Обработчик события приема сообщений от вкладки (панели) "Работа"
+        /// </summary>
+        /// <param name="obj">Массив объектов сообщения</param>
         private void OnEvtDataAskedFormMain_PanelWork(object obj)
         {
             EventArgsDataHost ev = obj as EventArgsDataHost;
             //ev.id - здесь всегда = -1
             m_handler.Push(m_panelWork, ev.par as object[]);
         }
-
+        /// <summary>
+        /// Обработчик события приема сообщений от вкладки (панели) "Конфигурация"
+        /// </summary>
+        /// <param name="obj">Массив объектов сообщения</param>
         private void OnEvtDataAskedFormMain_PanelConfig(object obj)
         {
             EventArgsDataHost ev = obj as EventArgsDataHost;
