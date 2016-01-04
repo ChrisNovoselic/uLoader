@@ -1449,9 +1449,19 @@ namespace uLoaderCommon
             //_MarkReversed = true;
         }
 
-        public void SetMark (int indx, bool val)
+        public void SetMark(int indx, bool val)
         {
-            m_markDataHost.Set (indx, val);
+            //m_markDataHost.Set(indx, val);
+            if (m_dictDataHostCounter.ContainsKey(indx) == true)
+                if (val == true)
+                    m_dictDataHostCounter[indx] ++;
+                else
+                    if (val == false)
+                        m_dictDataHostCounter[indx] --;
+                    else
+                        ; // недостижимый код
+            else
+                ;
         }
         /// <summary>
         /// Обработчик запросов от клиента
@@ -1483,7 +1493,7 @@ namespace uLoaderCommon
                     break;
                 case (int)ID_DATA_ASKED_HOST.START: //Принята команда на запуск группы сигналов
                     //Проверить признак получения целевым объектом параметоров для инициализации
-                    if ((m_markDataHost.IsMarked((int)ID_DATA_ASKED_HOST.INIT_SOURCE) == true) && (target.IsInitSource == true))
+                    if ((isMarked((int)ID_DATA_ASKED_HOST.INIT_SOURCE) == true) && (target.IsInitSource == true))
                     //if (m_markDataHost.IsMarked((int)ID_DATA_ASKED_HOST.INIT_SOURCE) == true)
                     {
                         //Инициализация группы сигналов по идентифактору [0]

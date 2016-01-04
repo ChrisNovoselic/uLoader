@@ -173,7 +173,7 @@ namespace DestTEP32sql
             else
                 ;
             
-            strRes = m_strNameTable + @"_" + dtInsert.Year.ToString () + (dtInsert.Month + 0).ToString ();
+            strRes = m_strNameTable + @"_" + dtInsert.Year.ToString () + dtInsert.Month.ToString (@"00");
 
             return strRes;
         }
