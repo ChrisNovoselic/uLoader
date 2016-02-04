@@ -53,7 +53,7 @@ namespace DestTEP32sql
                 if (m_DupTables.TableDistinct.Rows.Count > 0)
                 {
                     strRes = @"INSERT INTO [dbo].[NAMETABLE_INSERT_INTO] ("
-                        + @"[ID_INPUT]"
+                        + @"[ID_PUT]"
                         + @",[ID_USER]"
                         + @",[ID_SOURCE]"
                         + @",[DATE_TIME]"
@@ -143,14 +143,14 @@ namespace DestTEP32sql
                     dtToSelect = ((DateTime)TableRecieved.Rows[0][@"DATETIME"]);
 
                     strRes = @"SELECT [ID] as [ID_REC]"
-                        + @", [ID_INPUT] as [ID]"
+                        + @", [ID_PUT] as [ID]"
                         + @", [DATE_TIME] as [DATETIME]"
                         + @", [ID_TIMEZONE]"
                         + @", [QUALITY]"
                         + @" FROM [" + (_parent as DestTEP32sql).GetNameTable(dtToSelect.GetValueOrDefault()) + @"]"
                         + @" WHERE [DATE_TIME]='" + dtToSelect.GetValueOrDefault().ToString(s_strFormatDbDateTime) + @"'"
                             + @" AND [ID_SOURCE]=" + m_IdSourceConnSett
-                            + @" AND [ID_INPUT] IN (" + strIds + @")";
+                            + @" AND [ID_PUT] IN (" + strIds + @")";
                 }
                 else
                     ;
