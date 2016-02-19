@@ -112,7 +112,7 @@ namespace SrcMSTASUTPIDT5tg6sql
         {
             _Id = 1008;
 
-            createObject(typeof(SrcMSTASUTPIDT5tg6sql));
+            registerType(_Id, typeof(SrcMSTASUTPIDT5tg6sql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

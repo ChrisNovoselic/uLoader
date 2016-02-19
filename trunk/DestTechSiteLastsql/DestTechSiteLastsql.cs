@@ -97,7 +97,7 @@ namespace DestTechSiteLastsql
         {
             _Id = 2005;
 
-            createObject(typeof(DestTechSiteLastsql));
+            registerType(_Id, typeof(DestTechSiteLastsql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

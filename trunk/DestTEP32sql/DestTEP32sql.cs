@@ -188,7 +188,7 @@ namespace DestTEP32sql
         {
             _Id = 2006;
 
-            createObject(typeof(DestTEP32sql));
+            registerType(_Id, typeof(DestTEP32sql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

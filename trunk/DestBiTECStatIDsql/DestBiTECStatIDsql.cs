@@ -104,7 +104,7 @@ namespace DestBiTECStatIDsql
         {
             _Id = 2003;
 
-            createObject(typeof(DestBiTECStatIDsql));
+            registerType(_Id, typeof(DestBiTECStatIDsql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

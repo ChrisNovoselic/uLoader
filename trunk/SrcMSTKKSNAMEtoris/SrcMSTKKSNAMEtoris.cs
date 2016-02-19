@@ -589,7 +589,7 @@ namespace SrcMSTKKSNAMEtoris
         {
             _Id = 1007;
 
-            createObject(typeof(SrcMSTKKSNAMEtoris));
+            registerType(_Id, typeof(SrcMSTKKSNAMEtoris));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

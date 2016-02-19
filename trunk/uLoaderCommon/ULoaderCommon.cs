@@ -1449,19 +1449,37 @@ namespace uLoaderCommon
             //_MarkReversed = true;
         }
 
-        public void SetMark(int indx, bool val)
+        /// <summary>
+        /// Зарегистрировать тип объекта библиотеки
+        /// </summary>
+        /// <param name="key">Ключ регистрируемого типа объекиа</param>
+        /// <param name="type">Регистрируемый тип</param>
+        protected override void registerType(int key, Type type)
+        {
+            base.registerType(key, type);
+
+            createObject(key);
+        }
+
+        public void SetMark(int key, bool val)
         {
             //m_markDataHost.Set(indx, val);
-            if (m_dictDataHostCounter.ContainsKey(indx) == true)
+            if (m_dictDataHostCounter.ContainsKey(key) == true)
                 if (val == true)
-                    m_dictDataHostCounter[indx] ++;
+                    m_dictDataHostCounter[key] ++;
                 else
                     if (val == false)
-                        m_dictDataHostCounter[indx] --;
+                        m_dictDataHostCounter[key] --;
                     else
                         ; // недостижимый код
             else
                 ;
+        }
+
+        protected bool isMarked(int key)
+        {
+            return (m_dictDataHostCounter.ContainsKey(key) == true)
+                && (m_dictDataHostCounter[key] % 2 == 1);
         }
         /// <summary>
         /// Обработчик запросов от клиента
@@ -1470,7 +1488,7 @@ namespace uLoaderCommon
         public override void OnEvtDataRecievedHost(object obj)
         {
             EventArgsDataHost ev = obj as EventArgsDataHost; //Переданные значения из-вне
-            HHandlerDbULoader target = _object as HHandlerDbULoader; //Целевой объект
+            HHandlerDbULoader target = _objects[_Id] as HHandlerDbULoader; //Целевой объект
 
             switch (ev.id)
             {

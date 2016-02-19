@@ -145,24 +145,23 @@ namespace uLoader
         {
         }        
 
-        private void TabCtrl_OnPrevSelectedIndexChanged(object obj, EventArgs ev)
+        private void TabCtrl_OnPrevSelectedIndexChanged(int indx)
         {
-            Logging.Logg().Action(@"Смена вкладки: активная - " + (obj as HTabCtrlEx).SelectedTab.Text, Logging.INDEX_MESSAGE.NOT_SET);
+            Logging.Logg().Action(@"Смена вкладки: активная - " + m_TabCtrl.SelectedTab.Text, Logging.INDEX_MESSAGE.NOT_SET);
 
-            HTabCtrlEx tabCtrl = obj as HTabCtrlEx;
             HPanelCommon panelCommon;
             //Проверить наличие вкладки для деактивации перед активации выбранной пользователем
-            if (!(tabCtrl.PrevSelectedIndex < 0)
-                && (tabCtrl.PrevSelectedIndex < tabCtrl.TabCount))
+            if (!(m_TabCtrl.PrevSelectedIndex < 0)
+                && (m_TabCtrl.PrevSelectedIndex < m_TabCtrl.TabCount))
             {
                 // деактивировать предыдущую вкладку
-                panelCommon = (tabCtrl.TabPages[tabCtrl.PrevSelectedIndex].Controls[0] as HPanelCommon);
+                panelCommon = (m_TabCtrl.TabPages[m_TabCtrl.PrevSelectedIndex].Controls[0] as HPanelCommon);
                 panelCommon.Activate(false);
             }
             else
                 ;
             // активировать выбранную вкладку
-            panelCommon = (tabCtrl.TabPages[tabCtrl.SelectedIndex].Controls[0] as HPanelCommon);
+            panelCommon = (m_TabCtrl.TabPages[m_TabCtrl.SelectedIndex].Controls[0] as HPanelCommon);
             panelCommon.Activate(true);
         }
         /// <summary>

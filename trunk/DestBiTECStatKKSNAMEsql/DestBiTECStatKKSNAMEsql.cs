@@ -105,7 +105,7 @@ namespace DestBiTECStatKKSNAMEsql
         {
             _Id = 2004;
 
-            createObject(typeof(DestBiTECStatKKSNAMEsql));
+            registerType(_Id, typeof(DestBiTECStatKKSNAMEsql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

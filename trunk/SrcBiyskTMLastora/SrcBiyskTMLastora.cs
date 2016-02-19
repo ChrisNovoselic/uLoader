@@ -122,7 +122,7 @@ namespace SrcBiyskTMLastora
         {
             _Id = 1005;
 
-            createObject(typeof(SrcBiyskTMLastora));
+            registerType(_Id, typeof(SrcBiyskTMLastora));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

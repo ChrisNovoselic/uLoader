@@ -132,7 +132,7 @@ namespace SrcMSTKKSNAMEsql
         {
             _Id = 1004;
 
-            createObject(typeof(SrcMSTKKSNAMEsql));
+            registerType(_Id, typeof(SrcMSTKKSNAMEsql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

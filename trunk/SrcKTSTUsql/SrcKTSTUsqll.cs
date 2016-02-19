@@ -238,7 +238,7 @@ namespace SrcKTSTUsql
         {
             _Id = 1002;
 
-            createObject(typeof(SrcKTSTUsql));
+            registerType (1002, typeof(SrcKTSTUsql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

@@ -86,7 +86,7 @@ namespace SrcBiyskTMora
         {
             _Id = 1001;
 
-            createObject(typeof(SrcBiyskTMora));
+            registerType(1001, typeof(SrcBiyskTMora));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

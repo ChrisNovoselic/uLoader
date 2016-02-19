@@ -103,7 +103,7 @@ namespace DestStatIDsql
         {
             _Id = 2001;
 
-            createObject(typeof(DestStatIDsql));
+            registerType(_Id, typeof(DestStatIDsql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

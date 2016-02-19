@@ -141,7 +141,7 @@ namespace SrcBiyskDiscrLastora
         {
             _Id = 1006;
 
-            createObject(typeof(SrcBiyskDiscrLastora));
+            registerType(_Id, typeof(SrcBiyskDiscrLastora));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

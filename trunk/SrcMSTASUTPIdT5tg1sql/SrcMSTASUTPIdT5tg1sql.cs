@@ -148,7 +148,7 @@ namespace SrcMSTASUTPIDT5tg1sql
         {
             _Id = 1003;
 
-            createObject(typeof(SrcMSTASUTPIDT5tg1sql));
+            registerType(_Id, typeof(SrcMSTASUTPIDT5tg1sql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)
