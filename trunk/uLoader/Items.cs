@@ -978,13 +978,19 @@ namespace uLoader
         {
             EventArgsDataHost ev = obj as EventArgsDataHost;
             GroupSignals grpSgnls = null;
+            ID_DATA_ASKED_HOST id_cmd = ID_DATA_ASKED_HOST.UNKNOWN;
             int iIDGroupSignals = -1; //??? д.б. указана в "запросе"
+            // [0] - идентификатор команды
+            // [1] - идентификатор группы сигналов
+            // [2] - идентификатор признака подтверждения/запроса ИЛИ таблица с результатом
             object []pars = null;
             
             try
             {
                 pars = (ev.par as object[])[0] as object [];
 
+                id_cmd = (ID_DATA_ASKED_HOST)pars[0];
+                
                 iIDGroupSignals = (int)pars[1];
                 if (! (iIDGroupSignals < 0))
                     grpSgnls = getGroupSignals(iIDGroupSignals);
@@ -993,7 +999,7 @@ namespace uLoader
 
                 string msgDebugLog = string.Empty;
 
-                switch ((ID_DATA_ASKED_HOST)pars[0])
+                switch (id_cmd)
                 {
                     case ID_DATA_ASKED_HOST.INIT_SOURCE: //Получен запрос на парметры инициализации
                         if ((ID_HEAD_ASKED_HOST)pars[2] == ID_HEAD_ASKED_HOST.GET)
@@ -1012,7 +1018,7 @@ namespace uLoader
                             else
                                 ;
 
-                        msgDebugLog += ((ID_DATA_ASKED_HOST)pars[0]).ToString ();
+                        msgDebugLog += id_cmd.ToString ();
                         break;
                     case ID_DATA_ASKED_HOST.INIT_SIGNALS: //Получен запрос на обрабатываемую группу сигналов
                         if ((ID_HEAD_ASKED_HOST)pars[2] == ID_HEAD_ASKED_HOST.GET)
@@ -1034,7 +1040,7 @@ namespace uLoader
                             else
                                 ;
 
-                        msgDebugLog += ((ID_DATA_ASKED_HOST)pars[0]).ToString();
+                        msgDebugLog += id_cmd.ToString();
                         break;
                     case ID_DATA_ASKED_HOST.TABLE_RES:
                         if ((!(grpSgnls == null))
@@ -1061,7 +1067,7 @@ namespace uLoader
                         grpSgnls.StateChange();
                         //Установить/разорвать взаимосвязь между группами источников (при необходимости)
                         if (this is GroupSourcesDest)
-                            (this as GroupSourcesDest).PerformDataAskedHostQueue(new EventArgsDataHost((int)pars[0], new object[] { iIDGroupSignals }));
+                            (this as GroupSourcesDest).PerformDataAskedHostQueue(new EventArgsDataHost((int)id_cmd, new object[] { iIDGroupSignals }));
                         else
                             ;
 
@@ -1074,7 +1080,7 @@ namespace uLoader
                         else
                             ;
 
-                        msgDebugLog = @"подтверждено: " + ((ID_DATA_ASKED_HOST)pars[0]).ToString();
+                        msgDebugLog = @"подтверждено: " + id_cmd.ToString();
 
                         if (bSemaStateChange == true)
                             //Разрешить очередную команду на изменение состояния
