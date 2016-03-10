@@ -45,6 +45,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SrcMSTASUTPIdT5tg1sql", "Sr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SrcMSTASUTPIdT5tg6sql", "SrcMSTASUTPIdT5tg6sql\SrcMSTASUTPIdT5tg6sql.csproj", "{C1724DDE-3900-47BF-B92D-4CF965334034}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SrcKTSTUDsql", "SrcKTSTUDsql\SrcKTSTUDsql.csproj", "{7840F19B-BBA3-4C16-866E-1CAC4C12872F}"
+EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = uLoader.vsmdi
@@ -334,6 +336,18 @@ Global
 		{C1724DDE-3900-47BF-B92D-4CF965334034}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{C1724DDE-3900-47BF-B92D-4CF965334034}.Release|x64.ActiveCfg = Release|Any CPU
 		{C1724DDE-3900-47BF-B92D-4CF965334034}.Release|x86.ActiveCfg = Release|Any CPU
+		{7840F19B-BBA3-4C16-866E-1CAC4C12872F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7840F19B-BBA3-4C16-866E-1CAC4C12872F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7840F19B-BBA3-4C16-866E-1CAC4C12872F}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{7840F19B-BBA3-4C16-866E-1CAC4C12872F}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{7840F19B-BBA3-4C16-866E-1CAC4C12872F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7840F19B-BBA3-4C16-866E-1CAC4C12872F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7840F19B-BBA3-4C16-866E-1CAC4C12872F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7840F19B-BBA3-4C16-866E-1CAC4C12872F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7840F19B-BBA3-4C16-866E-1CAC4C12872F}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{7840F19B-BBA3-4C16-866E-1CAC4C12872F}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{7840F19B-BBA3-4C16-866E-1CAC4C12872F}.Release|x64.ActiveCfg = Release|Any CPU
+		{7840F19B-BBA3-4C16-866E-1CAC4C12872F}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

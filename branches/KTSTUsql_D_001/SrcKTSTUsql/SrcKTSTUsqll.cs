@@ -34,9 +34,12 @@ namespace SrcKTSTUsql
                 return new SIGNALIdsql((int)objs[0], (int)objs[2], bool.Parse((string)objs[3]));
             }
 
+            /// <summary>
+            /// Формирование запроса
+            /// </summary>
             protected override void setQuery()
             {
-                int idReq = HMath.GetRandomNumber ()
+                int idReq = HMath.GetRandomNumber()
                     , i = -1;
                 string cmd =
                     string.Empty;
@@ -79,11 +82,21 @@ namespace SrcKTSTUsql
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="objs"></param>
+        /// <returns></returns>
         protected override HHandlerDbULoader.GroupSignals createGroupSignals(int id, object[] objs)
         {
             return new GroupSignalsKTSTUsql(this, id, objs);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="table"></param>
         protected override void parseValues(System.Data.DataTable table)
         {
             //base.parseValues (table);

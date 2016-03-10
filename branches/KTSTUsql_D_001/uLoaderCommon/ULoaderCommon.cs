@@ -67,6 +67,9 @@ namespace uLoaderCommon
                     case @"hh":
                         iValue = (int)_value.TotalHours;
                         break;
+                    case @"dd":
+                        iValue = (int)_value.TotalDays;
+                        break;
                     default:
                         break;
                 }
@@ -127,6 +130,9 @@ namespace uLoaderCommon
                         case @"hh":
                             tsRes = TimeSpan.FromHours(iValue);
                             break;
+                        case @"dd":
+                            tsRes = TimeSpan.FromDays(iValue);
+                            break;
                         default:
                             // признак ошибки
                             tsRes = TimeSpan.Zero;
@@ -167,6 +173,11 @@ namespace uLoaderCommon
         public static HTimeSpan FromHours(int hours)
         {
             return new HTimeSpan(@"hh", hours);
+        }
+
+        public static HTimeSpan FromDays(int day)
+        {
+            return new HTimeSpan(@"dd", day);
         }
     }
     
@@ -288,11 +299,13 @@ namespace uLoaderCommon
             /// <summary>
             /// Период времени для формирования запроса значений (глобальный)
             /// </summary>
-            public TimeSpan PeriodMain { get { return m_tsPeriodMain; } set { m_tsPeriodMain = value; } }
+            public TimeSpan PeriodMain { get { return m_tsPeriodMain; } 
+                set { m_tsPeriodMain = value; } }
             /// <summary>
             /// Период времени для формирования запроса значений (локальный)
             /// </summary>
-            public TimeSpan PeriodLocal { get { return m_tsPeriodLocal; } set { m_tsPeriodLocal = value; } }
+            public TimeSpan PeriodLocal { get { return m_tsPeriodLocal; } 
+                set { m_tsPeriodLocal = value; } }
 
             private long m_msecIntervalLocal;
             /// <summary>

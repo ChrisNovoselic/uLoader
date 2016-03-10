@@ -991,7 +991,7 @@ namespace uLoaderCommon
         public override void OnEvtDataRecievedHost(object obj)
         {
             EventArgsDataHost ev = obj as EventArgsDataHost;
-            HHandlerDbULoaderDest target = _objects[0] as HHandlerDbULoaderDest;
+            HHandlerDbULoaderDest target = _objects[_Id] as HHandlerDbULoaderDest;
 
             switch (ev.id)
             {

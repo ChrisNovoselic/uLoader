@@ -1365,7 +1365,7 @@ namespace uLoader
                     }
                     else
                         //tblRec == null или tblRec.Rows.Count == 0
-                        Logging.Logg().Warning(@"GroupSources::GetDataToPanel (id=" + id + @") - таблица 'recieved' не валидна...", Logging.INDEX_MESSAGE.NOT_SET);
+                        Logging.Logg().Warning(@"GroupSources::GetDataToPanel (id=" + id + @") - таблица 'received' не валидна...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
                 else
                     //grpSgnls == null
