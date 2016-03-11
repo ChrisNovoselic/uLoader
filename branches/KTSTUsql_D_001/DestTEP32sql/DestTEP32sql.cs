@@ -40,6 +40,10 @@ namespace DestTEP32sql
                 return new SIGNALIDsql((int)objs[0], (int)objs[1], (int)objs[3]);
             }
 
+            /// <summary>
+            /// Формирование запроса на вставку данных
+            /// </summary>
+            /// <returns></returns>
             protected override string getTargetValuesQuery()
             {
                 string strRes = string.Empty
@@ -122,6 +126,10 @@ namespace DestTEP32sql
                     ;
             }
 
+            /// <summary>
+            /// Формирование запроса на выборку данных по сигналам
+            /// </summary>
+            /// <returns></returns>
             protected override string getExistsValuesQuery()
             {
                 string strRes = string.Empty
