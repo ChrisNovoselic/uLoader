@@ -1,0 +1,5 @@
+D:\MyProjects\C.Net\uLoader\uLoader\bin\Debug\DestTEP32Dsql.dll
+D:\MyProjects\C.Net\uLoader\uLoader\bin\Debug\DestTEP32Dsql.pdb
+D:\MyProjects\C.Net\uLoader\DestTEP32Dsql\obj\Debug\DestTEP32Dsql.dll
+D:\MyProjects\C.Net\uLoader\DestTEP32Dsql\obj\Debug\DestTEP32Dsql.pdb
+D:\MyProjects\C.Net\uLoader\DestTEP32Dsql\obj\Debug\DestTEP32Dsql.csprojResolveAssemblyReference.cache
