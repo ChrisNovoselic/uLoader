@@ -54,7 +54,7 @@ namespace DestStatKKSNAMEsql
 
                 foreach (DataRow row in m_DupTables.TableDistinct.Rows)
                 {
-                    if (((int)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim()))) > 0)
+                    if (((string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim()))).Length > 0)
                     {
                         strRow = @"(";
 
