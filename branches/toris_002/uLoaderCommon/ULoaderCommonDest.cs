@@ -932,7 +932,7 @@ namespace uLoaderCommon
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
                 //ID_MAIN, ID_SRC_SGNL, KKSNAME_STAT
-                return new SIGNALStatKKSNAMEsql((int)objs[0], (int)objs[1], (string)objs[4]);
+                return new SIGNALStatKKSNAMEsql((int)objs[0], (int)objs[1], (string)objs[2]);
             }
 
             protected override object getIdTarget(int idLink)
@@ -991,7 +991,7 @@ namespace uLoaderCommon
         public override void OnEvtDataRecievedHost(object obj)
         {
             EventArgsDataHost ev = obj as EventArgsDataHost;
-            HHandlerDbULoaderDest target = _objects[0] as HHandlerDbULoaderDest;
+            HHandlerDbULoaderDest target = _objects[_Id] as HHandlerDbULoaderDest;
 
             switch (ev.id)
             {

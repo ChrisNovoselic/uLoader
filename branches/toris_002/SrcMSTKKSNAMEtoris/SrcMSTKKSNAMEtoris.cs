@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data; //DataTable
+using System.Diagnostics;
 
 using TORISLib;
 
@@ -142,9 +143,10 @@ namespace SrcMSTKKSNAMEtoris
                     //DateTime.FromOADate(timestamp)
                     //new DateTime(1899, 12, 30).AddDays(timestamp)
                     ;
-
+                
                 lock (this)
                 {
+                    Debug.Print("Добавление строки " + kksname + ", " + value.ToString() + ", " + dtVal.ToString());
                     m_tableTorIs.Rows.Add(new object[] { kksname, value, dtVal });
                 }
 

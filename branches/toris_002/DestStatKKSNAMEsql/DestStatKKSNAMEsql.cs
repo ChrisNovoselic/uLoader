@@ -54,7 +54,7 @@ namespace DestStatKKSNAMEsql
 
                 foreach (DataRow row in m_DupTables.TableDistinct.Rows)
                 {
-                    if (((int)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim()))) > 0)
+                    if (((string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim()))).Length > 0)
                     {
                         strRow = @"(";
 
@@ -62,7 +62,8 @@ namespace DestStatKKSNAMEsql
                         strRow += m_IdSourceTEC + @",";
                         strRow += ((double)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
                         strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(0).ToString(s_strFormatDbDateTime) + @"',";
-                        strRow += row[@"tmdelta"] + @",";
+                        strRow += "0" + @",";
+                        //strRow += row[@"tmdelta"] + @",";
                         strRow += @"GETDATE()" + @",";
                         strRow += m_IdSourceConnSett + @",";
                         strRow += idSrvTM;

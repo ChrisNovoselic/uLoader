@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Data;
 using System.Threading;
+using System.Diagnostics;
 
 using HClassLibrary;
 
@@ -392,7 +393,7 @@ namespace uLoaderCommon
                         if ((pair.Value as GroupSignalsSrc).MSecRemaindToActivate < 0)
                         {
                             pair.Value.State = GroupSignals.STATE.QUEUE;
-
+                            Debug.Print("Timer end " + DateTime.Now.ToString(@"dd.MM.yyyy HH:mm:ss.fff"));
                             push(pair.Key);
                         }
                         else
