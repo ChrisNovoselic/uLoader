@@ -34,7 +34,7 @@ namespace uLoaderCommon
             
             set
             {
-                _value = parse(value, out _prefix);
+                _value = parse(value, out _prefix);//ошибка парсер(mi0)
 
                 if (isError == true)
                     throw new Exception(@"HTimeSpan::ctor () - error parsing value ...");

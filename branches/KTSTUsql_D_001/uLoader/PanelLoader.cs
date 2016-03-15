@@ -529,7 +529,7 @@ namespace uLoader
                 string []vals;
 
                 vals = (GetWorkingItem(key) as MaskedTextBox).Text.Split (new char [] {':'});
-                tsRes = HTimeSpan.FromMinutes (Int32.Parse (vals[0]) * 60 + Int32.Parse(vals[1]));
+                tsRes = HTimeSpan.FromMinutes(Int32.Parse (vals[0]) * 60 + Int32.Parse(vals[1]));//00:00??dd1 or hh24
 
                 return tsRes;
             }

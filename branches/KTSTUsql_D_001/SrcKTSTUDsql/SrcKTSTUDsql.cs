@@ -39,10 +39,10 @@ namespace SrcKTSTUDsql
                 string cmd = string.Empty;
                 //перевод даты для суточного набора
                 if (DateTimeStart != DateTimeBegin)
-                    DateTimeBegin = (DateTimeBegin - DateTimeBegin.TimeOfDay).AddDays(PeriodMain.Days).AddMinutes(-30);  
+                    DateTimeBegin = (DateTimeBegin - DateTimeBegin.TimeOfDay).AddDays(PeriodMain.Days).AddMinutes(-30);
                 else
                     DateTimeBegin = (DateTimeStart - DateTimeStart.TimeOfDay).AddMinutes(-30);
-  
+
                 //Формировать запрос
                 i = 0;
                 foreach (GroupSignalsKTSTUDsql.SIGNALIdsql s in m_arSignals)
@@ -114,46 +114,35 @@ namespace SrcKTSTUDsql
             foreach (GroupSignalsKTSTUDsql.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
             {
                 rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal, @"DATETIME");
-
+                                    //вывод данных только при полных сутках
                 if ((rowsSgnl.Length > 0)
-                    && (rowsSgnl.Length % 2 == 0))
+                    && (rowsSgnl.Length % 48 == 0))
                 {
                     dtValue = (DateTime)rowsSgnl[0][@"DATETIME"];
-                    //вывод данных только при полных сутках
-                    if (rowsSgnl.Length % 48 == 0)
-                    {
-                        //Для обработки метки времени по UTC
-                        dtValue = dtValue.AddHours((int)rowsSgnl[0][@"UTC_OFFSET"]).AddDays(PeriodMain.Days);
-                        //Вычислить суммарное значение для сигнала
-                        dblSumValue = 0F;
-                        //cntRec = 0;
-                        //??? обработка всех последующих строк, а если строк > 2
-                        foreach (DataRow r in rowsSgnl)
-                        {
-                            dblSumValue += (double)r[@"VALUE"];
-                            //cntRec++;
-                        }
-                        // при необходимости найти среднее
-                        if (sgnl.m_bAVG == true)
-                            //dblSumValue /= cntRec;
-                            dblSumValue /= rowsSgnl.Length;
-                        else
-                            ;
-                        // вставить строку
-                        tblRes.Rows.Add(new object[] {
+                    //Для обработки метки времени по UTC
+                    dtValue = dtValue.AddHours((int)rowsSgnl[0][@"UTC_OFFSET"]).AddDays(PeriodMain.Days);
+                    //Вычислить суммарное значение для сигнала
+                    dblSumValue = 0F;
+                    //cntRec = 0;
+                    //??? обработка всех последующих строк, а если строк > 2
+                    foreach (DataRow r in rowsSgnl)
+                        dblSumValue += (double)r[@"VALUE"];
+                    // при необходимости найти среднее
+                    if (sgnl.m_bAVG == true)
+                        dblSumValue /= rowsSgnl.Length;
+                    else
+                        ;
+                    // вставить строку
+                    tblRes.Rows.Add(new object[] {
                             sgnl.m_idMain
                             , dtValue
                             , dblSumValue
                         });
-                    }
-                    else
-                        // значения за разные интервалы интегрирования
-                        //break
-                        continue
-                        ;
                 }
                 else
-                    ; // не полные данные
+                    continue
+                    ;
+                // не полные данные
             }
             base.parseValues(tblRes);
         }

@@ -119,7 +119,6 @@ namespace DestTEP32Dsql
                             if (dtToInsert.Equals(((DateTime)row[@"DATETIME"]).AddHours(0)) == false)
                             {
                                 Logging.Logg().Error(@"GroupSignalsTEP32sql::getInsertValuesQuery () - в наборе различные дата/время...", Logging.INDEX_MESSAGE.NOT_SET);
-
                                 break;
                             }
                             else
@@ -128,9 +127,7 @@ namespace DestTEP32Dsql
                         if (iIdToInsert > 0)
                         {
                             strRow = @"(";
-
                             strRow += iIdToInsert + @",";
-                            //strRow += (_parent as HHandlerDbULoaderStatTMDest).m_strIdTEC + @",";
                             strRow += 0.ToString() + @","; //ID_USER
                             strRow += m_IdSourceConnSett + @","; //ID_SOURCE
                             strRow += @"'" + dtToInsert.GetValueOrDefault().ToString(s_strFormatDbDateTime) + @"',";
@@ -139,9 +136,7 @@ namespace DestTEP32Dsql
                             strRow += 0.ToString() + @","; //QUALITY
                             strRow += ((float)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
                             strRow += @"GETDATE()";
-
                             strRow += @"),";
-
                             strRows += strRow;
                         }
                         else
