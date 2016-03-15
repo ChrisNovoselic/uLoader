@@ -29,6 +29,9 @@ namespace SrcKTSTUDsql
             {
             }
 
+            /// <summary>
+            /// Установить содержание для запроса
+            /// </summary>
             protected override void setQuery()
             {
                 int idReq = HMath.GetRandomNumber()

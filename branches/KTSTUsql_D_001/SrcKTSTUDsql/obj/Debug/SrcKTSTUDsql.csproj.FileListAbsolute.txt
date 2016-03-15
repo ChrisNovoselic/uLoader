@@ -9,4 +9,3 @@ D:\MyProjects\C.Net\uLoader\uLoader\bin\Debug\SrcKTSTUDsql.dll
 D:\MyProjects\C.Net\uLoader\uLoader\bin\Debug\SrcKTSTUDsql.pdb
 D:\MyProjects\C.Net\uLoader\SrcKTSTUDsql\obj\Debug\SrcKTSTUDsql.dll
 D:\MyProjects\C.Net\uLoader\SrcKTSTUDsql\obj\Debug\SrcKTSTUDsql.pdb
-D:\MyProjects\C.Net\uLoader\SrcKTSTUDsql\obj\Debug\SrcKTSTUDsql.csprojResolveAssemblyReference.cache

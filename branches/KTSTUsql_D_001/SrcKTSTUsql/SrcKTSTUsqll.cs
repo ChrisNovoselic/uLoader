@@ -76,6 +76,11 @@ namespace SrcKTSTUsql
                     + @";";
             }
 
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="id_link"></param>
+            /// <returns></returns>
             protected override object getIdMain(object id_link)
             {
                 throw new NotImplementedException();
