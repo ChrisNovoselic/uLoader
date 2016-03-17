@@ -46,15 +46,29 @@ namespace SrcMSTKKSNAMEtoris
             public DataTable m_tableTorIs;
             //public DataTable TableTorIs { get { return m_tableTorIs; } }
 
+            DataTable m_TablePrevValue;
+
+
             public GroupSignalsMSTKKSNAMEtoris(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
-                m_tableTorIs = new DataTable ();
-                m_tableTorIs.Columns.AddRange (new DataColumn [] {
+                DataColumn[] arColl = new DataColumn[] {
                                                 new DataColumn (@"ID", typeof (string))
                                                 , new DataColumn (@"VALUE", typeof (double))
                                                 , new DataColumn (@"DATETIME", typeof (DateTime))
-                                            });
+                                            };
+
+                m_tableTorIs = new DataTable ();
+
+                m_tableTorIs.Columns.AddRange (arColl);
+                
+                m_TablePrevValue = new DataTable();
+                m_TablePrevValue = m_tableTorIs.Copy();
+
+                for (int i = 0; i < m_arSignals.Length; i++)
+                {
+                    m_TablePrevValue.Rows.Add(new object[] { (m_arSignals[i] as uLoaderCommon.HHandlerDbULoaderSrc.GroupSignalsSrc.SIGNALMSTKKSNAMEsql).m_kks_name.ToString(), Convert.ToDouble(0.ToString("F2")), DateTime.MinValue}); 
+                }
             }
 
             public event DelegateObjectFunc EvtAdviseItem;
@@ -105,17 +119,74 @@ namespace SrcMSTKKSNAMEtoris
                 return iRes;
             }
 
+            protected DataTable returnTable(DataTable table)
+            {
+                if (table != null)
+                {
+                    try
+                    {
+                        lock (this)
+                        {
+                            foreach (DataRow r in m_TablePrevValue.Rows)
+                            {
+                            //    if (r[0].ToString() != "T5#SN0RBM_I_10_V")
+                            //    {
+                                    DataRow[] arrRows;
+                                    arrRows = table.Select("KKSNAME_MST='" + r[0].ToString() + "'");
+                                    if (arrRows.Length == 0)
+                                    {
+
+                                        r[2] = DateTime.UtcNow.AddSeconds(-5); ;
+                                        table.Rows.Add(new object[] { getIdMain(r[0]), r[1], r[2], r[0] });
+                                    }
+                                    else
+                                    {
+                                        for (int i = 0; i < arrRows.Length; i++)
+                                        {
+                                            if ((DateTime)r[2] <= DateTime.UtcNow.AddSeconds(-10))
+                                            {
+                                                if (Convert.ToDouble(arrRows[i][1]) == Convert.ToDouble(0))
+                                                {
+                                                    r[2] = DateTime.UtcNow.AddSeconds(-5);
+                                                    table.Rows[i][1] = r[1];
+                                                    table.Rows[i][2] = r[2];
+                                                }
+                                                else
+                                                {
+                                                    r[2] = DateTime.UtcNow.AddSeconds(-5);
+                                                    table.Rows.Add(new object[] { getIdMain(r[0]), r[1], r[2], r[0] });
+                                                }
+                                            }
+                                        }
+                                    }
+                                //}
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.Print(e.Message);
+                    }
+                }
+                Debug.Print("Вызван ReturnTable "+DateTime.Now);
+                return table;
+
+            }
+
             public override DataTable TableRecieved
             {
-                get { return base.TableRecieved; }
+                get
+                {
+                    return returnTable(base.TableRecieved);
+                }
 
                 set
                 {
                     //Требуется добавить идентификаторы 'id_main'
-                    if ((! (value == null)) && (! (value.Columns.IndexOf (@"ID") < 0)))
+                    if ((!(value == null)) && (!(value.Columns.IndexOf(@"ID") < 0)))
                     {
-                        DataTable tblVal = value.Copy ();
-                        tblVal.Columns.Add (@"KKSNAME_MST", typeof(string));
+                        DataTable tblVal = value.Copy();
+                        tblVal.Columns.Add(@"KKSNAME_MST", typeof(string));
                         //tblVal.Columns.Add(@"ID_MST", typeof(int));
 
                         foreach (DataRow r in tblVal.Rows)
@@ -129,7 +200,9 @@ namespace SrcMSTKKSNAMEtoris
                         base.TableRecieved = tblVal;
                     }
                     else
+                    {
                         base.TableRecieved = value;
+                    }
                 }
             }
 
@@ -137,17 +210,28 @@ namespace SrcMSTKKSNAMEtoris
             {
                 //string strIds = @" [ID=" + ((_parent as HHandlerDbULoader)._iPlugin as PlugInBase)._Id + @", key=" + m_Id + @"]: ";
 
-                DateTime dtVal = 
+                DateTime dtVal =
                     //new DateTime(1904, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(timestamp)
-                    DateTime.Now
+                     DateTime.UtcNow;
+               
                     //DateTime.FromOADate(timestamp)
                     //new DateTime(1899, 12, 30).AddDays(timestamp)
                     ;
                 
                 lock (this)
                 {
+                    foreach (DataRow r in m_TablePrevValue.Rows)
+                    {
+                        if (r[0].ToString().Trim() == kksname)
+                        {
+                            r[1] = value;
+                            r[2] = dtVal;
+                        }
+                    }
+
                     Debug.Print("Добавление строки " + kksname + ", " + value.ToString() + ", " + dtVal.ToString());
                     m_tableTorIs.Rows.Add(new object[] { kksname, value, dtVal });
+
                 }
 
                 Console.WriteLine(@"Получено значение для сигнала:" + kksname + @"(" + value + @", " + dtVal.ToString (@"dd.MM.yyyy HH:mm:ss.fff") + @")");
@@ -179,6 +263,7 @@ namespace SrcMSTKKSNAMEtoris
                         {
                             foreach (DataRow r in rowsDel)
                                 m_tableTorIs.Rows.Remove(r);
+                            //m_tableTorIs = returnTable(m_tableTorIs);
                             //??? Обязательно ли...
                             m_tableTorIs.AcceptChanges();
                         }
@@ -188,6 +273,10 @@ namespace SrcMSTKKSNAMEtoris
                     else
                         ;
 
+                    //m_tableTorIs = returnTable(m_tableTorIs);
+                    
+                    
+                                          
                     iCur = m_tableTorIs.Rows.Count;
                 }
 

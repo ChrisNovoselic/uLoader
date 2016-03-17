@@ -37,7 +37,7 @@ namespace DestTorisStatKKSNAMEsql
             {
                 //Заполнить таблицы с повторяющимися/уникальными записями
                 base.setTableRes();
-                //добаить поле [tmdelta]
+                //добавить поле [tmdelta]
                 (m_DupTables as DataTableDuplicateTMDelta).Convert(TableRecievedPrev, Signals);
             }
 
@@ -59,7 +59,6 @@ namespace DestTorisStatKKSNAMEsql
                     + @",[ID_SOURCE]"
                     + @",[ID_SRV_TM]"
                         + @") VALUES";
-
                 foreach (DataRow row in m_DupTables.TableDistinct.Rows)
                 {
                     if (((string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim()))).Length > 0)
