@@ -42,7 +42,7 @@ namespace SrcKTSTUDsql
                     DateTimeBegin = (DateTimeBegin - DateTimeBegin.TimeOfDay).AddDays(PeriodMain.Days).AddMinutes(-30);
                 else
                     DateTimeBegin = (DateTimeStart - DateTimeStart.TimeOfDay).AddMinutes(-30);
-
+              
                 //Формировать запрос
                 i = 0;
                 foreach (GroupSignalsKTSTUDsql.SIGNALIdsql s in m_arSignals)
@@ -98,8 +98,6 @@ namespace SrcKTSTUDsql
         /// <param name="table"></param>
         protected override void parseValues(System.Data.DataTable table)
         {
-            //base.parseValues (table);
-
             DataTable tblRes = new DataTable();
             DataRow[] rowsSgnl = null;
             DateTime dtValue;
