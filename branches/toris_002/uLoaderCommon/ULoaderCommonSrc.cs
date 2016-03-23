@@ -635,8 +635,7 @@ namespace uLoaderCommon
 
     public abstract class HHandlerDbULoaderDatetimeSrc : HHandlerDbULoaderSrc
     {
-        public HTimeSpan m_tsCurIntervalOffset
-            , m_tsUTCOffset;
+        public HTimeSpan m_tsCurIntervalOffset;
 
         protected string m_strDateTimeDBFormat;
 
@@ -874,12 +873,7 @@ namespace uLoaderCommon
             else
                 ;
 
-            // = Convert.ToInt32(m_dictAdding[@"UTC_OFFSET"]);
-            m_tsUTCOffset = HTimeSpan.NotValue;
-            if (m_dictAdding.ContainsKey(@"UTC_OFFSET") == true)
-                m_tsUTCOffset = new HTimeSpan(m_dictAdding[@"UTC_OFFSET"]);
-            else
-                ;
+            
             
             // = Convert.ToInt32(m_dictAdding[@"CUR_INTERVAL_OFFSET"]);
             m_tsCurIntervalOffset = HTimeSpan.NotValue;

@@ -8,16 +8,16 @@ using System.Globalization;
 using HClassLibrary;
 using uLoaderCommon;
 
-namespace DestTechSiteLastsql
+namespace DestStatLastSql
 {
-    public class DestTechSiteLastsql : HHandlerDbULoaderStatTMKKSNAMEDest
+    public class DestStatLastSql : HHandlerDbULoaderStatTMKKSNAMEDest
     {
         //private static string s_strNameDestTable = @"ALL_PARAM_SOTIASSO"
         //    , s_strIdTEC = @"6";
         /// <summary>
         /// Конструктор - вспомогательный (статическая сборка)
         /// </summary>
-        public DestTechSiteLastsql()
+        public DestStatLastSql()
             : base()
         {
         }
@@ -25,14 +25,14 @@ namespace DestTechSiteLastsql
         /// Конструктор - основной (динамическая загрузка)
         /// </summary>
         /// <param name="iPlugIn">Объект для связи с "родительским" приложением</param>
-        public DestTechSiteLastsql(IPlugIn iPlugIn)
+        public DestStatLastSql(IPlugIn iPlugIn)
             : base(iPlugIn)
         {
         }
 
-        private class GroupSignalsTechSiteLastsql : GroupSignalsStatTMKKSNAMEDest
+        private class GroupSignalsStatLastSql : GroupSignalsStatTMKKSNAMEDest
         {
-            public GroupSignalsTechSiteLastsql(HHandlerDbULoader parent, int id, object[] pars)
+            public GroupSignalsStatLastSql(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
             }
@@ -48,30 +48,28 @@ namespace DestTechSiteLastsql
                     , strRow = string.Empty;
                 Type typeVal = m_DupTables.TableDistinct.Columns[@"VALUE"].DataType;
                 int idSrvTM = (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).GetIdSrvTM(m_IdSourceConnSett);
-                HTimeSpan tsUTCOffset = _parent.m_tsUTCOffset == HTimeSpan.NotValue ? new HTimeSpan(@"ss0") : _parent.m_tsUTCOffset;
 
                 //Logging.Logg().Debug(@"GroupSignalsStatKKSNAMEsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 strRow = @"UPDATE [" + (_parent as HHandlerDbULoaderDest).m_strNameTable + @"]"
-                                    + @"SET [ID_SRV_TM]=" + idSrvTM + @",";
+                                    + @"SET ";
 
                 foreach (DataRow row in m_DupTables.TableDistinct.Rows)
                 {
                     strRes += strRow;
 
                     strRes += @"[VALUE]='";
-                    if (typeVal.Equals(typeof (decimal)) == true)
-                        strRes += ((decimal)row[@"VALUE"]).ToString("F7", CultureInfo.InvariantCulture);
-                    else
-                        if(typeVal.Equals(typeof (double)) == true)
-                            strRes += ((double)row[@"VALUE"]).ToString("F7", CultureInfo.InvariantCulture);
-                        else
-                            strRes += row[@"VALUE"];
-                    strRes +=  @"',";
-                    strRes += @"[DATETIME]='" + ((DateTime)row[@"DATETIME"]).Add(tsUTCOffset.Value).ToString(s_strFormatDbDateTime) + @"'" + @",";
+                    strRes += ((double)row[@"VALUE"]).ToString("F5", CultureInfo.InvariantCulture);
+
+                    //if (typeVal.Equals(typeof(decimal)) == true)
+                    //    strRes += ((decimal)row[@"VALUE"]).ToString("F7", CultureInfo.InvariantCulture);
+                    //else
+                    //    strRes += row[@"VALUE"];
+                    strRes += @"',";
+                    strRes += @"[DATETIME]='" + ((DateTime)row[@"DATETIME"]).ToString(s_strFormatDbDateTime) + @"'" + @",";
                     strRes += @"[UPDATE_DATETIME]=GETDATE()";
 
-                    strRes += @" WHERE [KKS_NAME]='" + (string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) + @"';";
+                    strRes += @" WHERE [ID_SIGNAL]='" + row[@"KKSNAME_MST"] + @"';";
                 }
 
                 return
@@ -88,7 +86,7 @@ namespace DestTechSiteLastsql
 
         protected override GroupSignals createGroupSignals(int id, object[] objs)
         {
-            return new GroupSignalsTechSiteLastsql(this, id, objs);
+            return new GroupSignalsStatLastSql(this, id, objs);
         }
     }
 
@@ -99,9 +97,9 @@ namespace DestTechSiteLastsql
         public PlugIn()
             : base()
         {
-            _Id = 2005;
+            _Id = 2008;
 
-            registerType(_Id, typeof(DestTechSiteLastsql));
+            registerType(_Id, typeof(DestStatLastSql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

@@ -234,6 +234,7 @@ namespace uLoaderCommon
     /// </summary>
     public abstract class HHandlerDbULoader : HHandlerDb
     {
+        public HTimeSpan m_tsUTCOffset;
         /// <summary>
         /// Ссылка на объект "связи" с клиентом
         /// </summary>
@@ -847,7 +848,7 @@ namespace uLoaderCommon
                 {
                     if (m_dictGroupSignals.Keys.Contains(id) == false)
                     {//Считать переданные параметры - параметрами сигналов                
-                        m_dictGroupSignals.Add(id, createGroupSignals (id, pars));
+                        m_dictGroupSignals.Add(id, createGroupSignals(id, pars));
 
                         //Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - добавить группу сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
@@ -885,6 +886,13 @@ namespace uLoaderCommon
 
                                 //Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
                             }
+
+                    // = Convert.ToInt32(m_dictAdding[@"UTC_OFFSET"]);
+                    m_tsUTCOffset = HTimeSpan.NotValue;
+                    if (m_dictAdding.ContainsKey(@"UTC_OFFSET") == true)
+                        m_tsUTCOffset = new HTimeSpan(m_dictAdding[@"UTC_OFFSET"]);
+                    else
+                        ;
                 }
             }
             catch (Exception e)

@@ -20,6 +20,11 @@ namespace SrcMSTKKSNAMEtoris
 
         TORISLib.TorISData m_torIsData;
 
+        /// <summary>
+        /// Объект для синхронизации изменения очереди событий
+        /// </summary>
+        private object m_lockData;
+
         public SrcMSTKKSNAMEtoris()
             //??? аргументы лишние, кроме 1-го
             : base(string.Empty, MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.HALF_PERIOD)
@@ -119,46 +124,48 @@ namespace SrcMSTKKSNAMEtoris
                 return iRes;
             }
 
-            protected DataTable returnTable(DataTable table)
+            protected DataTable returnTable(DataTable table)//table  - таблица для отображения/записи
             {
-                if (table != null)
+                if (table != null)//Если таблица не пустая то
                 {
                     try
                     {
                         lock (this)
                         {
-                            foreach (DataRow r in m_TablePrevValue.Rows)
+                            foreach (DataRow r in m_TablePrevValue.Rows)//Перебор таблицы с последними значениями сигналов
                             {
-                            //    if (r[0].ToString() != "T5#SN0RBM_I_10_V")
-                            //    {
-                                    DataRow[] arrRows;
-                                    arrRows = table.Select("KKSNAME_MST='" + r[0].ToString() + "'");
-                                    if (arrRows.Length == 0)
+                                //    if (r[0].ToString() != "T5#SN0RBM_I_10_V")
+                                //    {
+                                DataRow[] arrRows;
+                                arrRows = table.Select("KKSNAME_MST='" + r[0].ToString() + "'");//Выбираем из таблицы сигнал
+                                if (arrRows.Length == 0)//Если нет значений то
+                                {
+                                        r[2] = DateTime.UtcNow.AddSeconds(-5);//-5 - смещение от текущего времени для записи значения с данной меткой времени
+                                        table.Rows.Add(new object[] { getIdMain(r[0]), r[1], r[2], r[0] });//Добавляем последние значение сигнала со смещенной меткой времени
+                                }
+                                else
+                                {//если значения есть то
+                                    for (int i = 0; i < arrRows.Length; i++)//перебираем выборку строк
                                     {
-
-                                        r[2] = DateTime.UtcNow.AddSeconds(-5); ;
-                                        table.Rows.Add(new object[] { getIdMain(r[0]), r[1], r[2], r[0] });
-                                    }
-                                    else
-                                    {
-                                        for (int i = 0; i < arrRows.Length; i++)
+                                        if ((DateTime)r[2] <= DateTime.UtcNow.AddSeconds(-PeriodLocal.TotalSeconds))//если метка времени последнего значения меньше текущего времени со смещением в период обновления
                                         {
-                                            if ((DateTime)r[2] <= DateTime.UtcNow.AddSeconds(-10))
+                                            if (Convert.ToDouble(arrRows[i][1]) == Convert.ToDouble(0))//если значение 0
                                             {
-                                                if (Convert.ToDouble(arrRows[i][1]) == Convert.ToDouble(0))
-                                                {
-                                                    r[2] = DateTime.UtcNow.AddSeconds(-5);
-                                                    table.Rows[i][1] = r[1];
-                                                    table.Rows[i][2] = r[2];
-                                                }
-                                                else
-                                                {
-                                                    r[2] = DateTime.UtcNow.AddSeconds(-5);
-                                                    table.Rows.Add(new object[] { getIdMain(r[0]), r[1], r[2], r[0] });
-                                                }
+                                                r[2] = ((DateTime)r[2]).AddSeconds(PeriodLocal.TotalSeconds);//Добавляем к метке времени время опроса
+                                                table.Rows[i][1] = r[1];//обновляем значение
+                                                table.Rows[i][2] = r[2];//обновляем метку времени
+                                                //Здесь делаем обновлением потому что нулевые значения отображаются в таблице но не обновляется метка времени 
+                                            }
+                                            else
+                                            {
+                                                r[2] = ((DateTime)r[2]).AddSeconds(PeriodLocal.TotalSeconds);//Добавляем к метке времени время опроса
+                                                //table.Rows.Add(new object[] { getIdMain(r[0]), r[1], r[2], r[0] });//Добавляем строку с последним значением сигнала и новой меткой времени
+                                                table.Rows[i][1] = r[1];//обновляем значение
+                                                table.Rows[i][2] = r[2];//обновляем метку времени
                                             }
                                         }
                                     }
+                                }
                                 //}
                             }
                         }
@@ -229,7 +236,8 @@ namespace SrcMSTKKSNAMEtoris
                         }
                     }
 
-                    Debug.Print("Добавление строки " + kksname + ", " + value.ToString() + ", " + dtVal.ToString());
+                    //Debug.Print("Добавление строки " + kksname + ", " + value.ToString() + ", " + dtVal.ToString());
+                    
                     m_tableTorIs.Rows.Add(new object[] { kksname, value, dtVal });
 
                 }
@@ -245,7 +253,7 @@ namespace SrcMSTKKSNAMEtoris
                 {
                     iPrev = m_tableTorIs.Rows.Count;
                     string strSel =
-                        @"DATETIME<'" + DateTimeBegin.ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"' OR DATETIME>='" + DateTimeBegin.AddSeconds(PeriodMain.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
+                        @"DATETIME<'" + DateTimeBegin.AddSeconds(-15).ToUniversalTime().ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"' OR DATETIME>='" + DateTimeBegin.AddSeconds(PeriodLocal.TotalSeconds+5).ToUniversalTime().ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
                         //@"DATETIME BETWEEN '" + m_dtStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"' AND '" + m_dtStart.AddSeconds(m_tmSpanPeriod.Seconds).ToString(@"yyyy/MM/dd HH:mm:ss") + @"'"
                         ;
 
@@ -262,7 +270,11 @@ namespace SrcMSTKKSNAMEtoris
                         if (rowsDel.Length > 0)
                         {
                             foreach (DataRow r in rowsDel)
+                            {
+                                Debug.Print("Удалено значение для сигнала:" + r[0].ToString() + "(" + r[1].ToString() + "," + r[2].ToString() + ")");
                                 m_tableTorIs.Rows.Remove(r);
+                            }
+                            Debug.Print(strSel);
                             //m_tableTorIs = returnTable(m_tableTorIs);
                             //??? Обязательно ли...
                             m_tableTorIs.AcceptChanges();
@@ -609,9 +621,10 @@ namespace SrcMSTKKSNAMEtoris
         {
             int iRes = 0;
             error = false;
-
-            table = (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsMSTKKSNAMEtoris).m_tableTorIs.Copy();
-
+            lock (this)
+            {
+                table = (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsMSTKKSNAMEtoris).m_tableTorIs.Copy();
+            }
             return iRes;
         }
 

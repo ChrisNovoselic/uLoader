@@ -67,7 +67,7 @@ namespace DestTorisStatKKSNAMEsql
 
                         strRow += @"'" + row[@"KKSNAME_MST"] + @"'" + @",";
                         strRow += m_IdSourceTEC + @",";
-                        strRow += ((double)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
+                        strRow += ((double)row[@"VALUE"]).ToString("F4", CultureInfo.InvariantCulture) + @",";
                         strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(0).ToString(s_strFormatDbDateTime) + @"',";
                         //strRow += "0" + @",";
                         strRow += row[@"tmdelta"] + @",";
@@ -110,7 +110,7 @@ namespace DestTorisStatKKSNAMEsql
         public PlugIn()
             : base()
         {
-            _Id = 2002;
+            _Id = 2007;
 
             registerType(_Id, typeof(DestTorisStatKKSNAMEsql));
         }
