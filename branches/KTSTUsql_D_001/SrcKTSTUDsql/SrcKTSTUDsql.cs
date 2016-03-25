@@ -39,9 +39,9 @@ namespace SrcKTSTUDsql
                 string cmd = string.Empty;
                 //перевод даты для суточного набора
                 if (DateTimeStart != DateTimeBegin)
-                    DateTimeBegin = (DateTimeBegin - DateTimeBegin.TimeOfDay).AddDays(PeriodMain.Days).AddMinutes(-30);
+                    DateTimeBegin = (DateTimeBegin - DateTimeBegin.TimeOfDay).AddDays(PeriodMain.Days);
                 else
-                    DateTimeBegin = (DateTimeStart - DateTimeStart.TimeOfDay).AddMinutes(-30);
+                    DateTimeBegin = (DateTimeStart - DateTimeStart.TimeOfDay);
               
                 //Формировать запрос
                 i = 0;
@@ -124,7 +124,7 @@ namespace SrcKTSTUDsql
                     //cntRec = 0;
                     //??? обработка всех последующих строк, а если строк > 2
                     foreach (DataRow r in rowsSgnl)
-                        dblSumValue += (double)r[@"VALUE"];
+                        dblSumValue += Convert.ToSingle(r[@"VALUE"].ToString());
                     // при необходимости найти среднее
                     if (sgnl.m_bAVG == true)
                         dblSumValue /= rowsSgnl.Length;
