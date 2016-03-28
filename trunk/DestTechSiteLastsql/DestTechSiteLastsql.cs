@@ -30,7 +30,7 @@ namespace DestTechSiteLastsql
         {
         }
 
-        private class GroupSignalsTechSiteLastsql : GroupSignalsStatTMKKSNAMEDest
+        private class GroupSignalsTechSiteLastsql : GroupSignalsStatTMKKSNAMEOraDest
         {
             public GroupSignalsTechSiteLastsql(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)

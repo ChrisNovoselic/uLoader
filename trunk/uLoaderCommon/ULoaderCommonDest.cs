@@ -989,6 +989,20 @@ namespace uLoaderCommon
                 return iRes;
             }
         }
+
+        protected abstract class GroupSignalsStatTMKKSNAMEOraDest : GroupSignalsStatTMKKSNAMEDest
+        {
+            public GroupSignalsStatTMKKSNAMEOraDest(HHandlerDbULoader parent, int id, object[] pars)
+                : base(parent, id, pars)
+            {
+            }
+
+            protected override GroupSignals.SIGNAL createSignal(object[] objs)
+            {
+                //ID_MAIN, ID_SRC_SGNL, KKSNAME_STAT
+                return new SIGNALStatKKSNAMEsql((int)objs[0], (int)objs[1], (string)objs[4]); //14.03.2016 было - 4
+            }
+        }
     }
 
     public class PlugInULoaderDest : PlugInULoader
