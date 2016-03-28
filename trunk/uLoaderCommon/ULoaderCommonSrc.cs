@@ -11,6 +11,7 @@ namespace uLoaderCommon
 {
     public abstract class HHandlerDbULoaderSrc : HHandlerDbULoader, ILoaderSrc
     {
+        public HTimeSpan m_tsUTCOffset;
         /// <summary>
         /// Идентификатор ТЭЦ
         ///  (при наличии в файле конфигурации для группы источников)
@@ -86,6 +87,22 @@ namespace uLoaderCommon
                         default: ;
                             break;
                     }
+
+            return iRes;
+        }
+
+        public override int Initialize(int id, object[] pars)
+        {
+            int iRes = -1;
+
+            // = Convert.ToInt32(m_dictAdding[@"UTC_OFFSET"]);
+            m_tsUTCOffset = HTimeSpan.NotValue;
+            if (m_dictAdding.ContainsKey(@"UTC_OFFSET") == true)
+                m_tsUTCOffset = new HTimeSpan(m_dictAdding[@"UTC_OFFSET"]);
+            else
+                ;
+            
+            iRes = base.Initialize(id, pars);            
 
             return iRes;
         }
@@ -634,8 +651,7 @@ namespace uLoaderCommon
 
     public abstract class HHandlerDbULoaderDatetimeSrc : HHandlerDbULoaderSrc
     {
-        public HTimeSpan m_tsCurIntervalOffset
-            , m_tsUTCOffset;
+        public HTimeSpan m_tsCurIntervalOffset;
 
         protected string m_strDateTimeDBFormat;
 
@@ -870,13 +886,6 @@ namespace uLoaderCommon
 
             if (m_dictGroupSignals.Keys.Contains(id) == true)
                 (m_dictGroupSignals[id] as GroupSignalsDatetimeSrc).SetDelegateActualizeDateTimeBegin(actualizeDateTimeBegin);
-            else
-                ;
-
-            // = Convert.ToInt32(m_dictAdding[@"UTC_OFFSET"]);
-            m_tsUTCOffset = HTimeSpan.NotValue;
-            if (m_dictAdding.ContainsKey(@"UTC_OFFSET") == true)
-                m_tsUTCOffset = new HTimeSpan(m_dictAdding[@"UTC_OFFSET"]);
             else
                 ;
             

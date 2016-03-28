@@ -407,8 +407,18 @@ namespace uLoaderCommon
                         foreach (DataRow r in tablePrev.Rows)
                             r[@"ID"] = getIdLink(r[@"ID"]);
                     else
+                    {
                         // отсутствует необходимое поле "ID"
-                        Logging.Logg().Warning(@"HHandlerDbULoader.GroupSignals::Convert (IdGroupSgls=" + m_Id +@") - отсутствует необходимое поле [ID]...", Logging.INDEX_MESSAGE.NOT_SET);
+                        Logging.Logg().Warning(@"HHandlerDbULoader.GroupSignals::Convert (IdGroupSgls=" + m_Id + @") - отсутствует необходимое поле [ID]...", Logging.INDEX_MESSAGE.NOT_SET);
+
+                        string strFieldsNames = string.Empty;
+                        foreach (DataColumn c in tablePrev.Columns)
+                            strFieldsNames += c.ColumnName + @", ";
+
+                        strFieldsNames = strFieldsNames.Substring(0, strFieldsNames.Length - 2);
+
+                        Logging.Logg().Debug(@"Все столбцы в таблице: " + strFieldsNames, Logging.INDEX_MESSAGE.NOT_SET);
+                    }
                 }
                 catch (Exception e)
                 {

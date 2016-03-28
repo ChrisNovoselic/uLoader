@@ -36,7 +36,9 @@ namespace SrcBiyskDiscrLastora
 
                 if (m_arSignals.Length > 0)
                 {
-                    m_strQuery += @"SELECT TAGNAME as ID, VALUE, QUALITY, DATETIME FROM ARCH_SIGNALS.ARCHIVE_TS WHERE TAGNAME IN (";
+                    m_strQuery += @"SELECT TAGNAME as ID, VALUE, QUALITY"
+                            + @", DATETIME + numtodsinterval(" + (_parent as SrcBiyskDiscrLastora).m_tsUTCOffset.Value.TotalHours + @",'hour') as DATETIME"
+                        + @" FROM ARCH_SIGNALS.ARCHIVE_TS WHERE TAGNAME IN (";
 
                     //Формировать зпрос
                     foreach (GroupSignalsSrc.SIGNALBiyskTMoraSrc s in m_arSignals)

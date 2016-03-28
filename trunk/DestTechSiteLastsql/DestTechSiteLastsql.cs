@@ -52,7 +52,7 @@ namespace DestTechSiteLastsql
                 //Logging.Logg().Debug(@"GroupSignalsStatKKSNAMEsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 strRow = @"UPDATE [" + (_parent as HHandlerDbULoaderDest).m_strNameTable + @"]"
-                                    + @"SET [ID_SRV_TM]=" + idSrvTM + @",";
+                            + @"SET [ID_SRV_TM]=" + idSrvTM + @",";
 
                 foreach (DataRow row in m_DupTables.TableDistinct.Rows)
                 {
@@ -64,7 +64,7 @@ namespace DestTechSiteLastsql
                     else
                         strRes += row[@"VALUE"];
                     strRes +=  @"',";
-                    strRes += @"[DATETIME]='" + ((DateTime)row[@"DATETIME"]).AddHours(-6).ToString(s_strFormatDbDateTime) + @"'" + @",";
+                    strRes += @"[DATETIME]='" + ((DateTime)row[@"DATETIME"]).AddHours(-7).ToString(s_strFormatDbDateTime) + @"'" + @",";
                     strRes += @"[UPDATE_DATETIME]=GETDATE()";
 
                     strRes += @" WHERE [KKS_NAME]='" + (string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) + @"';";

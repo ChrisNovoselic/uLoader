@@ -41,7 +41,9 @@ namespace SrcBiyskTMLastora
                 //Формировать зпрос
                 foreach (GroupSignalsSrc.SIGNALBiyskTMoraSrc s in m_arSignals)
                 {
-                    m_strQuery += @"SELECT " + s.m_idMain + @" as ID, VALUE, QUALITY, DATETIME FROM ARCH_SIGNALS." + s.m_NameTable
+                    m_strQuery += @"SELECT " + s.m_idMain + @" as ID, VALUE, QUALITY"
+                            + @", DATETIME + numtodsinterval(" + (_parent as HHandlerDbULoaderSrc).m_tsUTCOffset.Value.TotalHours + @",'hour') as DATETIME" 
+                        + @" FROM ARCH_SIGNALS." + s.m_NameTable
                         + @" WHERE"
                         + @" DATETIME > " + @"to_timestamp('" + (_parent as SrcBiyskTMLastora).m_dtServer.AddMinutes(-1).ToString(@"yyyyMMdd HHmmss") + @"', 'yyyymmdd hh24missFF9')" //@" SYSTIMESTAMP - interval '1' minute"
                         //+ @" ORDER BY DATETIME DESC"
@@ -78,7 +80,7 @@ namespace SrcBiyskTMLastora
                                 rowAdd = tblVal.Rows.Add();
                                 rowAdd[@"ID"] = arSel[0][@"ID"];
                                 rowAdd[@"VALUE"] = arSel[0][@"VALUE"];
-                                rowAdd[@"DATETIME"] = arSel[0][@"DATETIME"];
+                                rowAdd[@"DATETIME"] = arSel[0][@"DATETIME"]; //((DateTime)arSel[0][@"DATETIME"]).Add((_parent as HHandlerDbULoaderDatetimeSrc).m_tsUTCOffset.Value);
                                 rowAdd[@"CNT"] = arSel.Length;
                             }
                             else
