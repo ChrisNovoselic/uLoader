@@ -61,6 +61,11 @@ namespace SrcBiyskDiscrLastora
                 ;
             }
 
+            protected override bool isUpdateQuery(int cntRec)
+            {
+                return false;
+            }
+
             protected override object getIdMain(object tag)
             {
                 int iRes = -1;
