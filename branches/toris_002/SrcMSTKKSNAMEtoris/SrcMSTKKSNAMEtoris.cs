@@ -12,6 +12,7 @@ namespace SrcMSTKKSNAMEtoris
 {
     public class SrcMSTKKSNAMEtoris : HHandlerDbULoaderDatetimeSrc
     {
+
         enum StatesMachine
         {
             Values
@@ -19,11 +20,6 @@ namespace SrcMSTKKSNAMEtoris
         }
 
         TORISLib.TorISData m_torIsData;
-
-        /// <summary>
-        /// Объект для синхронизации изменения очереди событий
-        /// </summary>
-        private object m_lockData;
 
         public SrcMSTKKSNAMEtoris()
             //??? аргументы лишние, кроме 1-го
@@ -48,10 +44,17 @@ namespace SrcMSTKKSNAMEtoris
 
         private class GroupSignalsMSTKKSNAMEtoris : GroupSignalsDatetimeSrc
         {
+            /// <summary>
+            /// Объект для синхронизации изменения очереди событий
+            /// </summary>
+            public object m_lockData;            
+
             public DataTable m_tableTorIs;
             //public DataTable TableTorIs { get { return m_tableTorIs; } }
 
             DataTable m_TablePrevValue;
+
+            static int s_repeatPrevValue_interval = 25;
 
 
             public GroupSignalsMSTKKSNAMEtoris(HHandlerDbULoader parent, int id, object[] pars)
@@ -74,6 +77,10 @@ namespace SrcMSTKKSNAMEtoris
                 {
                     m_TablePrevValue.Rows.Add(new object[] { (m_arSignals[i] as uLoaderCommon.HHandlerDbULoaderSrc.GroupSignalsSrc.SIGNALMSTKKSNAMEsql).m_kks_name.ToString(), Convert.ToDouble(0.ToString("F2")), DateTime.MinValue}); 
                 }
+
+                RepeatSignal += new RepeatSignalEventHandler(repeat_value);
+
+                m_lockData = new object();
             }
 
             public event DelegateObjectFunc EvtAdviseItem;
@@ -124,67 +131,60 @@ namespace SrcMSTKKSNAMEtoris
                 return iRes;
             }
 
-            protected DataTable returnTable(DataTable table)//table  - таблица для отображения/записи
-            {
-                if (table != null)//Если таблица не пустая то
-                {
-                    try
-                    {
-                        lock (this)
-                        {
-                            foreach (DataRow r in m_TablePrevValue.Rows)//Перебор таблицы с последними значениями сигналов
-                            {
-                                //    if (r[0].ToString() != "T5#SN0RBM_I_10_V")
-                                //    {
-                                DataRow[] arrRows;
-                                arrRows = table.Select("KKSNAME_MST='" + r[0].ToString() + "'");//Выбираем из таблицы сигнал
-                                if (arrRows.Length == 0)//Если нет значений то
-                                {
-                                        r[2] = DateTime.UtcNow.AddSeconds(-5);//-5 - смещение от текущего времени для записи значения с данной меткой времени
-                                        table.Rows.Add(new object[] { getIdMain(r[0]), r[1], r[2], r[0] });//Добавляем последние значение сигнала со смещенной меткой времени
-                                }
-                                else
-                                {//если значения есть то
-                                    for (int i = 0; i < arrRows.Length; i++)//перебираем выборку строк
-                                    {
-                                        if ((DateTime)r[2] <= DateTime.UtcNow.AddSeconds(-PeriodLocal.TotalSeconds))//если метка времени последнего значения меньше текущего времени со смещением в период обновления
-                                        {
-                                            if (Convert.ToDouble(arrRows[i][1]) == Convert.ToDouble(0))//если значение 0
-                                            {
-                                                r[2] = ((DateTime)r[2]).AddSeconds(PeriodLocal.TotalSeconds);//Добавляем к метке времени время опроса
-                                                table.Rows[i][1] = r[1];//обновляем значение
-                                                table.Rows[i][2] = r[2];//обновляем метку времени
-                                                //Здесь делаем обновлением потому что нулевые значения отображаются в таблице но не обновляется метка времени 
-                                            }
-                                            else
-                                            {
-                                                r[2] = ((DateTime)r[2]).AddSeconds(PeriodLocal.TotalSeconds);//Добавляем к метке времени время опроса
-                                                //table.Rows.Add(new object[] { getIdMain(r[0]), r[1], r[2], r[0] });//Добавляем строку с последним значением сигнала и новой меткой времени
-                                                table.Rows[i][1] = r[1];//обновляем значение
-                                                table.Rows[i][2] = r[2];//обновляем метку времени
-                                            }
-                                        }
-                                    }
-                                }
-                                //}
-                            }
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.Print(e.Message);
-                    }
-                }
-                Debug.Print("Вызван ReturnTable "+DateTime.Now);
-                return table;
+            //protected DataTable returnTable(DataTable table)//table  - таблица для отображения/записи
+            //{
+            //    if (table != null )//Если таблица не пустая то
+            //    {
+            //        try
+            //        {
+            //            lock (this)
+            //            {
+            //                if (table.Rows.Count > 0)
+            //                {
+            //                    foreach (DataRow r in m_TablePrevValue.Rows)//Перебор таблицы с последними значениями сигналов
+            //                    {
+            //                        DataRow[] rows_kks;
+            //                        DataRow[] rows_table;
+            //                        rows_kks = table.Select("KKSNAME_MST='" + r[0].ToString() + "'");
+            //                        foreach (DataRow rows in rows_kks)
+            //                        {
+            //                            rows_table = table.Select("KKSNAME_MST='" + r[0].ToString() + "' and DATETIME='" + rows["DATETIME"] + "'");
+            //                            if (rows_table.Length > 1)
+            //                            {
+            //                                for (int i = rows_table.Length - 1; i > 0; i--)
+            //                                {
+            //                                    table.Rows.Remove(rows_table[i]);
+            //                                }
+            //                                break;
+            //                            }
+            //                        }
+            //                    }
+            //                }
+            //            }
+            //        }
+            //        catch (Exception e)
+            //        {
+            //            Debug.Print(e.Message);
+            //        }
+            //    }
+            //    Debug.Print("Вызван ReturnTable " + DateTime.Now);
+            //    return table;
 
-            }
+            //}
 
             public override DataTable TableRecieved
             {
                 get
                 {
-                    return returnTable(base.TableRecieved);
+                   // return returnTable(base.TableRecieved);
+                    if(base.TableRecieved!=null)
+                        if (base.TableRecieved.Rows.Count == 0)
+                            if (RepeatSignal != null)
+                                RepeatSignal(this, new RepeatSignalEventArgs("zero_count"
+                                                    , new object()
+                                                    ));
+
+                    return base.TableRecieved;
                 }
 
                 set
@@ -215,41 +215,65 @@ namespace SrcMSTKKSNAMEtoris
 
             public void ItemNewValue(string kksname, object value, double timestamp, int quality, int status)
             {
-                //string strIds = @" [ID=" + ((_parent as HHandlerDbULoader)._iPlugin as PlugInBase)._Id + @", key=" + m_Id + @"]: ";
+                DateTime dtVal = DateTime.UtcNow;
 
-                DateTime dtVal =
-                    //new DateTime(1904, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(timestamp)
-                     DateTime.UtcNow;
-               
-                    //DateTime.FromOADate(timestamp)
-                    //new DateTime(1899, 12, 30).AddDays(timestamp)
-                    ;
-                
-                lock (this)
+                if (kksname == "zero_count")
                 {
                     foreach (DataRow r in m_TablePrevValue.Rows)
                     {
-                        if (r[0].ToString().Trim() == kksname)
+                        if ((DateTime)r[2] <= DateTime.UtcNow.AddSeconds(-s_repeatPrevValue_interval) & (DateTime)r[2] != DateTime.MinValue)//если метка времени последнего значения меньше текущего времени со смещением в период обновления
                         {
-                            r[1] = value;
-                            r[2] = dtVal;
+                            if (RepeatSignal != null)
+                                RepeatSignal(this, new RepeatSignalEventArgs(r[0].ToString()
+                                                    , r[1]
+                                                    ));
                         }
                     }
-
-                    //Debug.Print("Добавление строки " + kksname + ", " + value.ToString() + ", " + dtVal.ToString());
-                    
-                    m_tableTorIs.Rows.Add(new object[] { kksname, value, dtVal });
-
                 }
+                else
+                {
+                    //DateTime.FromOADate(timestamp)
+                    //new DateTime(1899, 12, 30).AddDays(timestamp)
+                    ;
 
-                Console.WriteLine(@"Получено значение для сигнала:" + kksname + @"(" + value + @", " + dtVal.ToString (@"dd.MM.yyyy HH:mm:ss.fff") + @")");
+                    lock (this)
+                    {
+                        foreach (DataRow r in m_TablePrevValue.Rows)
+                        {
+                            if (r[0].ToString().Trim() == kksname)
+                            {
+                                r[1] = value;
+                                r[2] = dtVal;
+                            }
+                            if ((DateTime)r[2] <= DateTime.UtcNow.AddSeconds(-s_repeatPrevValue_interval) & (DateTime)r[2] != DateTime.MinValue)//если метка времени последнего значения меньше текущего времени со смещением в период обновления
+                            {
+                                if (RepeatSignal != null)
+                                    RepeatSignal(this, new RepeatSignalEventArgs(r[0].ToString()
+                                                        , r[1]
+                                                        ));
+                            }
+                        }
+
+                        //Debug.Print("Добавление строки " + kksname + ", " + value.ToString() + ", " + dtVal.ToString());
+
+                    }
+
+                    lock (m_lockData)
+                    {
+                        Logging.Logg().Action("StateCheckResponse:m_tableTorIs.Rows.Add()", Logging.INDEX_MESSAGE.NOT_SET);
+                        m_tableTorIs.Rows.Add(new object[] { kksname, value, dtVal });
+                    }
+                    
+
+                    Console.WriteLine(@"Получено значение для сигнала:" + kksname + @"(" + value + @", " + dtVal.ToString(@"dd.MM.yyyy HH:mm:ss.fff") + @")");
+                }
             }
 
             public void ClearValues ()
             {
                 int iPrev = 0, iDel = 0, iCur = 0;
 
-                lock (this)
+                lock (m_lockData)
                 {
                     iPrev = m_tableTorIs.Rows.Count;
                     string strSel =
@@ -272,12 +296,16 @@ namespace SrcMSTKKSNAMEtoris
                             foreach (DataRow r in rowsDel)
                             {
                                 Debug.Print("Удалено значение для сигнала:" + r[0].ToString() + "(" + r[1].ToString() + "," + r[2].ToString() + ")");
+                                Logging.Logg().Action("StateCheckResponse:m_tableTorIs.Rows.Remove()", Logging.INDEX_MESSAGE.NOT_SET);
                                 m_tableTorIs.Rows.Remove(r);
+
                             }
                             Debug.Print(strSel);
                             //m_tableTorIs = returnTable(m_tableTorIs);
                             //??? Обязательно ли...
+                            Logging.Logg().Action("StateCheckResponse:m_tableTorIs.AcceptChanges()", Logging.INDEX_MESSAGE.NOT_SET);
                             m_tableTorIs.AcceptChanges();
+
                         }
                         else
                             ;
@@ -294,6 +322,54 @@ namespace SrcMSTKKSNAMEtoris
 
                 Console.WriteLine(@"Обновление рез-та [ID=" + m_Id + @"]: " + @"(было=" + iPrev + @", удалено=" + iDel + @", осталось=" + iCur + @")");
             }
+
+            private void repeat_value(object sender, RepeatSignalEventArgs e)
+            {
+                ItemNewValue(e.m_kks_name, e.m_Value, 0, 0, 0);
+            }
+            
+            /// <summary>
+            /// Класс для описания аргумента события - повторная запись значения
+            /// </summary>
+            public class RepeatSignalEventArgs : EventArgs
+            {
+                /// <summary>
+                /// Имя изменяемого параметра
+                /// </summary>
+                public string m_kks_name;
+
+                /// <summary>
+                /// Значение изменяемого параметра
+                /// </summary>
+                public object m_Value;
+
+                public RepeatSignalEventArgs()
+                    : base()
+                {
+                    m_kks_name = string.Empty;
+                    m_Value = string.Empty;
+
+                }
+
+                public RepeatSignalEventArgs(string kks_name, object value)
+                    : this()
+                {
+                    m_kks_name = kks_name;
+                    m_Value = value;
+                }
+            }
+
+            /// <summary>
+            /// Тип делегата для обработки события - повторная запись значения
+            /// </summary>
+            public delegate void RepeatSignalEventHandler(object obj, RepeatSignalEventArgs e);
+
+            /// <summary>
+            /// Событие - повторная запись значения
+            /// </summary>
+            public RepeatSignalEventHandler RepeatSignal;
+
+
         }
 
         protected override HHandlerDbULoaderDatetimeSrc.GroupSignals createGroupSignals(int id, object[] objs)
@@ -621,9 +697,19 @@ namespace SrcMSTKKSNAMEtoris
         {
             int iRes = 0;
             error = false;
-            lock (this)
+            table = null;
+            lock ((m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsMSTKKSNAMEtoris).m_lockData)
             {
-                table = (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsMSTKKSNAMEtoris).m_tableTorIs.Copy();
+                Logging.Logg().Action("StateCheckResponse:m_tableTorIs.Copy()", Logging.INDEX_MESSAGE.NOT_SET);
+                try
+                {
+                    table = (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsMSTKKSNAMEtoris).m_tableTorIs.Copy();
+                    
+                }
+                catch (Exception e)
+                {
+                    Logging.Logg().Warning("StateCheckResponse:m_tableTorIs.Copy() " + e.Message, Logging.INDEX_MESSAGE.NOT_SET);
+                }
             }
             return iRes;
         }
