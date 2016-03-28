@@ -246,6 +246,9 @@ namespace uLoaderCommon
         /// </summary>
         protected abstract class GroupSignalsSrc : GroupSignals
         {
+            protected int m_UTCOffsetTotalHours { get { return (_parent as HHandlerDbULoaderSrc).m_tsUTCOffset == HTimeSpan.NotValue ?
+                0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsUTCOffset.Value.TotalHours; } }
+            
             protected class SIGNALBiyskTMoraSrc : SIGNAL
             {
                 public string m_NameTable;                

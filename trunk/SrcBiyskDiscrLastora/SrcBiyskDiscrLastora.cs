@@ -33,11 +33,12 @@ namespace SrcBiyskDiscrLastora
                 m_strQuery = string.Empty;
 
                 string strUnion = @",";
+                int iUTCOffsetTotalHours = m_UTCOffsetTotalHours;
 
                 if (m_arSignals.Length > 0)
                 {
                     m_strQuery += @"SELECT TAGNAME as ID, VALUE, QUALITY"
-                            + @", DATETIME + numtodsinterval(" + (_parent as SrcBiyskDiscrLastora).m_tsUTCOffset.Value.TotalHours + @",'hour') as DATETIME"
+                            + @", DATETIME + numtodsinterval(" + iUTCOffsetTotalHours + @",'hour') as DATETIME"
                         + @" FROM ARCH_SIGNALS.ARCHIVE_TS WHERE TAGNAME IN (";
 
                     //Формировать зпрос
