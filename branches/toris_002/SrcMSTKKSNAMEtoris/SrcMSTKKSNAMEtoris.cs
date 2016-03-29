@@ -54,7 +54,8 @@ namespace SrcMSTKKSNAMEtoris
 
             DataTable m_TablePrevValue;
 
-            static int s_repeatPrevValue_interval = 25;
+            static int s_repeatPrevValue_interval = 22;
+            static int s_repeatPrevValue_interval_offset = 4;
 
 
             public GroupSignalsMSTKKSNAMEtoris(HHandlerDbULoader parent, int id, object[] pars)
@@ -176,13 +177,17 @@ namespace SrcMSTKKSNAMEtoris
             {
                 get
                 {
-                   // return returnTable(base.TableRecieved);
-                    if(base.TableRecieved!=null)
-                        if (base.TableRecieved.Rows.Count == 0)
-                            if (RepeatSignal != null)
-                                RepeatSignal(this, new RepeatSignalEventArgs("zero_count"
-                                                    , new object()
-                                                    ));
+                    DataTable table = base.TableRecieved;
+                    // return returnTable(base.TableRecieved);
+                    if (table != null)
+                        foreach (DataRow r in m_TablePrevValue.Rows)//Перебор таблицы с последними значениями сигналов
+                        {
+                            if (Convert.ToDateTime(r[2]) <= DateTime.UtcNow.AddSeconds(-s_repeatPrevValue_interval))
+                                if (RepeatSignal != null)
+                                    RepeatSignal(this, new RepeatSignalEventArgs("zero_count"
+                                                        , new object()
+                                                        ));
+                        }
 
                     return base.TableRecieved;
                 }
@@ -221,12 +226,14 @@ namespace SrcMSTKKSNAMEtoris
                 {
                     foreach (DataRow r in m_TablePrevValue.Rows)
                     {
-                        if ((DateTime)r[2] <= DateTime.UtcNow.AddSeconds(-s_repeatPrevValue_interval) & (DateTime)r[2] != DateTime.MinValue)//если метка времени последнего значения меньше текущего времени со смещением в период обновления
+                        if ((DateTime)r[2] <= DateTime.UtcNow.AddSeconds(-(s_repeatPrevValue_interval + s_repeatPrevValue_interval_offset)) & (DateTime)r[2] != DateTime.MinValue)//если метка времени последнего значения меньше текущего времени со смещением в период обновления
                         {
                             if (RepeatSignal != null)
+                            {
                                 RepeatSignal(this, new RepeatSignalEventArgs(r[0].ToString()
                                                     , r[1]
                                                     ));
+                            }
                         }
                     }
                 }
@@ -234,18 +241,21 @@ namespace SrcMSTKKSNAMEtoris
                 {
                     //DateTime.FromOADate(timestamp)
                     //new DateTime(1899, 12, 30).AddDays(timestamp)
-                    ;
-
+                    
                     lock (this)
                     {
                         foreach (DataRow r in m_TablePrevValue.Rows)
                         {
                             if (r[0].ToString().Trim() == kksname)
                             {
+
                                 r[1] = value;
-                                r[2] = dtVal;
+                                if (status == -1991)
+                                    r[2] = Convert.ToDateTime(r[2]).AddSeconds(s_repeatPrevValue_interval);
+                                else
+                                    r[2] = dtVal;
                             }
-                            if ((DateTime)r[2] <= DateTime.UtcNow.AddSeconds(-s_repeatPrevValue_interval) & (DateTime)r[2] != DateTime.MinValue)//если метка времени последнего значения меньше текущего времени со смещением в период обновления
+                            if ((DateTime)r[2] <= DateTime.UtcNow.AddSeconds(-(s_repeatPrevValue_interval + s_repeatPrevValue_interval_offset)) & (DateTime)r[2] != DateTime.MinValue)//если метка времени последнего значения меньше текущего времени со смещением в период обновления
                             {
                                 if (RepeatSignal != null)
                                     RepeatSignal(this, new RepeatSignalEventArgs(r[0].ToString()
@@ -277,7 +287,7 @@ namespace SrcMSTKKSNAMEtoris
                 {
                     iPrev = m_tableTorIs.Rows.Count;
                     string strSel =
-                        @"DATETIME<'" + DateTimeBegin.AddSeconds(-15).ToUniversalTime().ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"' OR DATETIME>='" + DateTimeBegin.AddSeconds(PeriodLocal.TotalSeconds+5).ToUniversalTime().ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
+                        @"DATETIME<'" + DateTimeBegin.AddSeconds(-(PeriodLocal.TotalSeconds + 15)).ToUniversalTime().ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"' OR DATETIME>='" + DateTimeBegin.AddSeconds(PeriodLocal.TotalSeconds + 5).ToUniversalTime().ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
                         //@"DATETIME BETWEEN '" + m_dtStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"' AND '" + m_dtStart.AddSeconds(m_tmSpanPeriod.Seconds).ToString(@"yyyy/MM/dd HH:mm:ss") + @"'"
                         ;
 
@@ -295,12 +305,12 @@ namespace SrcMSTKKSNAMEtoris
                         {
                             foreach (DataRow r in rowsDel)
                             {
-                                Debug.Print("Удалено значение для сигнала:" + r[0].ToString() + "(" + r[1].ToString() + "," + r[2].ToString() + ")");
+                                Debug.Print("Удалено значение для сигнала:" + r[0].ToString() + "(" + r[1].ToString() + "," + r[2].ToString() + ") " +DateTime.Now.ToString());
                                 Logging.Logg().Action("StateCheckResponse:m_tableTorIs.Rows.Remove()", Logging.INDEX_MESSAGE.NOT_SET);
                                 m_tableTorIs.Rows.Remove(r);
 
                             }
-                            Debug.Print(strSel);
+                            //Debug.Print(strSel);
                             //m_tableTorIs = returnTable(m_tableTorIs);
                             //??? Обязательно ли...
                             Logging.Logg().Action("StateCheckResponse:m_tableTorIs.AcceptChanges()", Logging.INDEX_MESSAGE.NOT_SET);
@@ -320,12 +330,12 @@ namespace SrcMSTKKSNAMEtoris
                     iCur = m_tableTorIs.Rows.Count;
                 }
 
-                Console.WriteLine(@"Обновление рез-та [ID=" + m_Id + @"]: " + @"(было=" + iPrev + @", удалено=" + iDel + @", осталось=" + iCur + @")");
+                //Console.WriteLine(@"Обновление рез-та [ID=" + m_Id + @"]: " + @"(было=" + iPrev + @", удалено=" + iDel + @", осталось=" + iCur + @")");
             }
 
             private void repeat_value(object sender, RepeatSignalEventArgs e)
             {
-                ItemNewValue(e.m_kks_name, e.m_Value, 0, 0, 0);
+                ItemNewValue(e.m_kks_name, e.m_Value, 0, 0, -1991);
             }
             
             /// <summary>
