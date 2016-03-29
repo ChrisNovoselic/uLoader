@@ -59,7 +59,7 @@ namespace DestStatLastSql
                     strRes += strRow;
 
                     strRes += @"[VALUE]='";
-                    strRes += ((double)row[@"VALUE"]).ToString("F5", CultureInfo.InvariantCulture);
+                    strRes += ((double)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture);
 
                     //if (typeVal.Equals(typeof(decimal)) == true)
                     //    strRes += ((decimal)row[@"VALUE"]).ToString("F7", CultureInfo.InvariantCulture);
