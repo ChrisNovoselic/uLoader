@@ -47,7 +47,7 @@ namespace SrcMSTKKSNAMEtoris
             /// <summary>
             /// Объект для синхронизации изменения очереди событий
             /// </summary>
-            public object m_lockData;            
+            public object m_lockData;
 
             public DataTable m_tableTorIs;
             //public DataTable TableTorIs { get { return m_tableTorIs; } }
@@ -132,53 +132,12 @@ namespace SrcMSTKKSNAMEtoris
                 return iRes;
             }
 
-            //protected DataTable returnTable(DataTable table)//table  - таблица для отображения/записи
-            //{
-            //    if (table != null )//Если таблица не пустая то
-            //    {
-            //        try
-            //        {
-            //            lock (this)
-            //            {
-            //                if (table.Rows.Count > 0)
-            //                {
-            //                    foreach (DataRow r in m_TablePrevValue.Rows)//Перебор таблицы с последними значениями сигналов
-            //                    {
-            //                        DataRow[] rows_kks;
-            //                        DataRow[] rows_table;
-            //                        rows_kks = table.Select("KKSNAME_MST='" + r[0].ToString() + "'");
-            //                        foreach (DataRow rows in rows_kks)
-            //                        {
-            //                            rows_table = table.Select("KKSNAME_MST='" + r[0].ToString() + "' and DATETIME='" + rows["DATETIME"] + "'");
-            //                            if (rows_table.Length > 1)
-            //                            {
-            //                                for (int i = rows_table.Length - 1; i > 0; i--)
-            //                                {
-            //                                    table.Rows.Remove(rows_table[i]);
-            //                                }
-            //                                break;
-            //                            }
-            //                        }
-            //                    }
-            //                }
-            //            }
-            //        }
-            //        catch (Exception e)
-            //        {
-            //            Debug.Print(e.Message);
-            //        }
-            //    }
-            //    Debug.Print("Вызван ReturnTable " + DateTime.Now);
-            //    return table;
-
-            //}
-
             public override DataTable TableRecieved
             {
                 get
                 {
                     DataTable table = base.TableRecieved;
-                    // return returnTable(base.TableRecieved);
+                    
                     if (table != null)
                         foreach (DataRow r in m_TablePrevValue.Rows)//Перебор таблицы с последними значениями сигналов
                         {
@@ -239,16 +198,12 @@ namespace SrcMSTKKSNAMEtoris
                 }
                 else
                 {
-                    //DateTime.FromOADate(timestamp)
-                    //new DateTime(1899, 12, 30).AddDays(timestamp)
-                    
                     lock (this)
                     {
                         foreach (DataRow r in m_TablePrevValue.Rows)
                         {
                             if (r[0].ToString().Trim() == kksname)
                             {
-
                                 r[1] = value;
                                 if (status == -1991)
                                     r[2] = Convert.ToDateTime(r[2]).AddSeconds(s_repeatPrevValue_interval);
@@ -270,12 +225,12 @@ namespace SrcMSTKKSNAMEtoris
 
                     lock (m_lockData)
                     {
-                        Logging.Logg().Action("StateCheckResponse:m_tableTorIs.Rows.Add()", Logging.INDEX_MESSAGE.NOT_SET);
+                        //Logging.Logg().Action("StateCheckResponse:m_tableTorIs.Rows.Add()", Logging.INDEX_MESSAGE.NOT_SET);
                         m_tableTorIs.Rows.Add(new object[] { kksname, value, dtVal });
                     }
-                    
 
-                    Console.WriteLine(@"Получено значение для сигнала:" + kksname + @"(" + value + @", " + dtVal.ToString(@"dd.MM.yyyy HH:mm:ss.fff") + @")");
+
+                    //Console.WriteLine(@"Получено значение для сигнала:" + kksname + @"(" + value + @", " + dtVal.ToString(@"dd.MM.yyyy HH:mm:ss.fff") + @")");
                 }
             }
 
@@ -305,15 +260,15 @@ namespace SrcMSTKKSNAMEtoris
                         {
                             foreach (DataRow r in rowsDel)
                             {
-                                Debug.Print("Удалено значение для сигнала:" + r[0].ToString() + "(" + r[1].ToString() + "," + r[2].ToString() + ") " +DateTime.Now.ToString());
-                                Logging.Logg().Action("StateCheckResponse:m_tableTorIs.Rows.Remove()", Logging.INDEX_MESSAGE.NOT_SET);
+                                //Debug.Print("Удалено значение для сигнала:" + r[0].ToString() + "(" + r[1].ToString() + "," + r[2].ToString() + ") " +DateTime.Now.ToString());
+                                //Logging.Logg().Action("StateCheckResponse:m_tableTorIs.Rows.Remove()", Logging.INDEX_MESSAGE.NOT_SET);
                                 m_tableTorIs.Rows.Remove(r);
 
                             }
                             //Debug.Print(strSel);
                             //m_tableTorIs = returnTable(m_tableTorIs);
                             //??? Обязательно ли...
-                            Logging.Logg().Action("StateCheckResponse:m_tableTorIs.AcceptChanges()", Logging.INDEX_MESSAGE.NOT_SET);
+                            //Logging.Logg().Action("StateCheckResponse:m_tableTorIs.AcceptChanges()", Logging.INDEX_MESSAGE.NOT_SET);
                             m_tableTorIs.AcceptChanges();
 
                         }
@@ -558,7 +513,7 @@ namespace SrcMSTKKSNAMEtoris
                 m_dictSignalsAdvised.Add(kks_name, idGrpSgnls);
             }
 
-            Logging.Logg ().Action (@"Подписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);
+            //Logging.Logg ().Action (@"Подписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);
 
             int quality, status;
             int type = 3;
@@ -628,7 +583,7 @@ namespace SrcMSTKKSNAMEtoris
                 m_dictSignalsAdvised.Remove(kks_name);
             }
 
-            Logging.Logg().Action(@"Отписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);
+            //Logging.Logg().Action(@"Отписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);
         }
 
         private void torIsData_ItemNewValue(string kksname, int type, object value, double timestamp, int quality, int status)
@@ -710,7 +665,7 @@ namespace SrcMSTKKSNAMEtoris
             table = null;
             lock ((m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsMSTKKSNAMEtoris).m_lockData)
             {
-                Logging.Logg().Action("StateCheckResponse:m_tableTorIs.Copy()", Logging.INDEX_MESSAGE.NOT_SET);
+                //Logging.Logg().Action("StateCheckResponse:m_tableTorIs.Copy()", Logging.INDEX_MESSAGE.NOT_SET);
                 try
                 {
                     table = (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsMSTKKSNAMEtoris).m_tableTorIs.Copy();

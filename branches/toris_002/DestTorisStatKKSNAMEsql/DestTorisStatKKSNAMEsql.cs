@@ -62,7 +62,7 @@ namespace DestTorisStatKKSNAMEsql
                         + @") VALUES";
                 foreach (DataRow row in m_DupTables.TableDistinct.Rows)
                 {
-                    Debug.Print("Записано в БД: " + row[@"KKSNAME_MST"] + " " + ((double)row[@"VALUE"]).ToString("F4", CultureInfo.InvariantCulture) + " " + ((DateTime)row[@"DATETIME"]).AddHours(0).ToString(s_strFormatDbDateTime)+".");
+                    //Debug.Print("Записано в БД: " + row[@"KKSNAME_MST"] + " " + ((double)row[@"VALUE"]).ToString("F4", CultureInfo.InvariantCulture) + " " + ((DateTime)row[@"DATETIME"]).AddHours(0).ToString(s_strFormatDbDateTime)+".");
                     if (((string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim()))).Length > 0)
                     {
                         strRow = @"(";
@@ -84,7 +84,7 @@ namespace DestTorisStatKKSNAMEsql
                     else
                         ; // не найдено соответствие с Id источника
                 }
-                Debug.Print("/****************************************************/ " + DateTime.Now.ToString());
+                Logging.Logg().Action("Записано в БД " + DateTime.Now.ToString(), Logging.INDEX_MESSAGE.NOT_SET);
                 //Лишняя ','
                 strRes = strRes.Substring(0, strRes.Length - 1);
 
