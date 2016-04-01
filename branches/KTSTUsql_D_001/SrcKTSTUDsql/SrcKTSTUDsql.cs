@@ -118,7 +118,7 @@ namespace SrcKTSTUDsql
                 {
                     dtValue = (DateTime)rowsSgnl[0][@"DATETIME"];
                     //Для обработки метки времени по UTC
-                    dtValue = dtValue.AddHours((int)rowsSgnl[0][@"UTC_OFFSET"]).AddDays(PeriodMain.Days);
+                    dtValue = dtValue.AddHours((int)rowsSgnl[0][@"UTC_OFFSET"]).AddDays(PeriodMain.Days).AddMinutes(-30);
                     //Вычислить суммарное значение для сигнала
                     dblSumValue = 0F;
                     //cntRec = 0;

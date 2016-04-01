@@ -130,8 +130,8 @@ namespace DestTEP32Dsql
                             strRow += iIdToInsert + @",";
                             strRow += 0.ToString() + @","; //ID_USER
                             strRow += m_IdSourceConnSett + @","; //ID_SOURCE
-                            strRow += @"'" + dtToInsert.GetValueOrDefault().AddMinutes(-30).ToString(s_strFormatDbDateTime) + @"',";
-                            strRow += 19.ToString() + @","; //ID_TIME = 1 ч
+                            strRow += @"'" + dtToInsert.GetValueOrDefault().ToString(s_strFormatDbDateTime) + @"',";
+                            strRow += 19.ToString() + @","; //ID_TIME = 1 day
                             strRow += 0.ToString() + @","; //ID_TIMEZONE = UTC
                             strRow += 0.ToString() + @","; //QUALITY
                             strRow += ((float)row[@"VALUE"]).ToString("F3",CultureInfo.InvariantCulture) + @",";
