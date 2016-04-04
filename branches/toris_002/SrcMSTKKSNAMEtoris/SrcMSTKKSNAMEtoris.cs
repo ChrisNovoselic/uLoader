@@ -183,40 +183,54 @@ namespace SrcMSTKKSNAMEtoris
 
                 if (kksname == "zero_count")
                 {
-                    foreach (DataRow r in m_TablePrevValue.Rows)
+                    try
                     {
-                        if ((DateTime)r[2] <= DateTime.UtcNow.AddSeconds(-(s_repeatPrevValue_interval + s_repeatPrevValue_interval_offset)) & (DateTime)r[2] != DateTime.MinValue)//если метка времени последнего значения меньше текущего времени со смещением в период обновления
+                        foreach (DataRow r in m_TablePrevValue.Rows)
                         {
-                            if (RepeatSignal != null)
+                            if ((DateTime)r[2] <= DateTime.UtcNow.AddSeconds(-(s_repeatPrevValue_interval + s_repeatPrevValue_interval_offset)) & (DateTime)r[2] != DateTime.MinValue)//если метка времени последнего значения меньше текущего времени со смещением в период обновления
                             {
-                                RepeatSignal(this, new RepeatSignalEventArgs(r[0].ToString()
-                                                    , r[1]
-                                                    ));
+                                if (RepeatSignal != null)
+                                {
+                                    RepeatSignal(this, new RepeatSignalEventArgs(r[0].ToString()
+                                                        , r[1]
+                                                        ));
+                                }
                             }
                         }
+                    }
+                    catch (Exception e)
+                    {
+                        Logging.Logg().Exception(e, "SrcMSTKKSNAMEtoris.GroupSignalsMSTKKSNAMEtoris.ItemNewValue - Ошибка перебора m_TablePrevValue при kksname = zero_count", Logging.INDEX_MESSAGE.NOT_SET);
                     }
                 }
                 else
                 {
                     lock (this)
                     {
-                        foreach (DataRow r in m_TablePrevValue.Rows)
+                        try
                         {
-                            if (r[0].ToString().Trim() == kksname)
+                            foreach (DataRow r in m_TablePrevValue.Rows)
                             {
-                                r[1] = value;
-                                if (status == -1991)
-                                    r[2] = Convert.ToDateTime(r[2]).AddSeconds(s_repeatPrevValue_interval);
-                                else
-                                    r[2] = dtVal;
+                                if (r[0].ToString().Trim() == kksname)
+                                {
+                                    r[1] = value;
+                                    if (status == -1991)
+                                        r[2] = Convert.ToDateTime(r[2]).AddSeconds(s_repeatPrevValue_interval);
+                                    else
+                                        r[2] = dtVal;
+                                }
+                                if ((DateTime)r[2] <= DateTime.UtcNow.AddSeconds(-(s_repeatPrevValue_interval + s_repeatPrevValue_interval_offset)) & (DateTime)r[2] != DateTime.MinValue)//если метка времени последнего значения меньше текущего времени со смещением в период обновления
+                                {
+                                    if (RepeatSignal != null)
+                                        RepeatSignal(this, new RepeatSignalEventArgs(r[0].ToString()
+                                                            , r[1]
+                                                            ));
+                                }
                             }
-                            if ((DateTime)r[2] <= DateTime.UtcNow.AddSeconds(-(s_repeatPrevValue_interval + s_repeatPrevValue_interval_offset)) & (DateTime)r[2] != DateTime.MinValue)//если метка времени последнего значения меньше текущего времени со смещением в период обновления
-                            {
-                                if (RepeatSignal != null)
-                                    RepeatSignal(this, new RepeatSignalEventArgs(r[0].ToString()
-                                                        , r[1]
-                                                        ));
-                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Logging.Logg().Exception(e, "SrcMSTKKSNAMEtoris.GroupSignalsMSTKKSNAMEtoris.ItemNewValue - ...", Logging.INDEX_MESSAGE.NOT_SET);
                         }
 
                         //Debug.Print("Добавление строки " + kksname + ", " + value.ToString() + ", " + dtVal.ToString());
