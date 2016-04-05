@@ -59,21 +59,26 @@ namespace uLoader
         /// <summary>
         /// Конструктор - основной (без параметров)
         /// </summary>
-        public HHandlerQueue()
+        public HHandlerQueue(string strNameFileINI)
             : base ()
         {
-            string strNameFileINI = string.Empty;
-            //Получить наименование файла из командной строки
-            string []args = Environment.GetCommandLineArgs ();
-            if (args.Length > 1)
+            //string strNameFileINI = string.Empty;
+            ////Получить наименование файла из командной строки
+            //string []args = Environment.GetCommandLineArgs ();
+            //if (args.Length > 1)
+            //{
+            //    //strNameFileINI = @"setup_biysktmora.ini";
+            //    //strNameFileINI = @"setup_ktstusql.ini";
+            //    strNameFileINI = args[1];
+            //}
+            //else
+            //    //Наименование файла "по умолчанию"
+            //    strNameFileINI = @"setup.ini";
+            if (strNameFileINI == string.Empty || strNameFileINI==null)
             {
-                //strNameFileINI = @"setup_biysktmora.ini";
-                //strNameFileINI = @"setup_ktstusql.ini";
-                strNameFileINI = args[1];
-            }
-            else
-                //Наименование файла "по умолчанию"
                 strNameFileINI = @"setup.ini";
+            }
+
             //Прочитать и "разобрать" файл конфигурации
             m_fileINI = new FormMain.FileINI(strNameFileINI);
 
