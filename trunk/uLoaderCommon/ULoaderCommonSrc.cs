@@ -11,7 +11,10 @@ namespace uLoaderCommon
 {
     public abstract class HHandlerDbULoaderSrc : HHandlerDbULoader, ILoaderSrc
     {
-        public HTimeSpan m_tsUTCOffset;
+        /// <summary>
+        /// Разность между часовыми поясами даты/времени сервера и метками даты/времени значений в БД
+        /// </summary>
+        public HTimeSpan m_tsServerOffsetToData;
         /// <summary>
         /// Идентификатор ТЭЦ
         ///  (при наличии в файле конфигурации для группы источников)
@@ -96,9 +99,9 @@ namespace uLoaderCommon
             int iRes = -1;
 
             // = Convert.ToInt32(m_dictAdding[@"UTC_OFFSET"]);
-            m_tsUTCOffset = HTimeSpan.NotValue;
-            if (m_dictAdding.ContainsKey(@"UTC_OFFSET") == true)
-                m_tsUTCOffset = new HTimeSpan(m_dictAdding[@"UTC_OFFSET"]);
+            m_tsServerOffsetToData = HTimeSpan.NotValue;
+            if (m_dictAdding.ContainsKey(@"SERVER_OFFSET_TO_DATA") == true)
+                m_tsServerOffsetToData = new HTimeSpan(m_dictAdding[@"SERVER_OFFSET_TO_DATA"]);
             else
                 ;
             
@@ -246,8 +249,8 @@ namespace uLoaderCommon
         /// </summary>
         protected abstract class GroupSignalsSrc : GroupSignals
         {
-            protected int m_UTCOffsetTotalHours { get { return (_parent as HHandlerDbULoaderSrc).m_tsUTCOffset == HTimeSpan.NotValue ?
-                0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsUTCOffset.Value.TotalHours; } }
+            protected int m_ServerOffsetToDataTotalHours { get { return (_parent as HHandlerDbULoaderSrc).m_tsServerOffsetToData == HTimeSpan.NotValue ?
+                0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsServerOffsetToData.Value.TotalHours; } }
             
             protected class SIGNALBiyskTMoraSrc : SIGNAL
             {
@@ -727,7 +730,7 @@ namespace uLoaderCommon
                     long msec = -1L
                         , msecDiff = -1L;
 
-                    msec = (long)(_parent as HHandlerDbULoaderDatetimeSrc).m_tsUTCOffset.Value.TotalMilliseconds;
+                    msec = (long)(_parent as HHandlerDbULoaderDatetimeSrc).m_tsServerOffsetToData.Value.TotalMilliseconds;
                     if (Math.Abs(msec) > 1)
                         msecDiff = msec;
                     else
@@ -765,7 +768,7 @@ namespace uLoaderCommon
                     long msec = -1L
                         , msecDiff = -1L;
 
-                    msec = (long)(_parent as HHandlerDbULoaderDatetimeSrc).m_tsUTCOffset.Value.TotalMilliseconds;
+                    msec = (long)(_parent as HHandlerDbULoaderDatetimeSrc).m_tsServerOffsetToData.Value.TotalMilliseconds;
                     if (Math.Abs(msec) > 1)
                         msecDiff = msec;
                     else
