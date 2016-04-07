@@ -26,7 +26,7 @@ namespace DestBiTECStatKKSNAMEsql
         {
         }
 
-        private class GroupSignalsStatKKSNAMEsql : GroupSignalsStatTMKKSNAMEOraDest
+        private class GroupSignalsStatKKSNAMEsql : GroupSignalsStatTMKKSNAMEDest
         {
             public GroupSignalsStatKKSNAMEsql(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)

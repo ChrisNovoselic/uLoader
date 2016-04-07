@@ -941,8 +941,10 @@ namespace uLoaderCommon
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
-                //ID_MAIN, ID_SRC_SGNL, KKSNAME_STAT
-                return new SIGNALStatKKSNAMEsql((int)objs[0], (int)objs[1], (string)objs[2]); //14.03.2016 было - 4
+                int indxKKS_NAMEStat = -1;
+                //ID_MAIN, ID_SRC_SGNL, KKSNAME_STAT (??? всегда крайнее)
+                indxKKS_NAMEStat = objs.Length - 1;
+                return new SIGNALStatKKSNAMEsql((int)objs[0], (int)objs[1], (string)objs[indxKKS_NAMEStat]); //14.03.2016 было - 4
             }
 
             protected override object getIdTarget(int idLink)
@@ -990,19 +992,19 @@ namespace uLoaderCommon
             }
         }
 
-        protected abstract class GroupSignalsStatTMKKSNAMEOraDest : GroupSignalsStatTMKKSNAMEDest
-        {
-            public GroupSignalsStatTMKKSNAMEOraDest(HHandlerDbULoader parent, int id, object[] pars)
-                : base(parent, id, pars)
-            {
-            }
+        //protected abstract class GroupSignalsStatTMKKSNAMEOraDest : GroupSignalsStatTMKKSNAMEDest
+        //{
+        //    public GroupSignalsStatTMKKSNAMEOraDest(HHandlerDbULoader parent, int id, object[] pars)
+        //        : base(parent, id, pars)
+        //    {
+        //    }
 
-            protected override GroupSignals.SIGNAL createSignal(object[] objs)
-            {
-                //ID_MAIN, ID_SRC_SGNL, KKSNAME_STAT
-                return new SIGNALStatKKSNAMEsql((int)objs[0], (int)objs[1], (string)objs[4]); //14.03.2016 было - 4
-            }
-        }
+        //    protected override GroupSignals.SIGNAL createSignal(object[] objs)
+        //    {
+        //        //ID_MAIN, ID_SRC_SGNL, KKSNAME_STAT
+        //        return new SIGNALStatKKSNAMEsql((int)objs[0], (int)objs[1], (string)objs[4]); //14.03.2016 было - 4
+        //    }
+        //}
     }
 
     public class PlugInULoaderDest : PlugInULoader
