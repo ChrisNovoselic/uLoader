@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data; //DataTable
+using System.Diagnostics;
 
 using TORISLib;
 
@@ -11,6 +12,7 @@ namespace SrcMSTKKSNAMEtoris
 {
     public class SrcMSTKKSNAMEtoris : HHandlerDbULoaderDatetimeSrc
     {
+
         enum StatesMachine
         {
             Values
@@ -42,18 +44,44 @@ namespace SrcMSTKKSNAMEtoris
 
         private class GroupSignalsMSTKKSNAMEtoris : GroupSignalsDatetimeSrc
         {
+            /// <summary>
+            /// Объект для синхронизации изменения очереди событий
+            /// </summary>
+            public object m_lockData;
+
             public DataTable m_tableTorIs;
             //public DataTable TableTorIs { get { return m_tableTorIs; } }
+
+            DataTable m_TablePrevValue;
+
+            static int s_repeatPrevValue_interval = 22;
+            static int s_repeatPrevValue_interval_offset = 4;
+
 
             public GroupSignalsMSTKKSNAMEtoris(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
-                m_tableTorIs = new DataTable ();
-                m_tableTorIs.Columns.AddRange (new DataColumn [] {
+                DataColumn[] arColl = new DataColumn[] {
                                                 new DataColumn (@"ID", typeof (string))
                                                 , new DataColumn (@"VALUE", typeof (double))
                                                 , new DataColumn (@"DATETIME", typeof (DateTime))
-                                            });
+                                            };
+
+                m_tableTorIs = new DataTable ();
+
+                m_tableTorIs.Columns.AddRange (arColl);
+                
+                m_TablePrevValue = new DataTable();
+                m_TablePrevValue = m_tableTorIs.Copy();
+
+                for (int i = 0; i < m_arSignals.Length; i++)
+                {
+                    m_TablePrevValue.Rows.Add(new object[] { (m_arSignals[i] as uLoaderCommon.HHandlerDbULoaderSrc.GroupSignalsSrc.SIGNALMSTKKSNAMEsql).m_kks_name.ToString(), Convert.ToDouble(0.ToString("F2")), DateTime.MinValue}); 
+                }
+
+                RepeatSignal += new RepeatSignalEventHandler(repeat_value);
+
+                m_lockData = new object();
             }
 
             public event DelegateObjectFunc EvtAdviseItem;
@@ -106,15 +134,30 @@ namespace SrcMSTKKSNAMEtoris
 
             public override DataTable TableRecieved
             {
-                get { return base.TableRecieved; }
+                get
+                {
+                    DataTable table = base.TableRecieved;
+                    
+                    if (table != null)
+                        foreach (DataRow r in m_TablePrevValue.Rows)//Перебор таблицы с последними значениями сигналов
+                        {
+                            if (Convert.ToDateTime(r[2]) <= DateTime.UtcNow.AddSeconds(-s_repeatPrevValue_interval))
+                                if (RepeatSignal != null)
+                                    RepeatSignal(this, new RepeatSignalEventArgs("zero_count"
+                                                        , new object()
+                                                        ));
+                        }
+
+                    return base.TableRecieved;
+                }
 
                 set
                 {
                     //Требуется добавить идентификаторы 'id_main'
-                    if ((! (value == null)) && (! (value.Columns.IndexOf (@"ID") < 0)))
+                    if ((!(value == null)) && (!(value.Columns.IndexOf(@"ID") < 0)))
                     {
-                        DataTable tblVal = value.Copy ();
-                        tblVal.Columns.Add (@"KKSNAME_MST", typeof(string));
+                        DataTable tblVal = value.Copy();
+                        tblVal.Columns.Add(@"KKSNAME_MST", typeof(string));
                         //tblVal.Columns.Add(@"ID_MST", typeof(int));
 
                         foreach (DataRow r in tblVal.Rows)
@@ -128,38 +171,92 @@ namespace SrcMSTKKSNAMEtoris
                         base.TableRecieved = tblVal;
                     }
                     else
+                    {
                         base.TableRecieved = value;
+                    }
                 }
             }
 
             public void ItemNewValue(string kksname, object value, double timestamp, int quality, int status)
             {
-                //string strIds = @" [ID=" + ((_parent as HHandlerDbULoader)._iPlugin as PlugInBase)._Id + @", key=" + m_Id + @"]: ";
+                DateTime dtVal = DateTime.UtcNow;
 
-                DateTime dtVal = 
-                    //new DateTime(1904, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(timestamp)
-                    DateTime.Now
-                    //DateTime.FromOADate(timestamp)
-                    //new DateTime(1899, 12, 30).AddDays(timestamp)
-                    ;
-
-                lock (this)
+                if (kksname == "zero_count")
                 {
-                    m_tableTorIs.Rows.Add(new object[] { kksname, value, dtVal });
+                    try
+                    {
+                        foreach (DataRow r in m_TablePrevValue.Rows)
+                        {
+                            if ((DateTime)r[2] <= DateTime.UtcNow.AddSeconds(-(s_repeatPrevValue_interval + s_repeatPrevValue_interval_offset)) & (DateTime)r[2] != DateTime.MinValue)//если метка времени последнего значения меньше текущего времени со смещением в период обновления
+                            {
+                                if (RepeatSignal != null)
+                                {
+                                    RepeatSignal(this, new RepeatSignalEventArgs(r[0].ToString()
+                                                        , r[1]
+                                                        ));
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Logging.Logg().Exception(e, "SrcMSTKKSNAMEtoris.GroupSignalsMSTKKSNAMEtoris.ItemNewValue - Ошибка перебора m_TablePrevValue при kksname = zero_count", Logging.INDEX_MESSAGE.NOT_SET);
+                    }
                 }
+                else
+                {
+                    lock (this)
+                    {
+                        try
+                        {
+                            foreach (DataRow r in m_TablePrevValue.Rows)
+                            {
+                                if (r[0].ToString().Trim() == kksname)
+                                {
+                                    r[1] = value;
+                                    if (status == -1991)
+                                        r[2] = Convert.ToDateTime(r[2]).AddSeconds(s_repeatPrevValue_interval);
+                                    else
+                                        r[2] = dtVal;
+                                }
+                                if ((DateTime)r[2] <= DateTime.UtcNow.AddSeconds(-(s_repeatPrevValue_interval + s_repeatPrevValue_interval_offset)) & (DateTime)r[2] != DateTime.MinValue)//если метка времени последнего значения меньше текущего времени со смещением в период обновления
+                                {
+                                    if (RepeatSignal != null)
+                                        RepeatSignal(this, new RepeatSignalEventArgs(r[0].ToString()
+                                                            , r[1]
+                                                            ));
+                                }
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Logging.Logg().Exception(e, "SrcMSTKKSNAMEtoris.GroupSignalsMSTKKSNAMEtoris.ItemNewValue - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                        }
 
-                Console.WriteLine(@"Получено значение для сигнала:" + kksname + @"(" + value + @", " + dtVal.ToString (@"dd.MM.yyyy HH:mm:ss.fff") + @")");
+                        //Debug.Print("Добавление строки " + kksname + ", " + value.ToString() + ", " + dtVal.ToString());
+
+                    }
+
+                    lock (m_lockData)
+                    {
+                        //Logging.Logg().Action("StateCheckResponse:m_tableTorIs.Rows.Add()", Logging.INDEX_MESSAGE.NOT_SET);
+                        m_tableTorIs.Rows.Add(new object[] { kksname, value, dtVal });
+                    }
+
+
+                    //Console.WriteLine(@"Получено значение для сигнала:" + kksname + @"(" + value + @", " + dtVal.ToString(@"dd.MM.yyyy HH:mm:ss.fff") + @")");
+                }
             }
 
             public void ClearValues ()
             {
                 int iPrev = 0, iDel = 0, iCur = 0;
 
-                lock (this)
+                lock (m_lockData)
                 {
                     iPrev = m_tableTorIs.Rows.Count;
                     string strSel =
-                        @"DATETIME<'" + DateTimeBegin.ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"' OR DATETIME>='" + DateTimeBegin.AddSeconds(PeriodMain.TotalSeconds).ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
+                        @"DATETIME<'" + DateTimeBegin.AddSeconds(-(PeriodLocal.TotalSeconds + 15)).ToUniversalTime().ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"' OR DATETIME>='" + DateTimeBegin.AddSeconds(PeriodLocal.TotalSeconds + 5).ToUniversalTime().ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
                         //@"DATETIME BETWEEN '" + m_dtStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"' AND '" + m_dtStart.AddSeconds(m_tmSpanPeriod.Seconds).ToString(@"yyyy/MM/dd HH:mm:ss") + @"'"
                         ;
 
@@ -176,9 +273,18 @@ namespace SrcMSTKKSNAMEtoris
                         if (rowsDel.Length > 0)
                         {
                             foreach (DataRow r in rowsDel)
+                            {
+                                //Debug.Print("Удалено значение для сигнала:" + r[0].ToString() + "(" + r[1].ToString() + "," + r[2].ToString() + ") " +DateTime.Now.ToString());
+                                //Logging.Logg().Action("StateCheckResponse:m_tableTorIs.Rows.Remove()", Logging.INDEX_MESSAGE.NOT_SET);
                                 m_tableTorIs.Rows.Remove(r);
+
+                            }
+                            //Debug.Print(strSel);
+                            //m_tableTorIs = returnTable(m_tableTorIs);
                             //??? Обязательно ли...
+                            //Logging.Logg().Action("StateCheckResponse:m_tableTorIs.AcceptChanges()", Logging.INDEX_MESSAGE.NOT_SET);
                             m_tableTorIs.AcceptChanges();
+
                         }
                         else
                             ;
@@ -186,11 +292,63 @@ namespace SrcMSTKKSNAMEtoris
                     else
                         ;
 
+                    //m_tableTorIs = returnTable(m_tableTorIs);
+                    
+                    
+                                          
                     iCur = m_tableTorIs.Rows.Count;
                 }
 
-                Console.WriteLine(@"Обновление рез-та [ID=" + m_Id + @"]: " + @"(было=" + iPrev + @", удалено=" + iDel + @", осталось=" + iCur + @")");
+                //Console.WriteLine(@"Обновление рез-та [ID=" + m_Id + @"]: " + @"(было=" + iPrev + @", удалено=" + iDel + @", осталось=" + iCur + @")");
             }
+
+            private void repeat_value(object sender, RepeatSignalEventArgs e)
+            {
+                ItemNewValue(e.m_kks_name, e.m_Value, 0, 0, -1991);
+            }
+            
+            /// <summary>
+            /// Класс для описания аргумента события - повторная запись значения
+            /// </summary>
+            public class RepeatSignalEventArgs : EventArgs
+            {
+                /// <summary>
+                /// Имя изменяемого параметра
+                /// </summary>
+                public string m_kks_name;
+
+                /// <summary>
+                /// Значение изменяемого параметра
+                /// </summary>
+                public object m_Value;
+
+                public RepeatSignalEventArgs()
+                    : base()
+                {
+                    m_kks_name = string.Empty;
+                    m_Value = string.Empty;
+
+                }
+
+                public RepeatSignalEventArgs(string kks_name, object value)
+                    : this()
+                {
+                    m_kks_name = kks_name;
+                    m_Value = value;
+                }
+            }
+
+            /// <summary>
+            /// Тип делегата для обработки события - повторная запись значения
+            /// </summary>
+            public delegate void RepeatSignalEventHandler(object obj, RepeatSignalEventArgs e);
+
+            /// <summary>
+            /// Событие - повторная запись значения
+            /// </summary>
+            public RepeatSignalEventHandler RepeatSignal;
+
+
         }
 
         protected override HHandlerDbULoaderDatetimeSrc.GroupSignals createGroupSignals(int id, object[] objs)
@@ -369,7 +527,7 @@ namespace SrcMSTKKSNAMEtoris
                 m_dictSignalsAdvised.Add(kks_name, idGrpSgnls);
             }
 
-            Logging.Logg ().Action (@"Подписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);
+            //Logging.Logg ().Action (@"Подписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);
 
             int quality, status;
             int type = 3;
@@ -420,7 +578,14 @@ namespace SrcMSTKKSNAMEtoris
                 idGrpSgnls = m_dictSignalsAdvised[kks_name];
                 strIds = @" [" + PlugInId + @", key=" + idGrpSgnls + @"]: ";
 
-                err = m_torIsData.UnadviseItem(kks_name);
+                try
+                {
+                    err = m_torIsData.UnadviseItem(kks_name);
+                }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, "TORISLib.TorISDataClass.UnadviseItem(String item) - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
 
                 if (!(err == 0))
                 {
@@ -439,7 +604,7 @@ namespace SrcMSTKKSNAMEtoris
                 m_dictSignalsAdvised.Remove(kks_name);
             }
 
-            Logging.Logg().Action(@"Отписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);
+            //Logging.Logg().Action(@"Отписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);
         }
 
         private void torIsData_ItemNewValue(string kksname, int type, object value, double timestamp, int quality, int status)
@@ -518,9 +683,20 @@ namespace SrcMSTKKSNAMEtoris
         {
             int iRes = 0;
             error = false;
-
-            table = (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsMSTKKSNAMEtoris).m_tableTorIs.Copy();
-
+            table = null;
+            lock ((m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsMSTKKSNAMEtoris).m_lockData)
+            {
+                //Logging.Logg().Action("StateCheckResponse:m_tableTorIs.Copy()", Logging.INDEX_MESSAGE.NOT_SET);
+                try
+                {
+                    table = (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsMSTKKSNAMEtoris).m_tableTorIs.Copy();
+                    
+                }
+                catch (Exception e)
+                {
+                    Logging.Logg().Warning("StateCheckResponse:m_tableTorIs.Copy() " + e.Message, Logging.INDEX_MESSAGE.NOT_SET);
+                }
+            }
             return iRes;
         }
 

@@ -49,6 +49,7 @@ namespace DestTechSiteLastsql
                 Type typeVal = m_DupTables.TableDistinct.Columns[@"VALUE"].DataType;
                 int idSrvTM = (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).GetIdSrvTM(m_IdSourceConnSett)
                     , iUTCOffsetToDataTotalHours = (int)(_parent as DestTechSiteLastsql).m_tsUTCOffsetToData.Value.TotalHours;
+                HTimeSpan tsUTCOffset = _parent.m_tsUTCOffset == HTimeSpan.NotValue ? new HTimeSpan(@"ss0") : _parent.m_tsUTCOffset;
 
                 //Logging.Logg().Debug(@"GroupSignalsStatKKSNAMEsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -63,7 +64,10 @@ namespace DestTechSiteLastsql
                     if (typeVal.Equals(typeof (decimal)) == true)
                         strRes += ((decimal)row[@"VALUE"]).ToString("F7", CultureInfo.InvariantCulture);
                     else
-                        strRes += row[@"VALUE"];
+                        if(typeVal.Equals(typeof (double)) == true)
+                            strRes += ((double)row[@"VALUE"]).ToString("F7", CultureInfo.InvariantCulture);
+                        else
+                            strRes += row[@"VALUE"];
                     strRes +=  @"',";
                     strRes += @"[DATETIME]='" + ((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours).ToString(s_strFormatDbDateTime) + @"'" + @",";
                     strRes += @"[UPDATE_DATETIME]=GETDATE()";
