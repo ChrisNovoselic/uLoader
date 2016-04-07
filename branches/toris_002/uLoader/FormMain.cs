@@ -28,12 +28,16 @@ namespace uLoader
 
         public FormMain()
         {
+            string strNameFileINI = string.Empty;
+            createHCmdArg(Environment.GetCommandLineArgs(), ref strNameFileINI);
+
             InitializeComponent();
 
             m_formWait = FormWait.This;
 
-            m_handler = new HHandlerQueue();
-            m_handler.Start(); m_handler.Activate(true);
+            m_handler = new HHandlerQueue(strNameFileINI);
+            m_handler.Start();
+            m_handler.Activate(true);
 
             m_panelWork = new PanelWork(); m_panelWork.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelWork); m_panelWork.Start();
             m_panelConfig = new PanelConfig(); m_panelConfig.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelConfig); m_panelConfig.Start ();
@@ -46,6 +50,52 @@ namespace uLoader
             конфигурацияToolStripMenuItem.CheckStateChanged += new EventHandler(конфигурацияToolStripMenuItem_CheckStateChanged);
 
             m_TabCtrl.EventHTabCtrlExClose += new HTabCtrlEx.DelegateHTabCtrlEx(onCloseTabPage);
+        }
+
+        /// <summary>
+        /// Создание объекта-обработчика аргументов командной строки
+        /// </summary>
+        /// <param name="args">Массив аргументов командной строки</param>
+        /// <returns>Объект-обработчик аргументов командной строки</returns>
+        protected HCmd_Arg createHCmdArg(string[] args, ref string strNameFileINI)
+        {
+            return new handlerCmd(args, ref strNameFileINI);
+        }
+
+        /// <summary>
+        /// Класс обработки "своих" команд
+        /// </summary>
+        public class handlerCmd : HCmd_Arg
+        {
+            /// <summary>
+            /// Конструктор - основной (с параметрами)
+            /// </summary>
+            /// <param name="args">Массив аргументов командной строки</param>
+            public handlerCmd(string[] args, ref string strNameFileINI)
+                : base(args)
+            {
+               strNameFileINI = RunCmd();
+            }
+
+            /// <summary>
+            /// обработка "своих" команд
+            /// </summary>
+            /// <param name="command"></param>
+            private string RunCmd()
+            {
+                string strNameFileINI = string.Empty;
+                switch (cmd)
+                {
+                    case "conf_ini":
+                        strNameFileINI = param;
+                        break;
+                    default:
+                        strNameFileINI = "";
+                        break;
+                }
+
+                return strNameFileINI;
+            }
         }
 
         void файлКонфигурацияЗагрузитьToolStripMenuItem_Click(object sender, EventArgs e)

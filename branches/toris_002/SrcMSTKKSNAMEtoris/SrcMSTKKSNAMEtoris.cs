@@ -578,7 +578,14 @@ namespace SrcMSTKKSNAMEtoris
                 idGrpSgnls = m_dictSignalsAdvised[kks_name];
                 strIds = @" [" + PlugInId + @", key=" + idGrpSgnls + @"]: ";
 
-                err = m_torIsData.UnadviseItem(kks_name);
+                try
+                {
+                    err = m_torIsData.UnadviseItem(kks_name);
+                }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, "TORISLib.TorISDataClass.UnadviseItem(String item) - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
 
                 if (!(err == 0))
                 {
