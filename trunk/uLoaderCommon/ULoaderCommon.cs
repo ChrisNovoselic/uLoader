@@ -239,6 +239,11 @@ namespace uLoaderCommon
         /// </summary>
         protected IPlugIn _iPlugin;
         /// <summary>
+        /// Разность между часовыми поясами даты/времени сервера и метками даты/времени значений в БД
+        /// </summary>
+        public HTimeSpan m_tsUTCOffsetToServer
+            , m_tsUTCOffsetToData;
+        /// <summary>
         /// Класс - базовый для описания группы сигналов
         /// </summary>
         public abstract class GroupSignals
@@ -823,6 +828,19 @@ namespace uLoaderCommon
                     else
                         ; //Для инициализации передан только 'ConnectionSettings' (pars[0])
 
+                    //
+                    m_tsUTCOffsetToServer = HTimeSpan.NotValue;
+                    if (m_dictAdding.ContainsKey(@"UTC_OFFSET_TO_SERVER") == true)
+                        m_tsUTCOffsetToServer = new HTimeSpan(m_dictAdding[@"UTC_OFFSET_TO_SERVER"]);
+                    else
+                        ;
+
+                    m_tsUTCOffsetToData = HTimeSpan.NotValue;
+                    if (m_dictAdding.ContainsKey(@"UTC_OFFSET_TO_DATA") == true)
+                        m_tsUTCOffsetToData = new HTimeSpan(m_dictAdding[@"UTC_OFFSET_TO_DATA"]);
+                    else
+                        ;
+
                     m_evtInitSource.Set ();
                 } else
                     ;
@@ -835,7 +853,7 @@ namespace uLoaderCommon
         /// </summary>
         /// <param name="id">Идентификатор группы сигналов</param>
         /// <param name="pars">Параметры группы сигналов для инициализации</param>
-        /// <returns></returns>
+        /// <returns>Результат выполнения метода</returns>
         public virtual int Initialize(/*INDEX_INIT_PARAMETER indxPars, */int id, object[] pars)
         {
             int iRes = 0;
@@ -846,7 +864,7 @@ namespace uLoaderCommon
                 {
                     if (m_dictGroupSignals.Keys.Contains(id) == false)
                     {//Считать переданные параметры - параметрами сигналов                
-                        m_dictGroupSignals.Add(id, createGroupSignals (id, pars));
+                        m_dictGroupSignals.Add(id, createGroupSignals (id, pars));                       
 
                         //Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - добавить группу сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
                     }

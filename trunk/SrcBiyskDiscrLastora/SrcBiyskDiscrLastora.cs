@@ -33,7 +33,7 @@ namespace SrcBiyskDiscrLastora
                 m_strQuery = string.Empty;
 
                 string strUnion = @",";
-                int iUTCOffsetTotalHours = m_UTCOffsetTotalHours;
+                int iUTCOffsetTotalHours = m_UTCOffsetToDataTotalHours;
 
                 if (m_arSignals.Length > 0)
                 {

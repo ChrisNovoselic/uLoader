@@ -45,8 +45,9 @@ namespace DestTEP32sql
                 string strRes = string.Empty
                     , strRows = string.Empty
                     , strRow = string.Empty;
-                int iIdToInsert = -1;
-                DateTime? dtToInsert = null;
+                int iIdToInsert = -1
+                    , iUTCOffsetToDataTotalHours = (int)(_parent as DestTEP32sql).m_tsUTCOffsetToData.Value.TotalHours;
+                DateTime? dtToInsert = null;                
 
                 //Logging.Logg().Debug(@"GroupSignalsStatIDsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -68,9 +69,9 @@ namespace DestTEP32sql
                     {
                         iIdToInsert = (int)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim()));
                         if (dtToInsert == null)
-                            dtToInsert = ((DateTime)row[@"DATETIME"]).AddHours(0);
+                            dtToInsert = ((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours);
                         else
-                            if (dtToInsert.Equals(((DateTime)row[@"DATETIME"]).AddHours(0)) == false)
+                            if (dtToInsert.Equals(((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours)) == false)
                             {
                                 Logging.Logg().Error(@"GroupSignalsTEP32sql::getInsertValuesQuery () - в наборе различные дата/время...", Logging.INDEX_MESSAGE.NOT_SET);
 

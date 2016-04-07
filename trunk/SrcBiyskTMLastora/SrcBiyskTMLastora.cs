@@ -37,13 +37,13 @@ namespace SrcBiyskTMLastora
                 m_strQuery = string.Empty;
 
                 string strUnion = @" UNION ALL ";
-                int iUTCOffsetTotalHours = m_UTCOffsetTotalHours;
+                int iUTCOffsetToDataTotalHours = m_UTCOffsetToDataTotalHours;
 
                 //Формировать зпрос
                 foreach (GroupSignalsSrc.SIGNALBiyskTMoraSrc s in m_arSignals)
                 {
                     m_strQuery += @"SELECT " + s.m_idMain + @" as ID, VALUE, QUALITY"
-                            + @", DATETIME + numtodsinterval(" + iUTCOffsetTotalHours + @",'hour') as DATETIME" 
+                            + @", DATETIME + numtodsinterval(" + iUTCOffsetToDataTotalHours + @",'hour') as DATETIME" 
                         + @" FROM ARCH_SIGNALS." + s.m_NameTable
                         + @" WHERE"
                         + @" DATETIME > " + @"to_timestamp('" + (_parent as SrcBiyskTMLastora).m_dtServer.AddMinutes(-1).ToString(@"yyyyMMdd HHmmss") + @"', 'yyyymmdd hh24missFF9')" //@" SYSTIMESTAMP - interval '1' minute"

@@ -12,10 +12,6 @@ namespace uLoaderCommon
     public abstract class HHandlerDbULoaderSrc : HHandlerDbULoader, ILoaderSrc
     {
         /// <summary>
-        /// Разность между часовыми поясами даты/времени сервера и метками даты/времени значений в БД
-        /// </summary>
-        public HTimeSpan m_tsServerOffsetToData;
-        /// <summary>
         /// Идентификатор ТЭЦ
         ///  (при наличии в файле конфигурации для группы источников)
         /// </summary>
@@ -96,15 +92,8 @@ namespace uLoaderCommon
 
         public override int Initialize(int id, object[] pars)
         {
-            int iRes = -1;
+            int iRes = -1;            
 
-            // = Convert.ToInt32(m_dictAdding[@"UTC_OFFSET"]);
-            m_tsServerOffsetToData = HTimeSpan.NotValue;
-            if (m_dictAdding.ContainsKey(@"SERVER_OFFSET_TO_DATA") == true)
-                m_tsServerOffsetToData = new HTimeSpan(m_dictAdding[@"SERVER_OFFSET_TO_DATA"]);
-            else
-                ;
-            
             iRes = base.Initialize(id, pars);            
 
             return iRes;
@@ -249,9 +238,28 @@ namespace uLoaderCommon
         /// </summary>
         protected abstract class GroupSignalsSrc : GroupSignals
         {
-            protected int m_ServerOffsetToDataTotalHours { get { return (_parent as HHandlerDbULoaderSrc).m_tsServerOffsetToData == HTimeSpan.NotValue ?
-                0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsServerOffsetToData.Value.TotalHours; } }
-            
+            protected int m_UTCOffsetToServerTotalHours {
+                get {
+                    return (_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer == HTimeSpan.NotValue ?
+                        0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer.Value.TotalHours;
+                }
+            }
+
+            protected int m_UTCOffsetToDataTotalHours {
+                get {
+                    return (_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData == HTimeSpan.NotValue ?
+                        0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData.Value.TotalHours;
+                }
+            }
+
+            //protected int m_ServerOffsetToDataTotalHours {
+            //    get {
+            //        return ((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer == HTimeSpan.NotValue)
+            //            || ((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData == HTimeSpan.NotValue) ?
+            //                0 : (int)((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer.Value - (_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData.Value).TotalHours;
+            //    }            
+            //}
+
             protected class SIGNALBiyskTMoraSrc : SIGNAL
             {
                 public string m_NameTable;                
@@ -659,7 +667,7 @@ namespace uLoaderCommon
     {
         public HTimeSpan m_tsCurIntervalOffset;
 
-        protected string m_strDateTimeDBFormat;
+        protected virtual string m_strDateTimeDBFormat { get; set; }
 
         public enum INDEX_MODE_CURINTERVAL { CAUSE, NEXTSTEP, COUNT };
         /// <summary>
@@ -730,7 +738,7 @@ namespace uLoaderCommon
                     long msec = -1L
                         , msecDiff = -1L;
 
-                    msec = (long)(_parent as HHandlerDbULoaderDatetimeSrc).m_tsServerOffsetToData.Value.TotalMilliseconds;
+                    msec = (long)(_parent as HHandlerDbULoaderDatetimeSrc).m_tsUTCOffsetToServer.Value.TotalMilliseconds;
                     if (Math.Abs(msec) > 1)
                         msecDiff = msec;
                     else
@@ -768,7 +776,7 @@ namespace uLoaderCommon
                     long msec = -1L
                         , msecDiff = -1L;
 
-                    msec = (long)(_parent as HHandlerDbULoaderDatetimeSrc).m_tsServerOffsetToData.Value.TotalMilliseconds;
+                    msec = (long)(_parent as HHandlerDbULoaderDatetimeSrc).m_tsUTCOffsetToServer.Value.TotalMilliseconds;
                     if (Math.Abs(msec) > 1)
                         msecDiff = msec;
                     else

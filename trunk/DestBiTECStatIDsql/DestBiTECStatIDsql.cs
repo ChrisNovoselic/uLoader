@@ -49,6 +49,7 @@ namespace DestBiTECStatIDsql
             {
                 string strRes = string.Empty
                     , strRow = string.Empty;
+                int iUTCOffsetToDataTotalHours = (int)(_parent as DestBiTECStatIDsql).m_tsUTCOffsetToData.Value.TotalHours;
 
                 strRes = @"INSERT INTO [dbo].[" + (_parent as HHandlerDbULoaderDest).m_strNameTable + @"] ("
                     + @"[ID]"
@@ -66,7 +67,7 @@ namespace DestBiTECStatIDsql
                     strRow += getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) + @",";
                     strRow += m_IdSourceTEC + @",";
                     strRow += ((decimal)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
-                    strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(-7).ToString(s_strFormatDbDateTime) + @"',";
+                    strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours).ToString(s_strFormatDbDateTime) + @"',";
                     strRow += row[@"tmdelta"] + @",";
                     strRow += @"GETDATE()";
 

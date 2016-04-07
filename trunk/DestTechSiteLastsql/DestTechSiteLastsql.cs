@@ -47,7 +47,8 @@ namespace DestTechSiteLastsql
                 string strRes = string.Empty
                     , strRow = string.Empty;
                 Type typeVal = m_DupTables.TableDistinct.Columns[@"VALUE"].DataType;
-                int idSrvTM = (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).GetIdSrvTM(m_IdSourceConnSett);
+                int idSrvTM = (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).GetIdSrvTM(m_IdSourceConnSett)
+                    , iUTCOffsetToDataTotalHours = (int)(_parent as DestTechSiteLastsql).m_tsUTCOffsetToData.Value.TotalHours;
 
                 //Logging.Logg().Debug(@"GroupSignalsStatKKSNAMEsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -64,7 +65,7 @@ namespace DestTechSiteLastsql
                     else
                         strRes += row[@"VALUE"];
                     strRes +=  @"',";
-                    strRes += @"[DATETIME]='" + ((DateTime)row[@"DATETIME"]).AddHours(-7).ToString(s_strFormatDbDateTime) + @"'" + @",";
+                    strRes += @"[DATETIME]='" + ((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours).ToString(s_strFormatDbDateTime) + @"'" + @",";
                     strRes += @"[UPDATE_DATETIME]=GETDATE()";
 
                     strRes += @" WHERE [KKS_NAME]='" + (string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) + @"';";
