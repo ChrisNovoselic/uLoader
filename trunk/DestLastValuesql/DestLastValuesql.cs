@@ -8,16 +8,16 @@ using System.Globalization;
 using HClassLibrary;
 using uLoaderCommon;
 
-namespace DestTechSiteLastsql
+namespace DestLastValuesql
 {
-    public class DestTechSiteLastsql : HHandlerDbULoaderStatTMKKSNAMEDest
+    public class DestLastValuesql : HHandlerDbULoaderStatTMKKSNAMEDest
     {
         //private static string s_strNameDestTable = @"ALL_PARAM_SOTIASSO"
         //    , s_strIdTEC = @"6";
         /// <summary>
         /// Конструктор - вспомогательный (статическая сборка)
         /// </summary>
-        public DestTechSiteLastsql()
+        public DestLastValuesql()
             : base()
         {
         }
@@ -25,7 +25,7 @@ namespace DestTechSiteLastsql
         /// Конструктор - основной (динамическая загрузка)
         /// </summary>
         /// <param name="iPlugIn">Объект для связи с "родительским" приложением</param>
-        public DestTechSiteLastsql(IPlugIn iPlugIn)
+        public DestLastValuesql(IPlugIn iPlugIn)
             : base(iPlugIn)
         {
         }
@@ -48,7 +48,7 @@ namespace DestTechSiteLastsql
                     , strRow = string.Empty;
                 Type typeVal = m_DupTables.TableDistinct.Columns[@"VALUE"].DataType;
                 int idSrvTM = (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).GetIdSrvTM(m_IdSourceConnSett)
-                    , iUTCOffsetToDataTotalHours = (int)(_parent as DestTechSiteLastsql).m_tsUTCOffsetToData.Value.TotalHours;
+                    , iUTCOffsetToDataTotalHours = (int)(_parent as DestLastValuesql).m_tsUTCOffsetToData.Value.TotalHours;
                 HTimeSpan tsUTCOffset = _parent.m_tsUTCOffset == HTimeSpan.NotValue ? new HTimeSpan(@"ss0") : _parent.m_tsUTCOffset;
 
                 //Logging.Logg().Debug(@"GroupSignalsStatKKSNAMEsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -102,7 +102,7 @@ namespace DestTechSiteLastsql
         {
             _Id = 2005;
 
-            registerType(_Id, typeof(DestTechSiteLastsql));
+            registerType(_Id, typeof(DestLastValuesql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)
