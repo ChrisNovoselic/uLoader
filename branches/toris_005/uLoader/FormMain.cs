@@ -17,6 +17,8 @@ namespace uLoader
 
     public partial class FormMain : Form
     {
+        public enum STATE_EXECUTE {NORMALIZE, MINIMIZE }
+        public static STATE_EXECUTE m_state_execute;
         private FormWait m_formWait;
         
         private HHandlerQueue m_handler;
@@ -50,6 +52,19 @@ namespace uLoader
             конфигурацияToolStripMenuItem.CheckStateChanged += new EventHandler(конфигурацияToolStripMenuItem_CheckStateChanged);
 
             m_TabCtrl.EventHTabCtrlExClose += new HTabCtrlEx.DelegateHTabCtrlEx(onCloseTabPage);
+
+            switch (m_state_execute)
+            {
+                case STATE_EXECUTE.MINIMIZE:
+                    Message msg = new Message();
+                    msg.Msg = 0x112;
+                    msg.WParam = (IntPtr)(0xF020);
+                    WndProc(ref msg);
+                    break;
+                case STATE_EXECUTE.NORMALIZE:
+                    this.OnMaximumSizeChanged(null);
+                    break;
+            }
         }
 
         /// <summary>
@@ -77,6 +92,7 @@ namespace uLoader
                strNameFileINI = RunCmd();
             }
 
+
             /// <summary>
             /// обработка "своих" команд
             /// </summary>
@@ -88,6 +104,9 @@ namespace uLoader
                 {
                     case "conf_ini":
                         strNameFileINI = param;
+                        break;
+                    case "minimize":
+                        m_state_execute = STATE_EXECUTE.MINIMIZE;
                         break;
                     default:
                         strNameFileINI = "";
@@ -170,6 +189,7 @@ namespace uLoader
 
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
+            m_notifyIcon.Visible = false;
             m_panelWork.Stop();
             m_panelConfig.Stop();
             

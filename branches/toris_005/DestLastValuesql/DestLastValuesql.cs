@@ -54,7 +54,8 @@ namespace DestLastValuesql
                 //Logging.Logg().Debug(@"GroupSignalsStatKKSNAMEsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 strRow = @"UPDATE [" + (_parent as HHandlerDbULoaderDest).m_strNameTable + @"]"
-                            + @"SET [ID_SRV_TM]=" + idSrvTM + @",";
+                            //+ @"SET [ID_SRV_TM]=" + idSrvTM + @",";
+                            + @"SET ";
 
                 foreach (DataRow row in m_DupTables.TableDistinct.Rows)
                 {
@@ -72,7 +73,9 @@ namespace DestLastValuesql
                     strRes += @"[DATETIME]='" + ((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours).ToString(s_strFormatDbDateTime) + @"'" + @",";
                     strRes += @"[UPDATE_DATETIME]=GETDATE()";
 
-                    strRes += @" WHERE [KKS_NAME]='" + (string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) + @"';";
+                    //strRes += @" WHERE [KKS_NAME]='" + (string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) + @"';";
+                    strRes += @" WHERE [ID_SIGNAL]='" + (string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) + @"';";
+
                 }
 
                 return
