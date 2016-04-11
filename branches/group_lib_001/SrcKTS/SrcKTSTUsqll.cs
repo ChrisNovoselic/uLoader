@@ -7,7 +7,7 @@ using System.Data;
 using HClassLibrary;
 using uLoaderCommon;
 
-namespace SrcKTSTUsql
+namespace SrcKTS
 {
     public class SrcKTSTUsql : HHandlerDbULoaderDatetimeSrc
     {
@@ -247,21 +247,5 @@ namespace SrcKTSTUsql
 
         //    return iRes;
         //}
-    }
-
-    public class PlugIn : PlugInULoader
-    {
-        public PlugIn()
-            : base()
-        {
-            _Id = 1002;
-
-            registerType(_Id, typeof(SrcKTSTUsql));
-        }
-
-        public override void OnEvtDataRecievedHost(object obj)
-        {
-            base.OnEvtDataRecievedHost(obj);
-        }
     }
 }

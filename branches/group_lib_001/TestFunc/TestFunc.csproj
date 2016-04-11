@@ -118,14 +118,6 @@
       <Project>{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}</Project>
       <Name>HClassLibrary</Name>
     </ProjectReference>
-    <ProjectReference Include="..\SrcBiyskTMora\SrcBiyskTMora.csproj">
-      <Project>{E323D5BE-103A-42D8-A9BD-652CBC6BF1F9}</Project>
-      <Name>SrcBiyskTMora</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SrcKTSTUsql\SrcKTSTUsql.csproj">
-      <Project>{75C045E1-E18E-484E-A3A5-2291007A950C}</Project>
-      <Name>SrcKTSTUsql</Name>
-    </ProjectReference>
     <ProjectReference Include="..\uLoaderCommon\uLoaderCommon.csproj">
       <Project>{4869D4EB-4F7A-4311-B105-D3E09BB7290A}</Project>
       <Name>uLoaderCommon</Name>

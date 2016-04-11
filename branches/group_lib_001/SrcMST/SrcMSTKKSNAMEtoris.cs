@@ -8,7 +8,7 @@ using TORISLib;
 using HClassLibrary;
 using uLoaderCommon;
 
-namespace SrcMSTKKSNAMEtoris
+namespace SrcMST
 {
     public class SrcMSTKKSNAMEtoris : HHandlerDbULoaderDatetimeSrc
     {
@@ -758,22 +758,6 @@ namespace SrcMSTKKSNAMEtoris
             //Console.WriteLine (msg);
 
             return iRes;
-        }
-    }
-
-    public class PlugIn : PlugInULoader
-    {
-        public PlugIn()
-            : base()
-        {
-            _Id = 1007;
-
-            registerType(_Id, typeof(SrcMSTKKSNAMEtoris));
-        }
-
-        public override void OnEvtDataRecievedHost(object obj)
-        {
-            base.OnEvtDataRecievedHost(obj);
         }
     }
 }

@@ -11,7 +11,7 @@ using System.Threading;
 using HClassLibrary;
 using uLoaderCommon;
 
-namespace SrcBiyskDiscrLastora
+namespace SrcBiysk
 {
     public class SrcBiyskDiscrLastora : HHandlerDbULoaderSrc
     {
@@ -139,22 +139,6 @@ namespace SrcBiyskDiscrLastora
         protected override HHandlerDbULoader.GroupSignals createGroupSignals(int id, object[] objs)
         {
             return new GroupSignalsBiyskDiscrLastora(this, id, objs);
-        }
-    }
-
-    public class PlugIn : PlugInULoader
-    {
-        public PlugIn()
-            : base()
-        {
-            _Id = 1006;
-
-            registerType(_Id, typeof(SrcBiyskDiscrLastora));
-        }
-
-        public override void OnEvtDataRecievedHost(object obj)
-        {
-            base.OnEvtDataRecievedHost(obj);
         }
     }
 }

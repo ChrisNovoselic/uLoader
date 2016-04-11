@@ -9,7 +9,7 @@ using System.Diagnostics;
 using HClassLibrary;
 using uLoaderCommon;
 
-namespace DestTorisStatKKSNAMEsql
+namespace DestStat
 {
     public class DestTorisStatKKSNAMEsql : HHandlerDbULoaderStatTMKKSNAMEDest //HHandlerDbULoaderStatTMKKSNAMEDest
     {
@@ -103,24 +103,6 @@ namespace DestTorisStatKKSNAMEsql
         protected override GroupSignals createGroupSignals(int id, object[] objs)
         {
             return new GroupSignalsTorisStatKKSNAMEsql(this, id, objs);
-        }
-    }
-
-    public class PlugIn : PlugInULoaderDest
-    {
-        //private Dictionary <int, HMark> m_dictMarkDataHost;
-
-        public PlugIn()
-            : base()
-        {
-            _Id = 2007;
-
-            registerType(_Id, typeof(DestTorisStatKKSNAMEsql));
-        }
-
-        public override void OnEvtDataRecievedHost(object obj)
-        {
-            base.OnEvtDataRecievedHost(obj);
         }
     }
 }

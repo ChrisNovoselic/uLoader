@@ -7,7 +7,7 @@ using System.Data;
 using HClassLibrary;
 using uLoaderCommon;
 
-namespace SrcKTSTUDsql
+namespace SrcKTS
 {
     public class SrcKTSTUDsql : HHandlerDbULoaderDatetimeSrc
     {
@@ -143,22 +143,6 @@ namespace SrcKTSTUDsql
                 // не полные данные
             }
             base.parseValues(tblRes);
-        }
-    }
-
-    public class PlugIn : PlugInULoader
-    {
-        public PlugIn()
-            : base()
-        {
-            _Id = 1009;
-
-            registerType(_Id, typeof(SrcKTSTUDsql));
-        }
-
-        public override void OnEvtDataRecievedHost(object obj)
-        {
-            base.OnEvtDataRecievedHost(obj);
         }
     }
 }

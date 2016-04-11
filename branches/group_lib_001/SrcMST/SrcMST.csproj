@@ -8,8 +8,8 @@
     <ProjectGuid>{0CFB2E91-E5F2-4B31-B677-934E946762E9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SrcMSTKKSNAMEtoris</RootNamespace>
-    <AssemblyName>SrcMSTKKSNAMEtoris</AssemblyName>
+    <RootNamespace>SrcMST</RootNamespace>
+    <AssemblyName>SrcMST</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -106,7 +106,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SrcMSTASUTPIdT5tg1sql.cs" />
+    <Compile Include="SrcMSTASUTPIdT5tg6sql.cs" />
+    <Compile Include="SrcMSTKKSNAMEsql.cs" />
     <Compile Include="SrcMSTKKSNAMEtoris.cs" />
+    <Compile Include="PluginItems.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\HClassLibrary\HClassLibrary.csproj">

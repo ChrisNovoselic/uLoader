@@ -8,8 +8,8 @@
     <ProjectGuid>{4DDEC172-3900-47BF-B92D-4CF940346533}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DestTEP32sql</RootNamespace>
-    <AssemblyName>DestTEP32sql</AssemblyName>
+    <RootNamespace>DestTEP32</RootNamespace>
+    <AssemblyName>DestTEP32</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -108,8 +108,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DestTEP32Dsql.cs" />
     <Compile Include="DestTEP32sql.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PluginItems.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\HClassLibrary\HClassLibrary.csproj">

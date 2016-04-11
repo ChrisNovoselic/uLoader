@@ -11,7 +11,7 @@ using System.Threading;
 using HClassLibrary;
 using uLoaderCommon;
 
-namespace SrcBiyskTMora
+namespace SrcBiysk
 {
     public class SrcBiyskTMora : HHandlerDbULoaderDatetimeSrc
     {
@@ -76,22 +76,6 @@ namespace SrcBiyskTMora
         protected override HHandlerDbULoader.GroupSignals createGroupSignals(int id, object[] objs)
         {
             return new GroupSignalsBiyskTMora(this, id, objs);
-        }
-    }
-
-    public class PlugIn : PlugInULoader
-    {
-        public PlugIn()
-            : base()
-        {
-            _Id = 1001;
-
-            registerType(1001, typeof(SrcBiyskTMora));
-        }
-
-        public override void OnEvtDataRecievedHost(object obj)
-        {
-            base.OnEvtDataRecievedHost(obj);
         }
     }
 }
