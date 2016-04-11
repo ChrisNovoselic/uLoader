@@ -850,7 +850,7 @@ namespace uLoader
         {
             int iRes = 0;
 
-            PerformDataAskedHostPlugIn(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_SOURCE, Pack ()));
+            PerformDataAskedHostPlugIn(new EventArgsDataHost(-1, (int)ID_DATA_ASKED_HOST.INIT_SOURCE, Pack ()));
 
             return iRes;
         }
@@ -887,7 +887,7 @@ namespace uLoader
             }
 
             //Отправить данные для инициализации
-            PerformDataAskedHostPlugIn(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.INIT_SIGNALS, new object[] { iIDGroupSignals, arToDataHost }));
+            PerformDataAskedHostPlugIn(new EventArgsDataHost(-1, (int)ID_DATA_ASKED_HOST.INIT_SIGNALS, new object[] { iIDGroupSignals, arToDataHost }));
 
             return iRes;
         }
@@ -966,7 +966,7 @@ namespace uLoader
                 else
                     ; //
 
-            PerformDataAskedHostPlugIn(new EventArgsDataHost((int)idToSend, arDataAskedHost));
+            PerformDataAskedHostPlugIn(new EventArgsDataHost(-1, (int)idToSend, arDataAskedHost));
 
             return iRes;
         }
@@ -1067,7 +1067,7 @@ namespace uLoader
                         grpSgnls.StateChange();
                         //Установить/разорвать взаимосвязь между группами источников (при необходимости)
                         if (this is GroupSourcesDest)
-                            (this as GroupSourcesDest).PerformDataAskedHostQueue(new EventArgsDataHost((int)id_cmd, new object[] { iIDGroupSignals }));
+                            (this as GroupSourcesDest).PerformDataAskedHostQueue(new EventArgsDataHost(-1, (int)id_cmd, new object[] { iIDGroupSignals }));
                         else
                             ;
 
@@ -1365,7 +1365,7 @@ namespace uLoader
                     }
                     else
                         //tblRec == null или tblRec.Rows.Count == 0
-                        Logging.Logg().Warning(@"GroupSources::GetDataToPanel (id=" + id + @") - таблица 'recieved' не валидна...", Logging.INDEX_MESSAGE.NOT_SET);
+                        Logging.Logg().Warning(@"GroupSources::GetDataToPanel (id=" + id + @") - таблица 'received' не валидна...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
                 else
                     //grpSgnls == null
@@ -1644,7 +1644,7 @@ namespace uLoader
                             if (!(grpSgnls.GetListNeededIndexGroupSignals().IndexOf((int)pars[1]) < 0))
                             {//Да, группа сигналов 'grpSgnls' ожидает значения от группы сигналов '(int)pars[1]'
                                 parsToSend[0] = FormMain.FileINI.GetIDIndex(grpSgnls.m_strID);
-                                PerformDataAskedHostPlugIn(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.TO_INSERT, parsToSend));
+                                PerformDataAskedHostPlugIn(new EventArgsDataHost(-1, (int)ID_DATA_ASKED_HOST.TO_INSERT, parsToSend));
 
                                 //Logging.Logg().Debug(@"GroupSources::Clone_OnEvtDataAskedHost () - NAME=" + m_strShrName + @", от [ID=" + (int)pars[1] + @"] для [ID=" + parsToSend[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
                             }
@@ -1679,7 +1679,7 @@ namespace uLoader
                         {
                             parsToSend[0] = FormMain.FileINI.GetIDIndex(grpSgnls.m_strID);
                             //Да, группа сигналов 'grpSgnls' ожидает значения от группы сигналов '(int)pars[1]';
-                            PerformDataAskedHostPlugIn(new EventArgsDataHost((int)ID_DATA_ASKED_HOST.TO_STOP, parsToSend));
+                            PerformDataAskedHostPlugIn(new EventArgsDataHost(-1, (int)ID_DATA_ASKED_HOST.TO_STOP, parsToSend));
                         }
                         else
                             ;
@@ -1710,7 +1710,7 @@ namespace uLoader
                     bEvtDataAskedHostQueue = false;
 
                     if (m_dictLinkedIndexGroupSources.ContainsKey(indx) == true)
-                        if ((ID_DATA_ASKED_HOST)ev.id == ID_DATA_ASKED_HOST.START)
+                        if ((ID_DATA_ASKED_HOST)ev.id_detail == ID_DATA_ASKED_HOST.START)
                         {
                             m_dictLinkedIndexGroupSources[indx].Add(indxGrpSgnls);
 
@@ -1720,7 +1720,7 @@ namespace uLoader
                                 ;
                         }
                         else
-                            if ((ID_DATA_ASKED_HOST)ev.id == ID_DATA_ASKED_HOST.STOP)
+                            if ((ID_DATA_ASKED_HOST)ev.id_detail == ID_DATA_ASKED_HOST.STOP)
                             {
                                 m_dictLinkedIndexGroupSources[indx].Remove(indxGrpSgnls);
 
@@ -1736,7 +1736,7 @@ namespace uLoader
 
                     if (bEvtDataAskedHostQueue == true)
                         //Передать для добавления обработчика событий
-                        EvtDataAskedHostQueue(new EventArgsDataHost(ev.id, new object[] { this, indx }));
+                        EvtDataAskedHostQueue(new EventArgsDataHost(ev.id_main, ev.id_detail, new object[] { this, indx }));
                     else
                         ;
                 }

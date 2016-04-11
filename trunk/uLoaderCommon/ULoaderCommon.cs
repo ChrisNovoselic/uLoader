@@ -34,7 +34,7 @@ namespace uLoaderCommon
             
             set
             {
-                _value = parse(value, out _prefix);
+                _value = parse(value, out _prefix);//ошибка парсер(mi0)
 
                 if (isError == true)
                     throw new Exception(@"HTimeSpan::ctor () - error parsing value ...");
@@ -66,6 +66,9 @@ namespace uLoaderCommon
                         break;
                     case @"hh":
                         iValue = (int)_value.TotalHours;
+                        break;
+                    case @"dd":
+                        iValue = (int)_value.TotalDays;
                         break;
                     default:
                         break;
@@ -127,6 +130,9 @@ namespace uLoaderCommon
                         case @"hh":
                             tsRes = TimeSpan.FromHours(iValue);
                             break;
+                        case @"dd":
+                            tsRes = TimeSpan.FromDays(iValue);
+                            break;
                         default:
                             // признак ошибки
                             tsRes = TimeSpan.Zero;
@@ -167,6 +173,11 @@ namespace uLoaderCommon
         public static HTimeSpan FromHours(int hours)
         {
             return new HTimeSpan(@"hh", hours);
+        }
+
+        public static HTimeSpan FromDays(int day)
+        {
+            return new HTimeSpan(@"dd", day);
         }
     }
     
@@ -294,11 +305,13 @@ namespace uLoaderCommon
             /// <summary>
             /// Период времени для формирования запроса значений (глобальный)
             /// </summary>
-            public TimeSpan PeriodMain { get { return m_tsPeriodMain; } set { m_tsPeriodMain = value; } }
+            public TimeSpan PeriodMain { get { return m_tsPeriodMain; } 
+                set { m_tsPeriodMain = value; } }
             /// <summary>
             /// Период времени для формирования запроса значений (локальный)
             /// </summary>
-            public TimeSpan PeriodLocal { get { return m_tsPeriodLocal; } set { m_tsPeriodLocal = value; } }
+            public TimeSpan PeriodLocal { get { return m_tsPeriodLocal; } 
+                set { m_tsPeriodLocal = value; } }
 
             private long m_msecIntervalLocal;
             /// <summary>
@@ -1298,7 +1311,7 @@ namespace uLoaderCommon
                 m_evtInitSource.Reset ();
                 m_connSett = null;
                 if (! (_iPlugin == null))
-                    (_iPlugin as PlugInULoader).SetMark((int)ID_DATA_ASKED_HOST.INIT_SOURCE, false);
+                    (_iPlugin as PlugInULoader).SetMark(-1, (int)ID_DATA_ASKED_HOST.INIT_SOURCE, false);
                 else
                     ;
 
@@ -1488,25 +1501,29 @@ namespace uLoaderCommon
             createObject(key);
         }
 
-        public void SetMark(int key, bool val)
+        public void SetMark(int id_obj, int key, bool val)
         {
+            KeyValuePair<int, int> pair = new KeyValuePair<int, int>(id_obj, key);
+
             //m_markDataHost.Set(indx, val);
-            if (m_dictDataHostCounter.ContainsKey(key) == true)
+            if (m_dictDataHostCounter.ContainsKey(pair) == true)
                 if (val == true)
-                    m_dictDataHostCounter[key] ++;
+                    m_dictDataHostCounter[pair] ++;
                 else
                     if (val == false)
-                        m_dictDataHostCounter[key] --;
+                        m_dictDataHostCounter[pair] --;
                     else
                         ; // недостижимый код
             else
                 ;
         }
 
-        protected bool isMarked(int key)
+        protected bool isMarked(int id_obj, int key)
         {
-            return (m_dictDataHostCounter.ContainsKey(key) == true)
-                && (m_dictDataHostCounter[key] % 2 == 1);
+            KeyValuePair<int, int> pair = new KeyValuePair<int, int>(id_obj, key);
+
+            return (m_dictDataHostCounter.ContainsKey(pair) == true)
+                && (m_dictDataHostCounter[pair] % 2 == 1);
         }
         /// <summary>
         /// Обработчик запросов от клиента
@@ -1517,7 +1534,7 @@ namespace uLoaderCommon
             EventArgsDataHost ev = obj as EventArgsDataHost; //Переданные значения из-вне
             HHandlerDbULoader target = _objects[_Id] as HHandlerDbULoader; //Целевой объект
 
-            switch (ev.id)
+            switch (ev.id_detail)
             {
                 case (int)ID_DATA_ASKED_HOST.INIT_SOURCE: //Приняты параметры для инициализации целевого объекта
                     if (target.Initialize(ev.par as object []) == 0)
@@ -1538,7 +1555,7 @@ namespace uLoaderCommon
                     break;
                 case (int)ID_DATA_ASKED_HOST.START: //Принята команда на запуск группы сигналов
                     //Проверить признак получения целевым объектом параметоров для инициализации
-                    if ((isMarked((int)ID_DATA_ASKED_HOST.INIT_SOURCE) == true) && (target.IsInitSource == true))
+                    if ((isMarked((int)(ev.par as object[])[0], (int)ID_DATA_ASKED_HOST.INIT_SOURCE) == true) && (target.IsInitSource == true))
                     //if (m_markDataHost.IsMarked((int)ID_DATA_ASKED_HOST.INIT_SOURCE) == true)
                     {
                         //Инициализация группы сигналов по идентифактору [0]

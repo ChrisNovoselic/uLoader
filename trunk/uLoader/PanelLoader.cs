@@ -433,7 +433,7 @@ namespace uLoader
                 else
                     if (ev.ColumnIndex == indxCol)
                     {//Кнопки только в КРАЙНем столбце
-                        //Проверить способность ячейки изменять свое состояние
+                        //Проверить способность ячейки изменять свое состояние-ошибка??
                         if (((obj as DataGridView).Rows[ev.RowIndex].Cells[ev.ColumnIndex].GetType () == typeof (DataGridViewDisableButtonCell))
                             // , если - да, то проверить "включенное" состояние
                             && (((obj as DataGridView).Rows[ev.RowIndex].Cells[ev.ColumnIndex] as DataGridViewDisableButtonCell).Enabled == true))
@@ -528,9 +528,21 @@ namespace uLoader
                 HTimeSpan tsRes = HTimeSpan.NotValue;
                 string []vals;
 
-                vals = (GetWorkingItem(key) as MaskedTextBox).Text.Split (new char [] {':'});
-                tsRes = HTimeSpan.FromMinutes (Int32.Parse (vals[0]) * 60 + Int32.Parse(vals[1]));
+                vals = (GetWorkingItem(key) as MaskedTextBox).Text.Split(new char[] { ',', ':' });
+                tsRes = HTimeSpan.FromMinutes(Int32.Parse(vals[0]) * 60 + Int32.Parse(vals[1]));//00:00??dd1 or hh24
 
+                //for (int i = 0; i < vals.Length; i++)
+                //Int32.Parse(vals[i]);
+
+                switch (vals.Length)
+                {
+                    case 2:
+                        tsRes = HTimeSpan.FromMinutes(Int32.Parse(vals[0]) * 60 + Int32.Parse(vals[1]));//00:00??dd1 or hh24
+                        break;
+                    case 3:
+                        tsRes = HTimeSpan.FromMinutes(Int32.Parse(vals[0]) * 24 * 60 + Int32.Parse(vals[1]) * 60 + Int32.Parse(vals[2]));//00:00??dd1 or hh24
+                        break;
+                }
                 return tsRes;
             }
             /// <summary>
@@ -768,7 +780,8 @@ namespace uLoader
                 //??? Отобразить период опроса (основной)
                 key = PanelLoader.KEY_CONTROLS.MTBX_PERIOD_MAIN;
                 workItem = GetWorkingItem(key);
-                (workItem as MaskedTextBox).Text = pars.m_tsPeriodMain.Value.Hours.ToString(@"00")
+                (workItem as MaskedTextBox).Text = pars.m_tsPeriodMain.Value.Days.ToString(@"00")
+                    + @"." + pars.m_tsPeriodMain.Value.Hours.ToString(@"00")
                     + @":" + pars.m_tsPeriodMain.Value.Minutes.ToString(@"00")
                     //+ @":" + grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.Seconds
                     ;
@@ -778,7 +791,8 @@ namespace uLoader
                     //??? Отобразить период опроса (локальный)
                     key = PanelLoader.KEY_CONTROLS.MTBX_PERIOD_LOCAL;
                     workItem = GetWorkingItem(key);
-                    (workItem as MaskedTextBox).Text = pars.m_tsPeriodLocal.Value.Hours.ToString(@"00")
+                    (workItem as MaskedTextBox).Text = pars.m_tsPeriodMain.Value.Days.ToString(@"00")
+                    + @"." + pars.m_tsPeriodLocal.Value.Hours.ToString(@"00")
                         + @":" + pars.m_tsPeriodLocal.Value.Minutes.ToString(@"00")
                         ;
 
@@ -1108,7 +1122,7 @@ namespace uLoader
                 panelColumns.Controls.Add(ctrl, 0, panelColumns.GetRow(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SIGNALS)) + panelColumns.GetRowSpan(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SIGNALS)));
                 panelColumns.SetColumnSpan(ctrl, 1); panelColumns.SetRowSpan(ctrl, panelColumns.RowCount - panelColumns.GetRowSpan(GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SIGNALS)));
                 //Панель для ГроупБокса
-                HPanelCommon panelGroupBox = new PanelCommonULoader(8, 7);
+                HPanelCommon panelGroupBox = new PanelCommonULoader(9, 7);
                 panelGroupBox.Dock = DockStyle.Fill;
                 ctrl.Controls.Add(panelGroupBox);
                 //Текущая дата/время
@@ -1147,12 +1161,12 @@ namespace uLoader
                 ctrl.Name = KEY_CONTROLS.MTBX_START_TIME.ToString();
                 ctrl.Dock = DockStyle.Fill;
                 (ctrl as MaskedTextBox).Mask = @"00:00";
-                panelGroupBox.Controls.Add(ctrl, 6, 3);
+                panelGroupBox.Controls.Add(ctrl, 7, 3);
                 panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Период
                 //Описание для главного периода
                 ctrl = new Label();
-                (ctrl as Label).Text = @"Период(ЧЧ:ММ)";
+                (ctrl as Label).Text = @"Период(ДД.ЧЧ:ММ)";
                 ctrl.Dock = DockStyle.Bottom;
                 //ctrl.Anchor = ((AnchorStyles)(AnchorStyles.Bottom | AnchorStyles.Left));
                 panelGroupBox.Controls.Add(ctrl, 0, 4);
@@ -1161,23 +1175,24 @@ namespace uLoader
                 ctrl = new MaskedTextBox();
                 ctrl.Name = KEY_CONTROLS.MTBX_PERIOD_MAIN.ToString();
                 ctrl.Dock = DockStyle.Bottom;
-                (ctrl as MaskedTextBox).Mask = @"00:00";
+                (ctrl as MaskedTextBox).Mask = @"00.00:00";
                 panelGroupBox.Controls.Add(ctrl, 6, 4);
-                panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
+                panelGroupBox.SetColumnSpan(ctrl, 3); panelGroupBox.SetRowSpan(ctrl, 1);
+
                 //Описание для локального периода
                 ctrl = new Label();
-                (ctrl as Label).Text = @"Период(ЧЧ:ММ)";
+                (ctrl as Label).Text = @"Период(ДД.ЧЧ:ММ)";
                 ctrl.Dock = DockStyle.Bottom;
                 //ctrl.Anchor = ((AnchorStyles)(AnchorStyles.Bottom | AnchorStyles.Left));
                 panelGroupBox.Controls.Add(ctrl, 0, 5);
                 panelGroupBox.SetColumnSpan(ctrl, 6); panelGroupBox.SetRowSpan(ctrl, 1);
-                //TextBox изменения главного периода
+                //TextBox изменения локального периода
                 ctrl = new MaskedTextBox();
                 ctrl.Name = KEY_CONTROLS.MTBX_PERIOD_LOCAL.ToString();
                 ctrl.Dock = DockStyle.Bottom;
-                (ctrl as MaskedTextBox).Mask = @"00:00";
+                (ctrl as MaskedTextBox).Mask = @"00.00:00";
                 panelGroupBox.Controls.Add(ctrl, 6, 5);
-                panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
+                panelGroupBox.SetColumnSpan(ctrl, 3); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Интервал
                 ctrl = new Label();
                 (ctrl as Label).Text = @"Интервал (мсек)";
@@ -1191,7 +1206,7 @@ namespace uLoader
                 ctrl.Dock = DockStyle.Bottom;
                 //(ctrl as MaskedTextBox).Mask = @"00:00";
                 panelGroupBox.Controls.Add(ctrl, 6, 6);
-                panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
+                panelGroupBox.SetColumnSpan(ctrl, 3); panelGroupBox.SetRowSpan(ctrl, 1);
 
                 this.ResumeLayout (false);
                 this.PerformLayout ();

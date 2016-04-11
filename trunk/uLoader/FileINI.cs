@@ -742,6 +742,7 @@ namespace uLoader
                 SRC src = m_arListGroupValues[(int)indxSrc]; //источник/назначение
                 int groupType = getTypeGroup (id);
 
+
                 //группы источников/сигналов
                 switch (groupType)
                 {

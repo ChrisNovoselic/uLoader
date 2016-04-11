@@ -1019,7 +1019,7 @@ namespace uLoaderCommon
             EventArgsDataHost ev = obj as EventArgsDataHost;
             HHandlerDbULoaderDest target = _objects[_Id] as HHandlerDbULoaderDest;
 
-            switch (ev.id)
+            switch (ev.id_detail)
             {
                 case (int)ID_DATA_ASKED_HOST.TO_INSERT:
                     target.Insert((int)(ev.par as object[])[0], (ev.par as object[])[1] as DataTable, (ev.par as object[])[2] as object[]);

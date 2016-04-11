@@ -106,10 +106,10 @@ namespace uLoader
             {
                 if (FormMain.FileINI.GetIDIndex(grpSrcSource.m_strID) == indxNeededGroupSources)
                 {
-                    if ((ID_DATA_ASKED_HOST)ev.id == ID_DATA_ASKED_HOST.START)
+                    if ((ID_DATA_ASKED_HOST)ev.id_detail == ID_DATA_ASKED_HOST.START)
                         grpSrcSource.AddDelegatePlugInOnEvtDataAskedHost(FormMain.FileINI.GetIDIndex(grpSrcDest.m_strID), grpSrcDest.Clone_OnEvtDataAskedHost);
                     else
-                        if ((ID_DATA_ASKED_HOST)ev.id == ID_DATA_ASKED_HOST.STOP)
+                        if ((ID_DATA_ASKED_HOST)ev.id_detail == ID_DATA_ASKED_HOST.STOP)
                             grpSrcSource.RemoveDelegatePlugInOnEvtDataAskedHost(FormMain.FileINI.GetIDIndex(grpSrcDest.m_strID), grpSrcDest.Clone_OnEvtDataAskedHost);
                         else
                             ;
