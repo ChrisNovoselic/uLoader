@@ -77,10 +77,10 @@ namespace SrcKTS
             }
 
             /// <summary>
-            /// 
+            /// Возвратить основной идентификатор по косвенному(связанному) идентификатору
             /// </summary>
-            /// <param name="id_link"></param>
-            /// <returns></returns>
+            /// <param name="id_link">Связанный идентификатор</param>
+            /// <returns>Основной идентификатор (строка или целочисленное значение)</returns>
             protected override object getIdMain(object id_link)
             {
                 throw new NotImplementedException();
@@ -88,20 +88,20 @@ namespace SrcKTS
         }
 
         /// <summary>
-        /// 
+        /// Возвратить объект группы сигналов
         /// </summary>
-        /// <param name="id"></param>
-        /// <param name="objs"></param>
-        /// <returns></returns>
+        /// <param name="id">Идентификатор группы сишналов</param>
+        /// <param name="objs">Параметры группы сигналов</param>
+        /// <returns>Объект (вновь созданный) группы сигналов</returns>
         protected override HHandlerDbULoader.GroupSignals createGroupSignals(int id, object[] objs)
         {
             return new GroupSignalsKTSTUsql(this, id, objs);
         }
 
         /// <summary>
-        /// 
+        /// Преобразовать таблицу к известному(с заранее установленной структурой) виду
         /// </summary>
-        /// <param name="table"></param>
+        /// <param name="table">Таблица с данными для преобразования</param>
         protected override void parseValues(System.Data.DataTable table)
         {
             //base.parseValues (table);
@@ -164,88 +164,5 @@ namespace SrcKTS
 
             base.parseValues(tblRes);
         }
-
-        ///// <summary>
-        ///// Актулизировать дату/время начала опроса
-        ///// </summary>
-        ///// <returns>Признак изменения даты/времени начала опроса</returns>
-        //protected override int actualizeDateTimeBegin()
-        //{
-        //    int iRes = 0;
-        //    if (Mode == MODE_WORK.CUR_INTERVAL)
-        //        //Проверить признак 1-го запуска (в режиме CUR_INTERVAL)
-        //        if (DateTimeBegin == DateTime.MinValue)
-        //        {
-        //            if (m_modeCurInterval == MODE_CURINTERVAL.CAUSE_PERIOD)
-        //            {
-        //                //Выравнивание по "час"
-        //                DateTimeBegin = m_dtServer.AddMilliseconds(-1 * (m_dtServer.Second * 1000 + m_dtServer.Millisecond));
-        //                DateTimeBegin = DateTimeBegin.AddSeconds(-1 * (m_dtServer.Minute * 60 + m_dtServer.Second));
-        //            }
-        //            else
-        //                if (m_modeCurInterval == MODE_CURINTERVAL.CAUSE_NOT)
-        //                    DateTimeBegin = m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds);
-        //                else
-        //                    ;
-
-        //            iRes = 1;
-        //        }
-        //        else
-        //            //Переход на очередной интервал (повторный опрос)
-        //            switch (m_modeCurInterval)
-        //            {
-        //                case MODE_CURINTERVAL.CAUSE_PERIOD:
-        //                    //Проверить необходимость изменения даты/времени
-        //                    if ((m_dtServer - DateTimeBegin.AddSeconds(PeriodLocal.TotalSeconds)).TotalMilliseconds > MSecIntervalLocal)
-        //                    {
-        //                        DateTimeBegin = DateTimeBegin.AddSeconds(PeriodLocal.TotalSeconds);
-        //                        //CountMSecInterval++;
-        //                        //Установить признак перехода
-        //                        iRes = 1;
-        //                    }
-        //                    else
-        //                        ;
-        //                    break;
-        //                case MODE_CURINTERVAL.CAUSE_NOT:
-        //                    DateTimeBegin = m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds);
-        //                    //Установить признак перехода
-        //                    iRes = 1;
-        //                    break;
-        //                default:
-        //                    break;
-        //            }
-        //    else
-        //        if (Mode == MODE_WORK.COSTUMIZE)
-        //        {
-        //            //Проверить признак 1-го запуска (в режиме COSTUMIZE)
-        //            if (DateTimeBegin == DateTime.MinValue)
-        //            {
-        //                //Проверить указано ли дата/время начала опроса
-        //                if (DateTimeStart == DateTime.MinValue)
-        //                    //Не указано - опросить ближайший к текущей дате/времени период
-        //                    DateTimeStart = m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds);
-        //                else
-        //                    ;
-
-        //                DateTimeBegin = DateTimeStart;
-        //            }
-        //            else
-        //                //Повторный опрос
-        //                DateTimeBegin = DateTimeBegin.AddMilliseconds(PeriodLocal.TotalMilliseconds);
-
-        //            iRes = 1;
-        //        }
-        //        else
-        //            throw new Exception(@"HHandlerDbULoaderDatetimeSrc::actualizeDateTimeStart () - неизвестный режим ...");
-
-        //    Logging.Logg().Debug(@"HHandlerDbULoader::actualizeDateTimeStart () - "
-        //                        + @"[" + PlugInId + @", key=" + IdGroupSignalsCurrent + @"]"
-        //                        + @", m_dtServer=" + m_dtServer.ToString(@"dd.MM.yyyy HH:mm.ss.fff")
-        //                        + @", DateTimeBegin=" + DateTimeBegin.ToString(@"dd.MM.yyyy HH:mm.ss.fff")
-        //                        + @", iRes=" + iRes
-        //                        + @"...", Logging.INDEX_MESSAGE.NOT_SET);
-
-        //    return iRes;
-        //}
     }
 }

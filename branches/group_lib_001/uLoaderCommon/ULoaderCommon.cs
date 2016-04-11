@@ -1349,7 +1349,7 @@ namespace uLoaderCommon
             {
                 if (! (_iPlugin == null))
                     //Подтвердить клиенту останов группы сигналов
-                    (_iPlugin as PlugInBase).DataAskedHost(new object[] { ID_DATA_ASKED_HOST.STOP, id, direct });
+                    (_iPlugin as PlugInBase).DataAskedHost(new object[] { -1, ID_DATA_ASKED_HOST.STOP, id, direct }); //-1 неизвестный идентификатор типа (класса)объекта
                 else
                     ;
 
@@ -1489,16 +1489,36 @@ namespace uLoaderCommon
             //_MarkReversed = true;
         }
 
-        /// <summary>
-        /// Зарегистрировать тип объекта библиотеки
-        /// </summary>
-        /// <param name="key">Ключ регистрируемого типа объекиа</param>
-        /// <param name="type">Регистрируемый тип</param>
-        protected override void registerType(int key, Type type)
-        {
-            base.registerType(key, type);
+        ///// <summary>
+        ///// Зарегистрировать тип объекта библиотеки
+        ///// </summary>
+        ///// <param name="key">Ключ регистрируемого типа объекиа</param>
+        ///// <param name="type">Регистрируемый тип</param>
+        //protected override void registerType(int key, Type type)
+        //{
+        //    base.registerType(key, type);
 
-            createObject(key);
+        //    createObject(key);
+        //}
+
+        public int CreateObject(string nameTypeObj)
+        {
+            int iRes = -1;
+
+            foreach (KeyValuePair<int, Type> pair in _types)
+                if (pair.Value.Name == nameTypeObj)
+                {
+                    if (createObject(pair.Key) == true)
+                        iRes = 0;
+                    else
+                        ;
+
+                    break;
+                }
+                else
+                    ;
+
+            return iRes;
         }
 
         public void SetMark(int id_obj, int key, bool val)
@@ -1532,18 +1552,19 @@ namespace uLoaderCommon
         public override void OnEvtDataRecievedHost(object obj)
         {
             EventArgsDataHost ev = obj as EventArgsDataHost; //Переданные значения из-вне
-            HHandlerDbULoader target = _objects[_Id] as HHandlerDbULoader; //Целевой объект
+            int id_obj = _objects.Keys.ElementAt(0);
+            HHandlerDbULoader target = _objects[id_obj] as HHandlerDbULoader; //Целевой объект
 
-            switch (ev.id_detail)
+            switch ((ID_DATA_ASKED_HOST)ev.id_detail)
             {
-                case (int)ID_DATA_ASKED_HOST.INIT_SOURCE: //Приняты параметры для инициализации целевого объекта
+                case ID_DATA_ASKED_HOST.INIT_SOURCE: //Приняты параметры для инициализации целевого объекта
                     if (target.Initialize(ev.par as object []) == 0)
                         //Подтвердить клиенту  получение параметров
-                        DataAskedHost(new object[] { ID_DATA_ASKED_HOST.INIT_SOURCE, -1, ID_HEAD_ASKED_HOST.CONFIRM });
+                        DataAskedHost(new object[] { id_obj, ID_DATA_ASKED_HOST.INIT_SOURCE, -1, ID_HEAD_ASKED_HOST.CONFIRM });
                     else
                         ;
                     break;
-                case (int)ID_DATA_ASKED_HOST.INIT_SIGNALS: //Приняты параметры инициализации группы сигналов
+                case ID_DATA_ASKED_HOST.INIT_SIGNALS: //Приняты параметры инициализации группы сигналов
                     ID_HEAD_ASKED_HOST idHead = ID_HEAD_ASKED_HOST.CONFIRM;
                     //Инициализация группы сигналов по идентифактору [0]
                     if (target.Initialize((int)(ev.par as object[])[0], (ev.par as object[])[1] as object[]) == 0)                        
@@ -1551,11 +1572,11 @@ namespace uLoaderCommon
                     else
                         ; //??? сообщить об ошибке idHead = ID_HEAD_ASKED_HOST.ERROR
                     //Подтвердить клиенту  получение параметров
-                    DataAskedHost(new object[] { ID_DATA_ASKED_HOST.INIT_SIGNALS, (ev.par as object[])[0], idHead });
+                    DataAskedHost(new object[] { id_obj, ID_DATA_ASKED_HOST.INIT_SIGNALS, (ev.par as object[])[0], idHead });
                     break;
-                case (int)ID_DATA_ASKED_HOST.START: //Принята команда на запуск группы сигналов
+                case ID_DATA_ASKED_HOST.START: //Принята команда на запуск группы сигналов
                     //Проверить признак получения целевым объектом параметоров для инициализации
-                    if ((isMarked((int)(ev.par as object[])[0], (int)ID_DATA_ASKED_HOST.INIT_SOURCE) == true) && (target.IsInitSource == true))
+                    if ((isMarked(ev.id_main, (int)ID_DATA_ASKED_HOST.INIT_SOURCE) == true) && (target.IsInitSource == true))
                     //if (m_markDataHost.IsMarked((int)ID_DATA_ASKED_HOST.INIT_SOURCE) == true)
                     {
                         //Инициализация группы сигналов по идентифактору [0]
@@ -1572,7 +1593,7 @@ namespace uLoaderCommon
                         //DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.INIT_SOURCE, (int)(ev.par as object[])[0], ID_HEAD_ASKED_HOST.GET })
                         ;
                     break;
-                case (int)ID_DATA_ASKED_HOST.STOP:
+                case ID_DATA_ASKED_HOST.STOP:
                     target.Stop((int)(ev.par as object[])[0], ID_HEAD_ASKED_HOST.CONFIRM);
                     break;
                 default:

@@ -757,6 +757,10 @@ namespace uLoader
                 ;
         }
         /// <summary>
+        /// Идентификатор типа объекта плюгИна, используемого для обращения к данным
+        /// </summary>
+        protected int m_IdType;
+        /// <summary>
         /// Загрузить библиотеку с именем 'm_strDLLName'
         /// </summary>
         /// <param name="iRes">Признак выполнения загрузки библиотеки</param>
@@ -768,10 +772,11 @@ namespace uLoader
             iRes = STATE_DLL.UNKNOWN;
 
             string name =
-                Path.GetFileNameWithoutExtension (this.m_strDLLName)
+                Path.GetFileNameWithoutExtension (this.m_strDLLName.Split(new char [] { ':' }, StringSplitOptions.None)[0])
                 //"biysktmora"
-                ;
+                , strTypeName = string.Empty;
             Type objType = null;
+
             try
             {
                 Assembly ass = null;
@@ -798,14 +803,21 @@ namespace uLoader
                 try
                 {
                     plugInRes = ((IPlugIn)Activator.CreateInstance(objType));
-                    plugInRes.Host = (IPlugInHost)this;
-                    //Взаимная "привязка" для обмена сообщениями
-                    // библиотека - объект класса
-                    (plugInRes as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(plugIn_OnEvtDataAskedHost);
-                    // объект класса - библиотека
-                    EvtDataAskedHostPlugIn += (plugInRes as PlugInBase).OnEvtDataRecievedHost;
+                    strTypeName = this.m_strDLLName.Split(new char[] { ':' }, StringSplitOptions.None)[1];
+                    if ((plugInRes as PlugInULoader).CreateObject(strTypeName) == 0)
+                    {
+                        m_IdType = plugInRes.GetKeyType(strTypeName);
+                        plugInRes.Host = (IPlugInHost)this;
+                        //Взаимная "привязка" для обмена сообщениями
+                        // библиотека - объект класса
+                        (plugInRes as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(plugIn_OnEvtDataAskedHost);
+                        // объект класса - библиотека
+                        EvtDataAskedHostPlugIn += (plugInRes as PlugInBase).OnEvtDataRecievedHost;
 
-                    iRes = STATE_DLL.LOADED;
+                        iRes = STATE_DLL.LOADED;
+                    }
+                    else
+                        iRes = STATE_DLL.NOT_LOAD;
                 }
                 catch (Exception e)
                 {
@@ -850,7 +862,7 @@ namespace uLoader
         {
             int iRes = 0;
 
-            PerformDataAskedHostPlugIn(new EventArgsDataHost(-1, (int)ID_DATA_ASKED_HOST.INIT_SOURCE, Pack ()));
+            PerformDataAskedHostPlugIn(new EventArgsDataHost(m_IdType, (int)ID_DATA_ASKED_HOST.INIT_SOURCE, Pack()));
 
             return iRes;
         }
@@ -887,7 +899,7 @@ namespace uLoader
             }
 
             //Отправить данные для инициализации
-            PerformDataAskedHostPlugIn(new EventArgsDataHost(-1, (int)ID_DATA_ASKED_HOST.INIT_SIGNALS, new object[] { iIDGroupSignals, arToDataHost }));
+            PerformDataAskedHostPlugIn(new EventArgsDataHost(m_IdType, (int)ID_DATA_ASKED_HOST.INIT_SIGNALS, new object[] { iIDGroupSignals, arToDataHost }));
 
             return iRes;
         }
@@ -966,7 +978,7 @@ namespace uLoader
                 else
                     ; //
 
-            PerformDataAskedHostPlugIn(new EventArgsDataHost(-1, (int)idToSend, arDataAskedHost));
+            PerformDataAskedHostPlugIn(new EventArgsDataHost(m_IdType, (int)idToSend, arDataAskedHost));
 
             return iRes;
         }
@@ -987,7 +999,10 @@ namespace uLoader
             
             try
             {
-                pars = (ev.par as object[])[0] as object [];
+                pars = 
+                    //(ev.par as object[])[0] as object []
+                    ev.par as object[]
+                    ;
 
                 id_cmd = (ID_DATA_ASKED_HOST)pars[0];
                 
@@ -1067,7 +1082,7 @@ namespace uLoader
                         grpSgnls.StateChange();
                         //Установить/разорвать взаимосвязь между группами источников (при необходимости)
                         if (this is GroupSourcesDest)
-                            (this as GroupSourcesDest).PerformDataAskedHostQueue(new EventArgsDataHost(-1, (int)id_cmd, new object[] { iIDGroupSignals }));
+                            (this as GroupSourcesDest).PerformDataAskedHostQueue(new EventArgsDataHost(m_IdType, (int)id_cmd, new object[] { iIDGroupSignals }));
                         else
                             ;
 
@@ -1644,7 +1659,7 @@ namespace uLoader
                             if (!(grpSgnls.GetListNeededIndexGroupSignals().IndexOf((int)pars[1]) < 0))
                             {//Да, группа сигналов 'grpSgnls' ожидает значения от группы сигналов '(int)pars[1]'
                                 parsToSend[0] = FormMain.FileINI.GetIDIndex(grpSgnls.m_strID);
-                                PerformDataAskedHostPlugIn(new EventArgsDataHost(-1, (int)ID_DATA_ASKED_HOST.TO_INSERT, parsToSend));
+                                PerformDataAskedHostPlugIn(new EventArgsDataHost(m_IdType, (int)ID_DATA_ASKED_HOST.TO_INSERT, parsToSend));
 
                                 //Logging.Logg().Debug(@"GroupSources::Clone_OnEvtDataAskedHost () - NAME=" + m_strShrName + @", от [ID=" + (int)pars[1] + @"] для [ID=" + parsToSend[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
                             }
@@ -1679,7 +1694,7 @@ namespace uLoader
                         {
                             parsToSend[0] = FormMain.FileINI.GetIDIndex(grpSgnls.m_strID);
                             //Да, группа сигналов 'grpSgnls' ожидает значения от группы сигналов '(int)pars[1]';
-                            PerformDataAskedHostPlugIn(new EventArgsDataHost(-1, (int)ID_DATA_ASKED_HOST.TO_STOP, parsToSend));
+                            PerformDataAskedHostPlugIn(new EventArgsDataHost(m_IdType, (int)ID_DATA_ASKED_HOST.TO_STOP, parsToSend));
                         }
                         else
                             ;

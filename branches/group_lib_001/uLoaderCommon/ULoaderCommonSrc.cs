@@ -614,7 +614,7 @@ namespace uLoaderCommon
             //Console.WriteLine(@"Ошибка. " + msgErr);
 
             if (!(_iPlugin == null))
-                (_iPlugin as PlugInBase).DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.ERROR, IdGroupSignalsCurrent, state, msgErr });
+                (_iPlugin as PlugInBase).DataAskedHost(new object[] { -1, (int)ID_DATA_ASKED_HOST.ERROR, IdGroupSignalsCurrent, state, msgErr }); //-1 неизвестный идентификатор типа (класса)объекта
             else
                 ;
 
