@@ -118,6 +118,14 @@
       <Project>{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}</Project>
       <Name>HClassLibrary</Name>
     </ProjectReference>
+    <ProjectReference Include="..\SrcBiysk\SrcBiysk.csproj">
+      <Project>{ee2093ca-afe0-4513-8542-b56f3d418ef9}</Project>
+      <Name>SrcBiysk</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SrcKTS\SrcKTS.csproj">
+      <Project>{75c045e1-e18e-484e-a3a5-2291007a950c}</Project>
+      <Name>SrcKTS</Name>
+    </ProjectReference>
     <ProjectReference Include="..\uLoaderCommon\uLoaderCommon.csproj">
       <Project>{4869D4EB-4F7A-4311-B105-D3E09BB7290A}</Project>
       <Name>uLoaderCommon</Name>

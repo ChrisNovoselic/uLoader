@@ -7,8 +7,8 @@
     <ProjectGuid>{3EC0312F-00FE-46E4-8A13-73AD72522377}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DestTorisStatKKSNAMEsql</RootNamespace>
-    <AssemblyName>DestTorisStatKKSNAMEsql</AssemblyName>
+    <RootNamespace>DestStat</RootNamespace>
+    <AssemblyName>DestStat</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />

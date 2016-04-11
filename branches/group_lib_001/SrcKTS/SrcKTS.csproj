@@ -8,8 +8,8 @@
     <ProjectGuid>{75C045E1-E18E-484E-A3A5-2291007A950C}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SrcKTSTUsql</RootNamespace>
-    <AssemblyName>SrcKTSTUsql</AssemblyName>
+    <RootNamespace>SrcKTS</RootNamespace>
+    <AssemblyName>SrcKTS</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
