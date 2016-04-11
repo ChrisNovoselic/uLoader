@@ -20,7 +20,7 @@ namespace SrcMST
         {
         }
 
-        public SrcMSTKKSNAMEsql(IPlugIn iPlugIn)
+        public SrcMSTKKSNAMEsql(PlugInULoader iPlugIn)
             : base(iPlugIn, @"yyyy/MM/dd HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.HALF_PERIOD)
         {
         }

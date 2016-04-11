@@ -15,7 +15,7 @@ namespace SrcMST
 {
     public class SrcMSTASUTPIDT5tg6sql : HHandlerDbULoaderMSTIDsql
     {
-        public SrcMSTASUTPIDT5tg6sql(IPlugIn plugIn)
+        public SrcMSTASUTPIDT5tg6sql(PlugInULoader plugIn)
             : base(plugIn, MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.FULL_PERIOD)
         {
         }

@@ -21,7 +21,7 @@ namespace DestStat
         {
         }
 
-        public DestBiTECStatKKSNAMEsql(IPlugIn iPlugIn)
+        public DestBiTECStatKKSNAMEsql(PlugInULoader iPlugIn)
             : base(iPlugIn)
         {
         }

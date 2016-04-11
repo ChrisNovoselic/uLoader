@@ -28,7 +28,7 @@ namespace SrcMST
             initialize();
         }
 
-        public SrcMSTKKSNAMEtoris(IPlugIn iPlugIn)
+        public SrcMSTKKSNAMEtoris(PlugInULoader iPlugIn)
             //??? аргументы лишние, кроме 1-го
             : base(iPlugIn, string.Empty, MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.HALF_PERIOD)
         {

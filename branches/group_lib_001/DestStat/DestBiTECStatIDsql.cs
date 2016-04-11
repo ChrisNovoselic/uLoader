@@ -20,7 +20,7 @@ namespace DestStat
         {
         }
 
-        public DestBiTECStatIDsql(IPlugIn iPlugIn)
+        public DestBiTECStatIDsql(PlugInULoader iPlugIn)
             : base(iPlugIn)
         {
         }

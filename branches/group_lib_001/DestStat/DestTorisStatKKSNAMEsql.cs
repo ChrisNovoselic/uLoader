@@ -22,7 +22,7 @@ namespace DestStat
         {
         }
 
-        public DestTorisStatKKSNAMEsql(IPlugIn iPlugIn)
+        public DestTorisStatKKSNAMEsql(PlugInULoader iPlugIn)
             : base(iPlugIn)
         {
         }

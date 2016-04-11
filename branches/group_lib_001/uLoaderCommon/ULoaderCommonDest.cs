@@ -30,7 +30,7 @@ namespace uLoaderCommon
         {
         }
 
-        public HHandlerDbULoaderDest(IPlugIn iPlugIn)
+        public HHandlerDbULoaderDest(PlugInULoader iPlugIn)
             : base(iPlugIn)
         {
         }
@@ -621,7 +621,7 @@ namespace uLoaderCommon
         {
         }
 
-        public HHandlerDbULoaderStatTMDest(IPlugIn iPlugIn)
+        public HHandlerDbULoaderStatTMDest(PlugInULoader iPlugIn)
             : base(iPlugIn)
         {
         }
@@ -813,7 +813,7 @@ namespace uLoaderCommon
     //    {
     //    }
 
-    //    public HHandlerDbULoaderStatTMMSTDest(IPlugIn iPlugIn)
+    //    public HHandlerDbULoaderStatTMMSTDest(PlugInULoader iPlugIn)
     //        : base(iPlugIn)
     //    {
     //    }
@@ -840,7 +840,7 @@ namespace uLoaderCommon
         {
         }
 
-        public HHandlerDbULoaderIDDest(IPlugIn iPlugIn)
+        public HHandlerDbULoaderIDDest(PlugInULoader iPlugIn)
             : base(iPlugIn)
         {
         }
@@ -913,7 +913,7 @@ namespace uLoaderCommon
         {
         }
 
-        public HHandlerDbULoaderStatTMKKSNAMEDest(IPlugIn iPlugIn)
+        public HHandlerDbULoaderStatTMKKSNAMEDest(PlugInULoader iPlugIn)
             : base(iPlugIn)
         {
         }

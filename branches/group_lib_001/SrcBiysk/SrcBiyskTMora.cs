@@ -20,7 +20,7 @@ namespace SrcBiysk
         {
         }
 
-        public SrcBiyskTMora(IPlugIn iPlugIn)
+        public SrcBiyskTMora(PlugInULoader iPlugIn)
             : base(iPlugIn, @"yyyyMMdd HHmmss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.HALF_PERIOD)
         {
         }

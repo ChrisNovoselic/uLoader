@@ -24,7 +24,7 @@ namespace DestTEP32
         /// Конструктор - основной (динамическая загрузка)
         /// </summary>
         /// <param name="iPlugIn">Объект для связи с "родительским" приложением</param>
-        public DestTEP32Dsql(IPlugIn iPlugIn)
+        public DestTEP32Dsql(PlugInULoader iPlugIn)
             : base(iPlugIn)
         {
         }

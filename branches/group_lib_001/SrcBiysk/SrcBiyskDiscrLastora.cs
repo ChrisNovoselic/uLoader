@@ -20,7 +20,7 @@ namespace SrcBiysk
         {
         }
 
-        public SrcBiyskDiscrLastora(IPlugIn iPlugIn)
+        public SrcBiyskDiscrLastora(PlugInULoader iPlugIn)
             : base(iPlugIn)
         {
         }

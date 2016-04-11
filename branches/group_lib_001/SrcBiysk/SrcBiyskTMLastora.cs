@@ -20,7 +20,7 @@ namespace SrcBiysk
         {
         }
 
-        public SrcBiyskTMLastora(IPlugIn iPlugIn)
+        public SrcBiyskTMLastora(PlugInULoader iPlugIn)
             : base(iPlugIn)
         {
         }

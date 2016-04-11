@@ -25,7 +25,7 @@ namespace DestStat
         /// Конструктор - основной (динамическая загрузка)
         /// </summary>
         /// <param name="iPlugIn">Объект для связи с "родительским" приложением</param>
-        public DestStatIDsql(IPlugIn iPlugIn)
+        public DestStatIDsql(PlugInULoader iPlugIn)
             : base(iPlugIn)
         {
         }

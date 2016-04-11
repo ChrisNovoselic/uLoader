@@ -249,7 +249,7 @@ namespace uLoaderCommon
         /// <summary>
         /// Ссылка на объект "связи" с клиентом
         /// </summary>
-        protected IPlugIn _iPlugin;
+        protected PlugInULoader _iPlugin;
         /// <summary>
         /// Разность между часовыми поясами даты/времени сервера и метками даты/времени значений в БД
         /// </summary>
@@ -792,7 +792,7 @@ namespace uLoaderCommon
         /// Конструктор - дополнительный для создания объекта при динамическом подключении библиотеки к приложению
         /// </summary>
         /// <param name="iPlugIn"></param>
-        public HHandlerDbULoader(IPlugIn iPlugIn)
+        public HHandlerDbULoader(PlugInULoader iPlugIn)
             : this()
         {
             this._iPlugin = iPlugIn;
@@ -1113,7 +1113,7 @@ namespace uLoaderCommon
         {
             // null - для передачи дополнительной информации
             //Для передачи дополнительной информации - переопределить метод, заполнить 'array[3]'
-            return new object[] { ID_DATA_ASKED_HOST.TABLE_RES, IdGroupSignalsCurrent, TableRecieved, null };
+            return new object[] { _iPlugin.KeySingleton, ID_DATA_ASKED_HOST.TABLE_RES, IdGroupSignalsCurrent, TableRecieved, null };
         }
 
         protected virtual object[] getConfirmStartAskedHost(int id)
@@ -1121,8 +1121,9 @@ namespace uLoaderCommon
             // null - для передачи дополнительной информации
             //Для передачи дополнительной информации - переопределить метод, заполнить 'array[3]'
             return new object[]
-                        { ID_DATA_ASKED_HOST.START,
-                            id
+                        { _iPlugin.KeySingleton 
+                            , ID_DATA_ASKED_HOST.START
+                            , id
                             , ID_HEAD_ASKED_HOST.CONFIRM
                             , null
                         };
@@ -1311,7 +1312,7 @@ namespace uLoaderCommon
                 m_evtInitSource.Reset ();
                 m_connSett = null;
                 if (! (_iPlugin == null))
-                    (_iPlugin as PlugInULoader).SetMark(-1, (int)ID_DATA_ASKED_HOST.INIT_SOURCE, false);
+                    (_iPlugin as PlugInULoader).SetMark(_iPlugin.KeySingleton, (int)ID_DATA_ASKED_HOST.INIT_SOURCE, false);
                 else
                     ;
 
@@ -1349,7 +1350,7 @@ namespace uLoaderCommon
             {
                 if (! (_iPlugin == null))
                     //Подтвердить клиенту останов группы сигналов
-                    (_iPlugin as PlugInBase).DataAskedHost(new object[] { -1, ID_DATA_ASKED_HOST.STOP, id, direct }); //-1 неизвестный идентификатор типа (класса)объекта
+                    (_iPlugin as PlugInBase).DataAskedHost(new object[] { _iPlugin.KeySingleton, ID_DATA_ASKED_HOST.STOP, id, direct }); //-1 неизвестный идентификатор типа (класса)объекта
                 else
                     ;
 
@@ -1521,6 +1522,8 @@ namespace uLoaderCommon
             return iRes;
         }
 
+        public int KeySingleton { get { return (_objects.Count == 1) ? _objects.Keys.ElementAt(0) : -1; } }
+
         public void SetMark(int id_obj, int key, bool val)
         {
             KeyValuePair<int, int> pair = new KeyValuePair<int, int>(id_obj, key);
@@ -1552,7 +1555,7 @@ namespace uLoaderCommon
         public override void OnEvtDataRecievedHost(object obj)
         {
             EventArgsDataHost ev = obj as EventArgsDataHost; //Переданные значения из-вне
-            int id_obj = _objects.Keys.ElementAt(0);
+            int id_obj = KeySingleton;
             HHandlerDbULoader target = _objects[id_obj] as HHandlerDbULoader; //Целевой объект
 
             switch ((ID_DATA_ASKED_HOST)ev.id_detail)

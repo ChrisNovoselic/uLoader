@@ -17,7 +17,7 @@ namespace SrcKTS
 
         }
 
-        public SrcKTSTUDsql(IPlugIn iPlugIn)
+        public SrcKTSTUDsql(PlugInULoader iPlugIn)
             : base(iPlugIn, @"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.FULL_PERIOD)
         {
         }
