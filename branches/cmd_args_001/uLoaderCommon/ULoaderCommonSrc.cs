@@ -253,13 +253,31 @@ namespace uLoaderCommon
                 }
             }
 
-            //protected int m_ServerOffsetToDataTotalHours {
-            //    get {
-            //        return ((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer == HTimeSpan.NotValue)
-            //            || ((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData == HTimeSpan.NotValue) ?
-            //                0 : (int)((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer.Value - (_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData.Value).TotalHours;
-            //    }            
-            //}
+            protected int m_ServerOffsetToDataTotalHours
+            {
+                get
+                {
+                    //int iRes = 0;
+
+                    //if ((!((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer == HTimeSpan.NotValue))
+                    //    && (!((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData == HTimeSpan.NotValue)))
+                    //    iRes = (int)((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer.Value.TotalHours
+                    //        - (_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData.Value.TotalHours);
+                    //else
+                    //    if (!((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer == HTimeSpan.NotValue))
+                    //        iRes = (int)(_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer.Value.TotalHours;
+                    //    else
+                    //        if (!((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData == HTimeSpan.NotValue))
+                    //            iRes = -1 * (int)(_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData.Value.TotalHours;
+                    //        else
+                    //            ;
+
+                    return
+                        //iRes
+                        m_UTCOffsetToServerTotalHours - m_UTCOffsetToDataTotalHours
+                        ;
+                }
+            }
 
             protected class SIGNALBiyskTMoraSrc : SIGNAL
             {
@@ -746,7 +764,7 @@ namespace uLoaderCommon
                     long msec = -1L
                         , msecDiff = -1L;
 
-                    msec = (long)(_parent as HHandlerDbULoaderDatetimeSrc).m_tsUTCOffsetToServer.Value.TotalMilliseconds;
+                    msec = (long)(_parent as HHandlerDbULoaderSrc).m_ServerOffsetToDataTotalHours.Value.TotalMilliseconds;
                     if (Math.Abs(msec) > 1)
                         msecDiff = msec;
                     else
@@ -785,7 +803,7 @@ namespace uLoaderCommon
                         , msecDiff = -1L;
                     //int pday = 1;
 
-                    msec = (long)(_parent as HHandlerDbULoaderDatetimeSrc).m_tsUTCOffsetToServer.Value.TotalMilliseconds;
+                    msec = (long)(_parent as HHandlerDbULoaderDatetimeSrc).m_ServerOffsetToDataTotalHours.Value.TotalMilliseconds;
                     if (Math.Abs(msec) > 1)
                         msecDiff = msec;
                     else
