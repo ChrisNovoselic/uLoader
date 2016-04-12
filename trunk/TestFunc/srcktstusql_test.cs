@@ -6,7 +6,7 @@ using System.Text;
 using HClassLibrary;
 using uLoaderCommon;
 
-using SrcKTSTUsql;
+using SrcKTS;
 
 namespace TestFunc
 {
@@ -21,7 +21,7 @@ namespace TestFunc
         {
             int iRes = 0;
 
-            Data = new SrcKTSTUsql.SrcKTSTUsql();
+            Data = new SrcKTS.SrcKTSTUsql();
 
             Data.Initialize(new object[] {
                                 new ConnectionSettings (
@@ -36,8 +36,8 @@ namespace TestFunc
             Data.Initialize(0
                 , new object[]
                 {
-                    new object [] { 12077, @"t окр.возд." }
-                    , new object [] { 12609, @"t обск.воды" }
+                    new object [] { 10101, @"t окр.возд.", 12145, "true" }
+                    , new object [] { 10102, @"t обск.воды", 12133, "true" }
                 }
             );
 

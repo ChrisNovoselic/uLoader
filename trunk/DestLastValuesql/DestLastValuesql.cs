@@ -25,7 +25,7 @@ namespace DestLastValuesql
         /// Конструктор - основной (динамическая загрузка)
         /// </summary>
         /// <param name="iPlugIn">Объект для связи с "родительским" приложением</param>
-        public DestLastValuesql(IPlugIn iPlugIn)
+        public DestLastValuesql(PlugInULoader iPlugIn)
             : base(iPlugIn)
         {
         }

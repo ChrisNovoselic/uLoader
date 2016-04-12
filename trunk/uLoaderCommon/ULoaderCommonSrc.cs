@@ -41,7 +41,7 @@ namespace uLoaderCommon
             initialize();
         }
 
-        public HHandlerDbULoaderSrc(IPlugIn iPlugIn)
+        public HHandlerDbULoaderSrc(PlugInULoader iPlugIn)
             : base(iPlugIn)
         {
             initialize();
@@ -614,7 +614,7 @@ namespace uLoaderCommon
             //Console.WriteLine(@"Ошибка. " + msgErr);
 
             if (!(_iPlugin == null))
-                (_iPlugin as PlugInBase).DataAskedHost(new object[] { (int)ID_DATA_ASKED_HOST.ERROR, IdGroupSignalsCurrent, state, msgErr });
+                (_iPlugin as PlugInBase).DataAskedHost(new object[] { -1, (int)ID_DATA_ASKED_HOST.ERROR, IdGroupSignalsCurrent, state, msgErr }); //-1 неизвестный идентификатор типа (класса)объекта
             else
                 ;
 
@@ -694,7 +694,7 @@ namespace uLoaderCommon
             m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.NEXTSTEP] = modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.NEXTSTEP];
         }
 
-        public HHandlerDbULoaderDatetimeSrc(IPlugIn iPlugIn, string dtDBFormat, params MODE_CURINTERVAL[] modeCurIntervals)
+        public HHandlerDbULoaderDatetimeSrc(PlugInULoader iPlugIn, string dtDBFormat, params MODE_CURINTERVAL[] modeCurIntervals)
             : base(iPlugIn)
         {
             m_strDateTimeDBFormat = dtDBFormat;
@@ -1135,7 +1135,7 @@ namespace uLoaderCommon
     //    {
     //    }
 
-    //    public HHandlerDbULoaderMSTTMSrc(IPlugIn iPlugIn)
+    //    public HHandlerDbULoaderMSTTMSrc(PlugInULoader iPlugIn)
     //        : base(iPlugIn, @"yyyy/MM/dd HH:mm:ss")
     //    {
     //    }
@@ -1224,7 +1224,7 @@ namespace uLoaderCommon
         {
         }
 
-        public HHandlerDbULoaderMSTIDsql(IPlugIn iPlugIn, params MODE_CURINTERVAL[] modeCurIntervals)
+        public HHandlerDbULoaderMSTIDsql(PlugInULoader iPlugIn, params MODE_CURINTERVAL[] modeCurIntervals)
             : base(iPlugIn, @"yyyyMMdd HH:mm:ss", modeCurIntervals)
         {
         }

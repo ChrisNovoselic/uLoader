@@ -6,7 +6,8 @@ using System.Threading;
 
 using HClassLibrary;
 using uLoaderCommon;
-using SrcBiyskTMora;
+
+using SrcBiysk;
 
 namespace TestFunc
 {
@@ -21,7 +22,7 @@ namespace TestFunc
         {
             int iRes = 0;
 
-            Data = new SrcBiyskTMora.SrcBiyskTMora();
+            Data = new SrcBiysk.SrcBiyskTMora();
 
             Data.Initialize(new object[] {
                                 new ConnectionSettings (
