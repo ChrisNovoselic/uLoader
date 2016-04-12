@@ -814,7 +814,7 @@ namespace uLoaderCommon
                     //Значения параметров соединения с источником данных
                     m_connSett = new ConnectionSettings((pars[0] as ConnectionSettings));
 
-                    strMsg = @"HHandlerDbUloader::Initialize [ID=" + PlugInId + @"] - объект: ConnectionSettings.ID=" + m_connSett.id + @" ...";
+                    strMsg = @"HHandlerDbUloader::Initialize [ID=" + PlugInId + @":" + _iPlugin.KeySingleton + @"] - объект: ConnectionSettings.ID=" + m_connSett.id + @" ...";
                     Console.WriteLine(strMsg);
                     Logging.Logg ().Debug (strMsg, Logging.INDEX_MESSAGE.NOT_SET);
 

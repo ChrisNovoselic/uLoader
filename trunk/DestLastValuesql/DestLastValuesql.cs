@@ -103,9 +103,9 @@ namespace DestLastValuesql
         public PlugIn()
             : base()
         {
-            _Id = 2005;
+            _Id = 205;
 
-            registerType(_Id, typeof(DestLastValuesql));
+            registerType(20501, typeof(DestLastValuesql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

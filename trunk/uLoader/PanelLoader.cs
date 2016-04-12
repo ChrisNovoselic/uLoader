@@ -529,13 +529,12 @@ namespace uLoader
                 string []vals;
 
                 vals = (GetWorkingItem(key) as MaskedTextBox).Text.Split(new char[] { ',', ':' });
-                tsRes = HTimeSpan.FromMinutes(Int32.Parse(vals[0]) * 60 + Int32.Parse(vals[1]));//00:00??dd1 or hh24
-
-                //for (int i = 0; i < vals.Length; i++)
-                //Int32.Parse(vals[i]);
 
                 switch (vals.Length)
                 {
+                    case 1:
+                        tsRes = new HTimeSpan(vals[0]);//00:00??dd1 or hh24
+                        break;
                     case 2:
                         tsRes = HTimeSpan.FromMinutes(Int32.Parse(vals[0]) * 60 + Int32.Parse(vals[1]));//00:00??dd1 or hh24
                         break;
@@ -543,6 +542,7 @@ namespace uLoader
                         tsRes = HTimeSpan.FromMinutes(Int32.Parse(vals[0]) * 24 * 60 + Int32.Parse(vals[1]) * 60 + Int32.Parse(vals[2]));//00:00??dd1 or hh24
                         break;
                 }
+
                 return tsRes;
             }
             /// <summary>

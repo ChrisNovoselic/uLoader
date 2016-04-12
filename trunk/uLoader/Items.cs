@@ -1326,6 +1326,7 @@ namespace uLoader
             DataRow[]arSel;
             object [] arObjToRow = null;
             string strNameFieldID = string.Empty;
+            HTimeSpan tsToData = HTimeSpan.NotValue;
 
             //Проверить длину идентификатора
             if (id.Length > 1)
@@ -1341,6 +1342,10 @@ namespace uLoader
                     {
                         if ((!(tblRec.Columns.IndexOf(@"ID") < 0)) && (!(tblRec.Columns.IndexOf(@"DATETIME") < 0)))
                         {
+                            if (m_dictAdding.ContainsKey(@"UTC_OFFSET_TO_DATA") == true)
+                                tsToData = new HTimeSpan(m_dictAdding[@"UTC_OFFSET_TO_DATA"]);
+                            else
+                                ;
                             //Logging.Logg().Debug(@"GroupSources::GetDataToPanel () - получено строк=" + tblRec.Rows.Count + @"...", Logging.INDEX_MESSAGE.NOT_SET);
                             
                             tblToPanel = new DataTable();
@@ -1366,7 +1371,10 @@ namespace uLoader
                             {
                                 arSel = tblRec.Select(@"ID=" + sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf (strNameFieldID)], @"DATETIME DESC");
                                 if (arSel.Length > 0)
-                                    arObjToRow = new object[] { sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf (@"NAME_SHR")], arSel[0][@"VALUE"], ((DateTime)arSel[0][@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff"), arSel.Length };
+                                    arObjToRow = new object[] { sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf (@"NAME_SHR")]
+                                        , arSel[0][@"VALUE"]
+                                        , ((DateTime)arSel[0][@"DATETIME"]).Add(tsToData == HTimeSpan.NotValue ? TimeSpan.Zero : - tsToData.Value).ToString(@"dd.MM.yyyy HH:mm:ss.fff")
+                                        , arSel.Length };
                                 else
                                     arObjToRow = new object[] { sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf (@"NAME_SHR")], string.Empty, string.Empty, string.Empty };
 
@@ -1620,7 +1628,7 @@ namespace uLoader
             //pars[1] - идентификатор группы сигналов
             //pars[2] - таблица с данными для "вставки"
             //??? pars[3] - object [] с доп./параметрами, для ретрансляции
-            object[] pars = (ev.par as object[])[0] as object[];
+            object[] pars = ev.par as object[];
             object[] parsToSend = null;
 
             //pars[0] - идентификатор события

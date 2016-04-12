@@ -154,7 +154,8 @@ namespace uLoaderCommon
                     ;
 
                 string msg = @"HHandlerDbULoaderDest.GroupSignalsDest::dequeue () - DEQUEUE!"
-                        + @" [ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @", key=" + (_parent as HHandlerDbULoaderDest).IdGroupSignalsCurrent
+                        + @" [ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @":" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInULoader).KeySingleton 
+                            + @", key=" + (_parent as HHandlerDbULoaderDest).IdGroupSignalsCurrent
                         + @"] queue.Count=" + (_parent as HHandlerDbULoaderDest).QueueCount
                         + @", queueTableRec.Count=" + m_queueTableRec.Count
                         + @", строк_было=" + cntPrev
@@ -361,7 +362,7 @@ namespace uLoaderCommon
                 else
                     ;
 
-                Logging.Logg().Debug(@"Строк для вставки [ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id
+                Logging.Logg().Debug(@"Строк для вставки [ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @":" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInULoader).KeySingleton
                         + @", key=" + (_parent as HHandlerDbULoaderDest).IdGroupSignalsCurrent + @"]: " + m_DupTables.TableDistinct.Rows.Count
                     , Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -1017,7 +1018,7 @@ namespace uLoaderCommon
         public override void OnEvtDataRecievedHost(object obj)
         {
             EventArgsDataHost ev = obj as EventArgsDataHost;
-            HHandlerDbULoaderDest target = _objects[_Id] as HHandlerDbULoaderDest;
+            HHandlerDbULoaderDest target = _objects[KeySingleton] as HHandlerDbULoaderDest;
 
             switch (ev.id_detail)
             {
