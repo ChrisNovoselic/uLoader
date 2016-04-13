@@ -33,12 +33,12 @@ namespace SrcBiysk
                 m_strQuery = string.Empty;
 
                 string strUnion = @",";
-                int iUTCOffsetToDataTotalHours = m_UTCOffsetToDataTotalHours;
+                long secUTCOffsetToData = m_msecUTCOffsetToData / 1000;
 
                 if (m_arSignals.Length > 0)
                 {
                     m_strQuery += @"SELECT TAGNAME as ID, VALUE, QUALITY"
-                            + @", DATETIME + numtodsinterval(" + iUTCOffsetToDataTotalHours + @",'hour') as DATETIME"
+                            + @", DATETIME + numtodsinterval(" + secUTCOffsetToData + @",'second') as DATETIME"
                         + @" FROM ARCH_SIGNALS.ARCHIVE_TS WHERE TAGNAME IN (";
 
                     //Формировать зпрос

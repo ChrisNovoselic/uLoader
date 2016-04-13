@@ -239,21 +239,21 @@ namespace uLoaderCommon
         /// </summary>
         protected abstract class GroupSignalsSrc : GroupSignals
         {
-            protected int m_UTCOffsetToServerTotalHours {
+            protected long m_msecUTCOffsetToServer {
                 get {
                     return (_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer == HTimeSpan.NotValue ?
-                        0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer.Value.TotalHours;
+                        0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer.Value.TotalMilliseconds;
                 }
             }
 
-            protected int m_UTCOffsetToDataTotalHours {
+            protected long m_msecUTCOffsetToData {
                 get {
                     return (_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData == HTimeSpan.NotValue ?
-                        0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData.Value.TotalHours;
+                        0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData.Value.TotalMilliseconds;
                 }
             }
 
-            protected int m_ServerOffsetToDataTotalHours
+            protected long m_msecServerOffsetToData
             {
                 get
                 {
@@ -274,7 +274,7 @@ namespace uLoaderCommon
 
                     return
                         //iRes
-                        m_UTCOffsetToServerTotalHours - m_UTCOffsetToDataTotalHours
+                        m_msecUTCOffsetToServer - m_msecUTCOffsetToData
                         ;
                 }
             }
@@ -764,7 +764,7 @@ namespace uLoaderCommon
                     long msec = -1L
                         , msecDiff = -1L;
 
-                    msec = (long)(_parent as HHandlerDbULoaderSrc).m_ServerOffsetToDataTotalHours.Value.TotalMilliseconds;
+                    msec = m_msecServerOffsetToData;
                     if (Math.Abs(msec) > 1)
                         msecDiff = msec;
                     else
@@ -803,7 +803,7 @@ namespace uLoaderCommon
                         , msecDiff = -1L;
                     //int pday = 1;
 
-                    msec = (long)(_parent as HHandlerDbULoaderDatetimeSrc).m_ServerOffsetToDataTotalHours.Value.TotalMilliseconds;
+                    msec = (long)m_msecServerOffsetToData;
                     if (Math.Abs(msec) > 1)
                         msecDiff = msec;
                     else

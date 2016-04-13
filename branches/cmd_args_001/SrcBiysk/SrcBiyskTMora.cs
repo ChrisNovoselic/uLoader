@@ -37,13 +37,13 @@ namespace SrcBiysk
                 m_strQuery = string.Empty;
 
                 string strUnion = @" UNION ";
-                int iUTCOffsetToDataTotalHours = m_UTCOffsetToDataTotalHours;
+                long secUTCOffsetToData = m_msecUTCOffsetToData / 1000;
 
                 //Формировать зпрос
                 foreach (GroupSignalsBiyskTMora.SIGNALBiyskTMoraSrc s in m_arSignals)
                 {
                     m_strQuery += @"SELECT " + s.m_idMain + @" as ID, VALUE, QUALITY"
-                            + @", DATETIME + numtodsinterval(" + iUTCOffsetToDataTotalHours + @",'hour') as DATETIME"
+                            + @", DATETIME + numtodsinterval(" + secUTCOffsetToData + @",'second') as DATETIME"
                         + @" FROM ARCH_SIGNALS." + s.m_NameTable
                         + @" WHERE"
                         + @" DATETIME >=" + @" to_timestamp('" + DateTimeBeginFormat + @"', 'yyyymmdd hh24missFF9')"
