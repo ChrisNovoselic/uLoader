@@ -10,14 +10,12 @@ using uLoaderCommon;
 
 namespace DestCurrentValuessql
 {
-    public class DestTechsiteCurValuessql : HHandlerDbULoaderStatTMKKSNAMEDest
+    public class DestStatCurValuessql : HHandlerDbULoaderStatTMKKSNAMEDest
     {
-        //private static string s_strNameDestTable = @"ALL_PARAM_SOTIASSO"
-        //    , s_strIdTEC = @"6";
         /// <summary>
         /// Конструктор - вспомогательный (статическая сборка)
         /// </summary>
-        public DestTechsiteCurValuessql()
+        public DestStatCurValuessql()
             : base()
         {
         }
@@ -25,7 +23,7 @@ namespace DestCurrentValuessql
         /// Конструктор - основной (динамическая загрузка)
         /// </summary>
         /// <param name="iPlugIn">Объект для связи с "родительским" приложением</param>
-        public DestTechsiteCurValuessql(PlugInULoader iPlugIn)
+        public DestStatCurValuessql(PlugInULoader iPlugIn)
             : base(iPlugIn)
         {
         }
@@ -48,13 +46,14 @@ namespace DestCurrentValuessql
                     , strRow = string.Empty;
                 Type typeVal = m_DupTables.TableDistinct.Columns[@"VALUE"].DataType;
                 int idSrvTM = (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).GetIdSrvTM(m_IdSourceConnSett)
-                    , iUTCOffsetToDataTotalHours = (int)(_parent as DestTechsiteCurValuessql).m_tsUTCOffsetToData.Value.TotalHours;
+                    , iUTCOffsetToDataTotalHours = (int)(_parent as DestStatCurValuessql).m_tsUTCOffsetToData.Value.TotalHours;
                 HTimeSpan tsUTCOffset = _parent.m_tsUTCOffset == HTimeSpan.NotValue ? new HTimeSpan(@"ss0") : _parent.m_tsUTCOffset;
 
                 //Logging.Logg().Debug(@"GroupSignalsStatKKSNAMEsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 strRow = @"UPDATE [" + (_parent as HHandlerDbULoaderDest).m_strNameTable + @"]"
-                            + @"SET [ID_SRV_TM]=" + idSrvTM + @",";
+                            //+ @"SET [ID_SRV_TM]=" + idSrvTM + @",";
+                            + @" SET ";
 
                 foreach (DataRow row in m_DupTables.TableDistinct.Rows)
                 {
@@ -72,7 +71,8 @@ namespace DestCurrentValuessql
                     strRes += @"[DATETIME]='" + ((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours).ToString(s_strFormatDbDateTime) + @"'" + @",";
                     strRes += @"[UPDATE_DATETIME]=GETDATE()";
 
-                    strRes += @" WHERE [KKS_NAME]='" + (string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) + @"';";
+                    //strRes += @" WHERE [KKS_NAME]='" + (string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) + @"';";
+                    strRes += @" WHERE [ID_SIGNAL]='" + (string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) + @"';";
 
                 }
 

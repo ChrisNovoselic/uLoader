@@ -8,7 +8,7 @@ using System.Globalization;
 using HClassLibrary;
 using uLoaderCommon;
 
-namespace DestCurrentValuessql
+namespace DestCurrentValues
 {
     public class PlugIn : PlugInULoaderDest
     {
@@ -19,7 +19,7 @@ namespace DestCurrentValuessql
         {
             _Id = 205;
 
-            registerType(20501, typeof(DestStatCurValuessql));
+            //registerType(20501, typeof(DestStatCurValuessql));
             registerType(20502, typeof(DestTechsiteCurValuessql));
         }
 
