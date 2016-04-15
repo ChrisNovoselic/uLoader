@@ -8,16 +8,16 @@ using System.Globalization;
 using HClassLibrary;
 using uLoaderCommon;
 
-namespace DestLastValuesql
+namespace DestCurrentValuessql
 {
-    public class DestLastValuesql : HHandlerDbULoaderStatTMKKSNAMEDest
+    public class DestStatCurValuessql : HHandlerDbULoaderStatTMKKSNAMEDest
     {
         //private static string s_strNameDestTable = @"ALL_PARAM_SOTIASSO"
         //    , s_strIdTEC = @"6";
         /// <summary>
         /// Конструктор - вспомогательный (статическая сборка)
         /// </summary>
-        public DestLastValuesql()
+        public DestStatCurValuessql()
             : base()
         {
         }
@@ -25,7 +25,7 @@ namespace DestLastValuesql
         /// Конструктор - основной (динамическая загрузка)
         /// </summary>
         /// <param name="iPlugIn">Объект для связи с "родительским" приложением</param>
-        public DestLastValuesql(PlugInULoader iPlugIn)
+        public DestStatCurValuessql(PlugInULoader iPlugIn)
             : base(iPlugIn)
         {
         }
@@ -48,14 +48,14 @@ namespace DestLastValuesql
                     , strRow = string.Empty;
                 Type typeVal = m_DupTables.TableDistinct.Columns[@"VALUE"].DataType;
                 int idSrvTM = (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).GetIdSrvTM(m_IdSourceConnSett)
-                    , iUTCOffsetToDataTotalHours = (int)(_parent as DestLastValuesql).m_tsUTCOffsetToData.Value.TotalHours;
+                    , iUTCOffsetToDataTotalHours = (int)(_parent as DestStatCurValuessql).m_tsUTCOffsetToData.Value.TotalHours;
                 HTimeSpan tsUTCOffset = _parent.m_tsUTCOffset == HTimeSpan.NotValue ? new HTimeSpan(@"ss0") : _parent.m_tsUTCOffset;
 
                 //Logging.Logg().Debug(@"GroupSignalsStatKKSNAMEsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 strRow = @"UPDATE [" + (_parent as HHandlerDbULoaderDest).m_strNameTable + @"]"
                             //+ @"SET [ID_SRV_TM]=" + idSrvTM + @",";
-                            + @"SET ";
+                            + @" SET ";
 
                 foreach (DataRow row in m_DupTables.TableDistinct.Rows)
                 {
@@ -93,24 +93,6 @@ namespace DestLastValuesql
         protected override GroupSignals createGroupSignals(int id, object[] objs)
         {
             return new GroupSignalsTechSiteLastsql(this, id, objs);
-        }
-    }
-
-    public class PlugIn : PlugInULoaderDest
-    {
-        //private Dictionary <int, HMark> m_dictMarkDataHost;
-
-        public PlugIn()
-            : base()
-        {
-            _Id = 205;
-
-            registerType(20501, typeof(DestLastValuesql));
-        }
-
-        public override void OnEvtDataRecievedHost(object obj)
-        {
-            base.OnEvtDataRecievedHost(obj);
         }
     }
 }
