@@ -101,8 +101,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DesStatCurValuessql.cs" />
-    <Compile Include="DesTechsiteCurValuessql.cs" />
+    <Compile Include="DestStatCurValuessql.cs" />
+    <Compile Include="DestTechsiteCurValuessql.cs" />
     <Compile Include="PluginItems.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
