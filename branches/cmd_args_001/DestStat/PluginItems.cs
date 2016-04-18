@@ -25,6 +25,8 @@ namespace DestStat
 
             registerType(20103, typeof(DestBiTECStatIDsql));
             registerType(20104, typeof(DestBiTECStatKKSNAMEsql));
+
+            registerType(20108, typeof(DestStatCurValuessql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

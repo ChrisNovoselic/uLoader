@@ -8,7 +8,7 @@ using System.Globalization;
 using HClassLibrary;
 using uLoaderCommon;
 
-namespace DestCurrentValuessql
+namespace DestStat
 {
     public class DestStatCurValuessql : HHandlerDbULoaderStatTMKKSNAMEDest
     {
