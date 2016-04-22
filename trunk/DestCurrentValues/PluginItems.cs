@@ -8,7 +8,7 @@ using System.Globalization;
 using HClassLibrary;
 using uLoaderCommon;
 
-namespace DestStat
+namespace DestCurrentValues
 {
     public class PlugIn : PlugInULoaderDest
     {
@@ -17,16 +17,10 @@ namespace DestStat
         public PlugIn()
             : base()
         {
-            _Id = 201;
+            _Id = 205;
 
-            registerType(20101, typeof(DestStatIDsql));
-            registerType(20102, typeof(DestStatKKSNAMEsql));
-            registerType(20107, typeof(DestTorisStatKKSNAMEsql));
-
-            registerType(20103, typeof(DestBiTECStatIDsql));
-            registerType(20104, typeof(DestBiTECStatKKSNAMEsql));
-
-            registerType(20108, typeof(DestStatCurValuessql));
+            //registerType(20501, typeof(DestStatCurValuessql));
+            registerType(20502, typeof(DestTechsiteCurValuessql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

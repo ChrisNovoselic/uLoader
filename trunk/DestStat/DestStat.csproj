@@ -43,6 +43,7 @@
   <ItemGroup>
     <Compile Include="DestBiTECStatIDsql.cs" />
     <Compile Include="DestBiTECStatKKSNAMEsql.cs" />
+    <Compile Include="DestStatCurValuessql.cs" />
     <Compile Include="DestStatIDsql.cs" />
     <Compile Include="DestStatKKSNAMEsql.cs" />
     <Compile Include="DestTorisStatKKSNAMEsql.cs" />

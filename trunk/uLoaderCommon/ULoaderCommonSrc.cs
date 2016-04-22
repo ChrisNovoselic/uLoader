@@ -239,27 +239,45 @@ namespace uLoaderCommon
         /// </summary>
         protected abstract class GroupSignalsSrc : GroupSignals
         {
-            protected int m_UTCOffsetToServerTotalHours {
+            protected long m_msecUTCOffsetToServer {
                 get {
                     return (_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer == HTimeSpan.NotValue ?
-                        0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer.Value.TotalHours;
+                        0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer.Value.TotalMilliseconds;
                 }
             }
 
-            protected int m_UTCOffsetToDataTotalHours {
+            protected long m_msecUTCOffsetToData {
                 get {
                     return (_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData == HTimeSpan.NotValue ?
-                        0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData.Value.TotalHours;
+                        0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData.Value.TotalMilliseconds;
                 }
             }
 
-            //protected int m_ServerOffsetToDataTotalHours {
-            //    get {
-            //        return ((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer == HTimeSpan.NotValue)
-            //            || ((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData == HTimeSpan.NotValue) ?
-            //                0 : (int)((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer.Value - (_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData.Value).TotalHours;
-            //    }            
-            //}
+            protected long m_msecServerOffsetToData
+            {
+                get
+                {
+                    //int iRes = 0;
+
+                    //if ((!((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer == HTimeSpan.NotValue))
+                    //    && (!((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData == HTimeSpan.NotValue)))
+                    //    iRes = (int)((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer.Value.TotalHours
+                    //        - (_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData.Value.TotalHours);
+                    //else
+                    //    if (!((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer == HTimeSpan.NotValue))
+                    //        iRes = (int)(_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer.Value.TotalHours;
+                    //    else
+                    //        if (!((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData == HTimeSpan.NotValue))
+                    //            iRes = -1 * (int)(_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData.Value.TotalHours;
+                    //        else
+                    //            ;
+
+                    return
+                        //iRes
+                        m_msecUTCOffsetToServer - m_msecUTCOffsetToData
+                        ;
+                }
+            }
 
             protected class SIGNALBiyskTMoraSrc : SIGNAL
             {
@@ -746,7 +764,7 @@ namespace uLoaderCommon
                     long msec = -1L
                         , msecDiff = -1L;
 
-                    msec = (long)(_parent as HHandlerDbULoaderDatetimeSrc).m_tsUTCOffsetToServer.Value.TotalMilliseconds;
+                    msec = m_msecServerOffsetToData;
                     if (Math.Abs(msec) > 1)
                         msecDiff = msec;
                     else
@@ -785,7 +803,7 @@ namespace uLoaderCommon
                         , msecDiff = -1L;
                     //int pday = 1;
 
-                    msec = (long)(_parent as HHandlerDbULoaderDatetimeSrc).m_tsUTCOffsetToServer.Value.TotalMilliseconds;
+                    msec = (long)m_msecServerOffsetToData;
                     if (Math.Abs(msec) > 1)
                         msecDiff = msec;
                     else

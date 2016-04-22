@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 
 using HClassLibrary;
@@ -17,15 +18,28 @@ namespace uLoader
 
     public partial class FormMain : Form
     {
-        public enum STATE_EXECUTE {NORMALIZE, MINIMIZE }
-        public static STATE_EXECUTE m_state_execute;
+        public enum STATE_EXECUTE { NORMALIZE, MINIMIZE }
+        /// <summary>
+        /// Признак типа выполнения приложения в ~ от указанного аргумента/параметра в командной строке
+        /// </summary>
+        public static STATE_EXECUTE s_state_execute;
+        /// <summary>
+        /// Объект для визуализации процесса выполнения длительных операций
+        /// </summary>
         private FormWait m_formWait;
         
         private HHandlerQueue m_handler;
-
+        /// <summary>
+        /// Перечисление - индексы вкладок в главном окне приложения
+        /// </summary>
         enum INDEX_TAB { WORK, CONFIG, COUNT_INDEX_TAB };
-
+        /// <summary>
+        /// Панель с элементами управления - действия по выполнению целевых функций приложения
+        /// </summary>
         private PanelWork m_panelWork;
+        /// <summary>
+        /// Панель с элементами управления - действия по конфигурации приложения
+        /// </summary>
         private PanelConfig m_panelConfig;        
 
         public FormMain()
@@ -53,7 +67,7 @@ namespace uLoader
 
             m_TabCtrl.EventHTabCtrlExClose += new HTabCtrlEx.DelegateHTabCtrlEx(onCloseTabPage);
 
-            switch (m_state_execute)
+            switch (s_state_execute)
             {
                 case STATE_EXECUTE.MINIMIZE:
                     Message msg = new Message();
@@ -100,18 +114,20 @@ namespace uLoader
             private string RunCmd()
             {
                 string strNameFileINI = string.Empty;
-                switch (cmd)
-                {
-                    case "conf_ini":
-                        strNameFileINI = param;
-                        break;
-                    case "minimize":
-                        m_state_execute = STATE_EXECUTE.MINIMIZE;
-                        break;
-                    default:
-                        strNameFileINI = "";
-                        break;
-                }
+
+                foreach (KeyValuePair <string, string> pair in m_dictCmdArgs)
+                    switch (pair.Key)
+                    {
+                        case "conf_ini":
+                            strNameFileINI = pair.Value;
+                            break;
+                        case "minimize":
+                            s_state_execute = STATE_EXECUTE.MINIMIZE;
+                            break;
+                        default:
+                            strNameFileINI = string.Empty;
+                            break;
+                    }
 
                 return strNameFileINI;
             }

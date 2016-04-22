@@ -8,8 +8,8 @@
     <ProjectGuid>{04FC54F4-F3B3-4BE7-9D80-0C5F886F2167}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DestLastValuesql</RootNamespace>
-    <AssemblyName>DestLastValuesql</AssemblyName>
+    <RootNamespace>DestCurrentValues</RootNamespace>
+    <AssemblyName>DestCurrentValues</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -101,7 +101,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DestLastValuesql.cs" />
+    <Compile Include="DestTechsiteCurValuessql.cs" />
+    <Compile Include="PluginItems.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
