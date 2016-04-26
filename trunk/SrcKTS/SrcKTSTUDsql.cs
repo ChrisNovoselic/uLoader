@@ -37,6 +37,7 @@ namespace SrcKTS
                 int idReq = HMath.GetRandomNumber()
                     , i = -1;
                 string cmd = string.Empty;
+                long secUTCOffsetToData = m_msecUTCOffsetToData / 1000;
                 //перевод даты для суточного набора
                 if (DateTimeStart != DateTimeBegin)
                     DateTimeBegin = (DateTimeBegin - DateTimeBegin.TimeOfDay).AddDays(PeriodMain.Days);
@@ -64,7 +65,7 @@ namespace SrcKTS
                     i++;
                 }
 
-                m_strQuery += @"SELECT idVTI as [ID],idReq,TimeIdx,TimeRTC,TimeSQL as [DATETIME],idState,ValueFl as [VALUE],ValueInt,IsInteger,idUnit"
+                m_strQuery += @"SELECT idVTI as [ID],idReq,TimeIdx,TimeRTC, TimeSQL as [DATETIME],idState,ValueFl as [VALUE],ValueInt,IsInteger,idUnit"
                         + @", DATEDIFF(HH, GETDATE(), GETUTCDATE()) as [UTC_OFFSET]"
                     + @" FROM e6work.dbo.VTIdataList"
                     + @" WHERE idReq=" + idReq
@@ -116,9 +117,9 @@ namespace SrcKTS
                 if ((rowsSgnl.Length > 0)
                     && (rowsSgnl.Length % 48 == 0))
                 {
-                    dtValue = (DateTime)rowsSgnl[0][@"DATETIME"];
+                    dtValue = ((DateTime)rowsSgnl[0][@"DATETIME"]).AddMinutes(-30);
                     //Для обработки метки времени по UTC
-                    dtValue = dtValue.AddHours((int)rowsSgnl[0][@"UTC_OFFSET"]).AddDays(PeriodMain.Days).AddMinutes(-30);
+                    //dtValue = dtValue.AddHours((int)rowsSgnl[0][@"UTC_OFFSET"]).AddMinutes(-30);
                     //Вычислить суммарное значение для сигнала
                     dblSumValue = 0F;
                     //cntRec = 0;

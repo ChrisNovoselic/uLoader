@@ -114,9 +114,9 @@ namespace DestTEP32
                     {
                         iIdToInsert = (int)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim()));
                         if (dtToInsert == null)
-                            dtToInsert = ((DateTime)row[@"DATETIME"]).AddHours(0);
+                            dtToInsert = ((DateTime)row[@"DATETIME"]).AddDays(0);
                         else
-                            if (dtToInsert.Equals(((DateTime)row[@"DATETIME"]).AddHours(0)) == false)
+                            if (dtToInsert.Equals(((DateTime)row[@"DATETIME"]).AddDays(0)) == false)
                             {
                                 Logging.Logg().Error(@"GroupSignalsTEP32sql::getInsertValuesQuery () - в наборе различные дата/время...", Logging.INDEX_MESSAGE.NOT_SET);
                                 break;
