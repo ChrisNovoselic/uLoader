@@ -1,0 +1,174 @@
+<?xml version="1.0"?>
+<UITest xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Name="" Id="f1153d5e-9461-4b8b-a099-b83b7bd4a417" AssemblyVersion="10.0.40219.457" Version="1.0" xmlns="http://schemas.microsoft.com/VisualStudio/TeamTest/UITest/2010">
+  <Configuration>
+    <Group Name="IE">
+      <Setting Name="Version" Value="9.11.9600.17126" WarningLevel="1" />
+      <Setting Name="InformationBar" WarningLevel="1" />
+      <Setting Name="AutoCompletePassword" Value="no" WarningLevel="1" />
+      <Setting Name="AutoCompleteForm" Value="no" WarningLevel="1" />
+      <Setting Name="DefaultBrowser" Value="IEXPLORE.EXE" WarningLevel="1" />
+      <Setting Name="PopupBlocker" Value="1" WarningLevel="1" />
+      <Setting Name="TabbedBrowsing" Value="1" WarningLevel="2" />
+      <Setting Name="InternetZoneSecurity" Value="0" WarningLevel="2" />
+      <Setting Name="IntranetZoneSecurity" Value="0" WarningLevel="2" />
+      <Setting Name="TrustedZoneSecurity" Value="70912" WarningLevel="2" />
+      <Setting Name="RestrictedZoneSecurity" Value="0" WarningLevel="2" />
+      <Setting Name="PhishingFilter" WarningLevel="1" />
+      <Setting Name="EnhancedSecurityConfiguration" WarningLevel="1" />
+    </Group>
+    <Group Name="OS">
+      <Setting Name="Name" Value="Microsoft Windows 7 Профессиональная " WarningLevel="2" />
+      <Setting Name="Version" Value="Microsoft Windows NT 6.1.7601 Service Pack 1" WarningLevel="2" />
+      <Setting Name="IsUserAdmin" Value="True" WarningLevel="2" />
+      <Setting Name="Is64BitOperatingSystem" Value="False" WarningLevel="2" />
+      <Setting Name="IsTerminalServerSession" Value="False" WarningLevel="2" />
+      <Setting Name="OSLanguage" Value="1049" WarningLevel="1" />
+      <Setting Name="UserLocale" Value="1049" WarningLevel="1" />
+      <Setting Name="DragFullWindows" Value="False" WarningLevel="2" />
+      <Setting Name="ScreenResolutionWidth" Value="1920" WarningLevel="2" />
+      <Setting Name="ScreenResolutionHeight" Value="1080" WarningLevel="2" />
+      <Setting Name="SystemDPIX" Value="96" WarningLevel="2" />
+      <Setting Name="SystemDPIY" Value="96" WarningLevel="2" />
+      <Setting Name="Aero" Value="0" WarningLevel="1" />
+      <Setting Name="UACEnabled" Value="0" WarningLevel="2" />
+      <Setting Name="UACPromptEnabled" Value="0" WarningLevel="1" />
+      <Setting Name="WindowsAccessibilityAPIVersion" Value="3.0" WarningLevel="1" />
+    </Group>
+    <Group Name="TechnologyManagers">
+      <Setting Name="Web" WarningLevel="1" />
+      <Setting Name="UIA" WarningLevel="1" />
+    </Group>
+  </Configuration>
+  <InitializeActions />
+  <ExecuteActions>
+    <AssertAction UIObjectName="UIMap.UIULoaderMicrosoftVisuWindow.UIItemTabList.UIFormAboutcsКонструктTabPage.UIFormAboutcsКонструктPane.UIFormAboutcsКонструктPane1.UIOverlayControlClient.UIAdornerWindowClient">
+      <ParameterName />
+      <PropertyName>ControlType</PropertyName>
+      <ExpectedValue>Client</ExpectedValue>
+      <Type>String</Type>
+      <PropertyCondition>AreEqual</PropertyCondition>
+    </AssertAction>
+    <AssertAction UIObjectName="UIMap.UIULoaderMicrosoftVisuWindow.UIItemTabList.UIFormAboutcsКонструктTabPage.UIFormAboutcsКонструктPane.UIFormAboutcsКонструктPane1.UIOverlayControlClient.UIAdornerWindowClient">
+      <ParameterName />
+      <PropertyName>ControlType</PropertyName>
+      <ExpectedValue>Client</ExpectedValue>
+      <Type>String</Type>
+      <PropertyCondition>AreEqual</PropertyCondition>
+    </AssertAction>
+    <TestStepMarkerAction MarkerInformation="AssertMethod1">
+      <ParameterName />
+      <StepId>-1</StepId>
+      <Direction>Start</Direction>
+      <Outcome />
+      <Disabled>false</Disabled>
+      <WorkItemId>0</WorkItemId>
+      <MarkerRegionType>Assertion</MarkerRegionType>
+    </TestStepMarkerAction>
+  </ExecuteActions>
+  <CleanupActions />
+  <OnErrorActions />
+  <Maps>
+    <UIMap Id="UIMap">
+      <TopLevelWindows>
+        <TopLevelWindow ControlType="Window" Id="UIULoaderMicrosoftVisuWindow" FriendlyName="uLoader - Microsoft Visual Studio (Администратор)" SpecialControlType="None" SessionId="131610">
+          <TechnologyName>MSAA</TechnologyName>
+          <WindowTitles>
+            <WindowTitle>uLoader - Microsoft Visual Studio (Администратор)</WindowTitle>
+          </WindowTitles>
+          <SearchConfigurations>
+            <SearchConfiguration>VisibleOnly</SearchConfiguration>
+          </SearchConfigurations>
+          <AndCondition Id="SearchCondition">
+            <PropertyCondition Name="Name">uLoader - Microsoft Visual Studio (Администратор)</PropertyCondition>
+            <PropertyCondition Name="ClassName" Operator="Contains">HwndWrapper</PropertyCondition>
+            <PropertyCondition Name="ControlType">Window</PropertyCondition>
+          </AndCondition>
+          <SupportLevel>1</SupportLevel>
+          <Descendants>
+            <UIObject ControlType="TabList" Id="UIItemTabList" FriendlyName="" SpecialControlType="None">
+              <TechnologyName>UIA</TechnologyName>
+              <WindowTitles>
+                <WindowTitle>uLoader - Microsoft Visual Studio (Администратор)</WindowTitle>
+              </WindowTitles>
+              <AndCondition>
+                <PropertyCondition Name="ControlType">TabList</PropertyCondition>
+              </AndCondition>
+              <SupportLevel>0</SupportLevel>
+              <Descendants>
+                <UIObject ControlType="TabPage" Id="UIFormAboutcsКонструктTabPage" FriendlyName="FormAbout.cs [Конструктор]" SpecialControlType="None">
+                  <TechnologyName>UIA</TechnologyName>
+                  <WindowTitles>
+                    <WindowTitle>uLoader - Microsoft Visual Studio (Администратор)</WindowTitle>
+                  </WindowTitles>
+                  <AndCondition>
+                    <PropertyCondition Name="ControlType">TabPage</PropertyCondition>
+                    <PropertyCondition Name="Name">FormAbout.cs [Конструктор]</PropertyCondition>
+                  </AndCondition>
+                  <SupportLevel>0</SupportLevel>
+                  <Descendants>
+                    <UIObject ControlType="Pane" Id="UIFormAboutcsКонструктPane" FriendlyName="FormAbout.cs [Конструктор]" SpecialControlType="None">
+                      <TechnologyName>UIA</TechnologyName>
+                      <WindowTitles>
+                        <WindowTitle>uLoader - Microsoft Visual Studio (Администратор)</WindowTitle>
+                      </WindowTitles>
+                      <AndCondition>
+                        <PropertyCondition Name="ControlType">Pane</PropertyCondition>
+                        <PropertyCondition Name="ClassName">Uia.ViewPresenter</PropertyCondition>
+                        <PropertyCondition Name="AutomationId">D:0:0:{33C90FD1-85FE-41F0-84AD-712E89AD8F2D}|uLoader\uLoader.csproj|d:\my project's\work's\c.net\uloader\uloader\formabout.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form</PropertyCondition>
+                      </AndCondition>
+                      <SupportLevel>0</SupportLevel>
+                      <Descendants>
+                        <UIObject ControlType="Pane" Id="UIFormAboutcsКонструктPane1" FriendlyName="FormAbout.cs [Конструктор]" SpecialControlType="None">
+                          <TechnologyName>UIA</TechnologyName>
+                          <WindowTitles>
+                            <WindowTitle>uLoader - Microsoft Visual Studio (Администратор)</WindowTitle>
+                          </WindowTitles>
+                          <AndCondition>
+                            <PropertyCondition Name="ControlType">Pane</PropertyCondition>
+                            <PropertyCondition Name="ClassName">Uia.GenericPane</PropertyCondition>
+                            <PropertyCondition Name="Name">FormAbout.cs [Конструктор]</PropertyCondition>
+                          </AndCondition>
+                          <SupportLevel>0</SupportLevel>
+                          <Descendants>
+                            <UIObject ControlType="Client" Id="UIOverlayControlClient" FriendlyName="OverlayControl" SpecialControlType="None">
+                              <TechnologyName>MSAA</TechnologyName>
+                              <WindowTitles>
+                                <WindowTitle>uLoader - Microsoft Visual Studio (Администратор)</WindowTitle>
+                              </WindowTitles>
+                              <AndCondition Id="SearchCondition">
+                                <PropertyCondition Name="Name">OverlayControl</PropertyCondition>
+                                <PropertyCondition Name="ControlType">Client</PropertyCondition>
+                              </AndCondition>
+                              <SupportLevel>100</SupportLevel>
+                              <Descendants>
+                                <UIObject ControlType="Client" Id="UIAdornerWindowClient" FriendlyName="AdornerWindow" SpecialControlType="None">
+                                  <TechnologyName>MSAA</TechnologyName>
+                                  <WindowTitles>
+                                    <WindowTitle>uLoader - Microsoft Visual Studio (Администратор)</WindowTitle>
+                                  </WindowTitles>
+                                  <AndCondition Id="SearchCondition">
+                                    <PropertyCondition Name="Name">AdornerWindow</PropertyCondition>
+                                    <PropertyCondition Name="ControlType">Client</PropertyCondition>
+                                  </AndCondition>
+                                  <SupportLevel>100</SupportLevel>
+                                  <Descendants />
+                                </UIObject>
+                              </Descendants>
+                            </UIObject>
+                          </Descendants>
+                        </UIObject>
+                      </Descendants>
+                    </UIObject>
+                  </Descendants>
+                </UIObject>
+              </Descendants>
+            </UIObject>
+          </Descendants>
+        </TopLevelWindow>
+      </TopLevelWindows>
+    </UIMap>
+  </Maps>
+  <ValueMap>
+    <ParameterList />
+  </ValueMap>
+</UITest>
