@@ -193,6 +193,8 @@
     </None>
     <None Include="setup_statistic.ini" />
     <None Include="setup_toris_tec5.ini" />
+    <None Include="setup_toris_tec2.ini" />
+    <None Include="setup_toris_btec.ini" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\HClassLibrary\HClassLibrary.csproj">
