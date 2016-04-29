@@ -61,7 +61,7 @@ namespace DestStat
                     {
                         strRes += @"(";
 
-                        strRes += @"'" + (string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) + @"'";
+                        strRes += @"'" + (string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) + @"'" + @",";
 
                         if (typeVal.Equals(typeof(decimal)) == true)
                             strRes += ((decimal)row[@"VALUE"]).ToString("F7", CultureInfo.InvariantCulture);
@@ -70,15 +70,15 @@ namespace DestStat
                                 strRes += ((double)row[@"VALUE"]).ToString("F7", CultureInfo.InvariantCulture);
                             else
                                 strRes += row[@"VALUE"];
-                        strRes += @"',";
+                        strRes += @",";
 
-                        strRes += ((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours).ToString(s_strFormatDbDateTime) + @"'" + @"),";
+                        strRes += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours).ToString(s_strFormatDbDateTime) + @"'" + @"),";
                     }
 
                     //Лишняя ','
                     strRes = strRes.Substring(0, strRes.Length - 1);
 
-                    strRes += @")AS [TORIS_SOURCE]([KKS_NAME], [VALUE], [DATETIME]);";
+                    strRes += @") AS [TORIS_SOURCE]([KKS_NAME], [VALUE], [DATETIME]);";
 
                     strRes += @"MERGE [WEB_TECHSITE].[dbo].[TECHSITE_OIK_CURRENT] AS [T]"
                         + @" USING @VALUES_TABLE AS [S]"

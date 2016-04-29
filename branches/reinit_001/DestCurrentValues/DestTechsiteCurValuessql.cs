@@ -33,6 +33,7 @@ namespace DestCurrentValues
             public GroupSignalsTechSiteLastsql(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
+                s_strFormatDbDateTime = @"yyyyMMdd HH:mm:ss.fff";
             }
 
             //protected override object getIdToInsert(int idLink)
@@ -61,7 +62,7 @@ namespace DestCurrentValues
                     {
                         strRes += @"(";
 
-                        strRes += @"'" + (string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) + @"'";
+                        strRes += @"'" + (string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) + @"'" + @",";
 
                         if (typeVal.Equals(typeof(decimal)) == true)
                             strRes += ((decimal)row[@"VALUE"]).ToString("F7", CultureInfo.InvariantCulture);
@@ -70,9 +71,9 @@ namespace DestCurrentValues
                                 strRes += ((double)row[@"VALUE"]).ToString("F7", CultureInfo.InvariantCulture);
                             else
                                 strRes += row[@"VALUE"];
-                        strRes += @"',";
+                        strRes += @",";
 
-                        strRes += ((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours).ToString(s_strFormatDbDateTime) + @"'" + @"),";
+                        strRes += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours).ToString(s_strFormatDbDateTime) + @"'" + @"),";
                     }
 
                     //Лишняя ','
