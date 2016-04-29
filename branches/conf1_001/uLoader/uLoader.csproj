@@ -192,6 +192,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="setup_statistic.ini" />
+    <None Include="setup_toris_bitec.ini" />
+    <None Include="setup_toris_tec3.ini" />
+    <None Include="setup_toris_tec4.ini" />
     <None Include="setup_toris_tec5.ini" />
   </ItemGroup>
   <ItemGroup>
