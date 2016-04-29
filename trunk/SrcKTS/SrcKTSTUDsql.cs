@@ -37,7 +37,7 @@ namespace SrcKTS
                 int idReq = HMath.GetRandomNumber()
                     , i = -1;
                 string cmd = string.Empty;
-                long secUTCOffsetToData = m_msecUTCOffsetToData / 1000;
+                long secUTCOffsetToData = m_msecUTCOffsetToServer / 1000;
                 //перевод даты для суточного набора
                 if (DateTimeStart != DateTimeBegin)
                     DateTimeBegin = (DateTimeBegin - DateTimeBegin.TimeOfDay).AddDays(PeriodMain.Days);
@@ -65,7 +65,7 @@ namespace SrcKTS
                     i++;
                 }
 
-                m_strQuery += @"SELECT idVTI as [ID],idReq,TimeIdx,TimeRTC, TimeSQL as [DATETIME],idState,ValueFl as [VALUE],ValueInt,IsInteger,idUnit"
+                m_strQuery += @"SELECT idVTI as [ID],idReq,TimeIdx,TimeRTC, DATEADD(Second," + secUTCOffsetToData + ",TimeSQL) as [DATETIME],idState,ValueFl as [VALUE],ValueInt,IsInteger,idUnit"
                         + @", DATEDIFF(HH, GETDATE(), GETUTCDATE()) as [UTC_OFFSET]"
                     + @" FROM e6work.dbo.VTIdataList"
                     + @" WHERE idReq=" + idReq
