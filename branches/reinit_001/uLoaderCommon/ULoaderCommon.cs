@@ -576,17 +576,60 @@ namespace uLoaderCommon
 
                     return tblRes;
                 }
+                /// <summary>
+                /// Очистить "текущую" таблицу от записей,
+                ///  с более старыми метками времени
+                /// </summary>
+                /// <param name="tblPrev">"Предыдущая" таблица</param>
+                /// <param name="tblRes">"Текущая" таблица</param>
+                /// <param name="keyFields">Наименования полей в составе ключа по которому происходит сравнение записей</param>
+                public void Top(DataTable tblPrev, DataTable tblCur, string keyFields = @"ID, DATETIME")
+                {
+                    int iDup = 0;
+                    DataRow[] arPrev = null;
 
-            }
-            /// <summary>
-            /// Очистить "текущую" таблицу от записей,
-            ///  с более старыми метками времени
-            /// </summary>
-            /// <param name="tblPrev">"Предыдущая" таблица</param>
-            /// <param name="tblRes">"Текущая" таблица</param>
-            /// <param name="keyFields">Наименования полей в составе ключа по которому происходит сравнение записей</param>
-            public void Top(DataTable tblPrev, DataTable tblCur, string keyFields = @"ID, DATETIME")
-            {
+                    if (!(tblCur == null))
+                        if ((((!(tblCur.Columns.IndexOf(@"ID") < 0)) && (!(tblCur.Columns.IndexOf(@"DATETIME") < 0)))
+                            && (tblCur.Rows.Count > 0)))
+                        {
+                            var listCurDistinct = tblCur.AsEnumerable().OrderBy(o => o[@"DATETIME"]).Distinct().ToList();
+                            //var listCurDistinct = tblCur.Select(string.Empty, @"DATETIME, ID").AsEnumerable().Select(r => r["ID"]).Distinct().ToArray();
+
+                            _arTables[(int)INDEX_RESULT.EQUALE] = tblCur.Clone();
+                            _arTables[(int)INDEX_RESULT.DISTINCT] = tblCur.Clone();
+
+                            if (!(tblPrev == null))
+                                if (!(tblPrev.Columns.IndexOf(@"DATETIME") < 0))
+                                    foreach (DataRow rCur in listCurDistinct)
+                                    {
+                                        arPrev = tblPrev.Select(@"ID=" + rCur[@"ID"]);
+                                        if (arPrev.Length == 0)
+                                            if (arPrev.Length == 1)
+                                                if (!(DateTime.Compare((DateTime)rCur[@"DATETIME"], (DateTime)arPrev[0][@"DATETIME"]) < 0))
+                                                {// удалить более старую (ИЛИ с одинаковой меткой времени) запись
+                                                    _arTables[(int)INDEX_RESULT.DISTINCT].ImportRow (rCur);
+                                                    _arTables[(int)INDEX_RESULT.DISTINCT].AcceptChanges();
+                                                }
+                                                else
+                                                {
+                                                    _arTables[(int)INDEX_RESULT.EQUALE].ImportRow(rCur);
+                                                    _arTables[(int)INDEX_RESULT.EQUALE].AcceptChanges();
+                                                }
+                                            else
+                                                ; //??? ошибка записей >, чем 1
+                                        else
+                                            ; // в предыдущей таблице нет сигнала с идентификатором
+                                    }
+                                else
+                                    ; // предыдущая таблица не имеет одного из полей [DATETIME] составного ключа
+                            else
+                                ; // предыдущая таблица не существует
+                        }
+                        else
+                            ; // текущая таблица не имеет одного из полей составного ключа ИЛИ не имеет ни одной строки
+                    else
+                        ; // текущая таблица не существует
+                }
             }
         }
         /// <summary>

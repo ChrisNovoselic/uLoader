@@ -51,7 +51,8 @@ namespace DestStat
 
                 //Logging.Logg().Debug(@"GroupSignalsStatKKSNAMEsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
-                if (m_DupTables.TableDistinct.Rows.Count > 0)
+                //??? проверка лишняя - производится перед вызовом
+                if (m_DupTables.IsDeterminate == true)
                 {
                     strRes = @"DECLARE @VALUES_TABLE AS TABLE([KKS_NAME] [nvarchar](256) NOT NULL, [VALUE] [real] NOT NULL, [DATETIME] [datetime] NOT NULL, [UPDATE_DATETIME] [datetime] NOT NULL, [ID_SRV_TM] [int] NOT NULL);";
                     strRes += @"INSERT INTO @VALUES_TABLE([KKS_NAME],[VALUE],[DATETIME],[UPDATE_DATETIME],[ID_SRV_TM])"
@@ -95,7 +96,7 @@ namespace DestStat
 
             protected override void setTableRes()
             {
-                Top(TableRecievedPrev, TableRecieved);
+                m_DupTables.Top(TableRecievedPrev, TableRecieved);
             }
 
             protected override string getExistsValuesQuery()

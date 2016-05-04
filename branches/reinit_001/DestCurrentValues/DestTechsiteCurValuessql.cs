@@ -96,7 +96,7 @@ namespace DestCurrentValues
 
             protected override void setTableRes()
             {
-                Top(TableRecievedPrev, TableRecieved);
+                m_DupTables.Top(TableRecievedPrev, TableRecieved);
             }
 
             protected override string getExistsValuesQuery()
