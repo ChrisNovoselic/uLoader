@@ -93,6 +93,11 @@ namespace DestStat
                     ;
             }
 
+            protected override void setTableRes()
+            {
+                Top(TableRecievedPrev, TableRecieved);
+            }
+
             protected override string getExistsValuesQuery()
             {
                 return string.Empty;

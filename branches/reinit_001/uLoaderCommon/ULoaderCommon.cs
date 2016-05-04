@@ -439,10 +439,10 @@ namespace uLoaderCommon
                 /// Очистить "текущую" таблицу от записей,
                 ///  содержащихся в "предыдущей" таблице
                 /// </summary>
-                /// <param name="tblPrev">"Предыдущая таблица"</param>
+                /// <param name="tblPrev">"Предыдущая" таблица</param>
                 /// <param name="tblRes">"Текущая" таблица</param>
-                /// <returns>Таблица без "дублирующих" записей</returns>
-                public void Clear(DataTable tblPrev, DataTable tblCur)
+                /// <param name="keyFields">Наименования полей в составе ключа по которому происходит сравнение записей</param>
+                public void Clear(DataTable tblPrev, DataTable tblCur, string keyFields = @"ID, DATETIME")
                 {
                     int iDup = 0;
                     DataRow[] arSel = null;
@@ -577,6 +577,16 @@ namespace uLoaderCommon
                     return tblRes;
                 }
 
+            }
+            /// <summary>
+            /// Очистить "текущую" таблицу от записей,
+            ///  с более старыми метками времени
+            /// </summary>
+            /// <param name="tblPrev">"Предыдущая" таблица</param>
+            /// <param name="tblRes">"Текущая" таблица</param>
+            /// <param name="keyFields">Наименования полей в составе ключа по которому происходит сравнение записей</param>
+            public void Top(DataTable tblPrev, DataTable tblCur, string keyFields = @"ID, DATETIME")
+            {
             }
         }
         /// <summary>

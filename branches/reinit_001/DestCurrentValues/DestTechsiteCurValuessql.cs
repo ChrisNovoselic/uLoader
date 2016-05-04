@@ -94,6 +94,11 @@ namespace DestCurrentValues
                     ;
             }
 
+            protected override void setTableRes()
+            {
+                Top(TableRecievedPrev, TableRecieved);
+            }
+
             protected override string getExistsValuesQuery()
             {
                 return string.Empty;
