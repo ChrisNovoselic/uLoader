@@ -1698,7 +1698,8 @@ namespace uLoader
                     parsToSend = new object [1];
                     //Установить взаимосвязь между полученными значениями группы сигналов и группой сигналов назначения
                     foreach (GroupSignalsDest grpSgnls in m_listGroupSignals)
-                        if (!(grpSgnls.GetListNeededIndexGroupSignals().IndexOf((int)pars[1]) < 0))
+                        if ((!(grpSgnls.GetListNeededIndexGroupSignals().IndexOf((int)pars[1]) < 0))
+                            && (grpSgnls.State == STATE.STARTED))
                         {
                             parsToSend[0] = FormMain.FileINI.GetIDIndex(grpSgnls.m_strID);
                             //Да, группа сигналов 'grpSgnls' ожидает значения от группы сигналов '(int)pars[1]';

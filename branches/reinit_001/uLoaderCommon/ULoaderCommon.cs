@@ -592,38 +592,44 @@ namespace uLoaderCommon
                         if ((((!(tblCur.Columns.IndexOf(@"ID") < 0)) && (!(tblCur.Columns.IndexOf(@"DATETIME") < 0)))
                             && (tblCur.Rows.Count > 0)))
                         {
-                            var listCurDistinct = tblCur.AsEnumerable().OrderBy(o => o[@"DATETIME"]).Distinct().ToList();
-                            //var listCurDistinct = tblCur.Select(string.Empty, @"DATETIME, ID").AsEnumerable().Select(r => r["ID"]).Distinct().ToArray();
+                            var listCurDistinct = tblCur.AsEnumerable().GroupBy(g => g[@"ID"]).First().ToList();
 
-                            _arTables[(int)INDEX_RESULT.EQUALE] = tblCur.Clone();
                             _arTables[(int)INDEX_RESULT.DISTINCT] = tblCur.Clone();
+                            _arTables[(int)INDEX_RESULT.EQUALE] = tblCur.Clone();
 
-                            if (!(tblPrev == null))
-                                if (!(tblPrev.Columns.IndexOf(@"DATETIME") < 0))
-                                    foreach (DataRow rCur in listCurDistinct)
-                                    {
-                                        arPrev = tblPrev.Select(@"ID=" + rCur[@"ID"]);
-                                        if (arPrev.Length == 0)
-                                            if (arPrev.Length == 1)
-                                                if (!(DateTime.Compare((DateTime)rCur[@"DATETIME"], (DateTime)arPrev[0][@"DATETIME"]) < 0))
-                                                {// удалить более старую (ИЛИ с одинаковой меткой времени) запись
-                                                    _arTables[(int)INDEX_RESULT.DISTINCT].ImportRow (rCur);
-                                                    _arTables[(int)INDEX_RESULT.DISTINCT].AcceptChanges();
-                                                }
-                                                else
-                                                {
-                                                    _arTables[(int)INDEX_RESULT.EQUALE].ImportRow(rCur);
-                                                    _arTables[(int)INDEX_RESULT.EQUALE].AcceptChanges();
-                                                }
+                            if ((!(tblPrev == null))
+                                && (((!(tblPrev.Columns.IndexOf(@"ID") < 0)) && (!(tblPrev.Columns.IndexOf(@"DATETIME") < 0)))
+                                && (tblPrev.Rows.Count > 0)))
+                            {
+                                var listPrevDistinct = tblPrev.AsEnumerable().GroupBy(g => g[@"ID"]).First().ToList();
+
+                                foreach (DataRow rCur in listCurDistinct)
+                                {
+                                    arPrev = listPrevDistinct.Where(r => Int32.Parse((string)r[@"ID"]) == Convert.ToInt32((string)rCur[@"ID"])).ToArray(); //tblPrev.Select(@"ID=" + rCur[@"ID"]);
+                                    if (arPrev.Length > 0)
+                                        if (arPrev.Length == 1)
+                                            if (!(DateTime.Compare((DateTime)rCur[@"DATETIME"], (DateTime)arPrev[0][@"DATETIME"]) < 0))
+                                            {// удалить более старую (ИЛИ с одинаковой меткой времени) запись
+                                                _arTables[(int)INDEX_RESULT.DISTINCT].ImportRow(rCur);
+                                                _arTables[(int)INDEX_RESULT.DISTINCT].AcceptChanges();
+                                            }
                                             else
-                                                ; //??? ошибка записей >, чем 1
+                                            {
+                                                _arTables[(int)INDEX_RESULT.EQUALE].ImportRow(rCur);
+                                                _arTables[(int)INDEX_RESULT.EQUALE].AcceptChanges();
+                                            }
                                         else
-                                            ; // в предыдущей таблице нет сигнала с идентификатором
-                                    }
-                                else
-                                    ; // предыдущая таблица не имеет одного из полей [DATETIME] составного ключа
+                                            ; //??? ошибка записей >, чем 1
+                                    else
+                                        ; // в предыдущей таблице нет сигнала с идентификатором
+                                }
+                            }
                             else
-                                ; // предыдущая таблица не существует
+                                // предыдущая таблица не существует, не имеет одного из полей [ID], [DATETIME] составного ключа
+                                foreach (DataRow rCur in listCurDistinct)
+                                    _arTables[(int)INDEX_RESULT.DISTINCT].ImportRow(rCur);
+
+                            _arTables[(int)INDEX_RESULT.DISTINCT].AcceptChanges();
                         }
                         else
                             ; // текущая таблица не имеет одного из полей составного ключа ИЛИ не имеет ни одной строки
