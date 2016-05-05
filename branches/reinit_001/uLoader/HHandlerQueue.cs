@@ -596,10 +596,14 @@ namespace uLoader
         {
             for (int i = 0; i < m_listGroupSources.Length; i ++)
                 foreach (GroupSources grpSrc in m_listGroupSources[i])
+                {
                     if (grpSrc.State == GroupSources.STATE.STARTED)
-                        grpSrc.Stop ();
+                        grpSrc.Stop();
                     else
                         ;
+
+                    grpSrc.Unload();
+                }
             
             base.Stop();
         }

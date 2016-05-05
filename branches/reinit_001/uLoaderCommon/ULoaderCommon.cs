@@ -527,38 +527,55 @@ namespace uLoaderCommon
                     //Строка запроса для поиска дублирующих записей
                     string strSel = string.Empty;
 
-                    if (!(tblDup.Columns.IndexOf(@"ID") < 0))
+                    if ((!(tblDup.Columns.IndexOf(@"ID") < 0))
+                        && (!(tblDup.Columns.IndexOf(@"DATETIME") < 0)))
                     {
                         try
                         {
-                            bQuote = !tblDup.Columns[@"ID"].DataType.IsPrimitive;
+                            ////Вариант №1
+                            //bQuote = !tblDup.Columns[@"ID"].DataType.IsPrimitive;
 
-                            foreach (DataRow r in tblDup.Rows)
-                            {
-                                //Проверить наличие индекса строки в уже найденных (как дублированные)
-                                if (listIndxToDelete.IndexOf(tblDup.Rows.IndexOf(r)) < 0)
-                                {
-                                    //Сформировать строку запроса
-                                    strSel = @"ID=" + (bQuote == true ? @"'" : string.Empty) + r[@"ID"] + (bQuote == true ? @"'" : string.Empty) + @" AND " + @"DATETIME='" + ((DateTime)r[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fffffff") + @"'";
-                                    arDup = (tblDup as DataTable).Select(strSel);
-                                    //Проверить наличие дублирующих записей
-                                    if (arDup.Length > 1)
-                                        //Добавить индексы всех найденных дублирующих строк в список для удаления
-                                        // , КРОМЕ 1-ой!
-                                        for (int i = 1; i < arDup.Length; i++)
-                                            listIndxToDelete.Add(tblDup.Rows.IndexOf(arDup[i]));
-                                    else
-                                        if (arDup.Length == 0)
-                                            throw new Exception("HHandlerDbULoader.GroupSignals.clearDupValues () - в таблице не найдена \"собственная\" строка...");
-                                        else
-                                            ;
+                            //foreach (DataRow r in tblDup.Rows)
+                            //{
+                            //    //Проверить наличие индекса строки в уже найденных (как дублированные)
+                            //    if (listIndxToDelete.IndexOf(tblDup.Rows.IndexOf(r)) < 0)
+                            //    {
+                            //        //Сформировать строку запроса
+                            //        strSel = @"ID=" + (bQuote == true ? @"'" : string.Empty) + r[@"ID"] + (bQuote == true ? @"'" : string.Empty) + @" AND " + @"DATETIME='" + ((DateTime)r[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fffffff") + @"'";
+                            //        arDup = (tblDup as DataTable).Select(strSel);
+                            //        //Проверить наличие дублирующих записей
+                            //        if (arDup.Length > 1)
+                            //            //Добавить индексы всех найденных дублирующих строк в список для удаления
+                            //            // , КРОМЕ 1-ой!
+                            //            for (int i = 1; i < arDup.Length; i++)
+                            //                listIndxToDelete.Add(tblDup.Rows.IndexOf(arDup[i]));
+                            //        else
+                            //            if (arDup.Length == 0)
+                            //                throw new Exception("HHandlerDbULoader.GroupSignals.clearDupValues () - в таблице не найдена \"собственная\" строка...");
+                            //            else
+                            //                ;
 
-                                    //Добавить строку в таблицу-результат
-                                    tblRes.ImportRow(arDup[0]);
-                                }
+                            //        //Добавить строку в таблицу-результат
+                            //        tblRes.ImportRow(arDup[0]);
+                            //    }
+                            //    else
+                            //        ;
+                            //}
+
+                            //Вариант№2
+                            List <DataRow> listRes = null;
+                            if (tblDup.Columns[@"ID"].DataType.Equals (typeof (int)) == true)
+                                listRes = tblDup.AsEnumerable().GroupBy(g => new { ID = g.Field<int>(@"ID"), DATETIME = g.Field<DateTime>(@"DATETIME") }).Select(s => s.First()).ToList();
+                            else
+                                if (tblDup.Columns[@"ID"].DataType.Equals (typeof (string)) == true)
+                                    listRes = tblDup.AsEnumerable().GroupBy(g => new { ID = g.Field<string>(@"ID"), DATETIME = g.Field<DateTime>(@"DATETIME") }).Select(s => s.First()).ToList();
                                 else
                                     ;
-                            }
+                            //Добавить строки в таблицу-результат
+                            if (!(listRes == null))
+                                listRes.ForEach(r => tblRes.ImportRow(r));
+                            else
+                                ;
                         }
                         catch (Exception e)
                         {

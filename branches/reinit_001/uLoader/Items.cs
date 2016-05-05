@@ -409,75 +409,83 @@ namespace uLoader
         public List<GROUP_SRC> m_listGroupSrc;
         public List<GROUP_SIGNALS_SRC> m_listGroupSgnlsSrc;
     }
-    ///// <summary>
-    ///// Состояние объекта 'GroupSignals'
-    ///// </summary>
-    //public class StateGroupSignals
-    //{
-    //    /// <summary>
-    //    /// Признак запуска/останова
-    //    /// </summary>
-    //    public bool m_bStarted;
-    //    /// <summary>
-    //    /// Признак ативности
-    //    /// </summary>
-    //    public bool m_bActived;
-    //    /// <summary>
-    //    /// Конструктор - основной (без параметров)
-    //    /// </summary>
-    //    public StateGroupSignals()
-    //    {
-    //        m_bStarted =
-    //        m_bActived =
-    //            false;
-    //    }
-    //}
-    ///// <summary>
-    ///// Состояние объекта 'GroupSources'
-    ///// </summary>
-    //public class StateGroupSources
-    //{
-    //    /// <summary>
-    //    /// Перечисление - состояния библиотеки
-    //    /// </summary>
-    //    public enum STATE_DLL { NOT_FOUND = -2, NOT_LOAD, LOADED, UNKNOWN }
-    //    /// <summary>
-    //    /// Состояние библиотеки
-    //    /// </summary>
-    //    public STATE_DLL m_StateDLL;
-    //    /// <summary>
-    //    /// Текущий идентификатор источника
-    //    /// </summary>
-    //    public string m_strCurrentIDSource;
-    //    /// <summary>
-    //    /// Список объектов состояния групп сигналов
-    //    /// </summary>
-    //    public List<StateGroupSignals> m_listStateGroupSignals;
-    //    /// <summary>
-    //    /// Конструктор - основной (без параметров)
-    //    /// </summary>
-    //    public StateGroupSources()
-    //    {
-    //        m_StateDLL = STATE_DLL.UNKNOWN;
-    //        m_strCurrentIDSource = string.Empty;
-
-    //        m_listStateGroupSignals = new List<StateGroupSignals>();
-    //    }
-    //}
     /// <summary>
     /// Группа источников с "прикрепленными" группами сигналов
     /// </summary>
-    public class GroupSources : GROUP_SRC, IPlugInHost
+    public class GroupSources : GROUP_SRC//, IPlugInHost
     {
+        /// <summary>
+        /// Класс - словарь для хранения объектов-плюгИнов
+        ///  - вырожден в коллекцию(словарь) с единственным объектом
+        /// </summary>
+        private class PlugIns : HPlugIns
+        {
+            /// <summary>
+            /// Идентификатор единственного загруженного плюгИна
+            /// </summary>
+            private int _id;
+            /// <summary>
+            /// Объект-плюгИн - загруженая библиотека с единственным созданным объектом класса
+            ///  , из зарегистрированных в ней 
+            /// </summary>
+            public PlugInULoader Loader { get { return this[_id] as PlugInULoader; } }
+            /// <summary>
+            /// Загрузить библиотеку с именем 'm_strDLLName'
+            /// </summary>
+            /// <param name="iRes">Признак выполнения загрузки библиотеки</param>
+            /// <returns>Объект с загруженной библиотекой</returns>
+            public void LoadPlugIn(string strDLLName, out STATE_DLL stateRes)
+            //private IPlugIn loadPlugIn(string name, out int iRes)
+            {
+                stateRes = STATE_DLL.UNKNOWN;
+
+                PlugInULoader plugIn = null;
+                int iLoadRes = -1;
+
+                string name = Path.GetFileNameWithoutExtension(strDLLName.Split(new char[] { ':' }, StringSplitOptions.None)[0]);
+
+                plugIn = load(name, out iLoadRes) as PlugInULoader;
+                plugIn.Host = (IPlugInHost)this;
+
+                _id = plugIn._Id;
+                Add(_id, plugIn);
+            }
+        }
+
+        private void loadPlugIn(out HClassLibrary.HPlugIns.STATE_DLL stateRes)
+        {
+            string strTypeName = string.Empty;
+
+            if (m_plugIns == null)
+                m_plugIns = new PlugIns();
+            else
+                ;
+
+            m_plugIns.LoadPlugIn(this.m_strDLLName, out stateRes);
+
+            strTypeName = this.m_strDLLName.Split(new char[] { ':' }, StringSplitOptions.None)[1];
+            if (m_plugIns.Loader.CreateObject(strTypeName) == 0)
+            {
+                m_iIdTypePlugInObjectLoaded = m_plugIns.Loader.KeySingleton; //plugInRes.GetKeyType(strTypeName);                
+                //Взаимная "привязка" для обмена сообщениями
+                // библиотека - объект класса
+                (m_plugIns.Loader as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(plugIn_OnEvtDataAskedHost);
+                // объект класса - библиотека
+                EvtDataAskedHostPlugIn += m_plugIns.Loader.OnEvtDataRecievedHost;
+
+                stateRes = HClassLibrary.HPlugIns.STATE_DLL.LOADED;
+            }
+            else
+                stateRes = HClassLibrary.HPlugIns.STATE_DLL.NOT_LOAD;
+        }
         /// <summary>
         /// Перечисление состояний группы источников
         /// </summary>
-        public enum STATE { UNKNOWN = -2, REVERSE, UNAVAILABLE, STOPPED, STARTED }
+        public enum STATE { UNKNOWN = -2, REVERSE, UNAVAILABLE, STOPPED, STARTED }        
         /// <summary>
-        /// Перечисление состояний библиотеки
+        /// Объект синхронизации (при автоматическом старте группы)
+        ///  требуется ожидание перед инициализацией 1-ой из групп сигналов
         /// </summary>
-        public enum STATE_DLL { UNKNOWN = -3, NOT_LOAD, TYPE_MISMATCH, LOADED, }
-
         private ManualResetEvent m_evtInitSource;
         private Semaphore m_semaStateChange;
         /// <summary>
@@ -503,7 +511,7 @@ namespace uLoader
 
                 if (stateRes == STATE.UNKNOWN)
                     //все группы сигналов имеют "известное" состояние
-                    if (_iStateDLL == STATE_DLL.LOADED)
+                    if (_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
                     {
                         stateRes = STATE.STOPPED;
 
@@ -525,11 +533,11 @@ namespace uLoader
             }
         }
 
-        private STATE_DLL _iStateDLL;
+        private HClassLibrary.HPlugIns.STATE_DLL _iStateDLL;
         /// <summary>
         /// Состояние группы источников
         /// </summary>
-        public STATE_DLL StateDLL
+        public HClassLibrary.HPlugIns.STATE_DLL StateDLL
         {
             get { return _iStateDLL; }
         }
@@ -552,7 +560,6 @@ namespace uLoader
         {
             return Activator.CreateInstance(typeObjGroupSignals, new object [] { par });
         }
-
         /// <summary>
         /// Группа сигналов (для получения данных)
         /// </summary>
@@ -670,11 +677,6 @@ namespace uLoader
             }
         }
         /// <summary>
-        /// Вспомогательный домен приложения для загрузки/выгрузки библиотеки
-        ///  в режиме реального времени
-        /// </summary>
-        AppDomain m_appDomain;
-        /// <summary>
         /// Список групп сигналов, принадлежащих группе источников
         /// </summary>
         protected List <GroupSignals> m_listGroupSignals;
@@ -698,7 +700,7 @@ namespace uLoader
         /// <summary>
         /// Объект с загруженной библиотекой
         /// </summary>
-        private IPlugIn m_plugIn;
+        private PlugIns m_plugIns;
         /// <summary>
         /// Событие для обмена данными с библиотекой
         /// </summary>
@@ -749,8 +751,8 @@ namespace uLoader
             else
                 ;
 
-            m_plugIn = loadPlugIn(out _iStateDLL);
-            if (_iStateDLL == STATE_DLL.LOADED)
+            loadPlugIn(out _iStateDLL);
+            if (_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
                 foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
                     if (itemGroupSignals.Validated == 0)
                         itemGroupSignals.State = STATE.STOPPED;                        
@@ -759,77 +761,6 @@ namespace uLoader
             else
                 //throw new Exception(@"GroupSources::GroupSources () - ...")
                 ;
-        }        
-        /// <summary>
-        /// Загрузить библиотеку с именем 'm_strDLLName'
-        /// </summary>
-        /// <param name="iRes">Признак выполнения загрузки библиотеки</param>
-        /// <returns>Объект с загруженной библиотекой</returns>
-        private PlugInULoader loadPlugIn(out STATE_DLL iRes)
-        //private IPlugIn loadPlugIn(string name, out int iRes)
-        {
-            PlugInULoader plugInRes = null;
-            iRes = STATE_DLL.UNKNOWN;
-
-            string name =
-                Path.GetFileNameWithoutExtension (this.m_strDLLName.Split(new char [] { ':' }, StringSplitOptions.None)[0])
-                //"biysktmora"
-                , strTypeName = string.Empty;
-            Type objType = null;
-
-            try
-            {
-                Assembly ass = null;
-                //Вариант №1
-                ass = Assembly.LoadFrom(Environment.CurrentDirectory + @"\" + name + @".dll");
-                //ass = Assembly.LoadFrom(Environment.CurrentDirectory + @"\" + name);
-                //Вариант №2
-                //m_appDomain = AppDomain.CreateDomain(@"appDomain_" + m_strID);
-                //ass = m_appDomain.Load(Environment.CurrentDirectory + @"\" + name + @".dll");
-                if (!(ass == null))
-                {
-                    objType = ass.GetType(name + ".PlugIn");
-                }
-                else
-                    ;
-            }
-            catch (Exception e)
-            {
-                iRes = STATE_DLL.NOT_LOAD;
-                Logging.Logg().Exception(e, @"GroupSources::loadPlugin () ... LoadFrom () ... plugIn.Name = " + name, Logging.INDEX_MESSAGE.NOT_SET);
-            }
-
-            if (!(objType == null))
-                try
-                {
-                    plugInRes = Activator.CreateInstance(objType) as PlugInULoader;
-                    strTypeName = this.m_strDLLName.Split(new char[] { ':' }, StringSplitOptions.None)[1];
-                    if ((plugInRes as PlugInULoader).CreateObject(strTypeName) == 0)
-                    {
-                        m_iIdTypePlugInObjectLoaded = plugInRes.KeySingleton; //plugInRes.GetKeyType(strTypeName);
-                        plugInRes.Host = (IPlugInHost)this;
-                        //Взаимная "привязка" для обмена сообщениями
-                        // библиотека - объект класса
-                        (plugInRes as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(plugIn_OnEvtDataAskedHost);
-                        // объект класса - библиотека
-                        EvtDataAskedHostPlugIn += (plugInRes as PlugInBase).OnEvtDataRecievedHost;
-
-                        iRes = STATE_DLL.LOADED;
-                    }
-                    else
-                        iRes = STATE_DLL.NOT_LOAD;
-                }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, @"GroupSources::loadPlugin () ... CreateInstance ... plugIn.Name = " + name, Logging.INDEX_MESSAGE.NOT_SET);
-                }
-            else
-            {
-                iRes = STATE_DLL.TYPE_MISMATCH;
-                Logging.Logg().Error(@"GroupSources::loadPlugin () ... Assembly.GetType()=null ... plugIn.Name = " + name, Logging.INDEX_MESSAGE.NOT_SET);
-            }
-
-            return plugInRes;
         }
 
         public void AutoStart()
@@ -1203,7 +1134,7 @@ namespace uLoader
             int idGrpSgnls = -1;
             GROUP_SIGNALS_PARS grpSgnlsPars;
 
-            if (_iStateDLL == STATE_DLL.LOADED)
+            if (_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
                 foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
                     if (itemGroupSignals.State == STATE.STOPPED)
                     {
@@ -1231,7 +1162,7 @@ namespace uLoader
             int iRes = 0;
             STATE newState = STATE.UNKNOWN;
 
-            if ((_iStateDLL == STATE_DLL.LOADED)
+            if ((_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
                 && (! (State == STATE.UNAVAILABLE)))
             {
                 newState = getNewState(State, out iRes);
@@ -1414,9 +1345,14 @@ namespace uLoader
                     //sendState(FormMain.FileINI.GetIDIndex(grpSgnls.m_strID), STATE.STOPPED);
                     stateChange(FormMain.FileINI.GetIDIndex(grpSgnls.m_strID), STATE.STOPPED);
                 else
-                    ;
+                    ;            
 
             return iRes;
+        }
+
+        public void Unload()
+        {
+            m_plugIns.Unload();
         }
         /// <summary>
         /// Добавить обработчик событий от присоединенной библиотеки
@@ -1425,7 +1361,7 @@ namespace uLoader
         /// <param name="fOnEvt">Функция обработки</param>
         public void AddDelegatePlugInOnEvtDataAskedHost (int indxGrpSrcDest, DelegateObjectFunc fOnEvt)
         {
-            (m_plugIn as PlugInBase).EvtDataAskedHost += fOnEvt;
+            m_plugIns.Loader.EvtDataAskedHost += fOnEvt;
         }
         /// <summary>
         /// Удалить обработчик событий от присоединенной библиотеки
@@ -1434,7 +1370,7 @@ namespace uLoader
         /// <param name="fOnEvt">Функция обработки</param>
         public void RemoveDelegatePlugInOnEvtDataAskedHost(int indxGrpSrcDest, DelegateObjectFunc fOnEvt)
         {
-            (m_plugIn as PlugInBase).EvtDataAskedHost -= fOnEvt;
+            m_plugIns.Loader.EvtDataAskedHost -= fOnEvt;
         }
         /// <summary>
         /// Получить признак наличия группы сигналов среди списка присоединенных групп сигналов

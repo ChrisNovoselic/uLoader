@@ -35,10 +35,10 @@ namespace uLoader
                                         , RBUTTON_CUR_DATETIME
                                         , RBUTTON_COSTUMIZE
                                         , CALENDAR_START_DATE, MTBX_START_TIME, MTBX_PERIOD_MAIN, MTBX_PERIOD_LOCAL, TBX_INTERVAL
-                                        ,BTN_CLEAR
+                                        , BTN_CLEAR
                                         //, TBX_GROUPSIGNALS_ADDING
                                         , DGV_SIGNALS_OF_GROUP
-                                        , COUNT_KEY_CONTROLS
+                                            , COUNT_KEY_CONTROLS
                                         ,};
 
             enum DGV_GROUP_SIGNALS_COL_INDEX { AUTO_START, SHR_NAME, TURN_ONOFF, COUNT_DGV_GROUP_SIGNALS_COL_INDEX }
