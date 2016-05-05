@@ -592,7 +592,7 @@ namespace uLoaderCommon
                         if ((((!(tblCur.Columns.IndexOf(@"ID") < 0)) && (!(tblCur.Columns.IndexOf(@"DATETIME") < 0)))
                             && (tblCur.Rows.Count > 0)))
                         {
-                            var listCurDistinct = tblCur.AsEnumerable().GroupBy(g => g[@"ID"]).First().ToList();
+                            var listCurDistinct = tblCur.AsEnumerable().GroupBy(g => g[@"ID"]).Select(s => s.Last()).ToList();
 
                             _arTables[(int)INDEX_RESULT.DISTINCT] = tblCur.Clone();
                             _arTables[(int)INDEX_RESULT.EQUALE] = tblCur.Clone();
@@ -601,7 +601,7 @@ namespace uLoaderCommon
                                 && (((!(tblPrev.Columns.IndexOf(@"ID") < 0)) && (!(tblPrev.Columns.IndexOf(@"DATETIME") < 0)))
                                 && (tblPrev.Rows.Count > 0)))
                             {
-                                var listPrevDistinct = tblPrev.AsEnumerable().GroupBy(g => g[@"ID"]).First().ToList();
+                                var listPrevDistinct = tblPrev.AsEnumerable().GroupBy(g => g[@"ID"]).Select(s => s.Last()).ToList();
 
                                 foreach (DataRow rCur in listCurDistinct)
                                 {

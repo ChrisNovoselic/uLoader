@@ -26,7 +26,7 @@ namespace TestFunc
                 ////Вариант №2
                 //typeof(ClassDataTableDistinct)
                 //Вариант №3
-                typeof(srcktstusql_test)
+                typeof(ClassDataTableDistinct)
                 ;
 
             try { objTest = Activator.CreateInstance(typeTest); }

@@ -19,13 +19,13 @@ namespace TestFunc
 
             dt2 = dt1.Clone();
 
-            dt1.Rows.Add(new object[] { 1, DateTime.Now, 12.3 });
-            dt1.Rows.Add(new object[] { 2, DateTime.Now, 23.4 });
-            dt1.Rows.Add(new object[] { 1, DateTime.Now, 34.5 });
+            dt1.Rows.Add(new object[] { 1, DateTime.Now.AddHours(4), 12.3 });
+            dt1.Rows.Add(new object[] { 2, DateTime.Now.AddHours(3), 23.4 });
+            dt1.Rows.Add(new object[] { 1, DateTime.Now.AddHours(6), 34.5 });
 
-            dt2.Rows.Add(new object[] { 2, DateTime.Now, 12.4 });
-            dt2.Rows.Add(new object[] { 1, DateTime.Now, 23.5 });
-            dt2.Rows.Add(new object[] { 2, DateTime.Now, 34.6 });
+            dt2.Rows.Add(new object[] { 2, DateTime.Now.AddHours(5), 12.4 });
+            dt2.Rows.Add(new object[] { 1, DateTime.Now.AddHours(1), 23.5 });
+            dt2.Rows.Add(new object[] { 2, DateTime.Now.AddHours(2), 34.6 });
 
             dt1.Merge(dt2, true);
 
@@ -34,7 +34,10 @@ namespace TestFunc
             //dt1 = dt1.DefaultView.ToTable(true, @"ID", @"DATETIME");
 
             //IEnumerable<DataRow> distinctRows = dt1.AsEnumerable().Distinct(c >= (DataRow)c[@"DATETIME"]);
-            var vRes = dt1.AsEnumerable().Select(c => (DataRow)c["ID"]).Distinct().ToList();
+            //var vRes = dt1.AsEnumerable().Select(c => (DataRow)c["ID"]).Distinct().ToList();
+            var vRes = dt1.AsEnumerable().GroupBy(g => g[@"ID"]).Select (s => s.First()).ToList();
+
+            vRes.ForEach (v => Console.WriteLine(@"ID=" + v[@"ID"] + @", DATETIME=" + v[@"DATETIME"].ToString ()));
         }
     }
 }

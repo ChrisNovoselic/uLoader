@@ -44,7 +44,8 @@ namespace DestCurrentValues
             protected override string getTargetValuesQuery()
             {
                 string strRes = string.Empty
-                    , strRow = string.Empty;
+                    , strValues = string.Empty
+                    , strIdTarget = string.Empty;
                 Type typeVal = m_DupTables.TableDistinct.Columns[@"VALUE"].DataType;
                 int idSrvTM = (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).GetIdSrvTM(m_IdSourceConnSett)
                     , iUTCOffsetToDataTotalHours = (int)(_parent as DestTechsiteCurValuessql).m_tsUTCOffsetToData.Value.TotalHours;
@@ -60,38 +61,48 @@ namespace DestCurrentValues
 
                     foreach (DataRow row in m_DupTables.TableDistinct.Rows)
                     {
-                        strRes += @"(";
+                        strIdTarget = (string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim()));
 
-                        strRes += @"'" + (string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) + @"'" + @",";
+                        if (strIdTarget.Equals(string.Empty) == false)
+                        {
+                            strValues += @"(";
 
-                        if (typeVal.Equals(typeof(decimal)) == true)
-                            strRes += ((decimal)row[@"VALUE"]).ToString("F7", CultureInfo.InvariantCulture);
-                        else
-                            if (typeVal.Equals(typeof(double)) == true)
-                                strRes += ((double)row[@"VALUE"]).ToString("F7", CultureInfo.InvariantCulture);
+                            strValues += @"'" + strIdTarget + @"'" + @",";
+
+                            if (typeVal.Equals(typeof(decimal)) == true)
+                                strValues += ((decimal)row[@"VALUE"]).ToString("F7", CultureInfo.InvariantCulture);
                             else
-                                strRes += row[@"VALUE"];
-                        strRes += @",";
+                                if (typeVal.Equals(typeof(double)) == true)
+                                    strValues += ((double)row[@"VALUE"]).ToString("F7", CultureInfo.InvariantCulture);
+                                else
+                                    strValues += row[@"VALUE"];
+                            strValues += @",";
 
-                        strRes += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours).ToString(s_strFormatDbDateTime) + @"'" + @"),";
+                            strValues += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours).ToString(s_strFormatDbDateTime) + @"'" + @"),";
+                        }
+                        else
+                            ;
                     }
-
                     //Лишняя ','
-                    strRes = strRes.Substring(0, strRes.Length - 1);
+                    if (strValues.Equals(string.Empty) == false)
+                    {
+                        strValues = strValues.Substring(0, strValues.Length - 1);
 
-                    strRes += @")AS [TORIS_SOURCE]([KKS_NAME], [VALUE], [DATETIME]);";
+                        strRes += strValues;
+                    }
+                    else
+                        ;
 
-                    strRes += @"MERGE [WEB_TECHSITE].[dbo].[TECHSITE_OIK_CURRENT] AS [T]"
+                    strRes += @") AS [TORIS_SOURCE]([KKS_NAME], [VALUE], [DATETIME]);";
+
+                    strRes += @" MERGE [WEB_TECHSITE].[dbo].[TECHSITE_OIK_CURRENT] AS [T]"
                         + @" USING @VALUES_TABLE AS [S]"
                         + @" ON ([T].[KKS_NAME] = [S].[KKS_NAME])"
                             + @" WHEN MATCHED AND ([S].[DATETIME] > [T].[DATETIME])"
                             + @" THEN UPDATE SET [VALUE] = [S].[VALUE], [DATETIME] = [S].[DATETIME], [UPDATE_DATETIME] = [S].[UPDATE_DATETIME], [ID_SRV_TM] = [S].[ID_SRV_TM];";
                 }
 
-                return
-                    //string.Empty
-                    strRes
-                    ;
+                return strValues.Equals(string.Empty) == true ? string.Empty : strRes;
             }
 
             protected override void setTableRes()
