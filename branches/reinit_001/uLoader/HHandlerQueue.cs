@@ -601,8 +601,8 @@ namespace uLoader
                         grpSrc.Stop();
                     else
                         ;
-
-                    grpSrc.Unload();
+                    //??? следует ожидать остановки (подтверждения) всех групп сигналов
+                    //grpSrc.Unload();
                 }
             
             base.Stop();

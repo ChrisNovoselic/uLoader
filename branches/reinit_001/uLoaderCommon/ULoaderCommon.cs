@@ -518,14 +518,17 @@ namespace uLoaderCommon
                 public static DataTable Clear(DataTable tblDup)
                 {
                     DataTable tblRes = tblDup.Clone();
-                    //Список индексов строк для удаления
-                    List<int> listIndxToDelete = new List<int>();
-                    //Массив дублированных строк
-                    DataRow[] arDup = null;
-                    //Признак наличия кавычек для значений в поле [ID]
-                    bool bQuote = false;
-                    //Строка запроса для поиска дублирующих записей
-                    string strSel = string.Empty;
+                    ////Вариант №1
+                    ////Список индексов строк для удаления
+                    //List<int> listIndxToDelete = new List<int>();
+                    ////Массив дублированных строк
+                    //DataRow[] arDup = null;
+                    ////Признак наличия кавычек для значений в поле [ID]
+                    //bool bQuote = false;
+                    ////Строка запроса для поиска дублирующих записей
+                    //string strSel = string.Empty;
+                    //Вариант№2
+                    List<DataRow> listRes = null;
 
                     if ((!(tblDup.Columns.IndexOf(@"ID") < 0))
                         && (!(tblDup.Columns.IndexOf(@"DATETIME") < 0)))
@@ -563,14 +566,13 @@ namespace uLoaderCommon
                             //}
 
                             //Вариант№2
-                            List <DataRow> listRes = null;
                             if (tblDup.Columns[@"ID"].DataType.Equals (typeof (int)) == true)
                                 listRes = tblDup.AsEnumerable().GroupBy(g => new { ID = g.Field<int>(@"ID"), DATETIME = g.Field<DateTime>(@"DATETIME") }).Select(s => s.First()).ToList();
                             else
                                 if (tblDup.Columns[@"ID"].DataType.Equals (typeof (string)) == true)
                                     listRes = tblDup.AsEnumerable().GroupBy(g => new { ID = g.Field<string>(@"ID"), DATETIME = g.Field<DateTime>(@"DATETIME") }).Select(s => s.First()).ToList();
                                 else
-                                    ;
+                                    listRes = tblDup.AsEnumerable().GroupBy(g => new { ID = g.Field<object>(@"ID"), DATETIME = g.Field<DateTime>(@"DATETIME") }).Select(s => s.First()).ToList();
                             //Добавить строки в таблицу-результат
                             if (!(listRes == null))
                                 listRes.ForEach(r => tblRes.ImportRow(r));
@@ -579,14 +581,14 @@ namespace uLoaderCommon
                         }
                         catch (Exception e)
                         {
-                            Logging.Logg().Exception(e, @"HHandlerDbULoader.GroupSignals::clearDupValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                            Logging.Logg().Exception(e, @"HHandlerDbULoader.GroupSignals.DataTableDuplicate::Clear () - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                             tblRes.Clear();
                         }
                     }
                     else
                         // отсутствует необходимое поле "ID"
-                        Logging.Logg().Warning(@"HHandlerDbULoader.GroupSignals::clearDupValues () - отсутствует необходимое поле [ID]...", Logging.INDEX_MESSAGE.NOT_SET);
+                        Logging.Logg().Warning(@"HHandlerDbULoader.GroupSignals.DataTableDuplicate::Clear  () - отсутствует необходимое поле [ID], [DATETIME] ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                     //Принять внесенные изменения в таблицу-результат
                     tblRes.AcceptChanges();
