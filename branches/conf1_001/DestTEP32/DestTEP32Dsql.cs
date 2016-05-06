@@ -41,7 +41,7 @@ namespace DestTEP32
                 return new SIGNALIDsql((int)objs[0], (int)objs[1], (int)objs[3]);
             }
 
-             /// <summary>
+            /// <summary>
             /// Формирование запроса на выборку данных по сигналам
             /// </summary>
             /// <returns></returns>
@@ -49,11 +49,14 @@ namespace DestTEP32
             {
                 string strRes = string.Empty
                     , strIds = string.Empty;
+                int cntDay = 0;
 
                 foreach (SIGNALIDsql sgnl in m_arSignals)
                     strIds += sgnl.m_idTarget + @",";
                 // удалить "лишнюю" запятую
                 strIds = strIds.Substring(0, strIds.Length - 1);
+                //кол-во дней
+                cntDay = TableRecieved.Rows.Count / m_arSignals.Count();
 
                 DateTime? dtToSelect = null;
                 //    // т.к. записи в таблице отсортированы по [DATE_TIME]
@@ -62,18 +65,24 @@ namespace DestTEP32
                 if ((!(TableRecieved == null))
                     && (TableRecieved.Rows.Count > 0)
                     && (TableRecieved.Columns.Contains(@"DATETIME") == true))
-                {                    
-                    dtToSelect = ((DateTime)TableRecieved.Rows[0][@"DATETIME"]);
+                {
+                    for (int i = 0; i < cntDay; i++)
+                    {
+                        dtToSelect = ((DateTime)TableRecieved.Rows[i * m_arSignals.Count()][@"DATETIME"]);
 
-                    strRes = @"SELECT [ID] as [ID_REC]"
-                        + @", [ID_PUT] as [ID]"
-                        + @", [DATE_TIME] as [DATETIME]"
-                        + @", [ID_TIMEZONE]"
-                        + @", [QUALITY]"
-                        + @" FROM [" + (_parent as DestTEP32Dsql).GetNameTable(dtToSelect.GetValueOrDefault()) + @"]"
-                        + @" WHERE [DATE_TIME]='" + dtToSelect.GetValueOrDefault().ToString(s_strFormatDbDateTime) + @"'"
-                            + @" AND [ID_SOURCE]=" + m_IdSourceConnSett
-                            + @" AND [ID_PUT] IN (" + strIds + @")";
+                        strRes += @"SELECT [ID] as [ID_REC]"
+                            + @", [ID_PUT] as [ID]"
+                            + @", [DATE_TIME] as [DATETIME]"
+                            + @", [ID_TIMEZONE]"
+                            + @", [QUALITY]"
+                            + @" FROM [" + (_parent as DestTEP32Dsql).GetNameTable(dtToSelect.GetValueOrDefault()) + @"]"
+                            + @" WHERE [DATE_TIME]='" + dtToSelect.GetValueOrDefault().ToString(s_strFormatDbDateTime) + @"'"
+                                + @" AND [ID_SOURCE]=" + m_IdSourceConnSett
+                                + @" AND [ID_PUT] IN (" + strIds + @")";
+
+                        if ((i + 1) < cntDay)
+                            strRes += @" UNION ALL ";
+                    }
                 }
                 else
                     ;
@@ -91,7 +100,9 @@ namespace DestTEP32
                 string strRes = string.Empty
                     , strRows = string.Empty
                     , strRow = string.Empty;
-                int iIdToInsert = -1;
+                int iIdToInsert = -1
+                    , grpSignlToDate = 0
+                    , nextDate = 0;
                 DateTime? dtToInsert = null;
 
                 //Logging.Logg().Debug(@"GroupSignalsStatIDsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -110,11 +121,26 @@ namespace DestTEP32
                         + @",[WR_DATETIME]"
                             + @") VALUES";
 
+                    var m_enumResIDPUT = (from r in m_DupTables.TableDistinct.AsEnumerable()
+                                          orderby r.Field<int>("ID")
+                                          select new
+                                          {
+                                              ID = r.Field<int>("ID"),
+                                          }).Distinct();
+
+
+                    //for (int i = 0; i < m_DupTables.TableDistinct.Rows.Count / m_enumResIDPUT.Count(); i++)
+                    //{
                     foreach (DataRow row in m_DupTables.TableDistinct.Rows)
                     {
                         iIdToInsert = (int)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim()));
-                        if (dtToInsert == null)
-                            dtToInsert = ((DateTime)row[@"DATETIME"]).AddDays(0);
+
+                        if (grpSignlToDate % m_enumResIDPUT.Count() == 0)
+                        {
+                            dtToInsert = ((DateTime)row[@"DATETIME"]).AddDays(0);//??
+                            grpSignlToDate++;
+                            nextDate++;
+                        }
                         else
                             if (dtToInsert.Equals(((DateTime)row[@"DATETIME"]).AddDays(0)) == false)
                             {
@@ -122,7 +148,7 @@ namespace DestTEP32
                                 break;
                             }
                             else
-                                ;
+                                grpSignlToDate++;
 
                         if (iIdToInsert > 0)
                         {
@@ -134,7 +160,7 @@ namespace DestTEP32
                             strRow += 19.ToString() + @","; //ID_TIME = 1 day
                             strRow += 0.ToString() + @","; //ID_TIMEZONE = UTC
                             strRow += 0.ToString() + @","; //QUALITY
-                            strRow += ((float)row[@"VALUE"]).ToString("F3",CultureInfo.InvariantCulture) + @",";
+                            strRow += ((float)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
                             strRow += @"GETDATE()";
                             strRow += @"),";
                             strRows += strRow;
@@ -153,6 +179,7 @@ namespace DestTEP32
                     }
                     else
                         strRes = string.Empty;
+                    //}
                 }
                 else
                     ; // нет строк для вставки
