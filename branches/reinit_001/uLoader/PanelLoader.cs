@@ -14,7 +14,7 @@ namespace uLoader
     /// <summary>
     /// Перечисление - ключи событий для передачи событий "родительской" панели
     /// </summary>
-    public enum KEY_EVENT { SELECTION_CHANGED, CELL_CLICK, BTN_CLEAR_CLICK }
+    public enum KEY_EVENT { SELECTION_CHANGED, CELL_CLICK, BTN_DLL_RELOAD, BTN_CLEAR_CLICK }
 
     public partial class PanelWork
     {
@@ -141,6 +141,7 @@ namespace uLoader
                 ctrl.Name = KEY_CONTROLS.BUTTON_DLLNAME_GROUPSOURCES.ToString();                
                 (ctrl as Button).Text = @"<->";
                 ctrl.Enabled = false;
+                (ctrl as Button).Click += new EventHandler(panelLoader_SourceOfGroupDLLReload);
                 ctrl.Dock = DockStyle.Fill;
                 panelColumns.Controls.Add(ctrl, 4, 4);
                 panelColumns.SetColumnSpan(ctrl, 1); panelColumns.SetRowSpan(ctrl, 1);
@@ -519,6 +520,28 @@ namespace uLoader
                     ;
             }
             /// <summary>
+            /// Обработчик события - нажатие на кнопку "Выгрузить/загрузить ДЛЛ"
+            /// </summary>
+            /// <param name="obj">Объект, инициировавший событие</param>
+            /// <param name="ev">Аргумент события</param>
+            private void panelLoader_SourceOfGroupDLLReload(object obj, EventArgs ev)
+            {
+                //Подготовить параметры для передачи "родительской" панели
+                object[] arPreparePars = new object[(int)INDEX_PREPARE_PARS.COUNT_INDEX_PREPARE_PARS];
+
+                arPreparePars[(int)INDEX_PREPARE_PARS.KEY_OBJ] = KEY_CONTROLS.BUTTON_DLLNAME_GROUPSOURCES;
+                arPreparePars[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] = getGroupId(KEY_CONTROLS.DGV_GROUP_SOURCES);
+                //arPreparePars[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] = ;
+
+                arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = this;
+                arPreparePars[(int)INDEX_PREPARE_PARS.KEY_EVT] = KEY_EVENT.BTN_DLL_RELOAD;
+
+                //if (arPreparePars[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA].Equals(string.Empty) == false)
+                    //Отправить сообщение "родительской" панели (для дальнейшей ретрансляции)
+                    DataAskedHost(arPreparePars);
+                //else ;
+            }
+            /// <summary>
             /// Преобразовать значение 'MaskedTextBox'
             /// </summary>
             /// <param name="key">Идентификатор элемента управления со значением для преобразования</param>
@@ -804,7 +827,13 @@ namespace uLoader
                 else
                     ; //Не 'Source'
             }
-
+            /// <summary>
+            /// Обновить состояние кнопки управления группой (источников, сигналов)
+            /// </summary>
+            /// <param name="ctrl">Элемент управления на котором размещается обновляемая кнопка</param>
+            /// <param name="indx">Индекс строки в которой размещена кнопка</param>
+            /// <param name="state">Состояние для кнопки</param>
+            /// <returns>Признак разрешающий/запрещающий редактирование доп./параметров</returns>
             private bool updateBtnCell (Control ctrl, int indx, GroupSources.STATE state)
             {
                 bool bRes = false;
@@ -835,7 +864,7 @@ namespace uLoader
                     btnCellText = @"?";
                 //Установить текст на кнопке в соответствии состоянием
                 btnCell.Value = btnCellText;
-
+                // когда кнопка доступна(включена), а группа остановлена = True
                 return bRes;
             }
             /// <summary>
@@ -867,7 +896,8 @@ namespace uLoader
                             switch (key)
                             {
                                 case KEY_CONTROLS.DGV_GROUP_SOURCES:
-                                    //??? GetWorkingItem(KEY_CONTROLS.BUTTON_DLLNAME_GROUPSOURCES).Enabled =
+                                    GetWorkingItem(KEY_CONTROLS.BUTTON_DLLNAME_GROUPSOURCES).Enabled =
+                                        ! ((states[i] == GroupSources.STATE.UNKNOWN) || (states[i] == GroupSources.STATE.UNAVAILABLE));
                                     GetWorkingItem(KEY_CONTROLS.CBX_SOURCE_OF_GROUP).Enabled =
                                     GetWorkingItem(KEY_CONTROLS.TBX_GROUPSOURCES_ADDING).Enabled =
                                         bEnabled;
@@ -891,7 +921,7 @@ namespace uLoader
                 return iRes;
             }
             /// <summary>
-            /// Включить элементы управления в соответствии с состоянием объектов
+            /// Включить элементы управления в соответствии с состоянием объектов (и-или параметров группы сигналов)
             /// </summary>
             /// <param name="key">Ключ элемента управления</param>
             /// <param name="args">Массив аргументов для каждой из групп сигналов (STATE, bEnableTools)</param>
@@ -1091,7 +1121,19 @@ namespace uLoader
                 
                 base.Stop();
             }
-
+            /// <summary>
+            /// Очистить представление
+            /// </summary>
+            public void UpdateData()
+            {
+                DataGridView dgv = GetWorkingItem(KEY_CONTROLS.DGV_SIGNALS_OF_GROUP) as DataGridView;
+                foreach (DataGridViewRow dgvRow in dgv.Rows)
+                    dgvRow.Cells[1].Value =
+                    dgvRow.Cells[2].Value =
+                    dgvRow.Cells[3].Value =
+                        string.Empty;
+            }
+            
             public abstract int UpdateData(DataTable table);
         }
 
@@ -1274,7 +1316,11 @@ namespace uLoader
                 else
                     ; //Не "отмеченные" - игнорировать
             }
-
+            /// <summary>
+            /// Отобразить полученные данные в представлении
+            /// </summary>
+            /// <param name="table"></param>
+            /// <returns></returns>
             public override int UpdateData(DataTable table)
             {
                 int iRes = 0;

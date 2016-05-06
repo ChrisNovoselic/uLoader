@@ -39,6 +39,7 @@ namespace uLoader
             , STATE_GROUP_SIGNALS //Состояние группы сигналов (источник, назначение)
             , STATE_CHANGED_GROUP_SOURCES //Изменение состояния группы источников (источник, назначение) - инициатива пользователя
             , STATE_CHANGED_GROUP_SIGNALS //Изменение состояния группы сигналов (источник, назначение) - инициатива пользователя
+            , COMMAND_RELAOD_GROUP_SOURCES //Команда для выгрузки/загрузки библиотеки - инициатива пользователя
             , CLEARVALUES_DEST_GROUP_SIGNALS //Очистить значения для группы сигналов - инициатива пользователя
             , DATA_SRC_GROUP_SIGNALS //Данные группы сигналов (источник)
             , DATA_DEST_GROUP_SIGNALS //Данные группы сигналов (назначение)
@@ -216,6 +217,7 @@ namespace uLoader
                 case StatesMachine.STATE_GROUP_SIGNALS:
                 case StatesMachine.STATE_CHANGED_GROUP_SOURCES:
                 case StatesMachine.STATE_CHANGED_GROUP_SIGNALS:
+                case StatesMachine.COMMAND_RELAOD_GROUP_SOURCES:
                 case StatesMachine.CLEARVALUES_DEST_GROUP_SIGNALS:
                 case StatesMachine.DATA_SRC_GROUP_SIGNALS:
                 case StatesMachine.DATA_DEST_GROUP_SIGNALS:
@@ -264,6 +266,7 @@ namespace uLoader
                 case StatesMachine.STATE_GROUP_SIGNALS:
                 case StatesMachine.STATE_CHANGED_GROUP_SOURCES:
                 case StatesMachine.STATE_CHANGED_GROUP_SIGNALS:                
+                case StatesMachine.COMMAND_RELAOD_GROUP_SOURCES:
                 case StatesMachine.DATA_SRC_GROUP_SIGNALS:
                 case StatesMachine.DATA_DEST_GROUP_SIGNALS:
                 case StatesMachine.GET_GROUP_SIGNALS_DATETIME_PARS:
@@ -492,6 +495,12 @@ namespace uLoader
                         itemQueue = Peek;
 
                         iRes = m_listGroupSources[(int)((INDEX_SRC)itemQueue.Pars[0])][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].StateChange((string)itemQueue.Pars[2]);
+                        break;
+                    case StatesMachine.COMMAND_RELAOD_GROUP_SOURCES:
+                        error = false;
+                        itemQueue = Peek;
+
+                        iRes = m_listGroupSources[(int)((INDEX_SRC)itemQueue.Pars[0])][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].Reload();
                         break;
                     case StatesMachine.CLEARVALUES_DEST_GROUP_SIGNALS:
                         //[1] - идентификаторы

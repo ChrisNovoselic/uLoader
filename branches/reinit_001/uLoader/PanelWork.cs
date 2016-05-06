@@ -239,24 +239,29 @@ namespace uLoader
                         enabledWorkItem(indxSrc, PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS, (par as object[])[(int)indxSrc] as object []);
                     break;
                 case HHandlerQueue.StatesMachine.STATE_CHANGED_GROUP_SOURCES: //Состояние (изменено) группы источников (источник, назначение)
-                    //Немедленно запросить состояния групп сигналов
+                    //Немедленно запросить состояния групп источников
                     changeTimerUpdate (0);
                     break;
                 case HHandlerQueue.StatesMachine.STATE_CHANGED_GROUP_SIGNALS: //Состояние (изменено) группы сигналов (источник, назначение)
                     //Немедленно запросить состояния групп сигналов
                     changeTimerUpdate(0);
                     break;
+                case HHandlerQueue.StatesMachine.COMMAND_RELAOD_GROUP_SOURCES: //Состояние (выгружена/загружена) группы источников (источник, назначение)
+                    //Немедленно запросить состояния групп источников
+                    changeTimerUpdate (0);
+                    break;
                 case HHandlerQueue.StatesMachine.DATA_SRC_GROUP_SIGNALS:
-                    if (! (par == null))
-                        m_arLoader[(int)INDEX_SRC.SOURCE].UpdateData (par as DataTable);
+                    if (par == null)
+                        m_arLoader[(int)INDEX_SRC.SOURCE].UpdateData ();
                     else
-                        ;
+                        m_arLoader[(int)INDEX_SRC.SOURCE].UpdateData(par as DataTable);
                     break;
                 case HHandlerQueue.StatesMachine.DATA_DEST_GROUP_SIGNALS:
-                    if (!(par == null))
-                        m_arLoader[(int)INDEX_SRC.DEST].UpdateData(par as DataTable);
+                    if (par == null)
+                        m_arLoader[(int)INDEX_SRC.DEST].UpdateData ();
                     else
-                        ;
+                        m_arLoader[(int)INDEX_SRC.DEST].UpdateData(par as DataTable);
+                    break;
                     break;
                 //case HHandlerQueue.StatesMachine.SET_IDCUR_SOURCE_OF_GROUP:
                 //    break;
@@ -400,10 +405,10 @@ namespace uLoader
                                     arObjToDataHost = new object[] { new object[] { (int)state, pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL] } };
                                     break;
                                 case PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS:
-                                    state = HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS_PARS;
+                                    //state = ;
                                     arObjToDataHost = new object[] {
                                         new object[] {
-                                            (int)state
+                                            (int)HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS_PARS
                                             , indxWork
                                             , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL]
                                             , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
@@ -474,10 +479,10 @@ namespace uLoader
                                     arObjToDataHost = new object[] { new object[] { (int)state, pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL] } };
                                     break;
                                 case PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS:
-                                    state = HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SIGNALS_PARS;
+                                    //state = ;
                                     arObjToDataHost = new object[] {
                                         new object[] {
-                                            (int)state
+                                            (int)HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SIGNALS_PARS
                                             , indxWork
                                             , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL]
                                             , (string)pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
@@ -565,35 +570,55 @@ namespace uLoader
                     }
 
                     arObjToDataHost = new object[] { new object []
-                                                        {
-                                                            (int)state
-                                                            , indxWork
-                                                            , pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL]
-                                                            , pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
-                                                        }
+                        {
+                            (int)state
+                            , indxWork
+                            , pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL]
+                            , pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
+                        }
                     };
+                    break;
+                case KEY_EVENT.BTN_DLL_RELOAD:
+                    switch (indxWork)
+                    {
+                        case INDEX_SRC.SOURCE:
+                        case INDEX_SRC.DEST:
+                            //state = ;
+                            arObjToDataHost = new object[] {
+                                new object []
+                                {
+                                    (int)HHandlerQueue.StatesMachine.COMMAND_RELAOD_GROUP_SOURCES
+                                    , indxWork
+                                    , pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL]
+                                    //, pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
+                                }
+                            };
+                            break;
+                        default:
+                            break;
+                    }
                     break;
                 case KEY_EVENT.BTN_CLEAR_CLICK:
                     switch (indxWork)
                     {
-                        case INDEX_SRC.SOURCE:
+                        case INDEX_SRC.SOURCE: //для SOURCE удаление НЕвозможно
                             ;
                             break;
                         case INDEX_SRC.DEST:
                             switch ((PanelLoader.KEY_CONTROLS)pars[(int)PanelLoader.INDEX_PREPARE_PARS.KEY_OBJ])
                             {
-                                case PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES:
+                                case PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES: // для DEST группы источников удаление НЕвозможно
                                     ;
                                     break;
-                                case PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS:
+                                case PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS: // удаление возможно ТОЛЬКО для DEST группв сигналов
                                     state = HHandlerQueue.StatesMachine.CLEARVALUES_DEST_GROUP_SIGNALS;
                                     arObjToDataHost = new object[] { new object []
-                                                        {
-                                                            (int)state
-                                                            , indxWork
-                                                            , pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL]
-                                                            , pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
-                                                        }
+                                        {
+                                            (int)state
+                                            , indxWork
+                                            , pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL]
+                                            , pars[(int)PanelLoader.INDEX_PREPARE_PARS.DEPENDENCED_DATA]
+                                        }
                                     };
                                     break;
                                 default:
