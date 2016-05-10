@@ -31,6 +31,8 @@ namespace uLoader
 
         private int m_iSecondUpdate;
 
+        private StateManager m_states;
+
         /// <summary>
         /// Конструктор - основной
         /// </summary>
@@ -59,7 +61,12 @@ namespace uLoader
 
             InitializeComponent ();
 
-            //m_arCurrentGroupSources = new GroupSources[(int)INDEX_SRC.COUNT_INDEX_SRC];
+            //// настраиваемые параметры манагера состояний объектов
+            //StateManager.MSEC_TIMERFUNC_UPDATE = 1006;
+            //StateManager.MSEC_CONFIRM_WAIT = 6666;            
+            m_states = new StateManager();
+            m_states.Start(); m_states.Activate(true);
+            m_states.EventCrashed += new StateManager.EventHandlerCrashed(onCrashed);
 
             m_iSecondUpdate = -1;
 
@@ -277,6 +284,14 @@ namespace uLoader
         }
 
         /// <summary>
+        /// Обработчик события - состояние группы сигналов не актуально
+        /// </summary>
+        /// <param name="ev">Аргумент события</param>
+        private void onCrashed(StateManager.EventCrashedArgs ev)
+        {
+        }
+
+        /// <summary>
         /// Обработчик события получения данных по запросу (выполняется в потоке получения результата)
         /// </summary>
         /// <param name="obj">Результат, полученный по запросу</param>
@@ -299,6 +314,8 @@ namespace uLoader
 
         public override void Stop()
         {
+            m_states.Activate(false); m_states.Stop();           
+
             stopTimerUpdate ();
 
             foreach (PanelLoader pLoader in m_arLoader)
@@ -382,7 +399,7 @@ namespace uLoader
         /// Обработчик события 'EvtDataAskedHost' от панелей (источник, назначение)
         /// </summary>
         /// <param name="obj">Параметр для передачи-массив (0-панель, 1-индекс группы источников, 2-индекс группы сигналов)</param>
-        private void OnEvtDataAskedPanelWork_PanelLoader (object par)
+        private void onEvtDataAskedPanelWork_PanelLoader (object par)
         {
             object []pars = (par as EventArgsDataHost).par[0] as object [];
             //Массив параметров для передачи
@@ -699,7 +716,7 @@ namespace uLoader
                         break;
                 }
                 m_arLoader[i] = Activator.CreateInstance(typeLoader) as PanelLoader;
-                m_arLoader[i].EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedPanelWork_PanelLoader);
+                m_arLoader[i].EvtDataAskedHost += new DelegateObjectFunc(onEvtDataAskedPanelWork_PanelLoader);
 
                 this.Controls.Add(m_arLoader[i], 0, i * this.RowCount / 2);
                 this.SetColumnSpan(m_arLoader[i], this.ColumnCount); this.SetRowSpan(m_arLoader[i], this.RowCount / 2);
