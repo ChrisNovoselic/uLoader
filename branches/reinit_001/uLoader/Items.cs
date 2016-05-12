@@ -232,10 +232,12 @@ namespace uLoader
         /// Наименование библиотеки для работы с группами сигналов
         /// </summary>
         public string m_strDLLName;
+
+        protected int _iIdTypePlugInObjectLoaded;
         /// <summary>
         /// Идентификатор типа объекта плюгИна, используемого для обращения к данным
         /// </summary>
-        protected int m_iIdTypePlugInObjectLoaded; //{ get { return _plugIn.KeySingleton; } };
+        public int m_iIdTypePlugInObjectLoaded { get { return _iIdTypePlugInObjectLoaded; } } // _plugIn.KeySingleton
         /// <summary>
         /// Список с параметрами "присоединенных" к группе источников групп сигналов
         /// </summary>
@@ -466,7 +468,9 @@ namespace uLoader
                 Add(_id, plugIn);
             }
         }
-
+        /// <summary>
+        /// Загрузить плюгИн
+        /// </summary>
         private void loadPlugIn()
         {
             string strTypeName = string.Empty;
@@ -482,7 +486,7 @@ namespace uLoader
             if ((_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
                 && (m_plugIns.Loader.CreateObject(strTypeName) == 0))
             {
-                m_iIdTypePlugInObjectLoaded = m_plugIns.Loader.KeySingleton; //plugInRes.GetKeyType(strTypeName);                
+                _iIdTypePlugInObjectLoaded = m_plugIns.Loader.KeySingleton; //plugInRes.GetKeyType(strTypeName);                
                 //Взаимная "привязка" для обмена сообщениями
                 // библиотека - объект класса
                 (m_plugIns.Loader as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(plugIn_OnEvtDataAskedHost);
@@ -511,7 +515,7 @@ namespace uLoader
         {
             if (!(m_plugIns == null))
             {
-                m_iIdTypePlugInObjectLoaded = -1;
+                _iIdTypePlugInObjectLoaded = -1;
                 //Взаимная "РАЗпривязка" для обмена сообщениями - в обратном порядке
                 // объект класса - библиотека
                 EvtDataAskedHostPlugIn -= m_plugIns.Loader.OnEvtDataRecievedHost;                
@@ -534,7 +538,7 @@ namespace uLoader
         ///  требуется ожидание перед инициализацией 1-ой из групп сигналов
         /// </summary>
         private ManualResetEvent m_evtInitSource;
-        private Semaphore m_semaStateChange;
+        private /*Semaphore*/ManualResetEvent m_semaStateChange;
         /// <summary>
         /// Состояние группы источников
         /// </summary>
@@ -597,6 +601,18 @@ namespace uLoader
             return iRes;
         }
         # endregion
+        /// <summary>
+        /// Событие для обмена данными с очередью обработки событий
+        /// </summary>
+        public event DelegateObjectFunc EvtDataAskedHostQueue;
+        /// <summary>
+        /// Передать в очередь обработки событий сообщение о необходимости установления/разрыва связи между группами источников
+        /// </summary>
+        /// <param name="ev">Аргумент при передаче сообщения</param>
+        public virtual void PerformDataAskedHostQueue(EventArgsDataHost ev)
+        {
+            EvtDataAskedHostQueue(ev);
+        }
 
         protected virtual GroupSignals createGroupSignals(GROUP_SIGNALS_SRC grpSgnls)
         {
@@ -775,7 +791,7 @@ namespace uLoader
                 this.m_listSKeys.Add (skey);
 
             m_evtInitSource = new ManualResetEvent (false);
-            m_semaStateChange = new Semaphore (0, 1);
+            m_semaStateChange = new /*Semaphore*/ ManualResetEvent(/*0, 1*/true);
 
             //Список с объектми параметров соединения с источниками данных
             foreach (KeyValuePair <string, ConnectionSettings> pair in srcItem.m_dictConnSett)
@@ -835,6 +851,7 @@ namespace uLoader
         {
             int iRes = 0;
 
+            Console.WriteLine(@"GroupSources::sendInitSource (id=" + m_iIdTypePlugInObjectLoaded + @") - ...");
             PerformDataAskedHostPlugIn(new EventArgsDataHost(m_iIdTypePlugInObjectLoaded, (int)ID_DATA_ASKED_HOST.INIT_SOURCE, Pack()));
 
             return iRes;
@@ -907,12 +924,13 @@ namespace uLoader
             object []arDataAskedHost = null;
 
             if (idToSend == ID_DATA_ASKED_HOST.START)
+            {
                 //Проверить признак группы сигналов: источник или назначение
                 //if (! (grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL] == null))
                 if (grpSgnlsPars is GROUP_SIGNALS_SRC_PARS)
                 {
                     MODE_WORK mode = (grpSgnlsPars as GROUP_SIGNALS_SRC_PARS).m_mode;
-                    
+
                     arDataAskedHost = new object[]
                         {
                             iIDGroupSignals
@@ -942,14 +960,21 @@ namespace uLoader
                             };
                     else
                         ;
+                // установить контроль за группой сигналов
+                PerformDataAskedHostQueue(new EventArgsDataHost(m_iIdTypePlugInObjectLoaded, (int)idToSend, new object[] { iIDGroupSignals }));
+            }
             else
                 if (idToSend == ID_DATA_ASKED_HOST.STOP)
+                {
                     arDataAskedHost = new object[]
                         {
                             iIDGroupSignals
                         };
+                    // снять контроль за группой сигналов
+                    PerformDataAskedHostQueue(new EventArgsDataHost(m_iIdTypePlugInObjectLoaded, (int)idToSend, new object[] { iIDGroupSignals }));
+                }
                 else
-                    ; //
+                    ; //??? других команд не предусмотрено
 
             PerformDataAskedHostPlugIn(new EventArgsDataHost(m_iIdTypePlugInObjectLoaded, (int)idToSend, arDataAskedHost));
 
@@ -1043,6 +1068,8 @@ namespace uLoader
                             }
                             else
                                 msgDebugLog += 0.ToString();
+
+                            this.PerformDataAskedHostQueue(new EventArgsDataHost(m_iIdTypePlugInObjectLoaded, (int)id_cmd, new object[] { iIDGroupSignals }));
                         }
                         else
                             ;
@@ -1053,11 +1080,9 @@ namespace uLoader
                         //m_semaStateChange.Release (1);
                         //Вариант №2 (пост-установка)
                         grpSgnls.StateChange();
-                        //Установить/разорвать взаимосвязь между группами источников (при необходимости)
-                        if (this is GroupSourcesDest)
-                            (this as GroupSourcesDest).PerformDataAskedHostQueue(new EventArgsDataHost(m_iIdTypePlugInObjectLoaded, (int)id_cmd, new object[] { iIDGroupSignals }));
-                        else
-                            ;
+                        //Подтвердить изменение состояния группы сигналов
+                        // + установить/разорвать взаимосвязь между группами источников (при необходимости) - для 'GroupSourcesDest'
+                        this.PerformDataAskedHostQueue(new EventArgsDataHost(m_iIdTypePlugInObjectLoaded, (int)id_cmd, new object[] { iIDGroupSignals, ID_HEAD_ASKED_HOST.CONFIRM }));
 
                         if (grpSgnls.State == STATE.STOPPED)
                         {
@@ -1070,11 +1095,13 @@ namespace uLoader
 
                         msgDebugLog = @"подтверждено: " + id_cmd.ToString();
 
-                        if (bSemaStateChange == true)
+                        if ((bSemaStateChange == true)
+                            && (m_semaStateChange.WaitOne (0) == false))
                             //Разрешить очередную команду на изменение состояния
                             try
                             {
-                                m_semaStateChange.Release(1);
+                                Console.WriteLine(@"GroupSources::plugIn_OnEvtDataAskedHost () - m_semaStateChange.Release(1) - подтверждено: " + id_cmd.ToString() + @"...");
+                                m_semaStateChange./*Release(1)*/Reset();
                             }
                             catch (Exception e)
                             {
@@ -1241,16 +1268,10 @@ namespace uLoader
 
             return iRes;
         }
-        /// <summary>
-        /// Остановить/запустить группу сигналов
-        /// </summary>
-        /// <param name="strId">Строковый идентификатор группы источников</param>
-        /// <param name="prevState">Признак для изменения состояния</param>
-        /// <returns>Признак выполнения функции</returns>
-        public int StateChange (string strId, STATE prevState = STATE.REVERSE)
+
+        public int StateChange(int iId, STATE prevState = STATE.REVERSE)
         {
-            int iRes = 0
-                , iId = FormMain.FileINI.GetIDIndex (strId);
+            int iRes = 0;
 
             //Изменить состояние только ОДНой группы сигналов
             GroupSignals grpSgnls = getGroupSignals(iId);
@@ -1260,12 +1281,12 @@ namespace uLoader
                 && (iRes == 0))
             {
                 if ((grpSgnls.State == STATE.STARTED)
-                    &&(!(State == STATE.STARTED)))
-                    throw new Exception(@"GroupSources::StateChange (ID=" + strId + @") - несовместимые состояния групп источников и сигналов...");
+                    && (!(State == STATE.STARTED)))
+                    throw new Exception(@"GroupSources::StateChange (ID=" + iId + @") - несовместимые состояния групп источников и сигналов...");
                 else
                     ;
 
-                stateChange (iId, newState);
+                stateChange(iId, newState);
             }
             else
             {
@@ -1276,6 +1297,16 @@ namespace uLoader
             }
 
             return iRes;
+        }
+        /// <summary>
+        /// Остановить/запустить группу сигналов
+        /// </summary>
+        /// <param name="strId">Строковый идентификатор группы источников</param>
+        /// <param name="prevState">Признак для изменения состояния</param>
+        /// <returns>Признак выполнения функции</returns>
+        public int StateChange (string strId, STATE prevState = STATE.REVERSE)
+        {
+            return StateChange(FormMain.FileINI.GetIDIndex(strId), prevState);
         }
         /// <summary>
         /// Изменитьсостояние ВСЕХ групп сигналов
@@ -1299,6 +1330,8 @@ namespace uLoader
 
             if ((newState == STATE.STARTED)
                 && (m_evtInitSource.WaitOne(0) == false))
+                //??? возможно отправление повторного сообщения
+                // требуется ожидать подтверждения приема параметров соединения с источником
                 sendInitSource();
             else
                 if (newState == STATE.STOPPED)
@@ -1309,12 +1342,15 @@ namespace uLoader
             //Вариант №2 (пост-установка)
             if ((newState == STATE.STARTED)
                 && (m_evtInitSource.WaitOne() == true))
+                // отправление 'STARTED' будет произведено после подтверждения инициализации группы сигналов
                 sendInitGroupSignals(iId);
             else
                 sendState(iId, newState);
 
-            //Ожидать подтверждение об изменении состоянии
+            //Ожидать подтверждение об изменении состояния
             m_semaStateChange.WaitOne ();
+            Console.WriteLine(@"GroupSources::stateChange (iId=" + iId + @", newState=" + newState.ToString() + @") - m_semaStateChange.WaitOne() ...");
+            m_semaStateChange.Set();
         }
         /// <summary>
         /// Получить данные (результаты запроса в ~ режима) 'DataTable' по указанной группе сигналов
@@ -1457,7 +1493,33 @@ namespace uLoader
         {
             return getGroupSignals(indx) == null ? -1 : 0;
         }
+
+        public string GetIdGroupSignals(int indx)
+        {
+            GroupSignals grpSgnls = getGroupSignals(indx);
+
+            return grpSgnls == null ? string.Empty : grpSgnls.m_strID;
+        }
     }
+
+    //public class GroupSourcesSrc : GroupSources
+    //{
+    //    /// <summary>
+    //    /// Передать в очередь обработки событий сообщение о необходимости установления/разрыва связи между группами источников
+    //    /// </summary>
+    //    /// <param name="ev">Аргумент при передаче сообщения</param>
+    //    public override void PerformDataAskedHostQueue(EventArgsDataHost ev)
+    //    {
+    //        //id_main - идентификатор типа объекта в загруженной в ОЗУ библиотеки
+    //        //id_detail - команда на изменение состояния группы сигналов
+    //        //В 0-ом параметре передан индекс (???идентификатор) группы сигналов
+    //        int indxGrpSgnls = (int)(ev.par as object[])[0];
+    //        //В 1-ом параметре передан признак инициирования/подтверждения изменения состояния группы сигналов
+    //        ID_HEAD_ASKED_HOST idHeadAskedHost = (ID_HEAD_ASKED_HOST)(ev.par as object[])[1];
+
+    //        base.PerformDataAskedHostQueue(new EventArgsDataHost(ev.id_main, ev.id_detail, new object[] { this, indxGrpSgnls, idHeadAskedHost }));
+    //    }
+    //}
 
     public class GroupSourcesDest : GroupSources
     {
@@ -1466,11 +1528,7 @@ namespace uLoader
         ///  значениями - списками индексов групп сигналов
         ///  , подписчиками на таблицы результатов
         /// </summary>
-        Dictionary<int, List<int>> m_dictLinkedIndexGroupSources;
-        /// <summary>
-        /// Событие для обмена данными с очередью обработки событий
-        /// </summary>
-        public event DelegateObjectFunc EvtDataAskedHostQueue;
+        Dictionary<int, List<int>> m_dictLinkedIndexGroupSources;        
         /// <summary>
         /// Конструктор - основной (с параметрами)
         /// </summary>
@@ -1731,10 +1789,16 @@ namespace uLoader
         /// Передать в очередь обработки событий сообщение о необходимости установления/разрыва связи между группами источников
         /// </summary>
         /// <param name="ev">Аргумент при передаче сообщения</param>
-        public void PerformDataAskedHostQueue (EventArgsDataHost ev)
+        public override void PerformDataAskedHostQueue (EventArgsDataHost ev)
         {
-            //В 0-ом параметре пердан индекс (???идентификатор) группы сигналов
+            //id_main - идентификатор типа объекта в загруженной в ОЗУ библиотеки
+            //id_detail - команда на изменение состояния группы сигналов
+            //В 0-ом параметре передан индекс (???идентификатор) группы сигналов
             int indxGrpSgnls = (int)(ev.par as object[])[0];
+            ////В 1-ом параметре передан признак инициирования/подтверждения изменения состояния группы сигналов
+            //ID_HEAD_ASKED_HOST idHeadAskedHost = (ID_HEAD_ASKED_HOST)(ev.par as object[])[1];
+
+            base.PerformDataAskedHostQueue(ev);
 
             List<int> listNeededIndexGroupSources = GetListNeededIndexGroupSources(indxGrpSgnls);
             bool bEvtDataAskedHostQueue = false;
@@ -1771,8 +1835,7 @@ namespace uLoader
                         ;
 
                     if (bEvtDataAskedHostQueue == true)
-                        //Передать для добавления обработчика событий
-                        EvtDataAskedHostQueue(new EventArgsDataHost(ev.id_main, ev.id_detail, new object[] { this, indx }));
+                        base.PerformDataAskedHostQueue(new EventArgsDataHost(ev.id_main, ev.id_detail, new object[] { this, indx }));
                     else
                         ;
                 }

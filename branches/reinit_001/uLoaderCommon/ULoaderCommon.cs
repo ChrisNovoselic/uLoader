@@ -1305,6 +1305,7 @@ namespace uLoaderCommon
         {
             m_semaInitId.WaitOne ();
 
+            Console.WriteLine(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - ...");
             Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
             int iNeedStarted = -1; //Признак необходимости запуска "родительского" объекта
@@ -1337,6 +1338,7 @@ namespace uLoaderCommon
                         iNeedStarted = -1;
                 }
 
+                Console.WriteLine(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - iNeedStarted=" + iNeedStarted + @" ...");
                 Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - iNeedStarted=" + iNeedStarted + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 //Проврить признак необходимости запуска "родительского" объекта
@@ -1381,6 +1383,7 @@ namespace uLoaderCommon
         {
             lock (m_lockInitSource)
             {
+                Console.WriteLine(@"HHandlerDbULoader::Stop (" + PlugInId + @") - ...");
                 Logging.Logg().Debug(@"HHandlerDbULoader::Stop (" + PlugInId + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 stopThreadQueue();
@@ -1415,20 +1418,24 @@ namespace uLoaderCommon
                 {
                     if (m_dictGroupSignals[id].IsStarted == true)
                     {
+                        Console.WriteLine(@"HHandlerDbULoader::Stop (" + PlugInId + @", key=" + id + @") - ...");
                         m_dictGroupSignals[id].Stop();
                     }
                     else
-                        ;
+                        iNeedStopped = -1;
                 }
                 else
                     iNeedStopped = -1;
-            }
-            //Проверить возможность останова объекта
-            if (! (iNeedStopped < 0))
-            {
-                if (! (_iPlugin == null))
-                    //Подтвердить клиенту останов группы сигналов
-                    (_iPlugin as PlugInBase).DataAskedHost(new object[] { _iPlugin.KeySingleton, ID_DATA_ASKED_HOST.STOP, id, direct }); //-1 неизвестный идентификатор типа (класса)объекта
+
+                //Проверить возможность останова объекта
+                if (! (iNeedStopped < 0))
+                {
+                    if (! (_iPlugin == null))
+                        //Подтвердить клиенту останов группы сигналов
+                        (_iPlugin as PlugInBase).DataAskedHost(new object[] { _iPlugin.KeySingleton, ID_DATA_ASKED_HOST.STOP, id, direct }); //-1 неизвестный идентификатор типа (класса)объекта
+                    else
+                        ;
+                }
                 else
                     ;
 
@@ -1449,9 +1456,7 @@ namespace uLoaderCommon
                 }
                 else
                     ;
-            }
-            else
-                ;
+            }            
 
             m_semaInitId.Release(1);
         }
@@ -1608,13 +1613,17 @@ namespace uLoaderCommon
 
             //m_markDataHost.Set(indx, val);
             if (m_dictDataHostCounter.ContainsKey(pair) == true)
+            {
                 if (val == true)
-                    m_dictDataHostCounter[pair] ++;
+                    m_dictDataHostCounter[pair]++;
                 else
                     if (val == false)
-                        m_dictDataHostCounter[pair] --;
+                        m_dictDataHostCounter[pair]--;
                     else
                         ; // недостижимый код
+
+                Console.WriteLine(@"PlugInULoader::SetMark (id=" + id_obj + @", key=" + key + @", val=" + val + @") - counter=" + m_dictDataHostCounter[pair] + @" ...");
+            }
             else
                 ;
         }
@@ -1639,11 +1648,16 @@ namespace uLoaderCommon
             switch ((ID_DATA_ASKED_HOST)ev.id_detail)
             {
                 case ID_DATA_ASKED_HOST.INIT_SOURCE: //Приняты параметры для инициализации целевого объекта
-                    if (target.Initialize(ev.par as object []) == 0)
-                        //Подтвердить клиенту  получение параметров
-                        DataAskedHost(new object[] { id_obj, ID_DATA_ASKED_HOST.INIT_SOURCE, -1, ID_HEAD_ASKED_HOST.CONFIRM });
+                    //??? проверка на повторный прием параметров
+                    // требуется исключить повторную отпавку сообщения
+                    if (isMarked(ev.id_main, (int)ID_DATA_ASKED_HOST.INIT_SOURCE) == false)
+                        if (target.Initialize(ev.par as object[]) == 0)
+                            //Подтвердить клиенту  получение параметров
+                            DataAskedHost(new object[] { id_obj, ID_DATA_ASKED_HOST.INIT_SOURCE, -1, ID_HEAD_ASKED_HOST.CONFIRM });
+                        else
+                            ; // ошибка при инициализации
                     else
-                        ;
+                        ; // параметры уже инициализированы
                     break;
                 case ID_DATA_ASKED_HOST.INIT_SIGNALS: //Приняты параметры инициализации группы сигналов
                     ID_HEAD_ASKED_HOST idHead = ID_HEAD_ASKED_HOST.CONFIRM;

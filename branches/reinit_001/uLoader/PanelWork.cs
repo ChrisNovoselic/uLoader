@@ -31,7 +31,7 @@ namespace uLoader
 
         private int m_iSecondUpdate;
 
-        private StateManager m_states;
+        //private StateManager m_states;
 
         /// <summary>
         /// Конструктор - основной
@@ -60,13 +60,6 @@ namespace uLoader
             int iRes = 0;
 
             InitializeComponent ();
-
-            //// настраиваемые параметры манагера состояний объектов
-            //StateManager.MSEC_TIMERFUNC_UPDATE = 1006;
-            //StateManager.MSEC_CONFIRM_WAIT = 6666;            
-            m_states = new StateManager();
-            m_states.Start(); m_states.Activate(true);
-            m_states.EventCrashed += new StateManager.EventHandlerCrashed(onCrashed);
 
             m_iSecondUpdate = -1;
 
@@ -284,14 +277,6 @@ namespace uLoader
         }
 
         /// <summary>
-        /// Обработчик события - состояние группы сигналов не актуально
-        /// </summary>
-        /// <param name="ev">Аргумент события</param>
-        private void onCrashed(StateManager.EventCrashedArgs ev)
-        {
-        }
-
-        /// <summary>
         /// Обработчик события получения данных по запросу (выполняется в потоке получения результата)
         /// </summary>
         /// <param name="obj">Результат, полученный по запросу</param>
@@ -314,7 +299,7 @@ namespace uLoader
 
         public override void Stop()
         {
-            m_states.Activate(false); m_states.Stop();           
+            //m_states.Activate(false); m_states.Stop();           
 
             stopTimerUpdate ();
 

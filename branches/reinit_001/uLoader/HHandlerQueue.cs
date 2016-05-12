@@ -6,7 +6,7 @@ using HClassLibrary; //HHandler
 
 namespace uLoader
 {
-    class HHandlerQueue : HClassLibrary.HHandlerQueue
+    partial class HHandlerQueue : HClassLibrary.HHandlerQueue
     {
         /// <summary>
         /// Перечисление - возможные состояния для обработки
@@ -47,6 +47,11 @@ namespace uLoader
             , SET_TEXT_ADDING //Установить текст "дополнительных" параметров
             , SET_GROUP_SIGNALS_PARS //Установить параметры группы сигналов в группе источников при утрате фокуса ввода элементом управления (GroupBox) с их значениями
             , GET_GROUP_SIGNALS_DATETIME_PARS //Запросить параметры группы сигналов в группе источников при изменении типа параметров (CUR_DATETIME, COSTUMIZE)
+            , OMANAGEMENT_ADD
+            , OMANAGEMENT_REMOVE
+            , OMANAGEMENT_CONFIRM
+            , OMANAGEMENT_UPDATE
+            , OMANAGEMENT_CONTROL
             ,
         }
         /// <summary>
@@ -75,10 +80,16 @@ namespace uLoader
             //else
             //    //Наименование файла "по умолчанию"
             //    strNameFileINI = @"setup.ini";
-            if (strNameFileINI == string.Empty || strNameFileINI==null)
+            if (strNameFileINI == string.Empty || strNameFileINI == null)
             {
                 strNameFileINI = @"setup.ini";
             }
+            else
+                ;
+
+            m_timerFunc = new System.Threading.Timer(timerFunc);
+            m_listObjects = new ListOManagement();
+            eventCrashed += new /*HHandlerQueue.EventHandlerCrashed*/ DelegateObjectFunc(onCrashed);
 
             //Прочитать и "разобрать" файл конфигурации
             m_fileINI = new FormMain.FileINI(strNameFileINI);
@@ -91,34 +102,77 @@ namespace uLoader
             setListGroupSources(INDEX_SRC.DEST, m_fileINI.AllObjectsDestGroupSources, m_fileINI.AllObjectsDestGroupSignals);
         }
         /// <summary>
-        /// Обработчик события 'EvtDataAskedHostQueue' для установления взаимосвязи между "связанными" (по конф./файлу) по "цепочке" сигналов - групп сигналов - групп источников
+        /// Обработчик события 'EvtDataAskedHostQueue'
         /// </summary>
-        /// <param name="par">Параметры для установления соответствия</param>
-        private void onEvtDataAskedHostQueue_GroupSourcesDest(object par)
+        /// <param name="par">Параметры/аргументы события</param>
+        private void onEvtDataAskedHostQueue_GroupSources(object par)
         {
             EventArgsDataHost ev = par as EventArgsDataHost;
             object []pars = ev.par as object [];
 
-            GroupSourcesDest grpSrcDest = pars[0] as GroupSourcesDest;
+            // массив параметров различается в ~ от типа объекта в 'pars[0]'
+            // для 'GroupSourcesSrc, GroupSourcesDest' - длина=2 (набор исходный): [0] - индекс группы сигналов, [1 | при необходимости] - 'ID_HEAD_ASKED_HOST'
+            // для 'GroupSourcesDest' - длина=2 (набор изменен): [0] - объект 'GroupSourcesDest', [1] - индекс группы источников
+            GroupSourcesDest grpSrcDest = null; // только для 2-го набора
+            int indx = -1; // для разных наборов - различное значение
+            ID_HEAD_ASKED_HOST idHeadAskedHost = ID_HEAD_ASKED_HOST.UNKNOWN; // только для исходного набора (для START, STOP всегда = 'CONFIRM')
 
-            int indxNeededGroupSources = (int)pars[1];
+            if (pars[0].GetType().IsPrimitive == true)
+            {// действия поо набору-1
+                indx = (int)pars[0]; // индекс группы сигналов
+                if (pars.Length == 1)
+                    switch ((ID_DATA_ASKED_HOST)ev.id_detail)
+                    {
+                        case ID_DATA_ASKED_HOST.START:
+                            add(new object [] { ev.id_main, indx }, TimeSpan.FromMilliseconds (16667));
+                            break;
+                        case ID_DATA_ASKED_HOST.STOP:
+                            remove(ev.id_main, indx);
+                            break;
+                        case ID_DATA_ASKED_HOST.TABLE_RES:
+                            update(ev.id_main, indx);
+                            break;
+                        default:
+                            break;
+                    }
+                else
+                    if (pars.Length == 2)
+                    {
+                        idHeadAskedHost = (ID_HEAD_ASKED_HOST)pars[1];
 
-            foreach (GroupSources grpSrcSource in m_listGroupSources[(int)INDEX_SRC.SOURCE])
-            {
-                if (FormMain.FileINI.GetIDIndex(grpSrcSource.m_strID) == indxNeededGroupSources)
-                {
-                    if ((ID_DATA_ASKED_HOST)ev.id_detail == ID_DATA_ASKED_HOST.START)
-                        grpSrcSource.AddDelegatePlugInOnEvtDataAskedHost(FormMain.FileINI.GetIDIndex(grpSrcDest.m_strID), grpSrcDest.Clone_OnEvtDataAskedHost);
+                        if (idHeadAskedHost == ID_HEAD_ASKED_HOST.CONFIRM)
+                            confirm(ev.id_main, indx);
+                        else
+                            throw new MissingMemberException(); // ошибка - переменная имеет неожиданное значение
+                    }
                     else
-                        if ((ID_DATA_ASKED_HOST)ev.id_detail == ID_DATA_ASKED_HOST.STOP)
-                            grpSrcSource.RemoveDelegatePlugInOnEvtDataAskedHost(FormMain.FileINI.GetIDIndex(grpSrcDest.m_strID), grpSrcDest.Clone_OnEvtDataAskedHost);
+                        ;
+            }
+            else
+            {// действия поо набору-2 (для установления взаимосвязи между "связанными" (по конф./файлу) по "цепочке" сигналов - групп сигналов - групп источников)
+                if (pars[0] is GroupSourcesDest)
+                {
+                    grpSrcDest = pars[0] as GroupSourcesDest;
+                    indx = (int)pars[1]; // индекс группы источников
+
+                    foreach (GroupSources grpSrcSource in m_listGroupSources[(int)INDEX_SRC.SOURCE])
+                        if (FormMain.FileINI.GetIDIndex(grpSrcSource.m_strID) == indx) //indxNeededGroupSources
+                        {
+                            if ((ID_DATA_ASKED_HOST)ev.id_detail == ID_DATA_ASKED_HOST.START)
+                                grpSrcSource.AddDelegatePlugInOnEvtDataAskedHost(FormMain.FileINI.GetIDIndex(grpSrcDest.m_strID), grpSrcDest.Clone_OnEvtDataAskedHost);
+                            else
+                                if ((ID_DATA_ASKED_HOST)ev.id_detail == ID_DATA_ASKED_HOST.STOP)
+                                    grpSrcSource.RemoveDelegatePlugInOnEvtDataAskedHost(FormMain.FileINI.GetIDIndex(grpSrcDest.m_strID), grpSrcDest.Clone_OnEvtDataAskedHost);
+                                else
+                                    ;
+
+                            break;
+                        }
                         else
                             ;
-
-                    break;
                 }
                 else
-                    ;
+                    throw new InvalidCastException(); // ошибка - объект имеет неизвестный тип
             }
         }
 
@@ -165,10 +219,9 @@ namespace uLoader
                 //grpSrc = new GroupSources(itemSrc, listGroupSignals);
                 //Вариант №2
                 grpSrc = Activator.CreateInstance(typeObjGroupSources, new object[] { itemSrc, listGroupSignals }) as GroupSources;
-                if (indxSrc == INDEX_SRC.DEST)
-                    (grpSrc as GroupSourcesDest).EvtDataAskedHostQueue += new DelegateObjectFunc(onEvtDataAskedHostQueue_GroupSourcesDest);
-                else
-                    ;
+                //if (indxSrc == INDEX_SRC.DEST)
+                    grpSrc.EvtDataAskedHostQueue += new DelegateObjectFunc(onEvtDataAskedHostQueue_GroupSources);
+                //else ;
 
                 m_listGroupSources[(int)indxSrc].Add(grpSrc);
                                 
@@ -227,6 +280,13 @@ namespace uLoader
                 case StatesMachine.GET_GROUP_SIGNALS_DATETIME_PARS:
                     //Не требуют запроса
                     break;
+                case StatesMachine.OMANAGEMENT_ADD:
+                case StatesMachine.OMANAGEMENT_REMOVE:
+                case StatesMachine.OMANAGEMENT_UPDATE:
+                case StatesMachine.OMANAGEMENT_CONFIRM:
+                case StatesMachine.OMANAGEMENT_CONTROL:
+                    //Не требуют запроса
+                    break;
                 default:
                     break;
             }
@@ -270,13 +330,24 @@ namespace uLoader
                 case StatesMachine.DATA_SRC_GROUP_SIGNALS:
                 case StatesMachine.DATA_DEST_GROUP_SIGNALS:
                 case StatesMachine.GET_GROUP_SIGNALS_DATETIME_PARS:
-                    itemQueue.m_dataHostRecieved.OnEvtDataRecievedHost(new object[] { state, obj });
+                    if ((!(itemQueue == null))
+                        && (!(itemQueue.m_dataHostRecieved == null)))
+                        itemQueue.m_dataHostRecieved.OnEvtDataRecievedHost(new object[] { state, obj });
+                    else
+                        ;
                     break;
                 case StatesMachine.SET_IDCUR_SOURCE_OF_GROUP:
                 case StatesMachine.SET_TEXT_ADDING:
                 case StatesMachine.SET_GROUP_SIGNALS_PARS:
                 case StatesMachine.CLEARVALUES_DEST_GROUP_SIGNALS:
                     //Ответа не требуется
+                    break;
+                case StatesMachine.OMANAGEMENT_ADD:
+                case StatesMachine.OMANAGEMENT_REMOVE:
+                case StatesMachine.OMANAGEMENT_CONFIRM:
+                case StatesMachine.OMANAGEMENT_UPDATE:
+                case StatesMachine.OMANAGEMENT_CONTROL:
+                    //Не требуют обработки результата
                     break;
                 default:
                     break;
@@ -299,6 +370,7 @@ namespace uLoader
             {
                 switch (state)
                 {
+                    #region LIST_GROUP_SOURCES
                     case (int)StatesMachine.LIST_GROUP_SOURCES:
                         error = false;
                         outobj = new object [] {
@@ -308,6 +380,21 @@ namespace uLoader
 
                         iRes = 0;
                         break;
+                    #endregion
+
+                    #region LIST_GROUP_SIGNALS
+                    case StatesMachine.LIST_GROUP_SIGNALS:
+                        error = false;
+                        outobj = new object[] {
+                            m_fileINI.ListSrcGroupSignals
+                            , m_fileINI.ListDestGroupSignals
+                        };
+
+                        iRes = 0;
+                        break;
+                    #endregion
+
+                    #region LIST_SRC_GROUP_SOURCE_ITEMS, LIST_SRC_GROUP_SOURCE_PARS, LIST_SRC_GROUP_SOURCE_PROP, LIST_SRC_GROUP_SIGNAL_ITEMS, LIST_SRC_GROUP_SIGNAL_PARS, LIST_SRC_GROUP_SIGNAL_PROP
                     case StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS:
                         error = false;
                         itemQueue = Peek;
@@ -331,16 +418,7 @@ namespace uLoader
                         outobj = m_fileINI.GetListItemPropOfGroupSource(itemQueue.Pars.ToArray());
 
                         iRes = 0;
-                        break;
-                    case StatesMachine.LIST_GROUP_SIGNALS:
-                        error = false;
-                        outobj = new object[] {
-                            m_fileINI.ListSrcGroupSignals
-                            , m_fileINI.ListDestGroupSignals
-                        };
-
-                        iRes = 0;
-                        break;
+                        break;                    
                     case StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS:
                         error = false;
                         itemQueue = Peek;
@@ -362,6 +440,9 @@ namespace uLoader
 
                         iRes = 0;
                         break;
+                    #endregion
+
+                    #region LIST_DEST_GROUP_SOURCE_ITEMS, LIST_DEST_GROUP_SOURCE_PARS, LIST_DEST_GROUP_SOURCE_PROP, LIST_DEST_GROUP_SIGNAL_ITEMS, LIST_DEST_GROUP_SIGNAL_PARS, LIST_DEST_GROUP_SIGNAL_PROP                        
                     case StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS:
                         error = false;
                         itemQueue = Peek;
@@ -404,6 +485,9 @@ namespace uLoader
 
                         iRes = 0;
                         break;
+                    #endregion
+
+                    #region OBJ_SRC_GROUP_SOURCES, OBJ_DEST_GROUP_SOURCES
                     case StatesMachine.OBJ_SRC_GROUP_SOURCES:
                         error = false;
                         itemQueue = Peek;
@@ -420,12 +504,18 @@ namespace uLoader
 
                         iRes = 0;
                         break;
+                    #endregion
+
+                    #region TIMER_WORK_UPDATE
                     case StatesMachine.TIMER_WORK_UPDATE:
                         error = false;
                         outobj = m_fileINI.SecondWorkUpdate;
 
                         iRes = 0;
                         break;
+                    #endregion
+
+                    #region OBJ_SRC_GROUP_SIGNALS_PARS, OBJ_SRC_GROUP_SIGNALS, OBJ_DEST_GROUP_SIGNALS_PARS, OBJ_DEST_GROUP_SIGNALS
                     case StatesMachine.OBJ_SRC_GROUP_SIGNALS_PARS:
                         error = false;
                         itemQueue = Peek;
@@ -458,6 +548,9 @@ namespace uLoader
 
                         iRes = 0;
                         break;
+                    #endregion
+
+                    #region STATE_GROUP_SOURCES, STATE_GROUP_SIGNALS
                     case StatesMachine.STATE_GROUP_SOURCES:
                         error = false;
                         outobj = new object[(int)INDEX_SRC.COUNT_INDEX_SRC];
@@ -484,6 +577,9 @@ namespace uLoader
 
                         iRes = 0;
                         break;
+                    #endregion
+
+                    #region STATE_CHANGED_GROUP_SOURCES, STATE_CHANGED_GROUP_SIGNALS
                     case StatesMachine.STATE_CHANGED_GROUP_SOURCES:
                         error = false;
                         itemQueue = Peek;
@@ -496,12 +592,18 @@ namespace uLoader
 
                         iRes = m_listGroupSources[(int)((INDEX_SRC)itemQueue.Pars[0])][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].StateChange((string)itemQueue.Pars[2]);
                         break;
+                    #endregion
+
+                    #region COMMAND_RELAOD_GROUP_SOURCES
                     case StatesMachine.COMMAND_RELAOD_GROUP_SOURCES:
                         error = false;
                         itemQueue = Peek;
 
                         iRes = m_listGroupSources[(int)((INDEX_SRC)itemQueue.Pars[0])][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].Reload();
                         break;
+                    #endregion
+
+                    #region CLEARVALUES_DEST_GROUP_SIGNALS
                     case StatesMachine.CLEARVALUES_DEST_GROUP_SIGNALS:
                         //[1] - идентификаторы
                         //[2] = дата/время / продолжительность
@@ -516,6 +618,9 @@ namespace uLoader
 
                         iRes = 0;
                         break;
+                    #endregion
+
+                    #region DATA_SRC_GROUP_SIGNALS, DATA_DEST_GROUP_SIGNALS
                     case StatesMachine.DATA_SRC_GROUP_SIGNALS:
                         error = false;
                         itemQueue = Peek;
@@ -535,6 +640,9 @@ namespace uLoader
 
                         iRes = 0;
                         break;
+                    #endregion
+
+                    #region SET_IDCUR_SOURCE_OF_GROUP, SET_TEXT_ADDING, SET_GROUP_SIGNALS_PARS
                     case StatesMachine.SET_IDCUR_SOURCE_OF_GROUP:
                         error = false;
                         itemQueue = Peek;
@@ -565,6 +673,9 @@ namespace uLoader
 
                         iRes = 0;
                         break;
+                    #endregion
+
+                    #region GET_GROUP_SIGNALS_DATETIME_PARS
                     case StatesMachine.GET_GROUP_SIGNALS_DATETIME_PARS:
                         error = false;
                         itemQueue = Peek;
@@ -574,6 +685,48 @@ namespace uLoader
 
                         iRes = 0;
                         break;
+                    #endregion
+
+                    #region OMANAGEMENT_ADD, OMANAGEMENT_REMOVE, OMANAGEMENT_CONFIRM, OMANAGEMENT_UPDATE, OMANAGEMENT_CONTROL
+                    case StatesMachine.OMANAGEMENT_ADD:
+                        iRes = 0;
+                        error = false;
+
+                        itemQueue = Peek;
+
+                        add((ID)itemQueue.Pars[0], (TimeSpan)itemQueue.Pars[1]);
+                        break;
+                    case StatesMachine.OMANAGEMENT_REMOVE:
+                        iRes = 0;
+                        error = false;
+
+                        itemQueue = Peek;
+
+                        remove((ID)itemQueue.Pars[0]);
+                        break;
+                    case StatesMachine.OMANAGEMENT_CONFIRM:
+                        iRes = 0;
+                        error = false;
+
+                        itemQueue = Peek;
+
+                        confirm((ID)itemQueue.Pars[0]);
+                        break;
+                    case StatesMachine.OMANAGEMENT_UPDATE:
+                        iRes = 0;
+                        error = false;
+
+                        itemQueue = Peek;
+
+                        update((ID)itemQueue.Pars[0]);
+                        break;
+                    case StatesMachine.OMANAGEMENT_CONTROL:
+                        iRes = 0;
+                        error = false;
+
+                        targetFunc();
+                        break;
+                    #endregion
                     default:
                         break;
                 }

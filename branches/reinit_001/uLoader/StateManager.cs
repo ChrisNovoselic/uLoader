@@ -13,14 +13,29 @@ using uLoaderCommon;
 
 namespace uLoader
 {
-    public class StateManager : HClassLibrary.HHandlerQueue
+    //public class StateManager : HClassLibrary.HHandlerQueue
+    partial class HHandlerQueue
     {
         /// <summary>
         /// Класс для идентификации объекта контроля
         /// </summary>
         public class ID : Object
         {
-            public int m_id;
+            public int m_idTypeRegistred;
+
+            public int m_idGroupSgnls;
+
+            public ID(object[] ids)
+            {
+                m_idTypeRegistred = (int)ids[0];
+                m_idGroupSgnls = (int)ids[1];
+            }
+
+            public override bool Equals(object obj)
+            {
+                return (this.m_idTypeRegistred == (obj as ID).m_idTypeRegistred)
+                    && (this.m_idGroupSgnls.Equals((obj as ID).m_idGroupSgnls) == true);
+            }
         }
         /// <summary>
         /// Перечисление - состояния объектов контроля
@@ -29,7 +44,7 @@ namespace uLoader
         /// <summary>
         /// Класс для хранения информации о контролируемом объекте 
         /// </summary>
-        private struct OManagement
+        private class OManagement
         {
             public ID m_id;
             /// <summary>
@@ -51,7 +66,7 @@ namespace uLoader
             /// <summary>
             /// Указать, что объект контролируется
             /// </summary>
-            public void SetControled() { m_state = STATE.REMOVED; }
+            public void SetControled() { m_state = STATE.CONTROLED; }
 
             public void SetCrashed() { m_state = STATE.CRASH; }
             /// <summary>
@@ -70,11 +85,11 @@ namespace uLoader
         /// Интервал времени, в течении которого состояние объекта считать актуальным
         /// </summary>
         public static int MSEC_CONFIRM_WAIT = 6666;
-        /// <summary>
-        /// Перечисление - состояния для организации контроля списка объектов
-        /// </summary>
-        private enum StatesMachine : int { Unknown = -1, Add, Remove, Confirm, Update, Control
-            , Count }
+        ///// <summary>
+        ///// Перечисление - состояния для организации контроля списка объектов
+        ///// </summary>
+        //private enum StatesMachine : int { Unknown = -1, Add, Remove, Confirm, Update, Control
+        //    , Count }
         /// <summary>
         /// Таймер, обеспечивающий регулярный вызов целевой функции
         /// </summary>
@@ -156,14 +171,10 @@ namespace uLoader
                     , i = 0;
 
                 for (i = 0; i < this.Count; i++)
-                {
-                    i++;
-
-                    if (this[i].m_id == id)
+                    if (this[i].m_id.Equals(id) == true)
                         break;
                     else
                         ;
-                }
 
                 if (i < this.Count)
                     iRes = i;
@@ -178,14 +189,6 @@ namespace uLoader
         /// </summary>    
         ListOManagement m_listObjects;
         /// <summary>
-        /// Конструктор - основной (без параметров)
-        /// </summary>
-        public StateManager()
-        {
-            m_timerFunc = new Timer(timerFunc);
-            m_listObjects = new ListOManagement();
-        }
-        /// <summary>
         /// Функция обратного вызова для таймера
         /// </summary>
         /// <param name="obj">Аргумент при вызове функции</param>
@@ -194,7 +197,7 @@ namespace uLoader
             // добавить для обработки одно событие
             Push(null, new object[] { // несколько событий
                 new object [] { //очередное событие
-                    new object [] { StatesMachine.Control, } // параметры события (с 0-ым индексом - идентификатор события)
+                    new object [] { StatesMachine.OMANAGEMENT_CONTROL, } // параметры события (с 0-ым индексом - идентификатор события)
                 },
             });
         }
@@ -236,17 +239,20 @@ namespace uLoader
             {
                 m_listObjects.AddItem(id, tsLimit);
             }
+
+            //Console.WriteLine(@"StateManager::add (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - добавить объект; кол-во=" + m_listObjects.Count + @" ...");
+            Logging.Logg().Debug(@"StateManager::add (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - добавить объект; кол-во=" + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
         /// <summary>
         /// Добавить новый объект для контроля
         /// </summary>
         /// <param name="id">Сложный идентификатор объекта</param>
         /// <param name="tsLimit">Интервал времени в течении которого состояние объекта остается актуальным без обновления</param>
-        public void Add(int id, TimeSpan tsLimit)
+        protected void add(object [] pars, TimeSpan tsLimit)
         {
             Push (null, new object [] {
                 new object [] {
-                    new object [] { StatesMachine.Add, id, tsLimit }
+                    new object [] { StatesMachine.OMANAGEMENT_ADD, new ID (pars), tsLimit }
                 },
             });
         }
@@ -260,16 +266,19 @@ namespace uLoader
             {
                 m_listObjects.RemoveItem (id);
             }
+
+            //Console.WriteLine(@"StateManager::remove (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - удалить объект; кол-во=" + m_listObjects.Count + @" ...");
+            Logging.Logg().Debug(@"StateManager::remove (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - удалить объект; кол-во=" + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
         /// <summary>
         /// Удалить объект из списка контролируемых объектов
         /// </summary>
         /// <param name="id">Сложный идентификатор объекта</param>
-        public void Remove(int id)
+        protected void remove(params object[] pars)
         {
             Push(null, new object[] {
                 new object [] {
-                    new object [] { StatesMachine.Remove, id }
+                    new object [] { StatesMachine.OMANAGEMENT_REMOVE, new ID (pars) }
                 },
             });
         }
@@ -283,16 +292,19 @@ namespace uLoader
             {
                 m_listObjects.Confirm(id);
             }
+
+            //Console.WriteLine(@"StateManager::confirm (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - подтвердить состояние объекта ...");
+            Logging.Logg().Debug(@"StateManager::confirm (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - подтвердить сотояние объекта ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
         /// <summary>
         /// Подтвердить изменение состояния контролируемого объекта
         /// </summary>
         /// <param name="id">Сложный идентификатор объекта</param>
-        public void Confirm(int id)
+        protected void confirm(params object []pars)
         {
             Push(null, new object[] {
                 new object [] {
-                    new object [] { StatesMachine.Confirm, id }
+                    new object [] { StatesMachine.OMANAGEMENT_CONFIRM, new ID (pars) }
                 },
             });
         }
@@ -311,133 +323,72 @@ namespace uLoader
         /// Обновить состояние контролируемого объекта
         /// </summary>
         /// <param name="id">Сложный идентификатор объекта</param>
-        public void Update(int id)
+        protected void update(params object[] pars)
         {
             Push(null, new object[] {
                 new object [] {
-                    new object [] { StatesMachine.Update, id }
+                    new object [] { StatesMachine.OMANAGEMENT_UPDATE, new ID (pars) }
                 },
             });
-        }
-        /// <summary>
-        /// Получить результат запроса
-        /// </summary>
-        /// <param name="state">Событие для которого требуется получить результат (идентификатор типа запроса)</param>
-        /// <param name="error">Признак ошибки при получении результата</param>
-        /// <param name="outobj">Объект - результат запроса</param>
-        /// <returns>Признак выполнения функции</returns>
-        protected override int StateCheckResponse(int state, out bool error, out object outobj)
-        {
-            int iRes = -1;
+        }        
 
-            error = true;
-            outobj = null;
-
-            ItemQueue itemQueue = null;
-
-            switch ((StatesMachine)state)
-            {
-                case StatesMachine.Add:
-                    iRes = 0;
-                    error = false;
-
-                    itemQueue = Peek;
-
-                    add((ID)itemQueue.Pars[0], (TimeSpan)itemQueue.Pars[1]);
-                    break;
-                case StatesMachine.Remove:
-                    remove((ID)itemQueue.Pars[0]);
-                    break;
-                case StatesMachine.Confirm:
-                    confirm((ID)itemQueue.Pars[0]);
-                    break;
-                case StatesMachine.Update:
-                    update((ID)itemQueue.Pars[0]);
-                    break;
-                case StatesMachine.Control:
-                    iRes = 0;
-                    error = false;
-
-                    targetFunc();
-                    break;
-                default:
-                    break;
-            }
-
-            return iRes;
-        }
-        /// <summary>
-        /// Запросить данные
-        /// </summary>
-        /// <param name="state">Событие для которого запрашиваются данные</param>
-        /// <returns>Признак выполнения функции</returns>
-        protected override int StateRequest(int state)
-        {
-            int iRes = 0;
-            
-            switch ((StatesMachine)state)
-            {
-                case StatesMachine.Add:
-                case StatesMachine.Remove:
-                case StatesMachine.Update:
-                case StatesMachine.Control:
-                    //Не требуют запроса
-                    break;
-                default:
-                    break;
-            }
-
-            return iRes;
-        }
-        /// <summary>
-        /// Обработать результат запроса
-        /// </summary>
-        /// <param name="state">Событие для которого обрабатываются полученные данные</param>
-        /// <param name="obj"></param>
-        /// <returns></returns>
-        protected override int StateResponse(int state, object obj)
-        {
-            int iRes = 0;
-
-            switch ((StatesMachine)state)
-            {
-                case StatesMachine.Add:
-                case StatesMachine.Remove:
-                case StatesMachine.Update:
-                case StatesMachine.Control:
-                    //Не требуют обработки результата
-                    break;
-                default:
-                    break;
-            }
-
-            return iRes;
-        }
-
-        protected override HHandler.INDEX_WAITHANDLE_REASON StateErrors(int state, int req, int res)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override void StateWarnings(int state, int req, int res)
-        {
-            throw new NotImplementedException();
-        }
-
-        public class EventCrashedArgs : EventArgs
+        private class EventCrashedArgs : EventArgs
         {
             public ID m_id;
+
+            public STATE m_state;
         }
 
-        public delegate void EventHandlerCrashed (EventCrashedArgs arg);
+        private delegate void EventHandlerCrashed (EventCrashedArgs arg);
 
-        public event EventHandlerCrashed EventCrashed;
+        private event /*EventHandlerCrashed*/ DelegateObjectFunc eventCrashed;
+        /// <summary>
+        /// Обработчик события - состояние группы сигналов не актуально
+        /// </summary>
+        /// <param name="ev">Аргумент события</param>
+        private void onCrashed(/*HHandlerQueue.EventCrashedArgs*/ object obj)
+        {
+            HHandlerQueue.EventCrashedArgs ev = obj as HHandlerQueue.EventCrashedArgs;
+            
+            object[] arToSend = null; // массив для аргументов состояния
+
+            for (INDEX_SRC type = INDEX_SRC.SOURCE; type < INDEX_SRC.COUNT_INDEX_SRC; type++)
+                foreach (GroupSources grpSrc in m_listGroupSources[(int)type])
+                    if (grpSrc.m_iIdTypePlugInObjectLoaded == ev.m_id.m_idTypeRegistred)
+                    {
+                        if (ev.m_state == STATE.CONTROLED)
+                        {// группа сигналов в работе
+                            arToSend = new object[] {
+                                (int)StatesMachine.STATE_CHANGED_GROUP_SIGNALS
+                                , type
+                                , grpSrc.m_strID
+                                , grpSrc.GetIdGroupSignals (ev.m_id.m_idGroupSgnls)
+                            };
+                            // поставить в очередь 2 состояния                            
+                            Push(null, new object[] {
+                                new object[] {
+                                    arToSend // для 'STOP'
+                                    , arToSend // для 'START'
+                                    ,
+                                },
+                            });
+                        }
+                        else
+                            ; // группа сигналов не получила подтверждения от библиотеки при изменении своего состояния
+
+                        type = INDEX_SRC.COUNT_INDEX_SRC; // для прерывания внешнего цикла
+
+                        break; // прервать внутренний цикл
+                    }
+                    else
+                        ;
+        }
         /// <summary>
         /// Целевая функция контроля
         /// </summary>
         private void targetFunc()
         {
-            Logging.Logg().Debug(@"StateManager::targetFunc () - итерация контроля; кол-во объектов=" + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+            //Logging.Logg().Debug(@"StateManager::targetFunc () - итерация контроля; кол-во объектов=" + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
             DateTime now = DateTime.Now;
             int msecLimit = -1;
@@ -462,9 +413,14 @@ namespace uLoader
                 if ((msecLimit > 0)
                     && (now - o.m_dtUpdate).TotalMilliseconds > msecLimit)
                 {
-                    o.SetCrashed();
+                    //new Thread (new ParameterizedThreadStart (onCrashed)).Start(new EventCrashedArgs() { m_id = o.m_id, m_state = o.m_state });
+                    onCrashed(new EventCrashedArgs() { m_id = o.m_id, m_state = o.m_state });
+                    Console.WriteLine(@"HHandlerQueue::targetFunc () - eventCrashed (id=" + o.m_id.m_idTypeRegistred
+                        + @", key=" + o.m_id.m_idGroupSgnls
+                        + @", state=" + o.m_state.ToString () + @") - ...");
 
-                    EventCrashed(new EventCrashedArgs() { m_id = o.m_id });
+                    o.SetCrashed();
+                    //o.Update();
                 }
                 else
                     ;

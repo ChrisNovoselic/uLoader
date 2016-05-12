@@ -634,8 +634,8 @@ namespace uLoader
             /// <summary>
             /// Получить "маску" строкового идетификатора
             /// </summary>
-            /// <param name="id"></param>
-            /// <returns></returns>
+            /// <param name="id">Строковый идентификатор</param>
+            /// <returns>Маска строкового идентификатора</returns>
             private static string getIDMasked(string id)
             {
                 string strRes = string.Empty;
