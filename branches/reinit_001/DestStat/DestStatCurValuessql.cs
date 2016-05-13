@@ -33,6 +33,7 @@ namespace DestStat
             public GroupSignalsTechSiteLastsql(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
+                s_strFormatDbDateTime = @"yyyyMMdd HH:mm:ss.fff";
             }
 
             //protected override object getIdToInsert(int idLink)
@@ -54,9 +55,9 @@ namespace DestStat
                 //??? проверка лишняя - производится перед вызовом
                 if (m_DupTables.IsDeterminate == true)
                 {
-                    strRes = @"DECLARE @VALUES_TABLE AS TABLE([KKS_NAME] [nvarchar](256) NOT NULL, [VALUE] [real] NOT NULL, [DATETIME] [datetime] NOT NULL, [UPDATE_DATETIME] [datetime] NOT NULL, [ID_SRV_TM] [int] NOT NULL);";
-                    strRes += @"INSERT INTO @VALUES_TABLE([KKS_NAME],[VALUE],[DATETIME],[UPDATE_DATETIME],[ID_SRV_TM])"
-                        + @" SELECT [KKS_NAME],[VALUE],[DATETIME], GETDATE() AS [UPDATE_DATETIME], " + idSrvTM + @" AS [ID_SRV_TM] FROM (VALUES ";
+                    strRes = @"DECLARE @VALUES_TABLE AS TABLE([ID_SIGNAL] [nvarchar](256) NOT NULL, [VALUE] [real] NOT NULL, [DATETIME] [datetime] NOT NULL, [UPDATE_DATETIME] [datetime] NOT NULL, [ID_SRV_TM] [int] NOT NULL);";
+                    strRes += @"INSERT INTO @VALUES_TABLE([ID_SIGNAL],[VALUE],[DATETIME],[UPDATE_DATETIME],[ID_SRV_TM])"
+                        + @" SELECT [ID_SIGNAL],[VALUE],[DATETIME], GETDATE() AS [UPDATE_DATETIME], " + idSrvTM + @" AS [ID_SRV_TM] FROM (VALUES ";
 
                     foreach (DataRow row in m_DupTables.TableDistinct.Rows)
                     {
@@ -79,11 +80,11 @@ namespace DestStat
                     //Лишняя ','
                     strRes = strRes.Substring(0, strRes.Length - 1);
 
-                    strRes += @") AS [TORIS_SOURCE]([KKS_NAME], [VALUE], [DATETIME]);";
+                    strRes += @") AS [TORIS_SOURCE]([ID_SIGNAL], [VALUE], [DATETIME]);";
 
-                    strRes += @"MERGE [WEB_TECHSITE].[dbo].[TECHSITE_OIK_CURRENT] AS [T]"
+                    strRes += @"MERGE [dbo].[" + (_parent as HHandlerDbULoaderDest).m_strNameTable + @"] AS [T]"
                         + @" USING @VALUES_TABLE AS [S]"
-                        + @" ON ([T].[KKS_NAME] = [S].[KKS_NAME])"
+                        + @" ON ([T].[ID_SIGNAL] = [S].[ID_SIGNAL])"
                             + @" WHEN MATCHED AND ([S].[DATETIME] > [T].[DATETIME])"
                             + @" THEN UPDATE SET [VALUE] = [S].[VALUE], [DATETIME] = [S].[DATETIME], [UPDATE_DATETIME] = [S].[UPDATE_DATETIME], [ID_SRV_TM] = [S].[ID_SRV_TM];";
                 }

@@ -734,7 +734,8 @@ namespace uLoaderCommon
                                             }
 
                                             if (bConsoleDebug == true)
-                                                Console.WriteLine(@"Установлен для ID=" + idSgnl + @", DATETIME=" + ((DateTime)rowAdd[@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff") + @" tmdelta=" + rowAdd[@"tmdelta"]);
+                                                //Console.WriteLine(@"Установлен для ID=" + idSgnl + @", DATETIME=" + ((DateTime)rowAdd[@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff") + @" tmdelta=" + rowAdd[@"tmdelta"])
+                                                ;
                                             else
                                                 ;
                                         }
@@ -747,7 +748,8 @@ namespace uLoaderCommon
                                         long iTMDelta = (((DateTime)arSelIns[i][@"DATETIME"]).Ticks - ((DateTime)arSelIns[i - 1][@"DATETIME"]).Ticks) / TimeSpan.TicksPerMillisecond;
                                         rowPrev[@"tmdelta"] = (int)iTMDelta;
                                         if (bConsoleDebug == true)
-                                            Console.WriteLine(@", tmdelta=" + rowPrev[@"tmdelta"]);
+                                            //Console.WriteLine(@", tmdelta=" + rowPrev[@"tmdelta"])
+                                            ;
                                         else
                                             ;
                                     }
@@ -971,11 +973,13 @@ namespace uLoaderCommon
                     }
                     else
                         ;
-
-                if (strRes.Equals (string.Empty) == true)
-                    Logging.Logg().Warning(@"GroupSignalsStatTMKKSNAMEDest::getIdTarget (idLink=" + idLink + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                else
-                    ;
+                //// для уменьшения кол-ва записей в журнале приложения
+                //if (strRes.Equals (string.Empty) == true)
+                //    Logging.Logg().Warning(@"GroupSignalsStatTMKKSNAMEDest::getIdTarget (id=" + (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).PlugInId
+                //        + @", key=" + m_Id
+                //        + @", idLink=" + idLink + this.m_Id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                //else
+                //    ;
 
                 return strRes;
             }

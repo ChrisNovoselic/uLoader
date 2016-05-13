@@ -893,7 +893,7 @@ namespace uLoaderCommon
                     m_connSett = new ConnectionSettings((pars[0] as ConnectionSettings));
 
                     strMsg = @"HHandlerDbUloader::Initialize [ID=" + PlugInId + @":" + _iPlugin.KeySingleton + @"] - объект: ConnectionSettings.ID=" + m_connSett.id + @" ...";
-                    Console.WriteLine(strMsg);
+                    //Console.WriteLine(strMsg);
                     Logging.Logg ().Debug (strMsg, Logging.INDEX_MESSAGE.NOT_SET);
 
                     //Очистить словарь с доп./параметрами
@@ -1305,7 +1305,7 @@ namespace uLoaderCommon
         {
             m_semaInitId.WaitOne ();
 
-            Console.WriteLine(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - ...");
+            //Console.WriteLine(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - ...");
             Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
             int iNeedStarted = -1; //Признак необходимости запуска "родительского" объекта
@@ -1338,7 +1338,7 @@ namespace uLoaderCommon
                         iNeedStarted = -1;
                 }
 
-                Console.WriteLine(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - iNeedStarted=" + iNeedStarted + @" ...");
+                //Console.WriteLine(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - iNeedStarted=" + iNeedStarted + @" ...");
                 Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - iNeedStarted=" + iNeedStarted + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 //Проврить признак необходимости запуска "родительского" объекта
@@ -1383,7 +1383,7 @@ namespace uLoaderCommon
         {
             lock (m_lockInitSource)
             {
-                Console.WriteLine(@"HHandlerDbULoader::Stop (" + PlugInId + @") - ...");
+                //Console.WriteLine(@"HHandlerDbULoader::Stop (" + PlugInId + @") - ...");
                 Logging.Logg().Debug(@"HHandlerDbULoader::Stop (" + PlugInId + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 stopThreadQueue();
@@ -1418,7 +1418,7 @@ namespace uLoaderCommon
                 {
                     if (m_dictGroupSignals[id].IsStarted == true)
                     {
-                        Console.WriteLine(@"HHandlerDbULoader::Stop (" + PlugInId + @", key=" + id + @") - ...");
+                        //Console.WriteLine(@"HHandlerDbULoader::Stop (" + PlugInId + @", key=" + id + @") - ...");
                         m_dictGroupSignals[id].Stop();
                     }
                     else
@@ -1622,7 +1622,7 @@ namespace uLoaderCommon
                     else
                         ; // недостижимый код
 
-                Console.WriteLine(@"PlugInULoader::SetMark (id=" + id_obj + @", key=" + key + @", val=" + val + @") - counter=" + m_dictDataHostCounter[pair] + @" ...");
+                //Console.WriteLine(@"PlugInULoader::SetMark (id=" + id_obj + @", key=" + key + @", val=" + val + @") - counter=" + m_dictDataHostCounter[pair] + @" ...");
             }
             else
                 ;

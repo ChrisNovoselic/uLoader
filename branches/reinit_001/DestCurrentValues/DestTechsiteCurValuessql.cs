@@ -95,7 +95,7 @@ namespace DestCurrentValues
 
                     strRes += @") AS [TORIS_SOURCE]([KKS_NAME], [VALUE], [DATETIME]);";
 
-                    strRes += @" MERGE [WEB_TECHSITE].[dbo].[TECHSITE_OIK_CURRENT] AS [T]"
+                    strRes += @" MERGE [dbo].[" + (_parent as HHandlerDbULoaderDest).m_strNameTable + @"] AS [T]"
                         + @" USING @VALUES_TABLE AS [S]"
                         + @" ON ([T].[KKS_NAME] = [S].[KKS_NAME])"
                             + @" WHEN MATCHED AND ([S].[DATETIME] > [T].[DATETIME])"

@@ -224,7 +224,7 @@ namespace uLoader
             Logging.Logg().Debug(@"StateManager::Activate (active=" + active + @") - "
                 + (due == System.Threading.Timeout.Infinite ? @"ДЕ" : string.Empty) + @"Активация объекта контроля ..."
                 , Logging.INDEX_MESSAGE.NOT_SET);
-            m_timerFunc.Change (due, period);
+            m_timerFunc.Change(due, period);
 
             return bRes;
         }
@@ -241,7 +241,7 @@ namespace uLoader
             }
 
             //Console.WriteLine(@"StateManager::add (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - добавить объект; кол-во=" + m_listObjects.Count + @" ...");
-            Logging.Logg().Debug(@"StateManager::add (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - добавить объект; кол-во=" + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+            Logging.Logg().Debug(@"StateManager::add (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - добавить объект; кол-во->" + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
         /// <summary>
         /// Добавить новый объект для контроля
@@ -268,7 +268,7 @@ namespace uLoader
             }
 
             //Console.WriteLine(@"StateManager::remove (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - удалить объект; кол-во=" + m_listObjects.Count + @" ...");
-            Logging.Logg().Debug(@"StateManager::remove (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - удалить объект; кол-во=" + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+            Logging.Logg().Debug(@"StateManager::remove (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - удалить объект; кол-во<-" + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
         /// <summary>
         /// Удалить объект из списка контролируемых объектов
@@ -294,7 +294,7 @@ namespace uLoader
             }
 
             //Console.WriteLine(@"StateManager::confirm (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - подтвердить состояние объекта ...");
-            Logging.Logg().Debug(@"StateManager::confirm (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - подтвердить сотояние объекта ...", Logging.INDEX_MESSAGE.NOT_SET);
+            Logging.Logg().Debug(@"StateManager::confirm (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - подтвердить сотояние объекта; кол-во=" + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
         /// <summary>
         /// Подтвердить изменение состояния контролируемого объекта
@@ -356,25 +356,42 @@ namespace uLoader
                 foreach (GroupSources grpSrc in m_listGroupSources[(int)type])
                     if (grpSrc.m_iIdTypePlugInObjectLoaded == ev.m_id.m_idTypeRegistred)
                     {
-                        if (ev.m_state == STATE.CONTROLED)
-                        {// группа сигналов в работе
-                            arToSend = new object[] {
-                                (int)StatesMachine.STATE_CHANGED_GROUP_SIGNALS
-                                , type
-                                , grpSrc.m_strID
-                                , grpSrc.GetIdGroupSignals (ev.m_id.m_idGroupSgnls)
-                            };
-                            // поставить в очередь 2 состояния                            
-                            Push(null, new object[] {
-                                new object[] {
-                                    arToSend // для 'STOP'
-                                    , arToSend // для 'START'
-                                    ,
-                                },
-                            });
+                        switch (ev.m_state)
+                        {
+                            case STATE.CONTROLED:// группа сигналов в работе
+                                arToSend = new object[] {
+                                    (int)StatesMachine.STATE_CHANGED_GROUP_SIGNALS
+                                    , type
+                                    , grpSrc.m_strID
+                                    , grpSrc.GetIdGroupSignals (ev.m_id.m_idGroupSgnls)
+                                };
+                                // поставить в очередь 2 состояния: последовательный останов/запуск группы сигналов
+                                Push(null, new object[] {
+                                    new object[] {
+                                        arToSend // для 'STOP'
+                                        , arToSend // для 'START'
+                                        ,
+                                    },
+                                });
+                                break;
+                            case STATE.ADDED:
+                            case STATE.REMOVED:
+                                // группа сигналов не получила подтверждения от библиотеки при изменении своего состояния
+                                // поставить в очередь 1 состояние - полная выгрузка/загрузки библиотеки
+                                Push(null, new object[] {
+                                    new object[] {
+                                        new object [] {
+                                            StatesMachine.COMMAND_RELAOD_GROUP_SOURCES
+                                            , type
+                                            , grpSrc.m_strID
+                                        }
+                                        ,
+                                    },
+                                });
+                                break;
+                            default:
+                                break;
                         }
-                        else
-                            ; // группа сигналов не получила подтверждения от библиотеки при изменении своего состояния
 
                         type = INDEX_SRC.COUNT_INDEX_SRC; // для прерывания внешнего цикла
 
@@ -415,9 +432,9 @@ namespace uLoader
                 {
                     //new Thread (new ParameterizedThreadStart (onCrashed)).Start(new EventCrashedArgs() { m_id = o.m_id, m_state = o.m_state });
                     onCrashed(new EventCrashedArgs() { m_id = o.m_id, m_state = o.m_state });
-                    Console.WriteLine(@"HHandlerQueue::targetFunc () - eventCrashed (id=" + o.m_id.m_idTypeRegistred
-                        + @", key=" + o.m_id.m_idGroupSgnls
-                        + @", state=" + o.m_state.ToString () + @") - ...");
+                    //Console.WriteLine(@"HHandlerQueue::targetFunc () - eventCrashed (id=" + o.m_id.m_idTypeRegistred
+                    //    + @", key=" + o.m_id.m_idGroupSgnls
+                    //    + @", state=" + o.m_state.ToString () + @") - ...");
 
                     o.SetCrashed();
                     //o.Update();

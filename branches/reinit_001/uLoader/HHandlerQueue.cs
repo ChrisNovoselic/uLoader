@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using HClassLibrary; //HHandler
+using uLoaderCommon;
 
 namespace uLoader
 {
@@ -121,11 +122,12 @@ namespace uLoader
             {// действия поо набору-1
                 indx = (int)pars[0]; // индекс группы сигналов
                 if (pars.Length == 1)
+                // единственный параметр
                     switch ((ID_DATA_ASKED_HOST)ev.id_detail)
                     {
-                        case ID_DATA_ASKED_HOST.START:
-                            add(new object [] { ev.id_main, indx }, TimeSpan.FromMilliseconds (16667));
-                            break;
+                        //case ID_DATA_ASKED_HOST.START:
+                        //    add(new object [] { ev.id_main, indx }, TimeSpan.FromMilliseconds (16667));
+                        //    break;
                         case ID_DATA_ASKED_HOST.STOP:
                             remove(ev.id_main, indx);
                             break;
@@ -136,17 +138,25 @@ namespace uLoader
                             break;
                     }
                 else
+                // 2 параметра
                     if (pars.Length == 2)
                     {
-                        idHeadAskedHost = (ID_HEAD_ASKED_HOST)pars[1];
+                        if (pars[1].GetType().IsEnum == true)
+                        {//ID_DATA_ASKED_HOST.START, ID_DATA_ASKED_HOST.STOP; ID_HEAD_ASKED_HOST.CONFIRM
+                            idHeadAskedHost = (ID_HEAD_ASKED_HOST)pars[1];
 
-                        if (idHeadAskedHost == ID_HEAD_ASKED_HOST.CONFIRM)
-                            confirm(ev.id_main, indx);
+                            if (idHeadAskedHost == ID_HEAD_ASKED_HOST.CONFIRM)
+                                confirm(ev.id_main, indx);
+                            else
+                                throw new MissingMemberException(); // ошибка - переменная имеет неожиданное значение                            
+                        }
                         else
-                            throw new MissingMemberException(); // ошибка - переменная имеет неожиданное значение
+                        {//ID_DATA_ASKED_HOST.START
+                            add(new object[] { ev.id_main, indx }, TimeSpan.FromMilliseconds(((TimeSpan)pars[1]).TotalMilliseconds));
+                        }
                     }
                     else
-                        ;
+                        ; // других вариантов по количеству параметров - нет
             }
             else
             {// действия поо набору-2 (для установления взаимосвязи между "связанными" (по конф./файлу) по "цепочке" сигналов - групп сигналов - групп источников)

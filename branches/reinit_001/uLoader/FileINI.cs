@@ -864,7 +864,7 @@ namespace uLoader
                             else
                                 ; //Не изменять
 
-                            Console.WriteLine(@"MainForm.FileINI::makeValueGroupSignalsPars () - iAutoStart=" + listParValues[indxPar] + @"...");
+                            //Console.WriteLine(@"MainForm.FileINI::makeValueGroupSignalsPars () - iAutoStart=" + listParValues[indxPar] + @"...");
                             break;
                         case @"TOOLS_ENABLED": //Не устанавливается с помощью GUI
                             break;
