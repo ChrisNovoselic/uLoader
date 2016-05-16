@@ -121,25 +121,23 @@ namespace DestTEP32
                         + @",[WR_DATETIME]"
                             + @") VALUES";
 
-                    var m_enumResIDPUT = (from r in m_DupTables.TableDistinct.AsEnumerable()
-                                          orderby r.Field<int>("ID")
-                                          select new
-                                          {
-                                              ID = r.Field<int>("ID"),
-                                          }).Distinct();
+                    //var m_enumResIDPUT = (from r in m_DupTables.TableDistinct.AsEnumerable()
+                    //                      orderby r.Field<int>("ID")
+                    //                      select new
+                    //                      {
+                    //                          ID = r.Field<int>("ID"),
+                    //                      }).Distinct();
 
-
-                    //for (int i = 0; i < m_DupTables.TableDistinct.Rows.Count / m_enumResIDPUT.Count(); i++)
-                    //{
                     foreach (DataRow row in m_DupTables.TableDistinct.Rows)
                     {
                         iIdToInsert = (int)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim()));
 
-                        if (grpSignlToDate % m_enumResIDPUT.Count() == 0)
+                        if (dtToInsert == null)
+                            //grpSignlToDate % m_enumResIDPUT.Count() == 0)
                         {
                             dtToInsert = ((DateTime)row[@"DATETIME"]).AddDays(0);//??
-                            grpSignlToDate++;
-                            nextDate++;
+                            //grpSignlToDate++;
+                            //nextDate++;
                         }
                         else
                             if (dtToInsert.Equals(((DateTime)row[@"DATETIME"]).AddDays(0)) == false)
@@ -147,8 +145,8 @@ namespace DestTEP32
                                 Logging.Logg().Error(@"GroupSignalsTEP32sql::getInsertValuesQuery () - в наборе различные дата/время...", Logging.INDEX_MESSAGE.NOT_SET);
                                 break;
                             }
-                            else
-                                grpSignlToDate++;
+                            //else
+                            //    grpSignlToDate++;
 
                         if (iIdToInsert > 0)
                         {
@@ -179,7 +177,6 @@ namespace DestTEP32
                     }
                     else
                         strRes = string.Empty;
-                    //}
                 }
                 else
                     ; // нет строк для вставки

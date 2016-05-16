@@ -131,11 +131,10 @@ namespace SrcKTS
                         dblSumValue = 0F;
                         //cntRec = 0;
                         //??? обработка всех последующих строк, а если строк > 2
-                        for (int j = cntHour; j < (cntHour + 47); j++)
-                        {
-                            //foreach (DataRow r in rowsSgnl)
-                            dblSumValue += Convert.ToSingle(rowsSgnl[j][@"VALUE"].ToString());
-                        }
+                        //for (int j = cntHour; j < (cntHour + 47); j++)
+                            foreach (DataRow r in rowsSgnl)
+                            dblSumValue += Convert.ToSingle(r[@"VALUE"].ToString());
+                                //Convert.ToSingle(rowsSgnl[j][@"VALUE"].ToString());
                        
                         // при необходимости найти среднее
                         if (sgnl.m_bAVG == true)
@@ -154,7 +153,7 @@ namespace SrcKTS
                         ;
                     // не полные данные
                 }
-                cntHour = cntHour + 48;
+                //cntHour = cntHour + 48;//за месяц
                 base.parseValues(tblRes);
             }
         }
