@@ -376,6 +376,7 @@ namespace uLoader
                                 break;
                             case STATE.ADDED:
                             case STATE.REMOVED:
+#if _SEPARATE_APPDOMAIN
                                 // группа сигналов не получила подтверждения от библиотеки при изменении своего состояния
                                 // поставить в очередь 1 состояние - полная выгрузка/загрузки библиотеки
                                 Push(null, new object[] {
@@ -388,6 +389,7 @@ namespace uLoader
                                         ,
                                     },
                                 });
+#endif
                                 break;
                             default:
                                 break;

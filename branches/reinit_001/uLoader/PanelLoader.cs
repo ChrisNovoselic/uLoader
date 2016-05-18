@@ -897,7 +897,12 @@ namespace uLoader
                             {
                                 case KEY_CONTROLS.DGV_GROUP_SOURCES:
                                     GetWorkingItem(KEY_CONTROLS.BUTTON_DLLNAME_GROUPSOURCES).Enabled =
-                                        ! ((states[i] == GroupSources.STATE.UNKNOWN) || (states[i] == GroupSources.STATE.UNAVAILABLE));
+#if _SEPARATE_APPDOMAIN
+                                        ! ((states[i] == GroupSources.STATE.UNKNOWN) || (states[i] == GroupSources.STATE.UNAVAILABLE))
+#else
+                                        false
+#endif
+                                        ;
                                     GetWorkingItem(KEY_CONTROLS.CBX_SOURCE_OF_GROUP).Enabled =
                                     GetWorkingItem(KEY_CONTROLS.TBX_GROUPSOURCES_ADDING).Enabled =
                                         bEnabled;

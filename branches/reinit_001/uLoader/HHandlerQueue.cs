@@ -148,7 +148,7 @@ namespace uLoader
                             if (idHeadAskedHost == ID_HEAD_ASKED_HOST.CONFIRM)
                                 confirm(ev.id_main, indx);
                             else
-                                throw new MissingMemberException(); // ошибка - переменная имеет неожиданное значение                            
+                                throw new MissingMemberException(); // ошибка - переменная имеет непредвиденное значение                            
                         }
                         else
                         {//ID_DATA_ASKED_HOST.START

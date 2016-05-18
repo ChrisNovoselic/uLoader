@@ -1474,6 +1474,8 @@ namespace uLoader
             else
                 ; //??? ошибка
 
+            //m_evtGroupSgnlsState.WaitOne();
+            
             unloadPlugIn();
 
             return iRes;
