@@ -43,7 +43,7 @@ namespace SrcKTS
                     DateTimeBegin = (DateTimeBegin - DateTimeBegin.TimeOfDay).AddDays(PeriodMain.Days);
                 else
                     DateTimeBegin = (DateTimeStart - DateTimeStart.TimeOfDay);
-              
+
                 //Формировать запрос
                 i = 0;
                 foreach (GroupSignalsKTSTUDsql.SIGNALIdsql s in m_arSignals)
@@ -103,6 +103,9 @@ namespace SrcKTS
             DataRow[] rowsSgnl = null;
             DateTime dtValue;
             double dblSumValue = -1F;
+            int countDay = 0;
+
+            countDay = table.Rows.Count / (48 * m_dictGroupSignals[IdGroupSignalsCurrent].Signals.Count());
 
             tblRes.Columns.AddRange(new DataColumn[] {
                 new DataColumn (@"ID", typeof (int))
@@ -110,40 +113,49 @@ namespace SrcKTS
                 , new DataColumn (@"VALUE", typeof (float))
             });
 
-            foreach (GroupSignalsKTSTUDsql.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
+            int cntHour = 0;
+
+            for (int i = 0; i < countDay; i++)
             {
-                rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal, @"DATETIME");
-                                    //вывод данных только при полных сутках
-                if ((rowsSgnl.Length > 0)
-                    && (rowsSgnl.Length % 48 == 0))
+                foreach (GroupSignalsKTSTUDsql.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
                 {
-                    dtValue = ((DateTime)rowsSgnl[0][@"DATETIME"]).AddMinutes(-30);
-                    //Для обработки метки времени по UTC
-                    //dtValue = dtValue.AddHours((int)rowsSgnl[0][@"UTC_OFFSET"]).AddMinutes(-30);
-                    //Вычислить суммарное значение для сигнала
-                    dblSumValue = 0F;
-                    //cntRec = 0;
-                    //??? обработка всех последующих строк, а если строк > 2
-                    foreach (DataRow r in rowsSgnl)
-                        dblSumValue += Convert.ToSingle(r[@"VALUE"].ToString());
-                    // при необходимости найти среднее
-                    if (sgnl.m_bAVG == true)
-                        dblSumValue /= rowsSgnl.Length;
-                    else
-                        ;
-                    // вставить строку
-                    tblRes.Rows.Add(new object[] {
+                    rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal, @"DATETIME");
+                    //вывод данных только при полных сутках
+                    if ((rowsSgnl.Length > 0)
+                        && (rowsSgnl.Length % 48 == 0))
+                    {
+                        dtValue = ((DateTime)rowsSgnl[cntHour][@"DATETIME"]).AddMinutes(-30);
+                        //Для обработки метки времени по UTC
+                        //dtValue = dtValue.AddHours((int)rowsSgnl[0][@"UTC_OFFSET"]).AddMinutes(-30);
+                        //Вычислить суммарное значение для сигнала
+                        dblSumValue = 0F;
+                        //cntRec = 0;
+                        //??? обработка всех последующих строк, а если строк > 2
+                        //for (int j = cntHour; j < (cntHour + 47); j++)
+                            foreach (DataRow r in rowsSgnl)
+                            dblSumValue += Convert.ToSingle(r[@"VALUE"].ToString());
+                                //Convert.ToSingle(rowsSgnl[j][@"VALUE"].ToString());
+                       
+                        // при необходимости найти среднее
+                        if (sgnl.m_bAVG == true)
+                            dblSumValue /= rowsSgnl.Length;
+                        else
+                            ;
+                        // вставить строку
+                        tblRes.Rows.Add(new object[] {
                             sgnl.m_idMain
                             , dtValue
                             , dblSumValue
                         });
+                    }
+                    else
+                        continue
+                        ;
+                    // не полные данные
                 }
-                else
-                    continue
-                    ;
-                // не полные данные
+                //cntHour = cntHour + 48;//за месяц
+                base.parseValues(tblRes);
             }
-            base.parseValues(tblRes);
         }
     }
 }
