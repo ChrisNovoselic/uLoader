@@ -27,7 +27,9 @@ namespace uLoader
         /// Объект для визуализации процесса выполнения длительных операций
         /// </summary>
         private FormWait m_formWait;
-        
+        /// <summary>
+        /// Объект обработки событий
+        /// </summary>
         private HHandlerQueue m_handler;
         /// <summary>
         /// Перечисление - индексы вкладок в главном окне приложения
@@ -51,9 +53,12 @@ namespace uLoader
 
             m_formWait = FormWait.This;
 
+            //// настраиваемые параметры манагера состояний объектов
+            //HHandlerQueue.MSEC_TIMERFUNC_UPDATE = 1006;
+            //HHandlerQueue.MSEC_CONFIRM_WAIT = 6666;            
             m_handler = new HHandlerQueue(strNameFileINI);
-            m_handler.Start();
-            m_handler.Activate(true);
+            m_handler.Start(); m_handler.Activate(true);
+            //m_handler.EventCrashed += new HHandlerQueue.EventHandlerCrashed(onCrashed);
 
             m_panelWork = new PanelWork(); m_panelWork.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelWork); m_panelWork.Start();
             m_panelConfig = new PanelConfig(); m_panelConfig.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelConfig); m_panelConfig.Start ();
@@ -208,7 +213,7 @@ namespace uLoader
             m_notifyIcon.Visible = false;
             m_panelWork.Stop();
             m_panelConfig.Stop();
-            
+
             m_handler.Activate(false); m_handler.Stop();
         }
 

@@ -439,10 +439,10 @@ namespace uLoaderCommon
                 /// Очистить "текущую" таблицу от записей,
                 ///  содержащихся в "предыдущей" таблице
                 /// </summary>
-                /// <param name="tblPrev">"Предыдущая таблица"</param>
+                /// <param name="tblPrev">"Предыдущая" таблица</param>
                 /// <param name="tblRes">"Текущая" таблица</param>
-                /// <returns>Таблица без "дублирующих" записей</returns>
-                public void Clear(DataTable tblPrev, DataTable tblCur)
+                /// <param name="keyFields">Наименования полей в составе ключа по которому происходит сравнение записей</param>
+                public void Clear(DataTable tblPrev, DataTable tblCur, string keyFields = @"ID, DATETIME")
                 {
                     int iDup = 0;
                     DataRow[] arSel = null;
@@ -518,65 +518,143 @@ namespace uLoaderCommon
                 public static DataTable Clear(DataTable tblDup)
                 {
                     DataTable tblRes = tblDup.Clone();
-                    //Список индексов строк для удаления
-                    List<int> listIndxToDelete = new List<int>();
-                    //Массив дублированных строк
-                    DataRow[] arDup = null;
-                    //Признак наличия кавычек для значений в поле [ID]
-                    bool bQuote = false;
-                    //Строка запроса для поиска дублирующих записей
-                    string strSel = string.Empty;
+                    ////Вариант №1
+                    ////Список индексов строк для удаления
+                    //List<int> listIndxToDelete = new List<int>();
+                    ////Массив дублированных строк
+                    //DataRow[] arDup = null;
+                    ////Признак наличия кавычек для значений в поле [ID]
+                    //bool bQuote = false;
+                    ////Строка запроса для поиска дублирующих записей
+                    //string strSel = string.Empty;
+                    //Вариант№2
+                    List<DataRow> listRes = null;
 
-                    if (!(tblDup.Columns.IndexOf(@"ID") < 0))
+                    if ((!(tblDup.Columns.IndexOf(@"ID") < 0))
+                        && (!(tblDup.Columns.IndexOf(@"DATETIME") < 0)))
                     {
                         try
                         {
-                            bQuote = !tblDup.Columns[@"ID"].DataType.IsPrimitive;
+                            ////Вариант №1
+                            //bQuote = !tblDup.Columns[@"ID"].DataType.IsPrimitive;
 
-                            foreach (DataRow r in tblDup.Rows)
-                            {
-                                //Проверить наличие индекса строки в уже найденных (как дублированные)
-                                if (listIndxToDelete.IndexOf(tblDup.Rows.IndexOf(r)) < 0)
-                                {
-                                    //Сформировать строку запроса
-                                    strSel = @"ID=" + (bQuote == true ? @"'" : string.Empty) + r[@"ID"] + (bQuote == true ? @"'" : string.Empty) + @" AND " + @"DATETIME='" + ((DateTime)r[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fffffff") + @"'";
-                                    arDup = (tblDup as DataTable).Select(strSel);
-                                    //Проверить наличие дублирующих записей
-                                    if (arDup.Length > 1)
-                                        //Добавить индексы всех найденных дублирующих строк в список для удаления
-                                        // , КРОМЕ 1-ой!
-                                        for (int i = 1; i < arDup.Length; i++)
-                                            listIndxToDelete.Add(tblDup.Rows.IndexOf(arDup[i]));
-                                    else
-                                        if (arDup.Length == 0)
-                                            throw new Exception("HHandlerDbULoader.GroupSignals.clearDupValues () - в таблице не найдена \"собственная\" строка...");
-                                        else
-                                            ;
+                            //foreach (DataRow r in tblDup.Rows)
+                            //{
+                            //    //Проверить наличие индекса строки в уже найденных (как дублированные)
+                            //    if (listIndxToDelete.IndexOf(tblDup.Rows.IndexOf(r)) < 0)
+                            //    {
+                            //        //Сформировать строку запроса
+                            //        strSel = @"ID=" + (bQuote == true ? @"'" : string.Empty) + r[@"ID"] + (bQuote == true ? @"'" : string.Empty) + @" AND " + @"DATETIME='" + ((DateTime)r[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fffffff") + @"'";
+                            //        arDup = (tblDup as DataTable).Select(strSel);
+                            //        //Проверить наличие дублирующих записей
+                            //        if (arDup.Length > 1)
+                            //            //Добавить индексы всех найденных дублирующих строк в список для удаления
+                            //            // , КРОМЕ 1-ой!
+                            //            for (int i = 1; i < arDup.Length; i++)
+                            //                listIndxToDelete.Add(tblDup.Rows.IndexOf(arDup[i]));
+                            //        else
+                            //            if (arDup.Length == 0)
+                            //                throw new Exception("HHandlerDbULoader.GroupSignals.clearDupValues () - в таблице не найдена \"собственная\" строка...");
+                            //            else
+                            //                ;
 
-                                    //Добавить строку в таблицу-результат
-                                    tblRes.ImportRow(arDup[0]);
-                                }
+                            //        //Добавить строку в таблицу-результат
+                            //        tblRes.ImportRow(arDup[0]);
+                            //    }
+                            //    else
+                            //        ;
+                            //}
+
+                            //Вариант№2
+                            if (tblDup.Columns[@"ID"].DataType.Equals (typeof (int)) == true)
+                                listRes = tblDup.AsEnumerable().GroupBy(g => new { ID = g.Field<int>(@"ID"), DATETIME = g.Field<DateTime>(@"DATETIME") }).Select(s => s.First()).ToList();
+                            else
+                                if (tblDup.Columns[@"ID"].DataType.Equals (typeof (string)) == true)
+                                    listRes = tblDup.AsEnumerable().GroupBy(g => new { ID = g.Field<string>(@"ID"), DATETIME = g.Field<DateTime>(@"DATETIME") }).Select(s => s.First()).ToList();
                                 else
-                                    ;
-                            }
+                                    listRes = tblDup.AsEnumerable().GroupBy(g => new { ID = g.Field<object>(@"ID"), DATETIME = g.Field<DateTime>(@"DATETIME") }).Select(s => s.First()).ToList();
+                            //Добавить строки в таблицу-результат
+                            if (!(listRes == null))
+                                listRes.ForEach(r => tblRes.ImportRow(r));
+                            else
+                                ;
                         }
                         catch (Exception e)
                         {
-                            Logging.Logg().Exception(e, @"HHandlerDbULoader.GroupSignals::clearDupValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                            Logging.Logg().Exception(e, @"HHandlerDbULoader.GroupSignals.DataTableDuplicate::Clear () - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                             tblRes.Clear();
                         }
                     }
                     else
                         // отсутствует необходимое поле "ID"
-                        Logging.Logg().Warning(@"HHandlerDbULoader.GroupSignals::clearDupValues () - отсутствует необходимое поле [ID]...", Logging.INDEX_MESSAGE.NOT_SET);
+                        Logging.Logg().Warning(@"HHandlerDbULoader.GroupSignals.DataTableDuplicate::Clear  () - отсутствует необходимое поле [ID], [DATETIME] ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                     //Принять внесенные изменения в таблицу-результат
                     tblRes.AcceptChanges();
 
                     return tblRes;
                 }
+                /// <summary>
+                /// Очистить "текущую" таблицу от записей,
+                ///  с более старыми метками времени
+                /// </summary>
+                /// <param name="tblPrev">"Предыдущая" таблица</param>
+                /// <param name="tblRes">"Текущая" таблица</param>
+                /// <param name="keyFields">Наименования полей в составе ключа по которому происходит сравнение записей</param>
+                public void Top(DataTable tblPrev, DataTable tblCur, string keyFields = @"ID, DATETIME")
+                {
+                    int iDup = 0;
+                    DataRow[] arPrev = null;
 
+                    if (!(tblCur == null))
+                        if ((((!(tblCur.Columns.IndexOf(@"ID") < 0)) && (!(tblCur.Columns.IndexOf(@"DATETIME") < 0)))
+                            && (tblCur.Rows.Count > 0)))
+                        {
+                            var listCurDistinct = tblCur.AsEnumerable().GroupBy(g => g[@"ID"]).Select(s => s.Last()).ToList();
+
+                            _arTables[(int)INDEX_RESULT.DISTINCT] = tblCur.Clone();
+                            _arTables[(int)INDEX_RESULT.EQUALE] = tblCur.Clone();
+
+                            if ((!(tblPrev == null))
+                                && (((!(tblPrev.Columns.IndexOf(@"ID") < 0)) && (!(tblPrev.Columns.IndexOf(@"DATETIME") < 0)))
+                                && (tblPrev.Rows.Count > 0)))
+                            {
+                                var listPrevDistinct = tblPrev.AsEnumerable().GroupBy(g => g[@"ID"]).Select(s => s.Last()).ToList();
+
+                                foreach (DataRow rCur in listCurDistinct)
+                                {
+                                    arPrev = listPrevDistinct.Where(r => Int32.Parse((string)r[@"ID"]) == Convert.ToInt32((string)rCur[@"ID"])).ToArray(); //tblPrev.Select(@"ID=" + rCur[@"ID"]);
+                                    if (arPrev.Length > 0)
+                                        if (arPrev.Length == 1)
+                                            if (!(DateTime.Compare((DateTime)rCur[@"DATETIME"], (DateTime)arPrev[0][@"DATETIME"]) < 0))
+                                            {// удалить более старую (ИЛИ с одинаковой меткой времени) запись
+                                                _arTables[(int)INDEX_RESULT.DISTINCT].ImportRow(rCur);
+                                                _arTables[(int)INDEX_RESULT.DISTINCT].AcceptChanges();
+                                            }
+                                            else
+                                            {
+                                                _arTables[(int)INDEX_RESULT.EQUALE].ImportRow(rCur);
+                                                _arTables[(int)INDEX_RESULT.EQUALE].AcceptChanges();
+                                            }
+                                        else
+                                            ; //??? ошибка записей >, чем 1
+                                    else
+                                        ; // в предыдущей таблице нет сигнала с идентификатором
+                                }
+                            }
+                            else
+                                // предыдущая таблица не существует, не имеет одного из полей [ID], [DATETIME] составного ключа
+                                foreach (DataRow rCur in listCurDistinct)
+                                    _arTables[(int)INDEX_RESULT.DISTINCT].ImportRow(rCur);
+
+                            _arTables[(int)INDEX_RESULT.DISTINCT].AcceptChanges();
+                        }
+                        else
+                            ; // текущая таблица не имеет одного из полей составного ключа ИЛИ не имеет ни одной строки
+                    else
+                        ; // текущая таблица не существует
+                }
             }
         }
         /// <summary>
@@ -815,7 +893,7 @@ namespace uLoaderCommon
                     m_connSett = new ConnectionSettings((pars[0] as ConnectionSettings));
 
                     strMsg = @"HHandlerDbUloader::Initialize [ID=" + PlugInId + @":" + _iPlugin.KeySingleton + @"] - объект: ConnectionSettings.ID=" + m_connSett.id + @" ...";
-                    Console.WriteLine(strMsg);
+                    //Console.WriteLine(strMsg);
                     Logging.Logg ().Debug (strMsg, Logging.INDEX_MESSAGE.NOT_SET);
 
                     //Очистить словарь с доп./параметрами
@@ -1227,6 +1305,7 @@ namespace uLoaderCommon
         {
             m_semaInitId.WaitOne ();
 
+            //Console.WriteLine(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - ...");
             Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
             int iNeedStarted = -1; //Признак необходимости запуска "родительского" объекта
@@ -1259,6 +1338,7 @@ namespace uLoaderCommon
                         iNeedStarted = -1;
                 }
 
+                //Console.WriteLine(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - iNeedStarted=" + iNeedStarted + @" ...");
                 Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - iNeedStarted=" + iNeedStarted + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 //Проврить признак необходимости запуска "родительского" объекта
@@ -1303,6 +1383,7 @@ namespace uLoaderCommon
         {
             lock (m_lockInitSource)
             {
+                //Console.WriteLine(@"HHandlerDbULoader::Stop (" + PlugInId + @") - ...");
                 Logging.Logg().Debug(@"HHandlerDbULoader::Stop (" + PlugInId + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 stopThreadQueue();
@@ -1337,20 +1418,24 @@ namespace uLoaderCommon
                 {
                     if (m_dictGroupSignals[id].IsStarted == true)
                     {
+                        //Console.WriteLine(@"HHandlerDbULoader::Stop (" + PlugInId + @", key=" + id + @") - ...");
                         m_dictGroupSignals[id].Stop();
                     }
                     else
-                        ;
+                        iNeedStopped = -1;
                 }
                 else
                     iNeedStopped = -1;
-            }
-            //Проверить возможность останова объекта
-            if (! (iNeedStopped < 0))
-            {
-                if (! (_iPlugin == null))
-                    //Подтвердить клиенту останов группы сигналов
-                    (_iPlugin as PlugInBase).DataAskedHost(new object[] { _iPlugin.KeySingleton, ID_DATA_ASKED_HOST.STOP, id, direct }); //-1 неизвестный идентификатор типа (класса)объекта
+
+                //Проверить возможность останова объекта
+                if (! (iNeedStopped < 0))
+                {
+                    if (! (_iPlugin == null))
+                        //Подтвердить клиенту останов группы сигналов
+                        (_iPlugin as PlugInBase).DataAskedHost(new object[] { _iPlugin.KeySingleton, ID_DATA_ASKED_HOST.STOP, id, direct }); //-1 неизвестный идентификатор типа (класса)объекта
+                    else
+                        ;
+                }
                 else
                     ;
 
@@ -1371,9 +1456,7 @@ namespace uLoaderCommon
                 }
                 else
                     ;
-            }
-            else
-                ;
+            }            
 
             m_semaInitId.Release(1);
         }
@@ -1530,13 +1613,17 @@ namespace uLoaderCommon
 
             //m_markDataHost.Set(indx, val);
             if (m_dictDataHostCounter.ContainsKey(pair) == true)
+            {
                 if (val == true)
-                    m_dictDataHostCounter[pair] ++;
+                    m_dictDataHostCounter[pair]++;
                 else
                     if (val == false)
-                        m_dictDataHostCounter[pair] --;
+                        m_dictDataHostCounter[pair]--;
                     else
                         ; // недостижимый код
+
+                //Console.WriteLine(@"PlugInULoader::SetMark (id=" + id_obj + @", key=" + key + @", val=" + val + @") - counter=" + m_dictDataHostCounter[pair] + @" ...");
+            }
             else
                 ;
         }
@@ -1561,11 +1648,16 @@ namespace uLoaderCommon
             switch ((ID_DATA_ASKED_HOST)ev.id_detail)
             {
                 case ID_DATA_ASKED_HOST.INIT_SOURCE: //Приняты параметры для инициализации целевого объекта
-                    if (target.Initialize(ev.par as object []) == 0)
-                        //Подтвердить клиенту  получение параметров
-                        DataAskedHost(new object[] { id_obj, ID_DATA_ASKED_HOST.INIT_SOURCE, -1, ID_HEAD_ASKED_HOST.CONFIRM });
+                    //??? проверка на повторный прием параметров
+                    // требуется исключить повторную отпавку сообщения
+                    if (isMarked(ev.id_main, (int)ID_DATA_ASKED_HOST.INIT_SOURCE) == false)
+                        if (target.Initialize(ev.par as object[]) == 0)
+                            //Подтвердить клиенту  получение параметров
+                            DataAskedHost(new object[] { id_obj, ID_DATA_ASKED_HOST.INIT_SOURCE, -1, ID_HEAD_ASKED_HOST.CONFIRM });
+                        else
+                            ; // ошибка при инициализации
                     else
-                        ;
+                        ; // параметры уже инициализированы
                     break;
                 case ID_DATA_ASKED_HOST.INIT_SIGNALS: //Приняты параметры инициализации группы сигналов
                     ID_HEAD_ASKED_HOST idHead = ID_HEAD_ASKED_HOST.CONFIRM;

@@ -232,10 +232,12 @@ namespace uLoader
         /// Наименование библиотеки для работы с группами сигналов
         /// </summary>
         public string m_strDLLName;
+
+        protected int _iIdTypePlugInObjectLoaded;
         /// <summary>
         /// Идентификатор типа объекта плюгИна, используемого для обращения к данным
         /// </summary>
-        protected int m_iIdTypePlugInObjectLoaded; //{ get { return _plugIn.KeySingleton; } };
+        public int m_iIdTypePlugInObjectLoaded { get { return _iIdTypePlugInObjectLoaded; } } // _plugIn.KeySingleton
         /// <summary>
         /// Список с параметрами "присоединенных" к группе источников групп сигналов
         /// </summary>
@@ -409,77 +411,135 @@ namespace uLoader
         public List<GROUP_SRC> m_listGroupSrc;
         public List<GROUP_SIGNALS_SRC> m_listGroupSgnlsSrc;
     }
-    ///// <summary>
-    ///// Состояние объекта 'GroupSignals'
-    ///// </summary>
-    //public class StateGroupSignals
-    //{
-    //    /// <summary>
-    //    /// Признак запуска/останова
-    //    /// </summary>
-    //    public bool m_bStarted;
-    //    /// <summary>
-    //    /// Признак ативности
-    //    /// </summary>
-    //    public bool m_bActived;
-    //    /// <summary>
-    //    /// Конструктор - основной (без параметров)
-    //    /// </summary>
-    //    public StateGroupSignals()
-    //    {
-    //        m_bStarted =
-    //        m_bActived =
-    //            false;
-    //    }
-    //}
-    ///// <summary>
-    ///// Состояние объекта 'GroupSources'
-    ///// </summary>
-    //public class StateGroupSources
-    //{
-    //    /// <summary>
-    //    /// Перечисление - состояния библиотеки
-    //    /// </summary>
-    //    public enum STATE_DLL { NOT_FOUND = -2, NOT_LOAD, LOADED, UNKNOWN }
-    //    /// <summary>
-    //    /// Состояние библиотеки
-    //    /// </summary>
-    //    public STATE_DLL m_StateDLL;
-    //    /// <summary>
-    //    /// Текущий идентификатор источника
-    //    /// </summary>
-    //    public string m_strCurrentIDSource;
-    //    /// <summary>
-    //    /// Список объектов состояния групп сигналов
-    //    /// </summary>
-    //    public List<StateGroupSignals> m_listStateGroupSignals;
-    //    /// <summary>
-    //    /// Конструктор - основной (без параметров)
-    //    /// </summary>
-    //    public StateGroupSources()
-    //    {
-    //        m_StateDLL = STATE_DLL.UNKNOWN;
-    //        m_strCurrentIDSource = string.Empty;
-
-    //        m_listStateGroupSignals = new List<StateGroupSignals>();
-    //    }
-    //}
     /// <summary>
     /// Группа источников с "прикрепленными" группами сигналов
     /// </summary>
-    public class GroupSources : GROUP_SRC, IPlugInHost
+    public class GroupSources : GROUP_SRC//, IPlugInHost
     {
+        /// <summary>
+        /// Класс - словарь для хранения объектов-плюгИнов
+        ///  - вырожден в коллекцию(словарь) с единственным объектом
+        /// </summary>
+        private class PlugIns : HPlugIns
+        {
+            /// <summary>
+            /// Идентификатор единственного загруженного плюгИна
+            /// </summary>
+            private int _id;
+            /// <summary>
+            /// Объект-плюгИн - загруженая библиотека с единственным созданным объектом класса
+            ///  , из зарегистрированных в ней 
+            /// </summary>
+            public PlugInULoader Loader { get { return this[_id] as PlugInULoader; } }
+            /// <summary>
+            /// Загрузить библиотеку с именем 'm_strDLLName'
+            /// </summary>
+            /// <param name="iRes">Признак выполнения загрузки библиотеки</param>
+            /// <returns>Объект с загруженной библиотекой</returns>
+            public void LoadPlugIn(string strDLLName, out STATE_DLL stateRes)
+            //private IPlugIn loadPlugIn(string name, out int iRes)
+            {
+                stateRes = STATE_DLL.UNKNOWN;
+
+                PlugInULoader plugIn = null;
+                int iLoadRes = -1;
+
+                string name = Path.GetFileNameWithoutExtension(strDLLName.Split(new char[] { ':' }, StringSplitOptions.None)[0]);
+
+                plugIn = load(name, out iLoadRes) as PlugInULoader;
+
+                switch (iLoadRes)
+                {
+                    case 0:
+                        stateRes = STATE_DLL.LOADED;
+                        break;
+                    case -1:
+                        stateRes = STATE_DLL.NOT_LOAD;
+                        break;
+                    case -2:
+                        stateRes = STATE_DLL.TYPE_MISMATCH;
+                        break;
+                    default:
+                        //stateRes = STATE_DLL.UNKNOWN;
+                        break;
+                }
+
+                _id = plugIn._Id;
+                Add(_id, plugIn);
+            }
+        }
+        /// <summary>
+        /// Загрузить плюгИн
+        /// </summary>
+        private void loadPlugIn()
+        {
+            string strTypeName = string.Empty;
+
+            if (m_plugIns == null)
+                m_plugIns = new PlugIns();
+            else
+                ;
+
+            m_plugIns.LoadPlugIn(this.m_strDLLName, out _iStateDLL);
+
+            strTypeName = this.m_strDLLName.Split(new char[] { ':' }, StringSplitOptions.None)[1];
+            if ((_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
+                && (m_plugIns.Loader.CreateObject(strTypeName) == 0))
+            {
+                _iIdTypePlugInObjectLoaded = m_plugIns.Loader.KeySingleton; //plugInRes.GetKeyType(strTypeName);                
+                //Взаимная "привязка" для обмена сообщениями
+                // библиотека - объект класса
+                (m_plugIns.Loader as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(plugIn_OnEvtDataAskedHost);
+                // объект класса - библиотека
+                EvtDataAskedHostPlugIn += m_plugIns.Loader.OnEvtDataRecievedHost;
+                ////??? - повторная установка значения
+                //_iStateDLL = HClassLibrary.HPlugIns.STATE_DLL.LOADED;
+            }
+            else
+                _iStateDLL = HClassLibrary.HPlugIns.STATE_DLL.NOT_LOAD;
+
+            if (_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
+                foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
+                    if (itemGroupSignals.Validated == 0)
+                        itemGroupSignals.State = STATE.STOPPED;                        
+                    else
+                        itemGroupSignals.State = STATE.UNAVAILABLE;
+            else
+                //throw new Exception(@"GroupSources::GroupSources () - ...")
+                ;
+        }
+        /// <summary>
+        /// Выгрузить из ОЗУ библиотеку (точнее - объект класса библиотеки)
+        /// </summary>
+        private void unloadPlugIn()
+        {
+            if (!(m_plugIns == null))
+            {
+                _iIdTypePlugInObjectLoaded = -1;
+                //Взаимная "РАЗпривязка" для обмена сообщениями - в обратном порядке
+                // объект класса - библиотека
+                EvtDataAskedHostPlugIn -= m_plugIns.Loader.OnEvtDataRecievedHost;                
+                // библиотека - объект класса
+                (m_plugIns.Loader as PlugInBase).EvtDataAskedHost -= new DelegateObjectFunc(plugIn_OnEvtDataAskedHost);                
+
+                m_plugIns.UnloadPlugIn();
+            }
+            else
+                ;
+
+            _iStateDLL = HPlugIns.STATE_DLL.UNKNOWN;
+        }
         /// <summary>
         /// Перечисление состояний группы источников
         /// </summary>
-        public enum STATE { UNKNOWN = -2, REVERSE, UNAVAILABLE, STOPPED, STARTED }
+        public enum STATE { UNKNOWN = -2, REVERSE, UNAVAILABLE, STOPPED, STARTED }        
         /// <summary>
-        /// Перечисление состояний библиотеки
+        /// Объекты синхронизации (при автоматическом старте группы)
+        ///  требуется ожидание перед инициализацией 1-ой из групп сигналов
         /// </summary>
-        public enum STATE_DLL { UNKNOWN = -3, NOT_LOAD, TYPE_MISMATCH, LOADED, }
-
-        private ManualResetEvent m_evtInitSource;
-        private Semaphore m_semaStateChange;
+        private ManualResetEvent m_evtInitSourceSend
+            , m_evtInitSourceConfirm
+            , m_evtGroupSgnlsState;
         /// <summary>
         /// Состояние группы источников
         /// </summary>
@@ -503,7 +563,7 @@ namespace uLoader
 
                 if (stateRes == STATE.UNKNOWN)
                     //все группы сигналов имеют "известное" состояние
-                    if (_iStateDLL == STATE_DLL.LOADED)
+                    if (_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
                     {
                         stateRes = STATE.STOPPED;
 
@@ -525,11 +585,11 @@ namespace uLoader
             }
         }
 
-        private STATE_DLL _iStateDLL;
+        private HClassLibrary.HPlugIns.STATE_DLL _iStateDLL;
         /// <summary>
         /// Состояние группы источников
         /// </summary>
-        public STATE_DLL StateDLL
+        public HClassLibrary.HPlugIns.STATE_DLL StateDLL
         {
             get { return _iStateDLL; }
         }
@@ -542,6 +602,18 @@ namespace uLoader
             return iRes;
         }
         # endregion
+        /// <summary>
+        /// Событие для обмена данными с очередью обработки событий
+        /// </summary>
+        public event DelegateObjectFunc EvtDataAskedHostQueue;
+        /// <summary>
+        /// Передать в очередь обработки событий сообщение о необходимости установления/разрыва связи между группами источников
+        /// </summary>
+        /// <param name="ev">Аргумент при передаче сообщения</param>
+        public virtual void PerformDataAskedHostQueue(EventArgsDataHost ev)
+        {
+            EvtDataAskedHostQueue(ev);
+        }
 
         protected virtual GroupSignals createGroupSignals(GROUP_SIGNALS_SRC grpSgnls)
         {
@@ -552,7 +624,6 @@ namespace uLoader
         {
             return Activator.CreateInstance(typeObjGroupSignals, new object [] { par });
         }
-
         /// <summary>
         /// Группа сигналов (для получения данных)
         /// </summary>
@@ -614,6 +685,9 @@ namespace uLoader
                 this.m_strID = srcItem.m_strID;
                 this.m_strShrName = srcItem.m_strShrName;
 
+                // инициализировать данные
+                this.m_tableData = new DataTable();
+
                 _state = STATE.UNAVAILABLE;
             }
 
@@ -670,11 +744,6 @@ namespace uLoader
             }
         }
         /// <summary>
-        /// Вспомогательный домен приложения для загрузки/выгрузки библиотеки
-        ///  в режиме реального времени
-        /// </summary>
-        AppDomain m_appDomain;
-        /// <summary>
         /// Список групп сигналов, принадлежащих группе источников
         /// </summary>
         protected List <GroupSignals> m_listGroupSignals;
@@ -698,7 +767,7 @@ namespace uLoader
         /// <summary>
         /// Объект с загруженной библиотекой
         /// </summary>
-        private IPlugIn m_plugIn;
+        private PlugIns m_plugIns;
         /// <summary>
         /// Событие для обмена данными с библиотекой
         /// </summary>
@@ -722,8 +791,9 @@ namespace uLoader
             foreach (string skey in srcItem.m_listSKeys)
                 this.m_listSKeys.Add (skey);
 
-            m_evtInitSource = new ManualResetEvent (false);
-            m_semaStateChange = new Semaphore (0, 1);
+            m_evtInitSourceSend = new ManualResetEvent (false);
+            m_evtInitSourceConfirm = new ManualResetEvent(false);
+            m_evtGroupSgnlsState = new /*Semaphore*/ ManualResetEvent(/*0, 1*/false);
 
             //Список с объектми параметров соединения с источниками данных
             foreach (KeyValuePair <string, ConnectionSettings> pair in srcItem.m_dictConnSett)
@@ -749,87 +819,8 @@ namespace uLoader
             else
                 ;
 
-            m_plugIn = loadPlugIn(out _iStateDLL);
-            if (_iStateDLL == STATE_DLL.LOADED)
-                foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
-                    if (itemGroupSignals.Validated == 0)
-                        itemGroupSignals.State = STATE.STOPPED;                        
-                    else
-                        itemGroupSignals.State = STATE.UNAVAILABLE;
-            else
-                //throw new Exception(@"GroupSources::GroupSources () - ...")
-                ;
-        }        
-        /// <summary>
-        /// Загрузить библиотеку с именем 'm_strDLLName'
-        /// </summary>
-        /// <param name="iRes">Признак выполнения загрузки библиотеки</param>
-        /// <returns>Объект с загруженной библиотекой</returns>
-        private PlugInULoader loadPlugIn(out STATE_DLL iRes)
-        //private IPlugIn loadPlugIn(string name, out int iRes)
-        {
-            PlugInULoader plugInRes = null;
-            iRes = STATE_DLL.UNKNOWN;
-
-            string name =
-                Path.GetFileNameWithoutExtension (this.m_strDLLName.Split(new char [] { ':' }, StringSplitOptions.None)[0])
-                //"biysktmora"
-                , strTypeName = string.Empty;
-            Type objType = null;
-
-            try
-            {
-                Assembly ass = null;
-                //Вариант №1
-                ass = Assembly.LoadFrom(Environment.CurrentDirectory + @"\" + name + @".dll");
-                //ass = Assembly.LoadFrom(Environment.CurrentDirectory + @"\" + name);
-                //Вариант №2
-                //m_appDomain = AppDomain.CreateDomain(@"appDomain_" + m_strID);
-                //ass = m_appDomain.Load(Environment.CurrentDirectory + @"\" + name + @".dll");
-                if (!(ass == null))
-                {
-                    objType = ass.GetType(name + ".PlugIn");
-                }
-                else
-                    ;
-            }
-            catch (Exception e)
-            {
-                iRes = STATE_DLL.NOT_LOAD;
-                Logging.Logg().Exception(e, @"GroupSources::loadPlugin () ... LoadFrom () ... plugIn.Name = " + name, Logging.INDEX_MESSAGE.NOT_SET);
-            }
-
-            if (!(objType == null))
-                try
-                {
-                    plugInRes = Activator.CreateInstance(objType) as PlugInULoader;
-                    strTypeName = this.m_strDLLName.Split(new char[] { ':' }, StringSplitOptions.None)[1];
-                    if ((plugInRes as PlugInULoader).CreateObject(strTypeName) == 0)
-                    {
-                        m_iIdTypePlugInObjectLoaded = plugInRes.KeySingleton; //plugInRes.GetKeyType(strTypeName);
-                        plugInRes.Host = (IPlugInHost)this;
-                        //Взаимная "привязка" для обмена сообщениями
-                        // библиотека - объект класса
-                        (plugInRes as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(plugIn_OnEvtDataAskedHost);
-                        // объект класса - библиотека
-                        EvtDataAskedHostPlugIn += (plugInRes as PlugInBase).OnEvtDataRecievedHost;
-
-                        iRes = STATE_DLL.LOADED;
-                    }
-                    else
-                        iRes = STATE_DLL.NOT_LOAD;
-                }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, @"GroupSources::loadPlugin () ... CreateInstance ... plugIn.Name = " + name, Logging.INDEX_MESSAGE.NOT_SET);
-                }
-            else
-            {
-                iRes = STATE_DLL.TYPE_MISMATCH;
-                Logging.Logg().Error(@"GroupSources::loadPlugin () ... Assembly.GetType()=null ... plugIn.Name = " + name, Logging.INDEX_MESSAGE.NOT_SET);
-            }
-
-            return plugInRes;
+            _iStateDLL = HPlugIns.STATE_DLL.UNKNOWN;
+            loadPlugIn();            
         }
 
         public void AutoStart()
@@ -862,6 +853,9 @@ namespace uLoader
         {
             int iRes = 0;
 
+            m_evtInitSourceSend.Set();
+
+            //Console.WriteLine(@"GroupSources::sendInitSource (id=" + m_iIdTypePlugInObjectLoaded + @") - ...");
             PerformDataAskedHostPlugIn(new EventArgsDataHost(m_iIdTypePlugInObjectLoaded, (int)ID_DATA_ASKED_HOST.INIT_SOURCE, Pack()));
 
             return iRes;
@@ -914,7 +908,10 @@ namespace uLoader
             int iRes = 0;
             ID_DATA_ASKED_HOST idToSend = ID_DATA_ASKED_HOST.UNKNOWN;
 
-            //m_semaStateChange.WaitOne ();
+            GROUP_SIGNALS_PARS grpSgnlsPars = getGroupSignalsPars(iIDGroupSignals);
+            object[] arDataAskedHost = null;
+            MODE_WORK mode = MODE_WORK.UNKNOWN;
+            TimeSpan tsPeriodMain = TimeSpan.FromMilliseconds (-1);
 
             switch (state)
             {
@@ -929,17 +926,15 @@ namespace uLoader
                     break;
             }
 
-            //GroupSignals grpSgnls = getGroupSignals (iIDGroupSignals);
-            GROUP_SIGNALS_PARS grpSgnlsPars = getGroupSignalsPars (iIDGroupSignals);
-            object []arDataAskedHost = null;
-
             if (idToSend == ID_DATA_ASKED_HOST.START)
+            {
                 //Проверить признак группы сигналов: источник или назначение
                 //if (! (grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL] == null))
                 if (grpSgnlsPars is GROUP_SIGNALS_SRC_PARS)
                 {
-                    MODE_WORK mode = (grpSgnlsPars as GROUP_SIGNALS_SRC_PARS).m_mode;
-                    
+                    mode = (grpSgnlsPars as GROUP_SIGNALS_SRC_PARS).m_mode;
+                    tsPeriodMain = grpSgnlsPars.m_arWorkIntervals[(int)mode].m_tsPeriodMain.Value;
+
                     arDataAskedHost = new object[]
                         {
                             iIDGroupSignals
@@ -947,13 +942,21 @@ namespace uLoader
                             {
                                 mode
                                 , grpSgnlsPars.m_arWorkIntervals[(int)mode].m_dtStart
-                                , TimeSpan.FromSeconds(grpSgnlsPars.m_arWorkIntervals [(int)mode].m_tsPeriodMain.Value.TotalSeconds)
+                                , TimeSpan.FromSeconds(tsPeriodMain.TotalSeconds)
                                 , TimeSpan.FromSeconds(grpSgnlsPars.m_arWorkIntervals [(int)mode].m_tsPeriodLocal.Value.TotalSeconds)
                                 , (int)grpSgnlsPars.m_arWorkIntervals [(int)mode].m_tsIntervalLocal.Value.TotalMilliseconds
                             }
                         };
                 }
                 else
+                {
+                    //??? а если группа сигналов-источник запрашивает данные с бОльшим периодом
+                    // в таком случае, группа сигналов-назначение будет останавливаться/запускаться
+                    // последствия могут быть - потеря сообщения
+                    // вероятно, устанавливать/снимать контроль над группами сигналов-назначения следут
+                    // в момент установки взаимосвязи между граппами сигналов-источниками группами сигналов-назначения
+                    tsPeriodMain = TimeSpan.FromMilliseconds(66667);
+
                     if (grpSgnlsPars is GROUP_SIGNALS_DEST_PARS)
                         arDataAskedHost = new object[]
                             {
@@ -969,14 +972,22 @@ namespace uLoader
                             };
                     else
                         ;
+                }
+                // установить контроль за группой сигналов
+                PerformDataAskedHostQueue(new EventArgsDataHost(m_iIdTypePlugInObjectLoaded, (int)idToSend, new object[] { iIDGroupSignals, tsPeriodMain }));
+            }
             else
                 if (idToSend == ID_DATA_ASKED_HOST.STOP)
+                {
                     arDataAskedHost = new object[]
                         {
                             iIDGroupSignals
                         };
+                    // снять контроль за группой сигналов
+                    PerformDataAskedHostQueue(new EventArgsDataHost(m_iIdTypePlugInObjectLoaded, (int)idToSend, new object[] { iIDGroupSignals }));
+                }
                 else
-                    ; //
+                    ; //??? других команд не предусмотрено
 
             PerformDataAskedHostPlugIn(new EventArgsDataHost(m_iIdTypePlugInObjectLoaded, (int)idToSend, arDataAskedHost));
 
@@ -1020,14 +1031,14 @@ namespace uLoader
                         if ((ID_HEAD_ASKED_HOST)pars[2] == ID_HEAD_ASKED_HOST.GET)
                         {
                             //Отправить данные для инициализации
-                            sendInitSource ();
+                            sendInitSource ();                            
                             msgDebugLog = @"отправлен: ";
                         }
                         else
                             if ((ID_HEAD_ASKED_HOST)pars[2] == ID_HEAD_ASKED_HOST.CONFIRM)
                             {
                                 //Подтвердить установку параметров группы источников
-                                m_evtInitSource.Set ();
+                                m_evtInitSourceConfirm.Set();
                                 msgDebugLog = @"подтверждено: ";
                             }
                             else
@@ -1070,47 +1081,46 @@ namespace uLoader
                             }
                             else
                                 msgDebugLog += 0.ToString();
+
+                            this.PerformDataAskedHostQueue(new EventArgsDataHost(m_iIdTypePlugInObjectLoaded, (int)id_cmd, new object[] { iIDGroupSignals }));
                         }
                         else
                             ;
                         break;
                     case ID_DATA_ASKED_HOST.START:
                     case ID_DATA_ASKED_HOST.STOP:
-                        bool bSemaStateChange = true;
                         //m_semaStateChange.Release (1);
                         //Вариант №2 (пост-установка)
                         grpSgnls.StateChange();
-                        //Установить/разорвать взаимосвязь между группами источников (при необходимости)
-                        if (this is GroupSourcesDest)
-                            (this as GroupSourcesDest).PerformDataAskedHostQueue(new EventArgsDataHost(m_iIdTypePlugInObjectLoaded, (int)id_cmd, new object[] { iIDGroupSignals }));
-                        else
-                            ;
-
-                        if (grpSgnls.State == STATE.STOPPED)
-                        {
-                            m_evtInitSource.Reset();
-
-                            bSemaStateChange = (ID_HEAD_ASKED_HOST)pars[2] == ID_HEAD_ASKED_HOST.CONFIRM;
-                        }
-                        else
-                            ;
+                        //Подтвердить изменение состояния группы сигналов
+                        // + установить/разорвать взаимосвязь между группами источников (при необходимости) - для 'GroupSourcesDest'
+                        this.PerformDataAskedHostQueue(new EventArgsDataHost(m_iIdTypePlugInObjectLoaded, (int)id_cmd, new object[] { iIDGroupSignals, ID_HEAD_ASKED_HOST.CONFIRM }));
 
                         msgDebugLog = @"подтверждено: " + id_cmd.ToString();
 
-                        if (bSemaStateChange == true)
+                        try
+                        {
+                            if ((grpSgnls.State == STATE.STOPPED)
+                                && (State == STATE.STOPPED)
+                                )
+                            {
+                                m_evtInitSourceSend.Reset();
+                                m_evtInitSourceConfirm.Reset();
+                            }
+                            else
+                                ;
                             //Разрешить очередную команду на изменение состояния
-                            try
-                            {
-                                m_semaStateChange.Release(1);
-                            }
-                            catch (Exception e)
-                            {
-                                Logging.Logg().Exception(e
-                                    , @"GroupSources::plugIn_OnEvtDataAskedHost () - idGroupSgnls=" + iIDGroupSignals + @" ..."
-                                    , Logging.INDEX_MESSAGE.NOT_SET);
-                            }
-                        else
-                            ;
+                            //Console.WriteLine(@"GroupSources::plugIn_OnEvtDataAskedHost () - m_evtGroupSgnlsState.Set() - " + msgDebugLog + @"...");
+                            m_evtGroupSgnlsState./*Release(1)*/Set();
+                        }
+                        catch (Exception e)
+                        {
+                            Logging.Logg().Exception(e
+                                , @"GroupSources::plugIn_OnEvtDataAskedHost () - idGroupSgnls=" + iIDGroupSignals + @" ..."
+                                , Logging.INDEX_MESSAGE.NOT_SET);
+                        }
+                        // очистить данные
+                        grpSgnls.m_tableData = new DataTable();
                         break;
                     case ID_DATA_ASKED_HOST.ERROR:
                         //???
@@ -1203,7 +1213,7 @@ namespace uLoader
             int idGrpSgnls = -1;
             GROUP_SIGNALS_PARS grpSgnlsPars;
 
-            if (_iStateDLL == STATE_DLL.LOADED)
+            if (_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
                 foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
                     if (itemGroupSignals.State == STATE.STOPPED)
                     {
@@ -1223,42 +1233,53 @@ namespace uLoader
                 ;
         }
         /// <summary>
+        /// Выгрузить/загрузить библиотеку (объект класса)
+        /// </summary>
+        /// <returns>Признак выполнения функции</returns>
+        public int Reload()
+        {
+            int iRes = 0;            
+
+            if ((_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
+                && (!(State == STATE.UNAVAILABLE)))
+                //Изменить(остановить) состояние ВСЕХ групп сигналов
+                stateChange(STATE.STOPPED);
+            else
+                ; //??? ошибка
+
+            unloadPlugIn();
+            loadPlugIn();
+
+            autoStart();
+
+            return iRes;
+        }
+        /// <summary>
         /// Остановить/запустить все группы сигналов
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Признак выполнения функции</returns>
         public int StateChange()
         {
             int iRes = 0;
             STATE newState = STATE.UNKNOWN;
 
-            if ((_iStateDLL == STATE_DLL.LOADED)
+            if ((_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
                 && (! (State == STATE.UNAVAILABLE)))
             {
                 newState = getNewState(State, out iRes);
 
                 //Изменить состояние ВСЕХ групп сигналов
-                foreach (GroupSignals grpSgnls in m_listGroupSignals)
-                    //Проверить текцщее стостояние
-                    if ((!(grpSgnls.State == newState))
-                        && (!(grpSgnls.State == STATE.UNAVAILABLE)))
-                        stateChange(FormMain.FileINI.GetIDIndex(grpSgnls.m_strID), newState);
-                    else
-                        ; //Группа сигналов уже имеет указанное состояние ИЛИ не может изменить состояние на указанное
+                stateChange(newState);                
             }
             else
                 iRes = -1;
 
             return iRes;
         }
-        /// <summary>
-        /// Остановить/запустить группу сигналов
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public int StateChange (string strId, STATE prevState = STATE.REVERSE)
+
+        public int StateChange(int iId, STATE prevState = STATE.REVERSE)
         {
-            int iRes = 0
-                , iId = FormMain.FileINI.GetIDIndex (strId);
+            int iRes = 0;
 
             //Изменить состояние только ОДНой группы сигналов
             GroupSignals grpSgnls = getGroupSignals(iId);
@@ -1268,12 +1289,12 @@ namespace uLoader
                 && (iRes == 0))
             {
                 if ((grpSgnls.State == STATE.STARTED)
-                    &&(!(State == STATE.STARTED)))
-                    throw new Exception(@"GroupSources::StateChange (ID=" + strId + @") - несовместимые состояния групп источников и сигналов...");
+                    && (!(State == STATE.STARTED)))
+                    throw new Exception(@"GroupSources::StateChange (ID=" + iId + @") - несовместимые состояния групп источников и сигналов...");
                 else
                     ;
 
-                stateChange (iId, newState);
+                stateChange(iId, newState);
             }
             else
             {
@@ -1285,29 +1306,63 @@ namespace uLoader
 
             return iRes;
         }
+        /// <summary>
+        /// Остановить/запустить группу сигналов
+        /// </summary>
+        /// <param name="strId">Строковый идентификатор группы источников</param>
+        /// <param name="prevState">Признак для изменения состояния</param>
+        /// <returns>Признак выполнения функции</returns>
+        public int StateChange (string strId, STATE prevState = STATE.REVERSE)
+        {
+            return StateChange(FormMain.FileINI.GetIDIndex(strId), prevState);
+        }
+        /// <summary>
+        /// Изменитьсостояние ВСЕХ групп сигналов
+        /// </summary>
+        /// <param name="newState">Новое состояние для групп</param>
+        private void stateChange(STATE newState)
+        {
+            //Изменить состояние ВСЕХ групп сигналов
+            foreach (GroupSignals grpSgnls in m_listGroupSignals)
+                //Проверить текущее стостояние
+                if ((!(grpSgnls.State == newState))
+                    && (!(grpSgnls.State == STATE.UNAVAILABLE)))
+                    stateChange(FormMain.FileINI.GetIDIndex(grpSgnls.m_strID), newState);
+                else
+                    ; //Группа сигналов уже имеет указанное состояние ИЛИ не может изменить состояние на указанное
+        }
 
         private void stateChange (int iId, STATE newState)
         {
             bool bSync = false;
 
             if ((newState == STATE.STARTED)
-                && (m_evtInitSource.WaitOne(0) == false))
+                && (m_evtInitSourceSend.WaitOne(0) == false)
+                )
+                //??? возможно отправление повторного сообщения
+                // требуется ожидать подтверждения приема параметров соединения с источником
                 sendInitSource();
             else
-                if (newState == STATE.STOPPED)
-                    m_evtInitSource.Reset ();
+                //if (newState == STATE.STOPPED)
+                //    m_evtInitSource.Reset();
+                //else
+                    ;
+
+            //Вариант №2 (пост-установка)
+            if (newState == STATE.STARTED)
+                // ожидать подтверждения инициализации параметров соединения с источником
+                if (m_evtInitSourceConfirm.WaitOne())
+                    // отправление 'STARTED' будет произведено после подтверждения инициализации группы сигналов
+                    sendInitGroupSignals(iId);
                 else
                     ;
-            
-            //Вариант №2 (пост-установка)
-            if ((newState == STATE.STARTED)
-                && (m_evtInitSource.WaitOne() == true))
-                sendInitGroupSignals(iId);
             else
+                // отправить 'STOPPED'
                 sendState(iId, newState);
 
-            //Ожидать подтверждение об изменении состоянии
-            m_semaStateChange.WaitOne ();
+            //Ожидать подтверждение об изменении состояния
+            m_evtGroupSgnlsState.WaitOne ();
+            //Console.WriteLine(@"GroupSources::stateChange (iId=" + iId + @", newState=" + newState.ToString() + @") - m_evtGroupSgnlsState.WaitOne() ...");
         }
         /// <summary>
         /// Получить данные (результаты запроса в ~ режима) 'DataTable' по указанной группе сигналов
@@ -1321,7 +1376,7 @@ namespace uLoader
             bErr = false;
 
             GroupSignals grpSgnls;
-            DataTable tblRec = new DataTable()
+            DataTable tblRec = null
                 , tblToPanel = null;
             DataRow[]arSel;
             object [] arObjToRow = null;
@@ -1334,62 +1389,65 @@ namespace uLoader
                 iID = uLoader.FormMain.FileINI.GetIDIndex(id);
                 grpSgnls = getGroupSignals(iID);
                 if (!(grpSgnls == null))
-                {
-                    tblRec = grpSgnls.m_tableData;
-
-                    if ((!(tblRec == null))
-                        && (tblRec.Rows.Count > 0))
+                    if (grpSgnls.State == STATE.STARTED)
                     {
-                        if ((!(tblRec.Columns.IndexOf(@"ID") < 0)) && (!(tblRec.Columns.IndexOf(@"DATETIME") < 0)))
-                        {
-                            if (m_dictAdding.ContainsKey(@"UTC_OFFSET_TO_DATA") == true)
-                                tsToData = new HTimeSpan(m_dictAdding[@"UTC_OFFSET_TO_DATA"]);
-                            else
-                                ;
-                            //Logging.Logg().Debug(@"GroupSources::GetDataToPanel () - получено строк=" + tblRec.Rows.Count + @"...", Logging.INDEX_MESSAGE.NOT_SET);
-                            
-                            tblToPanel = new DataTable();
-                            tblToPanel.Columns.AddRange(new DataColumn[] { new DataColumn (@"NAME_SHR", typeof (string))
-                                                                            , new DataColumn (@"VALUE", typeof (string)) //new DataColumn (@"VALUE", typeof (decimal))
-                                                                            , new DataColumn (@"DATETIME", typeof (string)) //new DataColumn (@"DATETIME", typeof (DateTime))
-                                                                            , new DataColumn (@"COUNT", typeof (string)) //new DataColumn (@"COUNT", typeof (int))
-                                                                            });
+                        tblRec = grpSgnls.m_tableData;
+                        tblToPanel = new DataTable();
 
-                            //Logging.Logg().Debug(@"GroupSources::GetDataToPanel () - добавлен диапазон столбцов...", Logging.INDEX_MESSAGE.NOT_SET);
+                        if (!(tblRec == null))
+                            if (tblRec.Rows.Count > 0)
+                                if ((!(tblRec.Columns.IndexOf(@"ID") < 0)) && (!(tblRec.Columns.IndexOf(@"DATETIME") < 0)))
+                                {
+                                    if (m_dictAdding.ContainsKey(@"UTC_OFFSET_TO_DATA") == true)
+                                        tsToData = new HTimeSpan(m_dictAdding[@"UTC_OFFSET_TO_DATA"]);
+                                    else
+                                        ;
+                                    //Logging.Logg().Debug(@"GroupSources::GetDataToPanel () - получено строк=" + tblRec.Rows.Count + @"...", Logging.INDEX_MESSAGE.NOT_SET);
 
-                            if (this.GetType().Equals(typeof(GroupSources)) == true)
-                                strNameFieldID = @"ID";
-                            else
-                                if (this.GetType().Equals(typeof(GroupSourcesDest)) == true)
-                                    strNameFieldID = @"ID_SRC_SGNL";
+                                    tblToPanel.Columns.AddRange(new DataColumn[] { new DataColumn (@"NAME_SHR", typeof (string))
+                                                                                    , new DataColumn (@"VALUE", typeof (string)) //new DataColumn (@"VALUE", typeof (decimal))
+                                                                                    , new DataColumn (@"DATETIME", typeof (string)) //new DataColumn (@"DATETIME", typeof (DateTime))
+                                                                                    , new DataColumn (@"COUNT", typeof (string)) //new DataColumn (@"COUNT", typeof (int))
+                                                                                    });
+
+                                    //Logging.Logg().Debug(@"GroupSources::GetDataToPanel () - добавлен диапазон столбцов...", Logging.INDEX_MESSAGE.NOT_SET);
+
+                                    if (this.GetType().Equals(typeof(GroupSources)) == true)
+                                        strNameFieldID = @"ID";
+                                    else
+                                        if (this.GetType().Equals(typeof(GroupSourcesDest)) == true)
+                                            strNameFieldID = @"ID_SRC_SGNL";
+                                        else
+                                            ;
+
+                                    //Logging.Logg().Debug(@"GroupSources::GetDataToPanel () - определено наименование поля идентификатора...", Logging.INDEX_MESSAGE.NOT_SET);
+
+                                    foreach (SIGNAL_SRC sgnl in grpSgnls.m_listSgnls)
+                                    {
+                                        arSel = tblRec.Select(@"ID=" + sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf(strNameFieldID)], @"DATETIME DESC");
+                                        if (arSel.Length > 0)
+                                            arObjToRow = new object[] { sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf (@"NAME_SHR")]
+                                                , arSel[0][@"VALUE"]
+                                                , ((DateTime)arSel[0][@"DATETIME"]).Add(tsToData == HTimeSpan.NotValue ? TimeSpan.Zero : - tsToData.Value).ToString(@"dd.MM.yyyy HH:mm:ss.fff")
+                                                , arSel.Length };
+                                        else
+                                            arObjToRow = new object[] { sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf(@"NAME_SHR")], string.Empty, string.Empty, string.Empty };
+
+                                        tblToPanel.Rows.Add(arObjToRow);
+                                    }
+
+                                    //Logging.Logg().Debug(@"GroupSources::GetDataToPanel () - строк для отображения=" + tblToPanel.Rows.Count + @"...", Logging.INDEX_MESSAGE.NOT_SET);
+                                }
                                 else
-                                    ;
-
-                            //Logging.Logg().Debug(@"GroupSources::GetDataToPanel () - определено наименование поля идентификатора...", Logging.INDEX_MESSAGE.NOT_SET);
-
-                            foreach (SIGNAL_SRC sgnl in grpSgnls.m_listSgnls)
-                            {
-                                arSel = tblRec.Select(@"ID=" + sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf (strNameFieldID)], @"DATETIME DESC");
-                                if (arSel.Length > 0)
-                                    arObjToRow = new object[] { sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf (@"NAME_SHR")]
-                                        , arSel[0][@"VALUE"]
-                                        , ((DateTime)arSel[0][@"DATETIME"]).Add(tsToData == HTimeSpan.NotValue ? TimeSpan.Zero : - tsToData.Value).ToString(@"dd.MM.yyyy HH:mm:ss.fff")
-                                        , arSel.Length };
-                                else
-                                    arObjToRow = new object[] { sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf (@"NAME_SHR")], string.Empty, string.Empty, string.Empty };
-
-                                tblToPanel.Rows.Add(arObjToRow);
-                            }
-
-                            //Logging.Logg().Debug(@"GroupSources::GetDataToPanel () - строк для отображения=" + tblToPanel.Rows.Count + @"...", Logging.INDEX_MESSAGE.NOT_SET);
-                        }
+                                    throw new Exception(@"uLoader::GroupSources::GetDataToPanel () - ...");
+                            else
+                                ; //tblRec.Rows.Count == 0
                         else
-                            throw new Exception(@"uLoader::GroupSources::GetDataToPanel () - ...");
+                            //tblRec == null
+                            Logging.Logg().Warning(@"GroupSources::GetDataToPanel (id=" + id + @") - таблица 'received' не существует...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
                     else
-                        //tblRec == null или tblRec.Rows.Count == 0
-                        Logging.Logg().Warning(@"GroupSources::GetDataToPanel (id=" + id + @") - таблица 'received' не валидна...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
+                        ; // группа сигналов не выполняется
                 else
                     //grpSgnls == null
                     Logging.Logg().Warning(@"GroupSources::GetDataToPanel (id=" + id + @") - не найдена группа сигналов...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -1404,17 +1462,21 @@ namespace uLoader
         /// <summary>
         /// Остановить группу источников
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Признак выполнения функции</returns>
         public int Stop()
         {
             int iRes = 0;
 
-            foreach (GroupSignals grpSgnls in m_listGroupSignals)
-                if (grpSgnls.State == STATE.STARTED)
-                    //sendState(FormMain.FileINI.GetIDIndex(grpSgnls.m_strID), STATE.STOPPED);
-                    stateChange(FormMain.FileINI.GetIDIndex(grpSgnls.m_strID), STATE.STOPPED);
-                else
-                    ;
+            if ((_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
+                && (!(State == STATE.UNAVAILABLE)))
+                //Изменить(остановить) состояние ВСЕХ групп сигналов
+                stateChange(STATE.STOPPED);
+            else
+                ; //??? ошибка
+
+            //m_evtGroupSgnlsState.WaitOne();
+            
+            unloadPlugIn();
 
             return iRes;
         }
@@ -1425,7 +1487,7 @@ namespace uLoader
         /// <param name="fOnEvt">Функция обработки</param>
         public void AddDelegatePlugInOnEvtDataAskedHost (int indxGrpSrcDest, DelegateObjectFunc fOnEvt)
         {
-            (m_plugIn as PlugInBase).EvtDataAskedHost += fOnEvt;
+            m_plugIns.Loader.EvtDataAskedHost += fOnEvt;
         }
         /// <summary>
         /// Удалить обработчик событий от присоединенной библиотеки
@@ -1434,7 +1496,7 @@ namespace uLoader
         /// <param name="fOnEvt">Функция обработки</param>
         public void RemoveDelegatePlugInOnEvtDataAskedHost(int indxGrpSrcDest, DelegateObjectFunc fOnEvt)
         {
-            (m_plugIn as PlugInBase).EvtDataAskedHost -= fOnEvt;
+            m_plugIns.Loader.EvtDataAskedHost -= fOnEvt;
         }
         /// <summary>
         /// Получить признак наличия группы сигналов среди списка присоединенных групп сигналов
@@ -1445,7 +1507,33 @@ namespace uLoader
         {
             return getGroupSignals(indx) == null ? -1 : 0;
         }
+
+        public string GetIdGroupSignals(int indx)
+        {
+            GroupSignals grpSgnls = getGroupSignals(indx);
+
+            return grpSgnls == null ? string.Empty : grpSgnls.m_strID;
+        }
     }
+
+    //public class GroupSourcesSrc : GroupSources
+    //{
+    //    /// <summary>
+    //    /// Передать в очередь обработки событий сообщение о необходимости установления/разрыва связи между группами источников
+    //    /// </summary>
+    //    /// <param name="ev">Аргумент при передаче сообщения</param>
+    //    public override void PerformDataAskedHostQueue(EventArgsDataHost ev)
+    //    {
+    //        //id_main - идентификатор типа объекта в загруженной в ОЗУ библиотеки
+    //        //id_detail - команда на изменение состояния группы сигналов
+    //        //В 0-ом параметре передан индекс (???идентификатор) группы сигналов
+    //        int indxGrpSgnls = (int)(ev.par as object[])[0];
+    //        //В 1-ом параметре передан признак инициирования/подтверждения изменения состояния группы сигналов
+    //        ID_HEAD_ASKED_HOST idHeadAskedHost = (ID_HEAD_ASKED_HOST)(ev.par as object[])[1];
+
+    //        base.PerformDataAskedHostQueue(new EventArgsDataHost(ev.id_main, ev.id_detail, new object[] { this, indxGrpSgnls, idHeadAskedHost }));
+    //    }
+    //}
 
     public class GroupSourcesDest : GroupSources
     {
@@ -1454,11 +1542,7 @@ namespace uLoader
         ///  значениями - списками индексов групп сигналов
         ///  , подписчиками на таблицы результатов
         /// </summary>
-        Dictionary<int, List<int>> m_dictLinkedIndexGroupSources;
-        /// <summary>
-        /// Событие для обмена данными с очередью обработки событий
-        /// </summary>
-        public event DelegateObjectFunc EvtDataAskedHostQueue;
+        Dictionary<int, List<int>> m_dictLinkedIndexGroupSources;        
         /// <summary>
         /// Конструктор - основной (с параметрами)
         /// </summary>
@@ -1698,7 +1782,8 @@ namespace uLoader
                     parsToSend = new object [1];
                     //Установить взаимосвязь между полученными значениями группы сигналов и группой сигналов назначения
                     foreach (GroupSignalsDest grpSgnls in m_listGroupSignals)
-                        if (!(grpSgnls.GetListNeededIndexGroupSignals().IndexOf((int)pars[1]) < 0))
+                        if ((!(grpSgnls.GetListNeededIndexGroupSignals().IndexOf((int)pars[1]) < 0))
+                            && (grpSgnls.State == STATE.STARTED))
                         {
                             parsToSend[0] = FormMain.FileINI.GetIDIndex(grpSgnls.m_strID);
                             //Да, группа сигналов 'grpSgnls' ожидает значения от группы сигналов '(int)pars[1]';
@@ -1718,10 +1803,16 @@ namespace uLoader
         /// Передать в очередь обработки событий сообщение о необходимости установления/разрыва связи между группами источников
         /// </summary>
         /// <param name="ev">Аргумент при передаче сообщения</param>
-        public void PerformDataAskedHostQueue (EventArgsDataHost ev)
+        public override void PerformDataAskedHostQueue (EventArgsDataHost ev)
         {
-            //В 0-ом параметре пердан индекс (???идентификатор) группы сигналов
+            //id_main - идентификатор типа объекта в загруженной в ОЗУ библиотеки
+            //id_detail - команда на изменение состояния группы сигналов
+            //В 0-ом параметре передан индекс (???идентификатор) группы сигналов
             int indxGrpSgnls = (int)(ev.par as object[])[0];
+            ////В 1-ом параметре передан признак инициирования/подтверждения изменения состояния группы сигналов
+            //ID_HEAD_ASKED_HOST idHeadAskedHost = (ID_HEAD_ASKED_HOST)(ev.par as object[])[1];
+
+            base.PerformDataAskedHostQueue(ev);
 
             List<int> listNeededIndexGroupSources = GetListNeededIndexGroupSources(indxGrpSgnls);
             bool bEvtDataAskedHostQueue = false;
@@ -1758,8 +1849,7 @@ namespace uLoader
                         ;
 
                     if (bEvtDataAskedHostQueue == true)
-                        //Передать для добавления обработчика событий
-                        EvtDataAskedHostQueue(new EventArgsDataHost(ev.id_main, ev.id_detail, new object[] { this, indx }));
+                        base.PerformDataAskedHostQueue(new EventArgsDataHost(ev.id_main, ev.id_detail, new object[] { this, indx }));
                     else
                         ;
                 }

@@ -33,6 +33,7 @@ namespace DestStat
             public GroupSignalsTechSiteLastsql(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
+                s_strFormatDbDateTime = @"yyyyMMdd HH:mm:ss.fff";
             }
 
             //protected override object getIdToInsert(int idLink)
@@ -51,35 +52,52 @@ namespace DestStat
 
                 //Logging.Logg().Debug(@"GroupSignalsStatKKSNAMEsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
-                strRow = @"UPDATE [" + (_parent as HHandlerDbULoaderDest).m_strNameTable + @"]"
-                            //+ @"SET [ID_SRV_TM]=" + idSrvTM + @",";
-                            + @" SET ";
-
-                foreach (DataRow row in m_DupTables.TableDistinct.Rows)
+                //??? проверка лишняя - производится перед вызовом
+                if (m_DupTables.IsDeterminate == true)
                 {
-                    strRes += strRow;
+                    strRes = @"DECLARE @VALUES_TABLE AS TABLE([ID_SIGNAL] [nvarchar](256) NOT NULL, [VALUE] [real] NOT NULL, [DATETIME] [datetime] NOT NULL, [UPDATE_DATETIME] [datetime] NOT NULL, [ID_SRV_TM] [int] NOT NULL);";
+                    strRes += @"INSERT INTO @VALUES_TABLE([ID_SIGNAL],[VALUE],[DATETIME],[UPDATE_DATETIME],[ID_SRV_TM])"
+                        + @" SELECT [ID_SIGNAL],[VALUE],[DATETIME], GETDATE() AS [UPDATE_DATETIME], " + idSrvTM + @" AS [ID_SRV_TM] FROM (VALUES ";
 
-                    strRes += @"[VALUE]='";
-                    if (typeVal.Equals(typeof (decimal)) == true)
-                        strRes += ((decimal)row[@"VALUE"]).ToString("F7", CultureInfo.InvariantCulture);
-                    else
-                        if(typeVal.Equals(typeof (double)) == true)
-                            strRes += ((double)row[@"VALUE"]).ToString("F7", CultureInfo.InvariantCulture);
+                    foreach (DataRow row in m_DupTables.TableDistinct.Rows)
+                    {
+                        strRes += @"(";
+
+                        strRes += @"'" + (string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) + @"'" + @",";
+
+                        if (typeVal.Equals(typeof(decimal)) == true)
+                            strRes += ((decimal)row[@"VALUE"]).ToString("F7", CultureInfo.InvariantCulture);
                         else
-                            strRes += row[@"VALUE"];
-                    strRes +=  @"',";
-                    strRes += @"[DATETIME]='" + ((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours).ToString(s_strFormatDbDateTime) + @"'" + @",";
-                    strRes += @"[UPDATE_DATETIME]=GETDATE()";
+                            if (typeVal.Equals(typeof(double)) == true)
+                                strRes += ((double)row[@"VALUE"]).ToString("F7", CultureInfo.InvariantCulture);
+                            else
+                                strRes += row[@"VALUE"];
+                        strRes += @",";
 
-                    //strRes += @" WHERE [KKS_NAME]='" + (string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) + @"';";
-                    strRes += @" WHERE [ID_SIGNAL]='" + (string)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) + @"';";
+                        strRes += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours).ToString(s_strFormatDbDateTime) + @"'" + @"),";
+                    }
 
+                    //Лишняя ','
+                    strRes = strRes.Substring(0, strRes.Length - 1);
+
+                    strRes += @") AS [TORIS_SOURCE]([ID_SIGNAL], [VALUE], [DATETIME]);";
+
+                    strRes += @"MERGE [dbo].[" + (_parent as HHandlerDbULoaderDest).m_strNameTable + @"] AS [T]"
+                        + @" USING @VALUES_TABLE AS [S]"
+                        + @" ON ([T].[ID_SIGNAL] = [S].[ID_SIGNAL])"
+                            + @" WHEN MATCHED AND ([S].[DATETIME] > [T].[DATETIME])"
+                            + @" THEN UPDATE SET [VALUE] = [S].[VALUE], [DATETIME] = [S].[DATETIME], [UPDATE_DATETIME] = [S].[UPDATE_DATETIME], [ID_SRV_TM] = [S].[ID_SRV_TM];";
                 }
 
                 return
                     //string.Empty
                     strRes
                     ;
+            }
+
+            protected override void setTableRes()
+            {
+                m_DupTables.Top(TableRecievedPrev, TableRecieved);
             }
 
             protected override string getExistsValuesQuery()

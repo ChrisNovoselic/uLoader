@@ -228,9 +228,13 @@ namespace uLoaderCommon
             /// </summary>
             public DataTable TableRecievedPrev
             {
-                get { return m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS]; }
+                get {
+                    return m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS];
+                }
 
-                set { m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS] = value; }
+                set {
+                    m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS] = value;
+                }
             }
             /// <summary>
             /// Объект для сравнения предыдущей и текущей таблиц
@@ -404,29 +408,34 @@ namespace uLoaderCommon
             {
                 try
                 {
-                    if (!(tablePrev.Columns.IndexOf(@"ID") < 0))
-                        foreach (DataRow r in tablePrev.Rows)
-                            r[@"ID"] = getIdLink(r[@"ID"]);
+                    if (tablePrev.Columns.Count > 0)
+                        if (!(tablePrev.Columns.IndexOf(@"ID") < 0))
+                        {
+                            foreach (DataRow r in tablePrev.Rows)
+                                r[@"ID"] = getIdLink(r[@"ID"]);
+
+                            TableRecievedPrev = tablePrev;
+                        }
+                        else
+                        {
+                            // отсутствует необходимое поле "ID"
+                            Logging.Logg().Warning(@"HHandlerDbULoader.GroupSignals::Convert (IdGroupSgls=" + m_Id + @") - отсутствует необходимое поле [ID]...", Logging.INDEX_MESSAGE.NOT_SET);
+
+                            string strFieldsNames = string.Empty;
+                            foreach (DataColumn c in tablePrev.Columns)
+                                strFieldsNames += c.ColumnName + @", ";
+
+                            strFieldsNames = strFieldsNames.Substring(0, strFieldsNames.Length - 2);
+
+                            Logging.Logg().Debug(@"Все столбцы в таблице: " + strFieldsNames, Logging.INDEX_MESSAGE.NOT_SET);
+                        }
                     else
-                    {
-                        // отсутствует необходимое поле "ID"
-                        Logging.Logg().Warning(@"HHandlerDbULoader.GroupSignals::Convert (IdGroupSgls=" + m_Id + @") - отсутствует необходимое поле [ID]...", Logging.INDEX_MESSAGE.NOT_SET);
-
-                        string strFieldsNames = string.Empty;
-                        foreach (DataColumn c in tablePrev.Columns)
-                            strFieldsNames += c.ColumnName + @", ";
-
-                        strFieldsNames = strFieldsNames.Substring(0, strFieldsNames.Length - 2);
-
-                        Logging.Logg().Debug(@"Все столбцы в таблице: " + strFieldsNames, Logging.INDEX_MESSAGE.NOT_SET);
-                    }
+                        ; //??? нет ни одного столбца
                 }
                 catch (Exception e)
                 {
                     Logging.Logg().Exception(e, @"GroupsignalsDest::Convert (IdGroupSgnls=" + m_Id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
-
-                TableRecievedPrev = tablePrev;
             }
         }
 
@@ -480,6 +489,7 @@ namespace uLoaderCommon
                     //    + @"DATETIME=" + m_dtServer.ToString(@"dd.MM.yyyy HH.mm.ss.fff") + @"...";
                     //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
                     //Console.WriteLine (msg);
+                    (obj as DataTable).Columns.Clear();
                     break;
                 case StatesMachine.Values:
                     // ??? обработать результат запроса на получение текущих значений
@@ -574,7 +584,7 @@ namespace uLoaderCommon
         //    }
         //}
 
-        protected DataTable TableRecievedPrev
+        protected virtual DataTable TableRecievedPrev
         {
             get
             {
@@ -724,7 +734,8 @@ namespace uLoaderCommon
                                             }
 
                                             if (bConsoleDebug == true)
-                                                Console.WriteLine(@"Установлен для ID=" + idSgnl + @", DATETIME=" + ((DateTime)rowAdd[@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff") + @" tmdelta=" + rowAdd[@"tmdelta"]);
+                                                //Console.WriteLine(@"Установлен для ID=" + idSgnl + @", DATETIME=" + ((DateTime)rowAdd[@"DATETIME"]).ToString(@"dd.MM.yyyy HH:mm:ss.fff") + @" tmdelta=" + rowAdd[@"tmdelta"])
+                                                ;
                                             else
                                                 ;
                                         }
@@ -737,7 +748,8 @@ namespace uLoaderCommon
                                         long iTMDelta = (((DateTime)arSelIns[i][@"DATETIME"]).Ticks - ((DateTime)arSelIns[i - 1][@"DATETIME"]).Ticks) / TimeSpan.TicksPerMillisecond;
                                         rowPrev[@"tmdelta"] = (int)iTMDelta;
                                         if (bConsoleDebug == true)
-                                            Console.WriteLine(@", tmdelta=" + rowPrev[@"tmdelta"]);
+                                            //Console.WriteLine(@", tmdelta=" + rowPrev[@"tmdelta"])
+                                            ;
                                         else
                                             ;
                                     }
@@ -961,11 +973,13 @@ namespace uLoaderCommon
                     }
                     else
                         ;
-
-                if (strRes.Equals (string.Empty) == true)
-                    Logging.Logg().Warning(@"GroupSignalsStatTMKKSNAMEDest::getIdTarget (idLink=" + idLink + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                else
-                    ;
+                //// для уменьшения кол-ва записей в журнале приложения
+                //if (strRes.Equals (string.Empty) == true)
+                //    Logging.Logg().Warning(@"GroupSignalsStatTMKKSNAMEDest::getIdTarget (id=" + (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).PlugInId
+                //        + @", key=" + m_Id
+                //        + @", idLink=" + idLink + this.m_Id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                //else
+                //    ;
 
                 return strRes;
             }
