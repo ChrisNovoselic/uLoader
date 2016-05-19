@@ -360,6 +360,7 @@ namespace uLoader
                 , indxDestSel = -1;
             string strSrcIDGrpSignals = string.Empty
                 , strDestIDGrpSignals = string.Empty;
+            List<object[]> listDataAskedHost = new List<object[]>();            
 
             ctrl = m_arLoader[(int)INDEX_SRC.SOURCE].GetWorkingItem (PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView;
             indxSrcSel = ctrl.SelectedRows.Count > 0 ? ctrl.SelectedRows[0].Index : -1;            
@@ -371,13 +372,32 @@ namespace uLoader
             ctrl = m_arLoader[(int)INDEX_SRC.DEST].GetWorkingItem(PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView;
             strDestIDGrpSignals = ctrl.SelectedRows.Count > 0 ? m_arLoader[(int)INDEX_SRC.DEST].GetWorkingItemId (PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS) : string.Empty;
 
+            //1-ое событие (состояние групп источников)
+            listDataAskedHost.Add(new object[] { (int)HHandlerQueue.StatesMachine.STATE_GROUP_SOURCES /*, без параметров*/ });
+
+            if ((!(indxSrcSel < 0))
+                || (!(indxDestSel < 0)))
+                //2-ое (состояние групп сигналов) д.б. выбраны группы источников - родительские для групп сигналов
+                listDataAskedHost.Add(new object[] { (int)HHandlerQueue.StatesMachine.STATE_GROUP_SIGNALS, indxSrcSel, indxDestSel });
+            else
+                ;
+            
+            if ((!(indxSrcSel < 0))
+                && (strSrcIDGrpSignals.Equals(string.Empty) == false))
+                //3-ье (данные по группе сигналов)
+                listDataAskedHost.Add(new object[] { (int)HHandlerQueue.StatesMachine.DATA_SRC_GROUP_SIGNALS, indxSrcSel, strSrcIDGrpSignals });
+            else
+                ;
+
+            if ((!(indxDestSel < 0))
+                && (strDestIDGrpSignals.Equals (string.Empty) == false))
+                //4-ое (данные по группе сигналов)
+                listDataAskedHost.Add(new object[] { (int)HHandlerQueue.StatesMachine.DATA_DEST_GROUP_SIGNALS, indxDestSel, strDestIDGrpSignals });
+            else
+                ;
+
             //Запросить данные
-            DataAskedHost(new object[] {
-                new object [] { (int)HHandlerQueue.StatesMachine.STATE_GROUP_SOURCES /*, без параметров*/ }
-                , new object [] { (int)HHandlerQueue.StatesMachine.STATE_GROUP_SIGNALS, indxSrcSel, indxDestSel }
-                , new object [] { (int)HHandlerQueue.StatesMachine.DATA_SRC_GROUP_SIGNALS, indxSrcSel, strSrcIDGrpSignals }
-                , new object [] { (int)HHandlerQueue.StatesMachine.DATA_DEST_GROUP_SIGNALS, indxDestSel, strDestIDGrpSignals }
-            });
+            DataAskedHost(listDataAskedHost.ToArray ());
         }
 
         /// <summary>

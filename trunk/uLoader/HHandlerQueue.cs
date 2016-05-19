@@ -632,24 +632,22 @@ namespace uLoader
 
                     #region DATA_SRC_GROUP_SIGNALS, DATA_DEST_GROUP_SIGNALS
                     case StatesMachine.DATA_SRC_GROUP_SIGNALS:
-                        error = false;
-                        itemQueue = Peek;
-
-                        outobj = m_listGroupSources[(int)INDEX_SRC.SOURCE][(int)itemQueue.Pars[0]].GetDataToPanel(itemQueue.Pars[1] as string, out error);
-
-                        iRes = 0;
-                        break;
                     case StatesMachine.DATA_DEST_GROUP_SIGNALS:
                         error = false;
                         itemQueue = Peek;
 
-                        if (! ((int)itemQueue.Pars[0] < 0))
-                            outobj = m_listGroupSources[(int)INDEX_SRC.DEST][(int)itemQueue.Pars[0]].GetDataToPanel(itemQueue.Pars[1] as string, out error);
+                        INDEX_SRC indxGroupSrc = state == StatesMachine.DATA_SRC_GROUP_SIGNALS ? INDEX_SRC.SOURCE :
+                            state == StatesMachine.DATA_DEST_GROUP_SIGNALS ? INDEX_SRC.DEST :
+                                INDEX_SRC.COUNT_INDEX_SRC;
+                        //??? зачем проверка индекса группы источников, как это значение м.б. отрицательным (в элементе управления не выделена ни одна строка!!!)
+                        // см. 'PanelWork::fTimerUpdate ()' - из-за того, что при старте /minimize элемент управления не отображается и в нем не назначается выделенная строка
+                        if (!((int)itemQueue.Pars[0] < 0))
+                            outobj = m_listGroupSources[(int)indxGroupSrc][(int)itemQueue.Pars[0]].GetDataToPanel(itemQueue.Pars[1] as string, out error);
                         else
                             ;
 
                         iRes = 0;
-                        break;
+                        break;                    
                     #endregion
 
                     #region SET_IDCUR_SOURCE_OF_GROUP, SET_TEXT_ADDING, SET_GROUP_SIGNALS_PARS
