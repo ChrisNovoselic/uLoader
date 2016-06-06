@@ -430,7 +430,18 @@ namespace uLoader
             /// Объект-плюгИн - загруженая библиотека с единственным созданным объектом класса
             ///  , из зарегистрированных в ней 
             /// </summary>
-            public PlugInULoader Loader { get { return this[_id] as PlugInULoader; } }
+            public PlugInULoader Loader {
+                get {
+                    //if (this.ContainsKey(_id) == true)
+                        return this[_id] as PlugInULoader;
+                    //else
+                    //{
+                    //    Logging.Logg().Error(@"GroupSources.PlugIns::Loader - не загружена библиотека с единственным созданным объектом класса ...", Logging.INDEX_MESSAGE.NOT_SET);
+                    //
+                    //    return null;
+                    //}
+                }
+            }
             /// <summary>
             /// Загрузить библиотеку с именем 'm_strDLLName'
             /// </summary>
@@ -473,6 +484,7 @@ namespace uLoader
         /// </summary>
         private void loadPlugIn()
         {
+            PlugInULoader loader = null;
             string strTypeName = string.Empty;
 
             if (m_plugIns == null)
@@ -483,17 +495,29 @@ namespace uLoader
             m_plugIns.LoadPlugIn(this.m_strDLLName, out _iStateDLL);
 
             strTypeName = this.m_strDLLName.Split(new char[] { ':' }, StringSplitOptions.None)[1];
-            if ((_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
-                && (m_plugIns.Loader.CreateObject(strTypeName) == 0))
+            if (_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
             {
-                _iIdTypePlugInObjectLoaded = m_plugIns.Loader.KeySingleton; //plugInRes.GetKeyType(strTypeName);                
-                //Взаимная "привязка" для обмена сообщениями
-                // библиотека - объект класса
-                (m_plugIns.Loader as PlugInBase).EvtDataAskedHost += new DelegateObjectFunc(plugIn_OnEvtDataAskedHost);
-                // объект класса - библиотека
-                EvtDataAskedHostPlugIn += m_plugIns.Loader.OnEvtDataRecievedHost;
-                ////??? - повторная установка значения
-                //_iStateDLL = HClassLibrary.HPlugIns.STATE_DLL.LOADED;
+                loader = m_plugIns.Loader;
+
+                if (loader.CreateObject(strTypeName) == 0)
+                {
+                    _iIdTypePlugInObjectLoaded = loader.KeySingleton; //plugInRes.GetKeyType(strTypeName);
+
+                    //Взаимная "привязка" для обмена сообщениями
+                    if (!(loader == null))
+                    {
+                        // библиотека - объект класса
+                        loader.EvtDataAskedHost += new DelegateObjectFunc(plugIn_OnEvtDataAskedHost);
+                        // объект класса - библиотека
+                        EvtDataAskedHostPlugIn += loader.OnEvtDataRecievedHost;
+                        ////??? - повторная установка значения
+                        //_iStateDLL = HClassLibrary.HPlugIns.STATE_DLL.LOADED;
+                    }
+                    else
+                        ;
+                }
+                else
+                    ;
             }
             else
                 _iStateDLL = HClassLibrary.HPlugIns.STATE_DLL.NOT_LOAD;
@@ -513,14 +537,23 @@ namespace uLoader
         /// </summary>
         private void unloadPlugIn()
         {
+            PlugInBase loader = null;
+
             if (!(m_plugIns == null))
             {
                 _iIdTypePlugInObjectLoaded = -1;
-                //Взаимная "РАЗпривязка" для обмена сообщениями - в обратном порядке
-                // объект класса - библиотека
-                EvtDataAskedHostPlugIn -= m_plugIns.Loader.OnEvtDataRecievedHost;                
-                // библиотека - объект класса
-                (m_plugIns.Loader as PlugInBase).EvtDataAskedHost -= new DelegateObjectFunc(plugIn_OnEvtDataAskedHost);                
+
+                //Взаимная "РАЗпривязка" для обмена сообщениями - в обратном порядке                
+                loader = m_plugIns.Loader;
+                if (!(loader == null))
+                {
+                    // объект класса - библиотека
+                    EvtDataAskedHostPlugIn -= loader.OnEvtDataRecievedHost;
+                    // библиотека - объект класса
+                    loader.EvtDataAskedHost -= new DelegateObjectFunc(plugIn_OnEvtDataAskedHost);
+                }
+                else
+                    ;
 
                 m_plugIns.UnloadPlugIn();
             }
@@ -1487,7 +1520,14 @@ namespace uLoader
         /// <param name="fOnEvt">Функция обработки</param>
         public void AddDelegatePlugInOnEvtDataAskedHost (int indxGrpSrcDest, DelegateObjectFunc fOnEvt)
         {
-            m_plugIns.Loader.EvtDataAskedHost += fOnEvt;
+            try
+            {
+                m_plugIns.Loader.EvtDataAskedHost += fOnEvt;
+            }
+            catch (Exception e)
+            {
+                Logging.Logg().Exception(e, @"GroupSources::AddDelegatePlugInOnEvtDataAskedHost (IdTypePlugInObject=" + _iIdTypePlugInObjectLoaded + @") - ошибка обращения к объекту ...", Logging.INDEX_MESSAGE.NOT_SET);
+            }
         }
         /// <summary>
         /// Удалить обработчик событий от присоединенной библиотеки
@@ -1496,7 +1536,13 @@ namespace uLoader
         /// <param name="fOnEvt">Функция обработки</param>
         public void RemoveDelegatePlugInOnEvtDataAskedHost(int indxGrpSrcDest, DelegateObjectFunc fOnEvt)
         {
-            m_plugIns.Loader.EvtDataAskedHost -= fOnEvt;
+            try {
+                m_plugIns.Loader.EvtDataAskedHost -= fOnEvt;
+            }
+            catch (Exception e)
+            {
+                Logging.Logg().Exception(e, @"GroupSources::RemoveDelegatePlugInOnEvtDataAskedHost (IdTypePlugInObject=" + _iIdTypePlugInObjectLoaded + @") - ошибка обращения к объекту ...", Logging.INDEX_MESSAGE.NOT_SET);
+            }
         }
         /// <summary>
         /// Получить признак наличия группы сигналов среди списка присоединенных групп сигналов

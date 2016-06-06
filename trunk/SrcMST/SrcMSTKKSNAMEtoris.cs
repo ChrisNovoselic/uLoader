@@ -12,6 +12,9 @@ namespace SrcMST
 {
     public class SrcMSTKKSNAMEtoris : HHandlerDbULoaderDatetimeSrc
     {
+        //private class TorISData : TORISLib.TorISData
+        //{
+        //}
 
         enum StatesMachine
         {
@@ -19,7 +22,10 @@ namespace SrcMST
             ,
         }
 
-        TORISLib.TorISData m_torIsData;
+        TORISLib.TorISData
+        //TorISData
+            m_torIsData
+            ;
 
         public SrcMSTKKSNAMEtoris()
             //??? аргументы лишние, кроме 1-го
@@ -97,9 +103,10 @@ namespace SrcMST
             {
                 object[] parsToEvt = new object[] { m_Id, string.Empty };
 
+                
                 foreach (SIGNALMSTKKSNAMEsql sgnl in m_arSignals)
                 {
-                    parsToEvt [1] = sgnl.m_kks_name;
+                    parsToEvt[1] = sgnl.m_kks_name;
                     EvtAdviseItem(parsToEvt);
                 }
             }
@@ -463,8 +470,13 @@ namespace SrcMST
             //???
             ;
         }
-
+        /// <summary>
+        /// Объект синхронизации для доступа к словарю с зарегистрированными сигналами
+        /// </summary>
         private object lockAdvisedItems;
+        /// <summary>
+        /// Словарь с зарегистрированными сигналами
+        /// </summary>
         private Dictionary <string, int> m_dictSignalsAdvised;
         /// <summary>
         /// Подписаться на сигнал
@@ -493,39 +505,36 @@ namespace SrcMST
             else
                 ;
 
-            lock (lockAdvisedItems)
+            if (m_dictSignalsAdvised.ContainsKey(kks_name) == true)
+                return;
+            else
+                ;
+
+            err = m_torIsData.AdviseItems(kks_name);
+
+            if (! (err == 0))
             {
-                if (m_dictSignalsAdvised.ContainsKey(kks_name) == true)
-                    return;
-                else
-                    ;
-
-                err = m_torIsData.AdviseItems(kks_name);
-
-                if (! (err == 0))
+                switch (err)
                 {
-                    switch (err)
-                    {
-                        case 1: strErr = "ETORIS_NOTCONFIG"; break;
-                        case 2: strErr = "ETORIS_INVALIDITEM"; break;
-                        case 3: strErr = "ETORIS_INVALIDATTR"; break;
-                        case 4: strErr = "ETORIS_INVALIDTYPE"; break;
-                        case 5: strErr = "ETORIS_INVALIDHANDLE"; break;
-                        case 6: strErr = "ETORIS_NOTREGISTER"; break;
-                        case 7: strErr = "ETORIS_ALREADYADVISED"; break;
-                        case 8: strErr = "ETORIS_INVALIDITEMTYPE"; break;
-                        case 9: strErr = "ETORIS_SHUTDOWN"; break;
-                        default: strErr = "Неизвестная ошибка " + strErr.ToString(); break;
-                    }
-
-                    Logging.Logg().Error(@"Ошибка подписки на сигнал" + strIds + kks_name + " - " + strErr, Logging.INDEX_MESSAGE.NOT_SET);
-                    return;
+                    case 1: strErr = "ETORIS_NOTCONFIG"; break;
+                    case 2: strErr = "ETORIS_INVALIDITEM"; break;
+                    case 3: strErr = "ETORIS_INVALIDATTR"; break;
+                    case 4: strErr = "ETORIS_INVALIDTYPE"; break;
+                    case 5: strErr = "ETORIS_INVALIDHANDLE"; break;
+                    case 6: strErr = "ETORIS_NOTREGISTER"; break;
+                    case 7: strErr = "ETORIS_ALREADYADVISED"; break;
+                    case 8: strErr = "ETORIS_INVALIDITEMTYPE"; break;
+                    case 9: strErr = "ETORIS_SHUTDOWN"; break;
+                    default: strErr = "Неизвестная ошибка " + strErr.ToString(); break;
                 }
-                else
-                    ;
 
-                m_dictSignalsAdvised.Add(kks_name, idGrpSgnls);
+                Logging.Logg().Error(@"Ошибка подписки на сигнал" + strIds + kks_name + " - " + strErr, Logging.INDEX_MESSAGE.NOT_SET);
+                return;
             }
+            else
+                ;
+
+            m_dictSignalsAdvised.Add(kks_name, idGrpSgnls);
 
             //Logging.Logg ().Action (@"Подписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -568,41 +577,38 @@ namespace SrcMST
             string strErr = string.Empty
                 , strIds = string.Empty;
 
-            lock (lockAdvisedItems)
+            if (m_dictSignalsAdvised.ContainsKey(kks_name) == false)
+                return;
+            else
+                ;
+
+            idGrpSgnls = m_dictSignalsAdvised[kks_name];
+            strIds = @" [" + PlugInId + @", key=" + idGrpSgnls + @"]: ";
+
+            try
             {
-                if (m_dictSignalsAdvised.ContainsKey(kks_name) == false)
-                    return;
-                else
-                    ;
-
-                idGrpSgnls = m_dictSignalsAdvised[kks_name];
-                strIds = @" [" + PlugInId + @", key=" + idGrpSgnls + @"]: ";
-
-                try
-                {
-                    err = m_torIsData.UnadviseItem(kks_name);
-                }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, "TORISLib.TorISDataClass.UnadviseItem(String item) - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
-
-                if (!(err == 0))
-                {
-                    switch (err)
-                    {
-                        default:
-                            break;
-                    }
-
-                    Logging.Logg().Error(@"Ошибка отписки на сигнал" + strIds + kks_name + " - " + strErr, Logging.INDEX_MESSAGE.NOT_SET);
-                    return;
-                }
-                else
-                    ;
-
-                m_dictSignalsAdvised.Remove(kks_name);
+                err = m_torIsData.UnadviseItem(kks_name);
             }
+            catch (Exception e)
+            {
+                Logging.Logg().Exception(e, "TORISLib.TorISDataClass.UnadviseItem(String item) - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            }
+
+            if (!(err == 0))
+            {
+                switch (err)
+                {
+                    default:
+                        break;
+                }
+
+                Logging.Logg().Error(@"Ошибка отписки на сигнал" + strIds + kks_name + " - " + strErr, Logging.INDEX_MESSAGE.NOT_SET);
+                return;
+            }
+            else
+                ;
+
+            m_dictSignalsAdvised.Remove(kks_name);
 
             //Logging.Logg().Action(@"Отписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);
         }
