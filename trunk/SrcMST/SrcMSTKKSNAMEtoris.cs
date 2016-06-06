@@ -98,23 +98,48 @@ namespace SrcMST
                 //ID_MAIN, KKSNAME
                 return new SIGNALMSTKKSNAMEsql((int)objs[0], (string)objs[2]);
             }
-
+            /// <summary>
+            /// Зарегистрировать сигнал(-ы) (подписаться) в OPC-сервере
+            /// </summary>
             public void AdviseItems ()
             {
+                // сформировать объект - аргумент события
+                // [0] - идентификатор группы сигналов
+                // , [1] - перечень сигналов для регистрации сигнала(-ов) (подписка)
                 object[] parsToEvt = new object[] { m_Id, string.Empty };
 
-                
                 foreach (SIGNALMSTKKSNAMEsql sgnl in m_arSignals)
-                {
-                    parsToEvt[1] = sgnl.m_kks_name;
+                    parsToEvt[1] += sgnl.m_kks_name + @",";
+                
+                if (((string)parsToEvt[1]).Equals(string.Empty) == false)
+                {// только, если есть сигналы для подписки
+                    // исключить лишнюю запятую в списке
+                    parsToEvt[1] = ((string)parsToEvt[1]).Substring(0, ((string)parsToEvt[1]).Length - 1);
+                    // иницициировать событие - подписки
                     EvtAdviseItem(parsToEvt);
                 }
+                else
+                    ;
             }
-
+            /// <summary>
+            /// Отменить регистрацию сигнала(-ов) (отписаться) в OPC-сервере
+            /// </summary>
             public void UnadviseItems()
             {
+                string parsToEvt = string.Empty;
+                
                 foreach (SIGNALMSTKKSNAMEsql sgnl in m_arSignals)
-                    EvtUnadviseItem(sgnl.m_kks_name);
+                    parsToEvt += sgnl.m_kks_name + @",";
+
+                if (parsToEvt.Equals(string.Empty) == false)
+                {// только, если есть сигналы для отписки
+                    // исключить лишнюю запятую в списке
+                    parsToEvt = parsToEvt.Substring(0, parsToEvt.Length - 1);
+                    // иницициировать событие - отписки
+                    EvtUnadviseItem(parsToEvt);
+                }
+                else
+                    ;
             }
 
             protected override void setQuery()
@@ -184,7 +209,7 @@ namespace SrcMST
                 }
             }
 
-            public void ItemNewValue(string kksname, object value, double timestamp, int quality, int status)
+            public void ItemSetValue(string kksname, object value, double timestamp, int quality, int status)
             {
                 DateTime dtVal = DateTime.UtcNow;
 
@@ -311,7 +336,7 @@ namespace SrcMST
 
             private void repeat_value(object sender, RepeatSignalEventArgs e)
             {
-                ItemNewValue(e.m_kks_name, e.m_Value, 0, 0, -1991);
+                ItemSetValue(e.m_kks_name, e.m_Value, 0, 0, -1991);
             }
             
             /// <summary>
@@ -486,17 +511,17 @@ namespace SrcMST
         {
             long err = -1;
             int idGrpSgnls = (int) (pars as object [])[0];
-            string kks_name = (string) (pars as object [])[1]
-                , strErr = string.Empty
+            string []kks_names = ((string)(pars as object [])[1]).Split (new string [] {@","}, StringSplitOptions.RemoveEmptyEntries); 
+            string strErr = string.Empty
                 , strIds = @" [" + PlugInId + @", key=" + idGrpSgnls + @"]: ";
+            // переменные для вызова 'm_torIsData.ReadItem'
+            int quality, status;
+            int type = 3;
+            object value;
+            double timestamp;
 
             if (IsStarted == false)
                 return;
-            else
-                ;
-
-            if (lockAdvisedItems == null)
-                lockAdvisedItems = new object ();
             else
                 ;
 
@@ -505,67 +530,65 @@ namespace SrcMST
             else
                 ;
 
-            if (m_dictSignalsAdvised.ContainsKey(kks_name) == true)
-                return;
-            else
-                ;
-
-            err = m_torIsData.AdviseItems(kks_name);
-
-            if (! (err == 0))
+            foreach (string kks_name in kks_names)
             {
-                switch (err)
+                if (m_dictSignalsAdvised.ContainsKey(kks_name) == true)
+                    return;
+                else
+                    ;
+
+                err = m_torIsData.AdviseItems(kks_name);
+
+                if (!(err == 0))
                 {
-                    case 1: strErr = "ETORIS_NOTCONFIG"; break;
-                    case 2: strErr = "ETORIS_INVALIDITEM"; break;
-                    case 3: strErr = "ETORIS_INVALIDATTR"; break;
-                    case 4: strErr = "ETORIS_INVALIDTYPE"; break;
-                    case 5: strErr = "ETORIS_INVALIDHANDLE"; break;
-                    case 6: strErr = "ETORIS_NOTREGISTER"; break;
-                    case 7: strErr = "ETORIS_ALREADYADVISED"; break;
-                    case 8: strErr = "ETORIS_INVALIDITEMTYPE"; break;
-                    case 9: strErr = "ETORIS_SHUTDOWN"; break;
-                    default: strErr = "Неизвестная ошибка " + strErr.ToString(); break;
+                    switch (err)
+                    {
+                        case 1: strErr = "ETORIS_NOTCONFIG"; break;
+                        case 2: strErr = "ETORIS_INVALIDITEM"; break;
+                        case 3: strErr = "ETORIS_INVALIDATTR"; break;
+                        case 4: strErr = "ETORIS_INVALIDTYPE"; break;
+                        case 5: strErr = "ETORIS_INVALIDHANDLE"; break;
+                        case 6: strErr = "ETORIS_NOTREGISTER"; break;
+                        case 7: strErr = "ETORIS_ALREADYADVISED"; break;
+                        case 8: strErr = "ETORIS_INVALIDITEMTYPE"; break;
+                        case 9: strErr = "ETORIS_SHUTDOWN"; break;
+                        default: strErr = "Неизвестная ошибка " + strErr.ToString(); break;
+                    }
+
+                    Logging.Logg().Error(@"Ошибка подписки на сигнал" + strIds + kks_name + " - " + strErr, Logging.INDEX_MESSAGE.NOT_SET);
+                    continue;
                 }
+                else
+                    ;
 
-                Logging.Logg().Error(@"Ошибка подписки на сигнал" + strIds + kks_name + " - " + strErr, Logging.INDEX_MESSAGE.NOT_SET);
-                return;
+                m_dictSignalsAdvised.Add(kks_name, idGrpSgnls);
+
+                //Logging.Logg ().Action (@"Подписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);            
+
+                err = m_torIsData.ReadItem(kks_name, ref type, out value, out timestamp, out quality, out status);
+                if (! (err == 0))
+                {
+                    Logging.Logg().Error(@"Ошибка вызова ReadItem для" + strIds + kks_name + " - " + err.ToString(), Logging.INDEX_MESSAGE.NOT_SET);
+                    continue;
+                }
+                else
+                    ;
+
+                torIsData_ItemSetValue (kks_name, type, value, timestamp, quality, status);
             }
-            else
-                ;
-
-            m_dictSignalsAdvised.Add(kks_name, idGrpSgnls);
-
-            //Logging.Logg ().Action (@"Подписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);
-
-            int quality, status;
-            int type = 3;
-            object value;
-            double timestamp;
-
-            err = m_torIsData.ReadItem(kks_name, ref type, out value, out timestamp, out quality, out status);
-            if (! (err == 0))
-            {
-                Logging.Logg().Error(@"Ошибка вызова ReadItem для" + strIds + kks_name + " - " + err.ToString(), Logging.INDEX_MESSAGE.NOT_SET);
-                return;
-            }
-            else
-                ;
-
-            torIsData_ItemNewValue (kks_name, type, value, timestamp, quality, status);
         }
 
         private int getIdGroupSignals(string kksname)
         {
             int iRes = -1;
             
-            lock (lockAdvisedItems)
-            {
+            //lock (lockAdvisedItems)
+            //{
                 if (m_dictSignalsAdvised.ContainsKey (kksname) == true)
                     iRes = m_dictSignalsAdvised[kksname];
                 else
                     ;
-            }
+            //}
 
             return iRes;
         }
@@ -613,14 +636,12 @@ namespace SrcMST
             //Logging.Logg().Action(@"Отписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);
         }
 
-        private void torIsData_ItemNewValue(string kksname, int type, object value, double timestamp, int quality, int status)
+        private void torIsData_ItemSetValue(string kksname, int type, object value, double timestamp, int quality, int status)
         {
             string strErr = string.Empty;
             int idGrpSgnls = -1;
 
-            lock (lockAdvisedItems)
-            {
-                if (type != 3)
+            if (type != 3)
                 {
                     strErr = "SrcMSTKKSNAMEtoris::groupSignals_OnEvtUnadviseItem () - некорректный тип для: " + kksname + @", тип=" + type.ToString() + @" ...";
                     Logging.Logg().Error(strErr, Logging.INDEX_MESSAGE.NOT_SET);
@@ -662,8 +683,14 @@ namespace SrcMST
                     return;
                 }
 
-                (m_dictGroupSignals[idGrpSgnls] as GroupSignalsMSTKKSNAMEtoris).ItemNewValue(kksname, value, timestamp, quality, status);
+                (m_dictGroupSignals[idGrpSgnls] as GroupSignalsMSTKKSNAMEtoris).ItemSetValue(kksname, value, timestamp, quality, status);
+        }
 
+        private void torIsData_ItemNewValue(string kksname, int type, object value, double timestamp, int quality, int status)
+        {
+            lock (lockAdvisedItems)
+            {
+                torIsData_ItemSetValue(kksname, type, value, timestamp, quality, status);
             }
         }
         private void torIsData_ChangeAttributeValue(string item, string name, int type, object value)

@@ -475,7 +475,7 @@ namespace uLoaderCommon
         ///// <summary>
         ///// Изменить состояние - инициировать очередной запрос
         ///// </summary>
-        ///// <param name="state">Сотояние групп сигналов</param>
+        ///// <param name="state">Состояние групп сигналов</param>
         //private void changeState(GroupSignals.STATE state)
         //{
         //    lock (m_lockStateGroupSignals)

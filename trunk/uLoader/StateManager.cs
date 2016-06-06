@@ -240,8 +240,8 @@ namespace uLoader
                 m_listObjects.AddItem(id, tsLimit);
             }
 
-            //Console.WriteLine(@"StateManager::add (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - добавить объект; кол-во=" + m_listObjects.Count + @" ...");
-            Logging.Logg().Debug(@"StateManager::add (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - добавить объект; кол-во->" + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+            //Console.WriteLine(@"StateManager::add (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - добавить объект; кол-во = " + m_listObjects.Count + @" ...");
+            Logging.Logg().Debug(@"StateManager::add (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - добавить объект; кол-во -> " + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
         /// <summary>
         /// Добавить новый объект для контроля
@@ -267,8 +267,8 @@ namespace uLoader
                 m_listObjects.RemoveItem (id);
             }
 
-            //Console.WriteLine(@"StateManager::remove (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - удалить объект; кол-во=" + m_listObjects.Count + @" ...");
-            Logging.Logg().Debug(@"StateManager::remove (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - удалить объект; кол-во<-" + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+            //Console.WriteLine(@"StateManager::remove (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - удалить объект; кол-во = " + m_listObjects.Count + @" ...");
+            Logging.Logg().Debug(@"StateManager::remove (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - удалить объект; кол-во <- " + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
         /// <summary>
         /// Удалить объект из списка контролируемых объектов
@@ -294,7 +294,7 @@ namespace uLoader
             }
 
             //Console.WriteLine(@"StateManager::confirm (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - подтвердить состояние объекта ...");
-            Logging.Logg().Debug(@"StateManager::confirm (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - подтвердить сотояние объекта; кол-во=" + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+            Logging.Logg().Debug(@"StateManager::confirm (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - подтвердить состояние объекта; кол-во = " + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
         /// <summary>
         /// Подтвердить изменение состояния контролируемого объекта
