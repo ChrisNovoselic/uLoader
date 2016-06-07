@@ -288,8 +288,7 @@ namespace uLoader
                 case StatesMachine.SET_TEXT_ADDING:
                 case StatesMachine.SET_GROUP_SIGNALS_PARS:
                 case StatesMachine.GET_GROUP_SIGNALS_DATETIME_PARS:
-                    //Не требуют запроса
-                    break;
+                // группа событий диагностики/контроля
                 case StatesMachine.OMANAGEMENT_ADD:
                 case StatesMachine.OMANAGEMENT_REMOVE:
                 case StatesMachine.OMANAGEMENT_UPDATE:
@@ -346,18 +345,18 @@ namespace uLoader
                     else
                         ;
                     break;
+                // группа событий инициированных пользователем (элементы управления на панели)
                 case StatesMachine.SET_IDCUR_SOURCE_OF_GROUP:
                 case StatesMachine.SET_TEXT_ADDING:
                 case StatesMachine.SET_GROUP_SIGNALS_PARS:
                 case StatesMachine.CLEARVALUES_DEST_GROUP_SIGNALS:
-                    //Ответа не требуется
-                    break;
+                // группа событий диагностики/контроля
                 case StatesMachine.OMANAGEMENT_ADD:
                 case StatesMachine.OMANAGEMENT_REMOVE:
                 case StatesMachine.OMANAGEMENT_CONFIRM:
                 case StatesMachine.OMANAGEMENT_UPDATE:
                 case StatesMachine.OMANAGEMENT_CONTROL:
-                    //Не требуют обработки результата
+                    //Ответа не требуется/не требуют обработки результата
                     break;
                 default:
                     break;

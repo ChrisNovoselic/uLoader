@@ -593,47 +593,54 @@ namespace SrcMST
             return iRes;
         }
 
-        private void groupSignals_OnEvtUnadviseItem(string kks_name)
+        private void groupSignals_OnEvtUnadviseItem(string par)
         {
             int err = -1
                 , idGrpSgnls = -1;
+            string[] kks_names = par.Split(new string [] { @"," }, StringSplitOptions.RemoveEmptyEntries);
             string strErr = string.Empty
                 , strIds = string.Empty;
 
-            if (m_dictSignalsAdvised.ContainsKey(kks_name) == false)
-                return;
-            else
-                ;
-
-            idGrpSgnls = m_dictSignalsAdvised[kks_name];
-            strIds = @" [" + PlugInId + @", key=" + idGrpSgnls + @"]: ";
-
-            try
+            foreach (string kks_name in kks_names)
             {
-                err = m_torIsData.UnadviseItem(kks_name);
-            }
-            catch (Exception e)
-            {
-                Logging.Logg().Exception(e, "TORISLib.TorISDataClass.UnadviseItem(String item) - ...", Logging.INDEX_MESSAGE.NOT_SET);
-            }
+                // для каждого сигнала предполагаем худший вариант - сбой при отписке
+                err = -1;
+                
+                if (m_dictSignalsAdvised.ContainsKey(kks_name) == false)
+                    continue;
+                else
+                    ;
+                // необходимо только в случае возникновения исключения или ошибки
+                idGrpSgnls = m_dictSignalsAdvised[kks_name];
+                strIds = @" [" + PlugInId + @", key=" + idGrpSgnls + @"]: ";
 
-            if (!(err == 0))
-            {
-                switch (err)
+                try
                 {
-                    default:
-                        break;
+                    err = m_torIsData.UnadviseItem(kks_name);
+                }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, "TORISLib.TorISDataClass.UnadviseItem (" + strIds + @", KKS_NAME=" + kks_name + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
 
-                Logging.Logg().Error(@"Ошибка отписки на сигнал" + strIds + kks_name + " - " + strErr, Logging.INDEX_MESSAGE.NOT_SET);
-                return;
+                if (!(err == 0))
+                {
+                    switch (err)
+                    {
+                        default:
+                            break;
+                    }
+
+                    Logging.Logg().Error(@"Ошибка отписки на сигнал" + strIds + kks_name + " - " + strErr, Logging.INDEX_MESSAGE.NOT_SET);
+                    continue;
+                }
+                else
+                    ;
+
+                m_dictSignalsAdvised.Remove(kks_name);
+
+                //Logging.Logg().Action(@"Отписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);
             }
-            else
-                ;
-
-            m_dictSignalsAdvised.Remove(kks_name);
-
-            //Logging.Logg().Action(@"Отписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);
         }
 
         private void torIsData_ItemSetValue(string kksname, int type, object value, double timestamp, int quality, int status)
