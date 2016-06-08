@@ -168,8 +168,7 @@ namespace uLoader
             if (работаToolStripMenuItem.Checked == true)
             {
                 //Добавить вкладку
-                m_TabCtrl.AddTabPage(работаToolStripMenuItem.Text, 1, HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
-                m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add(m_panelWork);
+                m_TabCtrl.AddTabPage(m_panelWork, работаToolStripMenuItem.Text, 1, HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
                 //Запомнить "предыдущий" выбор
                 m_TabCtrl.PrevSelectedIndex = 0;
             }
@@ -275,13 +274,12 @@ namespace uLoader
 
             if (конфигурацияToolStripMenuItem.Checked == true)
             {
-                m_TabCtrl.AddTabPage(strNameMenuItem, 2, HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
-                m_TabCtrl.TabPages[m_TabCtrl.TabCount - 1].Controls.Add(m_panelConfig);
+                m_TabCtrl.AddTabPage(m_panelConfig, strNameMenuItem, 2, HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
             }
             else
             {
                 m_panelConfig.Activate(false);
-                m_TabCtrl.RemoveTabPage(strNameMenuItem);
+                m_TabCtrl.RemoveTabPage(); //strNameMenuItem                
             }
 
             activateMenuItemConfig(конфигурацияToolStripMenuItem.Checked);
