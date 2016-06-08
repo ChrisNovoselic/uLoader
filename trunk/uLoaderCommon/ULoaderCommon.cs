@@ -606,6 +606,7 @@ namespace uLoaderCommon
                 {
                     int iDup = 0;
                     DataRow[] arPrev = null;
+                    //int iIdType = -1; // неизвестный тип поля [ID] таблиц [tblPrev], [tblCur]
 
                     if (!(tblCur == null))
                         if ((((!(tblCur.Columns.IndexOf(@"ID") < 0)) && (!(tblCur.Columns.IndexOf(@"DATETIME") < 0)))
@@ -620,11 +621,13 @@ namespace uLoaderCommon
                                 && (((!(tblPrev.Columns.IndexOf(@"ID") < 0)) && (!(tblPrev.Columns.IndexOf(@"DATETIME") < 0)))
                                 && (tblPrev.Rows.Count > 0)))
                             {
+                                //iIdType = tblPrev.Columns[tblPrev.Columns.IndexOf(@"ID")].GetType().Ge
+
                                 var listPrevDistinct = tblPrev.AsEnumerable().GroupBy(g => g[@"ID"]).Select(s => s.Last()).ToList();
 
                                 foreach (DataRow rCur in listCurDistinct)
                                 {
-                                    arPrev = listPrevDistinct.Where(r => Int32.Parse((string)r[@"ID"]) == Convert.ToInt32((string)rCur[@"ID"])).ToArray(); //tblPrev.Select(@"ID=" + rCur[@"ID"]);
+                                    arPrev = listPrevDistinct.Where(r => Convert.ToInt32(r[@"ID"]) == Convert.ToInt32(rCur[@"ID"])).ToArray(); //tblPrev.Select(@"ID=" + rCur[@"ID"]);
                                     if (arPrev.Length > 0)
                                         if (arPrev.Length == 1)
                                             if (!(DateTime.Compare((DateTime)rCur[@"DATETIME"], (DateTime)arPrev[0][@"DATETIME"]) < 0))
@@ -1592,7 +1595,7 @@ namespace uLoaderCommon
             foreach (KeyValuePair<int, Type> pair in _types)
                 if (pair.Value.Name == nameTypeObj)
                 {
-                    if (createObject(pair.Key) == true)
+                    if (createObject(pair.Key) == 1)
                         iRes = 0;
                     else
                         ;

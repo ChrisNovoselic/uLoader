@@ -463,6 +463,9 @@ namespace uLoader
                 {
                     case 0:
                         stateRes = STATE_DLL.LOADED;
+
+                        _id = plugIn._Id;
+                        Add(_id, plugIn);
                         break;
                     case -1:
                         stateRes = STATE_DLL.NOT_LOAD;
@@ -474,9 +477,6 @@ namespace uLoader
                         //stateRes = STATE_DLL.UNKNOWN;
                         break;
                 }
-
-                _id = plugIn._Id;
-                Add(_id, plugIn);
             }
         }
         /// <summary>
@@ -494,11 +494,11 @@ namespace uLoader
 
             m_plugIns.LoadPlugIn(this.m_strDLLName, out _iStateDLL);
 
-            strTypeName = this.m_strDLLName.Split(new char[] { ':' }, StringSplitOptions.None)[1];
             if (_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
             {
                 loader = m_plugIns.Loader;
 
+                strTypeName = this.m_strDLLName.Split(new char[] { ':' }, StringSplitOptions.None)[1];
                 if (loader.CreateObject(strTypeName) == 0)
                 {
                     _iIdTypePlugInObjectLoaded = loader.KeySingleton; //plugInRes.GetKeyType(strTypeName);
