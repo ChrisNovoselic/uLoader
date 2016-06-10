@@ -1537,7 +1537,10 @@ namespace uLoader
         public void RemoveDelegatePlugInOnEvtDataAskedHost(int indxGrpSrcDest, DelegateObjectFunc fOnEvt)
         {
             try {
-                m_plugIns.Loader.EvtDataAskedHost -= fOnEvt;
+                if (_iIdTypePlugInObjectLoaded > 0)
+                    m_plugIns.Loader.EvtDataAskedHost -= fOnEvt;
+                else
+                    ; // плюгИн уже выгружен, либо идентификатор типа некорректен
             }
             catch (Exception e)
             {

@@ -25,8 +25,10 @@ namespace TestFunc
                 //typeof(biysktmora_test)
                 ////Вариант №2
                 //typeof(ClassDataTableDistinct)
-                //Вариант №3
-                typeof(ClassDataTableDistinct)
+                ////Вариант №3
+                //typeof(ClassDataTableDistinct)
+                //Вариант №4
+                typeof(ClassQueueRemoveAt)
                 ;
 
             try { objTest = Activator.CreateInstance(typeTest); }

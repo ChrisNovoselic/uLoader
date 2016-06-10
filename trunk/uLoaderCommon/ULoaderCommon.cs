@@ -787,11 +787,26 @@ namespace uLoaderCommon
         protected ConnectionSettings m_connSett;
         private int m_iIdGroupSignalsCurrent;
         /// <summary>
+        /// Объект синхронизации - указывает выполняется ли обработка состояния в текущий момент
+        /// </summary>
+        protected ManualResetEvent m_manualEvtStateHandlerCompleted;
+        /// <summary>
         /// Целочисленный идентификатор группы сигналов
         ///  , ключ для словаря с группами сигналов
         ///  , уникальный в границах приложения, передается из-вне (файл конфигурации)
         /// </summary>
-        protected virtual int IdGroupSignalsCurrent { get { return m_iIdGroupSignalsCurrent; } set { m_iIdGroupSignalsCurrent = value; } }
+        protected virtual int IdGroupSignalsCurrent {
+            get { return m_iIdGroupSignalsCurrent; }
+
+            set {
+                if (value == -1)
+                    m_manualEvtStateHandlerCompleted.Set();
+                else
+                    m_manualEvtStateHandlerCompleted.Reset();
+
+                m_iIdGroupSignalsCurrent = value;
+            }
+        }
 
         private Semaphore m_semaInitId;
         private ManualResetEvent m_evtInitSource;
@@ -978,8 +993,8 @@ namespace uLoaderCommon
                             }
                             else
                             {//Считать переданные параметры - параметрами группы сигналов
-                                lock (m_lockStateGroupSignals)
-                                {
+                                //lock (m_lockStateGroupSignals)
+                                //{
                                     m_dictGroupSignals[id].Mode = (uLoaderCommon.MODE_WORK)pars[0];
                                     m_dictGroupSignals[id].State = GroupSignals.STATE.STOP;
                                     //Переопределено в 'HHandlerDbULoaderDatetimeSrc'
@@ -994,7 +1009,7 @@ namespace uLoaderCommon
                                     m_dictGroupSignals[id].PeriodMain = (TimeSpan)pars[2];
                                     m_dictGroupSignals[id].PeriodLocal = (TimeSpan)pars[3];
                                     m_dictGroupSignals[id].MSecIntervalLocal = (int)pars[4];
-                                }
+                                //}
 
                                 //Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
                             }
@@ -1173,18 +1188,21 @@ namespace uLoaderCommon
             }
             //Освободить ресурс ядра ОС
             //??? "везде" 'true'
-            if (bRes == false)
-                try
-                {
-                    //m_semaQueue.Release(1);
-                    m_autoResetEvtQueue.Reset();
-                }
-                catch (Exception e)
-                { //System.Threading.SemaphoreFullException
-                    Logging.Logg().Exception(e, "HHandlerDbULoader::fThreadQueue () - semaState.Release(1)", Logging.INDEX_MESSAGE.NOT_SET);
-                }
-            else
-                ;
+            try
+            {
+                if (bRes == false)
+                    m_autoResetEvtQueue.Reset();                    
+                else
+                    ;
+
+                m_autoResetEvtQueue.Close();
+                // предполагается, что для этого объекта 'Reset' уже выполнен
+                m_manualEvtStateHandlerCompleted.Close();
+            }
+            catch (Exception e)
+            { //System.Threading.SemaphoreFullException
+                Logging.Logg().Exception(e, "HHandlerDbULoader::fThreadQueue () - m_autoResetEvtQueue.Release(1)", Logging.INDEX_MESSAGE.NOT_SET);
+            }
         }
         /// <summary>
         /// Возвратить массив объектов для передачи клиенту
@@ -1408,11 +1426,19 @@ namespace uLoaderCommon
         /// Остановить группу сигналов по указанному идентификатору
         /// </summary>
         /// <param name="id">Идентификатор группы сигналов</param>
+        /// <param name="direct">Направление запроса (запрос ИЛИ подтверждение получения ответа на запрос)</param>
         public virtual void Stop(int id, ID_HEAD_ASKED_HOST direct)
         {
             int iNeedStopped = 0; //Признак необходимости останова "родительского" объекта
+            List<int> listIdGroupSignals = new List<int>(); // список идентификаторов групп сигналов - копия очереди для обработки (для исключения из очереди идентификатора останавливаемой группы)
 
             m_semaInitId.WaitOne ();
+            // если обрабатывается указанная группа сигналов
+            if (IdGroupSignalsCurrent == id)
+                // ожидать окончания обраьотки
+                m_manualEvtStateHandlerCompleted.WaitOne();
+            else
+                ;
 
             lock (m_lockStateGroupSignals)
             {
@@ -1435,7 +1461,7 @@ namespace uLoaderCommon
                 {
                     if (! (_iPlugin == null))
                         //Подтвердить клиенту останов группы сигналов
-                        (_iPlugin as PlugInBase).DataAskedHost(new object[] { _iPlugin.KeySingleton, ID_DATA_ASKED_HOST.STOP, id, direct }); //-1 неизвестный идентификатор типа (класса)объекта
+                        (_iPlugin as PlugInBase).DataAskedHost(new object[] { _iPlugin.KeySingleton, ID_DATA_ASKED_HOST.STOP, id, direct });
                     else
                         ;
                 }
@@ -1459,7 +1485,17 @@ namespace uLoaderCommon
                 }
                 else
                     ;
-            }            
+            }
+
+            lock (m_lockQueue)
+            {
+                listIdGroupSignals = m_queueIdGroupSignals.ToList<int>();
+                m_queueIdGroupSignals.Clear();
+                while (listIdGroupSignals.Contains(id) == true)
+                    listIdGroupSignals.Remove(id);
+
+                listIdGroupSignals.ForEach(delegate(int i1) { m_queueIdGroupSignals.Enqueue(i1); });
+            }
 
             m_semaInitId.Release(1);
         }
@@ -1485,7 +1521,7 @@ namespace uLoaderCommon
                 //m_semaQueue = new Semaphore(1, 1);
                 //m_semaQueue.WaitOne();
                 m_autoResetEvtQueue = new AutoResetEvent (false);
-                //m_mnlResetEvtQueue = new ManualResetEvent (false);
+                m_manualEvtStateHandlerCompleted = new ManualResetEvent(true);
 
                 //InitializeSyncState();
                 //Установить в "несигнальное" состояние
