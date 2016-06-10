@@ -1135,8 +1135,10 @@ namespace uLoaderCommon
                         else
                             ;
                     }
+                    //m_manualEvtStateHandlerCompleted.Reset();
                     //Получить объект очереди событий
                     IdGroupSignalsCurrent = m_queueIdGroupSignals.Peek();
+                    
 
                     State = GroupSignals.STATE.ACTIVE;
 
@@ -1178,7 +1180,8 @@ namespace uLoaderCommon
 
                     try
                     {
-                        IdGroupSignalsCurrent = -1;
+                        //m_manualEvtStateHandlerCompleted.Set();
+                        IdGroupSignalsCurrent = -1;                        
                     }
                     catch (Exception e)
                     {
@@ -1196,7 +1199,7 @@ namespace uLoaderCommon
                     ;
 
                 m_autoResetEvtQueue.Close();
-                // предполагается, что для этого объекта 'Reset' уже выполнен
+                //// предполагается, что для этого объекта 'Reset' уже выполнен
                 m_manualEvtStateHandlerCompleted.Close();
             }
             catch (Exception e)
@@ -1435,8 +1438,12 @@ namespace uLoaderCommon
             m_semaInitId.WaitOne ();
             // если обрабатывается указанная группа сигналов
             if (IdGroupSignalsCurrent == id)
-                // ожидать окончания обраьотки
+            {
+                Logging.Logg().Debug(@"HHandlerDbULoader::Stop (Id=" + _iPlugin._Id + @", key=" + id + @") - ожидание окончания обработки группы сигналов...", Logging.INDEX_MESSAGE.NOT_SET);
+                // ожидать окончания обработки
                 m_manualEvtStateHandlerCompleted.WaitOne();
+                //while (IdGroupSignalsCurrent == id) ;
+            }
             else
                 ;
 

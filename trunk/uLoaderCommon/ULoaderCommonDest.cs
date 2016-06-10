@@ -680,7 +680,10 @@ namespace uLoaderCommon
                     if ((tblCur.Columns.Count > 2)
                         && ((!(tblCur.Columns.IndexOf(@"ID") < 0)) && (!(tblCur.Columns.IndexOf(@"DATETIME") < 0))))
                     {
-                        tblCur.Columns.Add(@"tmdelta", typeof(int));
+                        if (tblCur.Columns.IndexOf(@"tmdelta") < 0)
+                            tblCur.Columns.Add(@"tmdelta", typeof(int));
+                        else
+                            ;
                         TableDistinct = tblCur.Clone();
 
                         for (int s = 0; s < arSignals.Length; s++)

@@ -596,23 +596,31 @@ namespace SrcMST
         private void groupSignals_OnEvtUnadviseItem(string par)
         {
             int err = -1
-                , idGrpSgnls = -1;
+                , idGrpSgnls = -1
+                , i = -1;
             string[] kks_names = par.Split(new string [] { @"," }, StringSplitOptions.RemoveEmptyEntries);
+            int[] arResUnadvised = new int[kks_names.Length]; //Рез-т выполнения метода отписки от сигнала (-2 - ничего не делали, -1 - исключение, 0 - Ок, 1 - ошибка при выполнении метода)
             string strErr = string.Empty
                 , strIds = string.Empty;
 
+            i = -1;
             foreach (string kks_name in kks_names)
             {
+                i ++;
                 // для каждого сигнала предполагаем худший вариант - сбой при отписке
                 err = -1;
-                
+
                 if (m_dictSignalsAdvised.ContainsKey(kks_name) == false)
+                {
+                    arResUnadvised[i] = -2; //ничего не делали
+
                     continue;
+                }
                 else
                     ;
                 // необходимо только в случае возникновения исключения или ошибки
                 idGrpSgnls = m_dictSignalsAdvised[kks_name];
-                strIds = @" [" + PlugInId + @", key=" + idGrpSgnls + @"]: ";
+                strIds = @"[" + PlugInId + @", key=" + idGrpSgnls + @"]";
 
                 try
                 {
@@ -620,18 +628,22 @@ namespace SrcMST
                 }
                 catch (Exception e)
                 {
+                    arResUnadvised[i] = -1; // исключение при выполнении метода
+
                     Logging.Logg().Exception(e, "TORISLib.TorISDataClass.UnadviseItem (" + strIds + @", KKS_NAME=" + kks_name + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
 
                 if (!(err == 0))
                 {
+                    arResUnadvised[i] = 1; // ошибка - как рез-т выполнения метода
+
                     switch (err)
                     {
                         default:
                             break;
                     }
 
-                    Logging.Logg().Error(@"Ошибка отписки на сигнал" + strIds + kks_name + " - " + strErr, Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Error(@"Ошибка отписки на сигнал " + strIds + @": " + kks_name + " - " + strErr, Logging.INDEX_MESSAGE.NOT_SET);
                     continue;
                 }
                 else

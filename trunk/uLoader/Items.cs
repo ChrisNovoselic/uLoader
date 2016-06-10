@@ -457,26 +457,31 @@ namespace uLoader
 
                 string name = Path.GetFileNameWithoutExtension(strDLLName.Split(new char[] { ':' }, StringSplitOptions.None)[0]);
 
-                plugIn = load(name, out iLoadRes) as PlugInULoader;
-
-                switch (iLoadRes)
+                if (name.Equals(string.Empty) == false)
                 {
-                    case 0:
-                        stateRes = STATE_DLL.LOADED;
+                    plugIn = load(name, out iLoadRes) as PlugInULoader;
 
-                        _id = plugIn._Id;
-                        Add(_id, plugIn);
-                        break;
-                    case -1:
-                        stateRes = STATE_DLL.NOT_LOAD;
-                        break;
-                    case -2:
-                        stateRes = STATE_DLL.TYPE_MISMATCH;
-                        break;
-                    default:
-                        //stateRes = STATE_DLL.UNKNOWN;
-                        break;
+                    switch (iLoadRes)
+                    {
+                        case 0:
+                            stateRes = STATE_DLL.LOADED;
+
+                            _id = plugIn._Id;
+                            Add(_id, plugIn);
+                            break;
+                        case -1:
+                            stateRes = STATE_DLL.NOT_LOAD;
+                            break;
+                        case -2:
+                            stateRes = STATE_DLL.TYPE_MISMATCH;
+                            break;
+                        default:
+                            //stateRes = STATE_DLL.UNKNOWN;
+                            break;
+                    }
                 }
+                else
+                    ;
             }
         }
         /// <summary>
