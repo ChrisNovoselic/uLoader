@@ -123,7 +123,7 @@ namespace uLoaderCommon
             public int Dequeue()
             {
                 int iRes = 0
-                    , cntPrev = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Rows.Count
+                    , cntPrev = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT] == null ? -1 : m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Rows.Count
                     , cntCur = cntPrev;
 
                 //Проверка признака сравнения текущей и предыдущих таблиц + наличия очереди перед вызовом
@@ -167,7 +167,7 @@ namespace uLoaderCommon
                         + @", строк_было=" + cntPrev
                         + @", строк_стало=" + cntCur
                         ;
-                        
+
                 Console.WriteLine(msg);
                 Logging.Logg().Debug(msg + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
