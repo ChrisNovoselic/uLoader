@@ -67,23 +67,21 @@ namespace SrcMST
             public GroupSignalsMSTKKSNAMEtoris(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
-                DataColumn[] arColl = new DataColumn[] {
-                                                new DataColumn (@"ID", typeof (string))
-                                                , new DataColumn (@"VALUE", typeof (double))
-                                                , new DataColumn (@"DATETIME", typeof (DateTime))
-                                            };
-
                 m_tableTorIs = new DataTable ();
+                m_tableTorIs.Columns.AddRange (new DataColumn[] {
+                    new DataColumn (@"ID", typeof (string))
+                    , new DataColumn (@"VALUE", typeof (double))
+                    , new DataColumn (@"DATETIME", typeof (DateTime))
+                });
 
-                m_tableTorIs.Columns.AddRange (arColl);
-                
-                m_TablePrevValue = new DataTable();
                 m_TablePrevValue = m_tableTorIs.Copy();
 
                 for (int i = 0; i < m_arSignals.Length; i++)
-                {
-                    m_TablePrevValue.Rows.Add(new object[] { (m_arSignals[i] as uLoaderCommon.HHandlerDbULoaderSrc.GroupSignalsSrc.SIGNALMSTKKSNAMEsql).m_kks_name.ToString(), Convert.ToDouble(0.ToString("F2")), DateTime.MinValue}); 
-                }
+                    m_TablePrevValue.Rows.Add(new object[] {
+                        (m_arSignals[i] as uLoaderCommon.HHandlerDbULoaderSrc.GroupSignalsSrc.SIGNALMSTKKSNAMEsql).m_kks_name.ToString()
+                        , Convert.ToDouble(0.ToString("F2"))
+                        , DateTime.MinValue
+                    });
 
                 RepeatSignal += new RepeatSignalEventHandler(repeat_value);
 
@@ -465,10 +463,14 @@ namespace SrcMST
             {
                 lock (lockAdvisedItems)
                 {
+                    m_torIsData.ItemNewValue -= torIsData_ItemNewValue;
+                    
                     if (m_dictGroupSignals.ContainsKey (key) == true)
                         ((GroupSignalsMSTKKSNAMEtoris)m_dictGroupSignals[key]).UnadviseItems();
                     else
                         ;
+
+                    m_torIsData.ItemNewValue += new _ITorISDataEvents_ItemNewValueEventHandler (torIsData_ItemNewValue);
                 }
 
                 base.Stop(key, direct);
@@ -607,8 +609,8 @@ namespace SrcMST
             foreach (string kks_name in kks_names)
             {
                 i ++;
-                // для каждого сигнала предполагаем худший вариант - сбой при отписке
-                err = -1;
+                // для каждого сигнала предполагаем лучший вариант - отписка без ошибки
+                err = 0;
 
                 if (m_dictSignalsAdvised.ContainsKey(kks_name) == false)
                 {
@@ -643,7 +645,7 @@ namespace SrcMST
                             break;
                     }
 
-                    Logging.Logg().Error(@"Ошибка отписки на сигнал " + strIds + @": " + kks_name + " - " + strErr, Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Error(@"Ошибка отмены регистрации обработки событий для сигнала " + strIds + @": " + kks_name + " - " + strErr, Logging.INDEX_MESSAGE.NOT_SET);
                     continue;
                 }
                 else
@@ -661,50 +663,58 @@ namespace SrcMST
             int idGrpSgnls = -1;
 
             if (type != 3)
+            {
+                strErr = "SrcMSTKKSNAMEtoris::groupSignals_OnEvtUnadviseItem () - некорректный тип для: " + kksname + @", тип=" + type.ToString() + @" ...";
+                Logging.Logg().Error(strErr, Logging.INDEX_MESSAGE.NOT_SET);
+
+                return;
+            }
+            else
+                ;
+
+            idGrpSgnls = getIdGroupSignals(kksname);
+            if (idGrpSgnls < 0)
+            {
+                strErr = "SrcMSTKKSNAMEtoris::groupSignals_OnEvtUnadviseItem () - неиспользуемый сигнал: " + kksname + @" ...";
+                Logging.Logg().Error(strErr, Logging.INDEX_MESSAGE.NOT_SET);
+
+                return;
+            }
+            else
+                ;
+
+            if (quality != 0)
+            {
+                switch (quality)
                 {
-                    strErr = "SrcMSTKKSNAMEtoris::groupSignals_OnEvtUnadviseItem () - некорректный тип для: " + kksname + @", тип=" + type.ToString() + @" ...";
-                    Logging.Logg().Error(strErr, Logging.INDEX_MESSAGE.NOT_SET);
-
-                    return;
+                    case 1: strErr = "недостоверный ответ от КП"; break;
+                    case 2: strErr = "нет связи с КП"; break;
+                    case 3: strErr = "аппаратная ошибка"; break;
+                    case 4: strErr = "ошибка конфигурации"; break;
+                    case 5: strErr = "performance overflow"; break;
+                    case 6: strErr = "software error"; break;
+                    case 7: strErr = "потеря связи с ЦППС"; break;
+                    case 8: strErr = "ошибка протокола при ответе от КП"; break;
+                    case 9: strErr = "логически неверный ответ от КП"; break;
+                    default: strErr = "неизвестная ошибка " + quality.ToString(); break;
                 }
-                else
-                    ;
+                strErr = "SrcMSTKKSNAMEtoris::groupSignals_OnEvtUnadviseItem () - сигнал: " + kksname + " с ошибкой: " + strErr;
+                Logging.Logg().Error(strErr, Logging.INDEX_MESSAGE.NOT_SET);
 
-                idGrpSgnls = getIdGroupSignals(kksname);
-                if (idGrpSgnls < 0)
-                {
-                    strErr = "SrcMSTKKSNAMEtoris::groupSignals_OnEvtUnadviseItem () - неиспользуемый сигнал: " + kksname + @" ...";
-                    Logging.Logg().Error(strErr, Logging.INDEX_MESSAGE.NOT_SET);
+                return;
+            }
 
-                    return;
-                }
-                else
-                    ;
-
-                if (quality != 0)
-                {
-                    switch (quality)
-                    {
-                        case 1: strErr = "недостоверный ответ от КП"; break;
-                        case 2: strErr = "нет связи с КП"; break;
-                        case 3: strErr = "аппаратная ошибка"; break;
-                        case 4: strErr = "ошибка конфигурации"; break;
-                        case 5: strErr = "performance overflow"; break;
-                        case 6: strErr = "software error"; break;
-                        case 7: strErr = "потеря связи с ЦППС"; break;
-                        case 8: strErr = "ошибка протокола при ответе от КП"; break;
-                        case 9: strErr = "логически неверный ответ от КП"; break;
-                        default: strErr = "неизвестная ошибка " + quality.ToString(); break;
-                    }
-                    strErr = "SrcMSTKKSNAMEtoris::groupSignals_OnEvtUnadviseItem () - сигнал: " + kksname + " с ошибкой: " + strErr;
-                    Logging.Logg().Error(strErr, Logging.INDEX_MESSAGE.NOT_SET);
-
-                    return;
-                }
-
-                (m_dictGroupSignals[idGrpSgnls] as GroupSignalsMSTKKSNAMEtoris).ItemSetValue(kksname, value, timestamp, quality, status);
+            (m_dictGroupSignals[idGrpSgnls] as GroupSignalsMSTKKSNAMEtoris).ItemSetValue(kksname, value, timestamp, quality, status);
         }
-
+        /// <summary>
+        /// Обработчик события - появление нового значения в OPC-сервере МСТ для сигнала
+        /// </summary>
+        /// <param name="kksname">ККС-наименование сигнала для которого получено новое значение</param>
+        /// <param name="type">Тип ...</param>
+        /// <param name="value">Новое значение</param>
+        /// <param name="timestamp">Метка времени (всегда = метке времени запуска на выполнение OPC-сервера МСТ)</param>
+        /// <param name="quality">Качество полученного нового значения</param>
+        /// <param name="status">Состояние ...</param>
         private void torIsData_ItemNewValue(string kksname, int type, object value, double timestamp, int quality, int status)
         {
             lock (lockAdvisedItems)
@@ -712,10 +722,14 @@ namespace SrcMST
                 torIsData_ItemSetValue(kksname, type, value, timestamp, quality, status);
             }
         }
+
         private void torIsData_ChangeAttributeValue(string item, string name, int type, object value)
         {
         }
-
+        /// <summary>
+        /// Изменение состояние OPC-сервера МСТ
+        /// </summary>
+        /// <param name="newStatus">Пррзнак нового статуса</param>
         private void torIsData_ChangeStatus(int newStatus)
         {
             switch (newStatus)
@@ -726,7 +740,6 @@ namespace SrcMST
                     break;
             }
         }
-
         /// <summary>
         /// Проверить наличие ответа на запрос к источнику данных
         /// </summary>

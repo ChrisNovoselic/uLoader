@@ -36,6 +36,11 @@ namespace uLoader
                 return (this.m_idTypeRegistred == (obj as ID).m_idTypeRegistred)
                     && (this.m_idGroupSgnls.Equals((obj as ID).m_idGroupSgnls) == true);
             }
+
+            public override int GetHashCode()
+            {
+                return base.GetHashCode();
+            }
         }
         /// <summary>
         /// Перечисление - состояния объектов контроля
@@ -123,7 +128,13 @@ namespace uLoader
             /// <param name="id">Сложный идентификатор объекта</param>
             public void RemoveItem (ID id)
             {
-                this[indexOfId(id)].SetRemoved ();
+                int indx = indexOfId(id);
+
+                if (!(indx < 0))
+                    this[indx].SetRemoved();
+                else
+                    Logging.Logg().Error(@"HHandlerQueue.ListOManagement::RemoveItem (IdGrpSgnls=" + id.m_idGroupSgnls
+                        + @", IdTypeRegistred=)" + id.m_idTypeRegistred + @" - объект для удаления не найден ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
             /// <summary>
             /// Подтвердить изменения состояния (добавление/удаление)

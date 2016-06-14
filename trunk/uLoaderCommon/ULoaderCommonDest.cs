@@ -132,16 +132,22 @@ namespace uLoaderCommon
                     if (m_queueTableRec.Count > 0)
                     {
                         m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT] = m_queueTableRec.Dequeue();
-                        cntCur = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Rows.Count;
+                        if (!(m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT] == null))
+                            cntCur = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Rows.Count;
+                        else
+                            iRes = -1;
                     }
                     else
                         ;
                 }
 
-                //Пустую таблицу НЕ копировать, чтобы предотвратить потерю информацию в предыдущей
-                // , пустая таблица - признак перехода через границу интервала опроса
-                if (m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Rows.Count > 0)
-                    m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS] = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Copy();
+                if (!(iRes < 0))
+                    //Пустую таблицу НЕ копировать, чтобы предотвратить потерю информацию в предыдущей
+                    // , пустая таблица - признак перехода через границу интервала опроса
+                    if (m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Rows.Count > 0)
+                        m_arTableRec[(int)INDEX_DATATABLE_RES.PREVIOUS] = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Copy();
+                    else
+                        iRes = 1;
                 else
                     ;
                 //Очистить предыдущую таблицу, чтобы при очередной итерации
