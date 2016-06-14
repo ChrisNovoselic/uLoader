@@ -113,12 +113,15 @@ namespace uLoader
             public int AddItem(ID id, TimeSpan tsLimit)
             {
                 int indx = indexOfId(id);
+                //Console.WriteLine(@"HHandlerQueue.ListOManagement::AddItem (IdGrpSgnls=" + id.m_idGroupSgnls
+                //        + @", IdTypeRegistred=" + id.m_idTypeRegistred + @") - ДОБАВЛЕН!");
 
                 if (indx < 0)
                     this.Add(new OManagement() { m_id = id, m_state = STATE.ADDED, m_tsLimit = tsLimit, m_dtUpdate = DateTime.Now });
                 else
-                    // ошибка - такой объект уже контролируется
-                    ;
+                    // предупреждение - такой объект уже контролируется
+                    Logging.Logg().Warning(@"HHandlerQueue.ListOManagement::AddItem (IdGrpSgnls=" + id.m_idGroupSgnls
+                        + @", IdTypeRegistred=" + id.m_idTypeRegistred + @") - добавляемый объект уже контролируется ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 return this.Count - 1;
             }
@@ -129,12 +132,14 @@ namespace uLoader
             public void RemoveItem (ID id)
             {
                 int indx = indexOfId(id);
+                //Console.WriteLine(@"HHandlerQueue.ListOManagement::RemoveItem (IdGrpSgnls=" + id.m_idGroupSgnls
+                //        + @", IdTypeRegistred=" + id.m_idTypeRegistred + @") - удалЁн!");
 
                 if (!(indx < 0))
                     this[indx].SetRemoved();
                 else
                     Logging.Logg().Error(@"HHandlerQueue.ListOManagement::RemoveItem (IdGrpSgnls=" + id.m_idGroupSgnls
-                        + @", IdTypeRegistred=)" + id.m_idTypeRegistred + @" - объект для удаления не найден ...", Logging.INDEX_MESSAGE.NOT_SET);
+                        + @", IdTypeRegistred=" + id.m_idTypeRegistred + @") - объект для удаления не найден ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
             /// <summary>
             /// Подтвердить изменения состояния (добавление/удаление)
@@ -143,6 +148,7 @@ namespace uLoader
             public void Confirm(ID id)
             {
                 int indx = indexOfId(id);
+                string msgErr = string.Empty;
 
                 if (!(indx < 0))
                     if (this[indx].m_state == STATE.ADDED)
@@ -151,9 +157,17 @@ namespace uLoader
                         if (this[indx].m_state == STATE.REMOVED)
                             this.RemoveAt(indx);
                         else
-                            ; // ошибка - объект не может получить подтверждение
+                            // ошибка - объект не может получить подтверждение
+                            msgErr = @"объект [сост.=" + this[indx].m_state + @"] не может получить подтверждение";
                 else
-                    ; // ошибка - объект для подтверждения состояния не найден
+                    // ошибка - объект для подтверждения состояния не найден
+                    msgErr = @"объект для подтверждения состояния не найден";
+
+                if (msgErr.Equals (string.Empty) == false)
+                    Logging.Logg().Error(@"HHandlerQueue.ListOManagement::Confirm (IdGrpSgnls=" + id.m_idGroupSgnls
+                            + @", IdTypeRegistred=" + id.m_idTypeRegistred + @") - " + msgErr + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+                else
+                    ;
             }
             /// <summary>
             /// Обновить состояние контролируемого объекта

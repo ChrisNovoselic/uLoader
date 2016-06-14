@@ -125,6 +125,7 @@ namespace SrcMST
             public void UnadviseItems()
             {
                 string parsToEvt = string.Empty;
+                IAsyncResult iar = null;
                 
                 foreach (SIGNALMSTKKSNAMEsql sgnl in m_arSignals)
                     parsToEvt += sgnl.m_kks_name + @",";
@@ -134,7 +135,11 @@ namespace SrcMST
                     // исключить лишнюю запятую в списке
                     parsToEvt = parsToEvt.Substring(0, parsToEvt.Length - 1);
                     // иницициировать событие - отписки
-                    EvtUnadviseItem(parsToEvt);
+                    iar = EvtUnadviseItem.BeginInvoke(parsToEvt, null, null);
+                    // ожидать окончания обработки события (вар.№1)
+                    iar.AsyncWaitHandle.WaitOne();
+                    //// ожидать окончания обработки события (вар.№2)
+                    //EvtUnadviseItem.EndInvoke(iar);
                 }
                 else
                     ;
@@ -463,14 +468,10 @@ namespace SrcMST
             {
                 lock (lockAdvisedItems)
                 {
-                    m_torIsData.ItemNewValue -= torIsData_ItemNewValue;
-                    
                     if (m_dictGroupSignals.ContainsKey (key) == true)
                         ((GroupSignalsMSTKKSNAMEtoris)m_dictGroupSignals[key]).UnadviseItems();
                     else
                         ;
-
-                    m_torIsData.ItemNewValue += new _ITorISDataEvents_ItemNewValueEventHandler (torIsData_ItemNewValue);
                 }
 
                 base.Stop(key, direct);
@@ -664,7 +665,7 @@ namespace SrcMST
 
             if (type != 3)
             {
-                strErr = "SrcMSTKKSNAMEtoris::groupSignals_OnEvtUnadviseItem () - некорректный тип для: " + kksname + @", тип=" + type.ToString() + @" ...";
+                strErr = "SrcMSTKKSNAMEtoris::torIsData_ItemSetValue () - некорректный тип для: " + kksname + @", тип=" + type.ToString() + @" ...";
                 Logging.Logg().Error(strErr, Logging.INDEX_MESSAGE.NOT_SET);
 
                 return;
@@ -675,7 +676,7 @@ namespace SrcMST
             idGrpSgnls = getIdGroupSignals(kksname);
             if (idGrpSgnls < 0)
             {
-                strErr = "SrcMSTKKSNAMEtoris::groupSignals_OnEvtUnadviseItem () - неиспользуемый сигнал: " + kksname + @" ...";
+                strErr = "SrcMSTKKSNAMEtoris::torIsData_ItemSetValue () - неиспользуемый сигнал: " + kksname + @" ...";
                 Logging.Logg().Error(strErr, Logging.INDEX_MESSAGE.NOT_SET);
 
                 return;
@@ -698,7 +699,7 @@ namespace SrcMST
                     case 9: strErr = "логически неверный ответ от КП"; break;
                     default: strErr = "неизвестная ошибка " + quality.ToString(); break;
                 }
-                strErr = "SrcMSTKKSNAMEtoris::groupSignals_OnEvtUnadviseItem () - сигнал: " + kksname + " с ошибкой: " + strErr;
+                strErr = "SrcMSTKKSNAMEtoris::torIsData_ItemSetValue () - сигнал: " + kksname + " с ошибкой: " + strErr;
                 Logging.Logg().Error(strErr, Logging.INDEX_MESSAGE.NOT_SET);
 
                 return;
