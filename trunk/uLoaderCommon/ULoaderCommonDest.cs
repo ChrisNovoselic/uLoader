@@ -122,7 +122,7 @@ namespace uLoaderCommon
 
             public int Dequeue()
             {
-                int iRes = 0
+                int iRes = -1
                     , cntPrev = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT] == null ? -1 : m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Rows.Count
                     , cntCur = cntPrev;
 
@@ -133,9 +133,13 @@ namespace uLoaderCommon
                     {
                         m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT] = m_queueTableRec.Dequeue();
                         if (!(m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT] == null))
+                        {
                             cntCur = m_arTableRec[(int)INDEX_DATATABLE_RES.CURRENT].Rows.Count;
+
+                            iRes = 0;
+                        }
                         else
-                            iRes = -1;
+                            ;
                     }
                     else
                         ;
@@ -207,19 +211,21 @@ namespace uLoaderCommon
                 {
                     lock (this)
                     {
-                        ////Установить значения диапазона даты/времени
-                        //if ((!(value == null))
-                        //    && (value.Rows.Count > 0))
-                        //{
-                        //    // т.к. записи в таблице отсортированы по [DATE_TIME]
-                        //    DateTimeRangeRecieved.Set((DateTime)value.Rows[0][@"DATETIME"]
-                        //        , (DateTime)value.Rows[value.Rows.Count - 1][@"DATETIME"]);
-                        //}
-                        //else
-                        //    ;
-                        
-                        //Добавить элемент в очередь
-                        m_queueTableRec.Enqueue (value);
+                        if (!(value == null))
+                        {
+                            //if (value.Rows.Count > 0)
+                            //    //Установить значения диапазона даты/времени
+                            //    // т.к. записи в таблице отсортированы по [DATE_TIME]
+                            //    DateTimeRangeRecieved.Set((DateTime)value.Rows[0][@"DATETIME"]
+                            //        , (DateTime)value.Rows[value.Rows.Count - 1][@"DATETIME"]);
+                            //else
+                            //    ;
+
+                            //Добавить элемент в очередь
+                            m_queueTableRec.Enqueue (value);
+                        }
+                        else
+                            ;
                     }
 
                     //Logging.Logg().Debug(@"HHandlerDbULoaderDest::TableRecieved.set - " + @"ENQUEUE!"
@@ -363,17 +369,25 @@ namespace uLoaderCommon
             /// <returns>Строка с запросом на вставку значений</returns>
             public string GetTargetValuesQuery()
             {
-                string strRes = string.Empty;
+                string strRes = string.Empty
+                    , strIds = @"[ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @":" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInULoader).KeySingleton
+                        + @", key=" + (_parent as HHandlerDbULoaderDest).IdGroupSignalsCurrent + @"]";
 
-                setTableRes();
+                try
+                {
+                    setTableRes();
 
-                if (m_DupTables.IsDeterminate == true)
-                    strRes = getTargetValuesQuery();
-                else
-                    ;
+                    if (m_DupTables.IsDeterminate == true)
+                        strRes = getTargetValuesQuery();
+                    else
+                        ;
+                }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, @"HHandlerDbULoaderDest::GroupSignlsDest () - " + strIds + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
 
-                Logging.Logg().Debug(@"Строк для вставки [ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @":" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInULoader).KeySingleton
-                        + @", key=" + (_parent as HHandlerDbULoaderDest).IdGroupSignalsCurrent + @"]: " + m_DupTables.TableDistinct.Rows.Count
+                Logging.Logg().Debug(@"Строк для вставки " + strIds + @": " + m_DupTables.TableDistinct.Rows.Count
                     , Logging.INDEX_MESSAGE.NOT_SET);
 
                 return
