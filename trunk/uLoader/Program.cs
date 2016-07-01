@@ -1,4 +1,5 @@
-﻿#define _SEPARATE_APPDOMAIN
+﻿//!!! объявления производятся в свойствах проекта "Построение - Символы условной компиляции"
+//#define _SEPARATE_APPDOMAIN
 //#define _STATE_MANAGER
 
 using System;

@@ -1139,8 +1139,7 @@ namespace uLoaderCommon
                         }
                         //m_manualEvtStateHandlerCompleted.Reset();
                         //Получить объект очереди событий
-                        IdGroupSignalsCurrent = m_queueIdGroupSignals.Peek();
-                    
+                        IdGroupSignalsCurrent = m_queueIdGroupSignals.Peek();                    
 
                         State = GroupSignals.STATE.ACTIVE;
 
@@ -1179,15 +1178,17 @@ namespace uLoaderCommon
                             ;
 
                         //Logging.Logg().Debug(@"HHandlerDbULoader::fThreadQueue () - окончание обработки группы событий очереди (" + PlugInId + @", ID_GSGNLS=" + IdGroupSignalsCurrent + @")", Logging.INDEX_MESSAGE.NOT_SET);
+
+                        IdGroupSignalsCurrent = -1;
                     }
                     catch (Exception e)
                     {
                         Logging.Logg().Exception(e, @"HHandlerDbULoader.fThreadQueue () - IdGroupSignalsCurrent=" + IdGroupSignalsCurrent + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
-                    finally
-                    {
-                        IdGroupSignalsCurrent = -1;
-                    }
+                    //finally
+                    //{
+                    //    IdGroupSignalsCurrent = -1;
+                    //}
                 }
             }
             //Освободить ресурс ядра ОС
