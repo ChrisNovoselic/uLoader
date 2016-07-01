@@ -1127,65 +1127,66 @@ namespace uLoaderCommon
 
                 while (true)
                 {
-                    lock (m_lockQueue)
-                    {
-                        if (QueueCount == 0)
-                            //Прервать, если обработаны все объекты
-                            break;
-                        else
-                            ;
-                    }
-                    //m_manualEvtStateHandlerCompleted.Reset();
-                    //Получить объект очереди событий
-                    IdGroupSignalsCurrent = m_queueIdGroupSignals.Peek();
-                    
-
-                    State = GroupSignals.STATE.ACTIVE;
-
-                    //Logging.Logg().Debug(@"HHandlerDbULoader::fThreadQueue () - начало обработки группы событий очереди (" + PlugInId + @", ID_GSGNLS=" + IdGroupSignalsCurrent + @")", Logging.INDEX_MESSAGE.NOT_SET);
-
-                    lock (m_lockState)
-                    {
-                        //Очистить все состояния
-                        ClearStates();
-                        //Добавить все состояния
-                        addAllStates();
-                    }
-
-                    //Обработать все состояния
-                    Run(@"HHandlerDbULoader::fThreadQueue ()");
-
-                    //Ожидать обработки всех состояний
-                    m_waitHandleState[(int)INDEX_WAITHANDLE_REASON.SUCCESS].WaitOne(System.Threading.Timeout.Infinite, true);
-
-                    lock (m_lockQueue)
-                    {
-                        //Удалить объект очереди событий (обработанный)
-                        m_queueIdGroupSignals.Dequeue();
-                    }
-
-                    GroupSignals.STATE newState = GroupSignals.NewState(Mode, State);
-
-                    lock (m_lockStateGroupSignals)
-                    {
-                        State = newState;
-                    }
-
-                    if (! (_iPlugin == null))
-                        ((PlugInBase)_iPlugin).DataAskedHost(getDataAskedHost ());
-                    else
-                        ;
-
-                    //Logging.Logg().Debug(@"HHandlerDbULoader::fThreadQueue () - окончание обработки группы событий очереди (" + PlugInId + @", ID_GSGNLS=" + IdGroupSignalsCurrent + @")", Logging.INDEX_MESSAGE.NOT_SET);
-
                     try
                     {
-                        //m_manualEvtStateHandlerCompleted.Set();
-                        IdGroupSignalsCurrent = -1;                        
+                        lock (m_lockQueue)
+                        {
+                            if (QueueCount == 0)
+                                //Прервать, если обработаны все объекты
+                                break;
+                            else
+                                ;
+                        }
+                        //m_manualEvtStateHandlerCompleted.Reset();
+                        //Получить объект очереди событий
+                        IdGroupSignalsCurrent = m_queueIdGroupSignals.Peek();
+                    
+
+                        State = GroupSignals.STATE.ACTIVE;
+
+                        //Logging.Logg().Debug(@"HHandlerDbULoader::fThreadQueue () - начало обработки группы событий очереди (" + PlugInId + @", ID_GSGNLS=" + IdGroupSignalsCurrent + @")", Logging.INDEX_MESSAGE.NOT_SET);
+
+                        lock (m_lockState)
+                        {
+                            //Очистить все состояния
+                            ClearStates();
+                            //Добавить все состояния
+                            addAllStates();
+                        }
+
+                        //Обработать все состояния
+                        Run(@"HHandlerDbULoader::fThreadQueue ()");
+
+                        //Ожидать обработки всех состояний
+                        m_waitHandleState[(int)INDEX_WAITHANDLE_REASON.SUCCESS].WaitOne(System.Threading.Timeout.Infinite, true);
+
+                        lock (m_lockQueue)
+                        {
+                            //Удалить объект очереди событий (обработанный)
+                            m_queueIdGroupSignals.Dequeue();
+                        }
+
+                        GroupSignals.STATE newState = GroupSignals.NewState(Mode, State);
+
+                        lock (m_lockStateGroupSignals)
+                        {
+                            State = newState;
+                        }
+
+                        if (! (_iPlugin == null))
+                            ((PlugInBase)_iPlugin).DataAskedHost(getDataAskedHost ());
+                        else
+                            ;
+
+                        //Logging.Logg().Debug(@"HHandlerDbULoader::fThreadQueue () - окончание обработки группы событий очереди (" + PlugInId + @", ID_GSGNLS=" + IdGroupSignalsCurrent + @")", Logging.INDEX_MESSAGE.NOT_SET);
                     }
                     catch (Exception e)
                     {
-                        Logging.Logg().Exception(e, @"HHandlerDbULoader.fThreadQueue () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                        Logging.Logg().Exception(e, @"HHandlerDbULoader.fThreadQueue () - IdGroupSignalsCurrent=" + IdGroupSignalsCurrent + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+                    }
+                    finally
+                    {
+                        IdGroupSignalsCurrent = -1;
                     }
                 }
             }

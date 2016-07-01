@@ -48,11 +48,14 @@ namespace uLoader
             , SET_TEXT_ADDING //Установить текст "дополнительных" параметров
             , SET_GROUP_SIGNALS_PARS //Установить параметры группы сигналов в группе источников при утрате фокуса ввода элементом управления (GroupBox) с их значениями
             , GET_GROUP_SIGNALS_DATETIME_PARS //Запросить параметры группы сигналов в группе источников при изменении типа параметров (CUR_DATETIME, COSTUMIZE)
+#if _STATE_MANAGER
             , OMANAGEMENT_ADD
             , OMANAGEMENT_REMOVE
             , OMANAGEMENT_CONFIRM
             , OMANAGEMENT_UPDATE
             , OMANAGEMENT_CONTROL
+#else
+#endif
             ,
         }
         /// <summary>
@@ -87,11 +90,11 @@ namespace uLoader
             }
             else
                 ;
-
+#if _STATE_MANAGER
             m_timerFunc = new System.Threading.Timer(timerFunc);
             m_listObjects = new ListOManagement();
             eventCrashed += new /*HHandlerQueue.EventHandlerCrashed*/ DelegateObjectFunc(onCrashed);
-
+#endif
             //Прочитать и "разобрать" файл конфигурации
             m_fileINI = new FormMain.FileINI(strNameFileINI);
 
@@ -129,10 +132,14 @@ namespace uLoader
                         //    add(new object [] { ev.id_main, indx }, TimeSpan.FromMilliseconds (16667));
                         //    break;
                         case ID_DATA_ASKED_HOST.STOP:
+#if _STATE_MANAGER
                             remove(ev.id_main, indx);
+#endif
                             break;
                         case ID_DATA_ASKED_HOST.TABLE_RES:
+#if _STATE_MANAGER
                             update(ev.id_main, indx);
+#endif
                             break;
                         default:
                             break;
@@ -146,13 +153,21 @@ namespace uLoader
                             idHeadAskedHost = (ID_HEAD_ASKED_HOST)pars[1];
 
                             if (idHeadAskedHost == ID_HEAD_ASKED_HOST.CONFIRM)
-                                confirm(ev.id_main, indx);
+#if _STATE_MANAGER
+                                confirm(ev.id_main, indx)
+#else
+#endif
+                                    ;
                             else
                                 throw new MissingMemberException(); // ошибка - переменная имеет непредвиденное значение                            
                         }
                         else
                         {//ID_DATA_ASKED_HOST.START
+#if _STATE_MANAGER
+                            // добавить группу сигналов в список контролируемых
                             add(new object[] { ev.id_main, indx }, TimeSpan.FromMilliseconds(((TimeSpan)pars[1]).TotalMilliseconds));
+#else
+#endif
                         }
                     }
                     else
@@ -289,11 +304,13 @@ namespace uLoader
                 case StatesMachine.SET_GROUP_SIGNALS_PARS:
                 case StatesMachine.GET_GROUP_SIGNALS_DATETIME_PARS:
                 // группа событий диагностики/контроля
+#if _STATE_MANAGER
                 case StatesMachine.OMANAGEMENT_ADD:
                 case StatesMachine.OMANAGEMENT_REMOVE:
                 case StatesMachine.OMANAGEMENT_UPDATE:
                 case StatesMachine.OMANAGEMENT_CONFIRM:
                 case StatesMachine.OMANAGEMENT_CONTROL:
+#endif
                     //Не требуют запроса
                     break;
                 default:
@@ -351,11 +368,13 @@ namespace uLoader
                 case StatesMachine.SET_GROUP_SIGNALS_PARS:
                 case StatesMachine.CLEARVALUES_DEST_GROUP_SIGNALS:
                 // группа событий диагностики/контроля
+#if _STATE_MANAGER
                 case StatesMachine.OMANAGEMENT_ADD:
                 case StatesMachine.OMANAGEMENT_REMOVE:
                 case StatesMachine.OMANAGEMENT_CONFIRM:
                 case StatesMachine.OMANAGEMENT_UPDATE:
                 case StatesMachine.OMANAGEMENT_CONTROL:
+#endif
                     //Ответа не требуется/не требуют обработки результата
                     break;
                 default:
@@ -693,7 +712,7 @@ namespace uLoader
                         iRes = 0;
                         break;
                     #endregion
-
+#if _STATE_MANAGER
                     #region OMANAGEMENT_ADD, OMANAGEMENT_REMOVE, OMANAGEMENT_CONFIRM, OMANAGEMENT_UPDATE, OMANAGEMENT_CONTROL
                     case StatesMachine.OMANAGEMENT_ADD:
                         iRes = 0;
@@ -734,6 +753,7 @@ namespace uLoader
                         targetFunc();
                         break;
                     #endregion
+#endif
                     default:
                         break;
                 }

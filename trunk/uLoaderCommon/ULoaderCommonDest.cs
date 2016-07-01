@@ -172,7 +172,7 @@ namespace uLoaderCommon
                         + @", строк_стало=" + cntCur
                         ;
 
-                Console.WriteLine(msg);
+                //Console.WriteLine(msg);
                 Logging.Logg().Debug(msg + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 return iRes;

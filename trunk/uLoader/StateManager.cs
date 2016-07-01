@@ -16,6 +16,7 @@ namespace uLoader
     //public class StateManager : HClassLibrary.HHandlerQueue
     partial class HHandlerQueue
     {
+#if _STATE_MANAGER
         /// <summary>
         /// Класс для идентификации объекта контроля
         /// </summary>
@@ -225,33 +226,6 @@ namespace uLoader
                     new object [] { StatesMachine.OMANAGEMENT_CONTROL, } // параметры события (с 0-ым индексом - идентификатор события)
                 },
             });
-        }
-
-        public override bool Activate(bool active)
-        {
-            bool bRes = base.Activate(active);
-
-            int due = System.Threading.Timeout.Infinite
-                , period = System.Threading.Timeout.Infinite;
-
-            if (bRes == true)
-                if (active == true)
-                {
-                    due = 0;
-                    period = MSEC_TIMERFUNC_UPDATE;
-                }
-                else
-                    if (active == false)
-                        ; // оставить значения по умолчанию
-                    else
-                        ; // других состояний 'bool' не существует
-
-            Logging.Logg().Debug(@"StateManager::Activate (active=" + active + @") - "
-                + (due == System.Threading.Timeout.Infinite ? @"ДЕ" : string.Empty) + @"Активация объекта контроля ..."
-                , Logging.INDEX_MESSAGE.NOT_SET);
-            m_timerFunc.Change(due, period);
-
-            return bRes;
         }
         /// <summary>
         /// Добавить новый объект для контроля
@@ -470,5 +444,33 @@ namespace uLoader
                     ;
             }
         }
+#endif
+
+        public override bool Activate(bool active)
+        {
+            bool bRes = base.Activate(active);
+#if _STATE_MANAGER
+            int due = System.Threading.Timeout.Infinite
+                , period = System.Threading.Timeout.Infinite;
+
+            if (bRes == true)
+                if (active == true)
+                {
+                    due = 0;
+                    period = MSEC_TIMERFUNC_UPDATE;
+                }
+                else
+                    if (active == false)
+                        ; // оставить значения по умолчанию
+                    else
+                        ; // других состояний 'bool' не существует
+
+            Logging.Logg().Debug(@"StateManager::Activate (active=" + active + @") - "
+                + (due == System.Threading.Timeout.Infinite ? @"ДЕ" : string.Empty) + @"Активация объекта контроля ..."
+                , Logging.INDEX_MESSAGE.NOT_SET);
+            m_timerFunc.Change(due, period);
+#endif
+            return bRes;
+        }        
     }
 }
