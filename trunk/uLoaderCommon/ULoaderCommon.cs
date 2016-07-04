@@ -1127,16 +1127,17 @@ namespace uLoaderCommon
 
                 while (true)
                 {
-                    try
+                    lock (m_lockQueue)
                     {
-                        lock (m_lockQueue)
-                        {
-                            if (QueueCount == 0)
-                                //Прервать, если обработаны все объекты
-                                break;
-                            else
-                                ;
-                        }
+                        if (QueueCount == 0)
+                            //Прервать, если обработаны все объекты
+                            break;
+                        else
+                            ;
+                    }
+
+                    try
+                    {                        
                         //m_manualEvtStateHandlerCompleted.Reset();
                         //Получить объект очереди событий
                         IdGroupSignalsCurrent = m_queueIdGroupSignals.Peek();                    
@@ -1178,17 +1179,15 @@ namespace uLoaderCommon
                             ;
 
                         //Logging.Logg().Debug(@"HHandlerDbULoader::fThreadQueue () - окончание обработки группы событий очереди (" + PlugInId + @", ID_GSGNLS=" + IdGroupSignalsCurrent + @")", Logging.INDEX_MESSAGE.NOT_SET);
-
-                        IdGroupSignalsCurrent = -1;
                     }
                     catch (Exception e)
                     {
                         Logging.Logg().Exception(e, @"HHandlerDbULoader.fThreadQueue () - IdGroupSignalsCurrent=" + IdGroupSignalsCurrent + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
-                    //finally
-                    //{
-                    //    IdGroupSignalsCurrent = -1;
-                    //}
+                    finally
+                    {
+                        IdGroupSignalsCurrent = -1;
+                    }
                 }
             }
             //Освободить ресурс ядра ОС
@@ -1201,7 +1200,8 @@ namespace uLoaderCommon
                     ;
 
                 m_autoResetEvtQueue.Close();
-                //// предполагается, что для этого объекта 'Reset' уже выполнен
+                //??? предполагается, что для этого объекта 'Reset' уже выполнен
+                IdGroupSignalsCurrent = -1;
                 m_manualEvtStateHandlerCompleted.Close();
             }
             catch (Exception e)
