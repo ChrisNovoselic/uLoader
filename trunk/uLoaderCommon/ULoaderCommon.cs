@@ -1107,6 +1107,7 @@ namespace uLoaderCommon
         private void fThreadQueue()
         {
             bool bRes = false;
+            GroupSignals.STATE newState = GroupSignals.STATE.UNKNOWN;
 
             while (!(threadQueueIsWorking < 0))
             {
@@ -1140,9 +1141,12 @@ namespace uLoaderCommon
                     {                        
                         //m_manualEvtStateHandlerCompleted.Reset();
                         //Получить объект очереди событий
-                        IdGroupSignalsCurrent = m_queueIdGroupSignals.Peek();                    
+                        IdGroupSignalsCurrent = m_queueIdGroupSignals.Peek();
 
-                        State = GroupSignals.STATE.ACTIVE;
+                        lock (m_lockStateGroupSignals)
+                        {
+                            State = GroupSignals.STATE.ACTIVE;
+                        }
 
                         //Logging.Logg().Debug(@"HHandlerDbULoader::fThreadQueue () - начало обработки группы событий очереди (" + PlugInId + @", ID_GSGNLS=" + IdGroupSignalsCurrent + @")", Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -1164,12 +1168,11 @@ namespace uLoaderCommon
                         {
                             //Удалить объект очереди событий (обработанный)
                             m_queueIdGroupSignals.Dequeue();
-                        }
-
-                        GroupSignals.STATE newState = GroupSignals.NewState(Mode, State);
+                        }                        
 
                         lock (m_lockStateGroupSignals)
                         {
+                            newState = GroupSignals.NewState(Mode, State);
                             State = newState;
                         }
 
