@@ -254,6 +254,7 @@ namespace uLoader
             panelCommon = (m_TabCtrl.TabPages[m_TabCtrl.SelectedIndex].Controls[0] as HPanelCommon);
             panelCommon.Activate(true);
         }
+
         /// <summary>
         /// Обработчик события - изменения выбора вкладки
         /// </summary>
@@ -263,6 +264,7 @@ namespace uLoader
         {
             (obj as HTabCtrlEx).PrevSelectedIndex = (obj as HTabCtrlEx).SelectedIndex;
         }
+
         /// <summary>
         /// Обработчик события - изменение состояния выбора п. меню "Конфигурация"
         /// </summary>
