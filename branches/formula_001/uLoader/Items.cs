@@ -149,7 +149,9 @@ namespace uLoader
         /// <summary>
         /// Список сигналов в группе
         /// </summary>
-        public List<SIGNAL_SRC> m_listSgnls;        
+        public List<SIGNAL_SRC> m_listSgnls;
+
+        public Dictionary<string, string> m_dictFormula;
         /// <summary>
         /// Конструктор - основной (без параметров)
         /// </summary>

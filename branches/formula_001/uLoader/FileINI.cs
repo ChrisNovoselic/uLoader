@@ -422,6 +422,15 @@ namespace uLoader
                                         {
                                             // найдена формула - требуется:
                                             // 1) добавить к группе сигналов описание формулы
+                                            if ((itemSrc as GROUP_SIGNALS_SRC).m_dictFormula == null)
+                                                (itemSrc as GROUP_SIGNALS_SRC).m_dictFormula = new Dictionary<string, string>();
+                                            else
+                                                ;
+                                            // проверить не была ли формула уже добавлена
+                                            if ((itemSrc as GROUP_SIGNALS_SRC).m_dictFormula.ContainsKey(fKey) == false)
+                                                (itemSrc as GROUP_SIGNALS_SRC).m_dictFormula.Add(fKey, m_dictFormula[fKey]);
+                                            else
+                                                ;
                                             // 2) заменить идентификаторы аргументов-сигналов на локальные идентификаторы
 
                                             j = sgnl.m_arSPars.Length; // прервать внешний цикл (второй формулы для сигнала не будет)
