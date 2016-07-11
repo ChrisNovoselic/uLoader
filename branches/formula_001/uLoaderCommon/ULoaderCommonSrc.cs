@@ -283,10 +283,10 @@ namespace uLoaderCommon
             {
                 public string m_NameTable;
 
-                public SIGNALBiyskTMoraSrc(int idMain, string nameTable)
-                    : base(idMain)
+                public SIGNALBiyskTMoraSrc(GroupSignals parent, int idMain, object nameTable)
+                    : base(parent, idMain, nameTable)
                 {
-                    this.m_NameTable = nameTable;
+                    this.m_NameTable = IsFormula == false ? (string)nameTable : string.Empty;
                 }
             }
 
@@ -294,10 +294,10 @@ namespace uLoaderCommon
             {
                 public string m_kks_name;
 
-                public SIGNALMSTKKSNAMEsql(int idMain, string kks_name)
-                    : base(idMain)
+                public SIGNALMSTKKSNAMEsql(GroupSignals parent, int idMain, object kks_name)
+                    : base(parent, idMain, kks_name)
                 {
-                    m_kks_name = kks_name;
+                    m_kks_name = IsFormula == false ? (string)kks_name : string.Empty;
                 }
             }
 
@@ -306,10 +306,10 @@ namespace uLoaderCommon
                 public int m_iIdLocal;
                 public bool m_bAVG;
 
-                public SIGNALIdsql(int idMain, int idLocal, bool bAVG)
-                    : base(idMain)
+                public SIGNALIdsql(GroupSignals parent, int idMain, object idLocal, bool bAVG)
+                    : base(parent, idMain, idLocal)
                 {
-                    m_iIdLocal = idLocal;
+                    m_iIdLocal = IsFormula == false ? (int)idLocal : -1;
                     m_bAVG = bAVG;
                 }
             }
@@ -1121,7 +1121,7 @@ namespace uLoaderCommon
             return iRes;
         }
 
-        protected override int IdGroupSignalsCurrent { get { return base.IdGroupSignalsCurrent; } set { if (value == -1) completeGroupSignalsCurrent(); else ; base.IdGroupSignalsCurrent = value; } }
+        protected override int IdGroupSignalsCurrent { get { return base.IdGroupSignalsCurrent; } set { if ((!(base.IdGroupSignalsCurrent == value)) && (value == -1)) completeGroupSignalsCurrent(); else ; base.IdGroupSignalsCurrent = value; } }
 
         private void completeGroupSignalsCurrent()
         {
@@ -1261,7 +1261,7 @@ namespace uLoaderCommon
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
                 //ID_MAIN, ID_LOCAL, AVG
-                return new SIGNALIdsql((int)objs[0], (int)objs[2], bool.Parse((string)objs[3]));
+                return new SIGNALIdsql(this, (int)objs[0], /*(int)*/objs[2], bool.Parse((string)objs[3]));
             }
 
             protected override object getIdMain(object id_mst)

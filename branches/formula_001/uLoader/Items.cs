@@ -137,7 +137,7 @@ namespace uLoader
         /// <summary>
         /// Конструктор - основной (без параметров)
         /// </summary>
-        public GROUP_SIGNALS_DEST_PARS ()
+        public GROUP_SIGNALS_DEST_PARS () : base ()
         {
         }
     }

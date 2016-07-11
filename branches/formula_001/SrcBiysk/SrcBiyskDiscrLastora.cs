@@ -43,9 +43,10 @@ namespace SrcBiysk
 
                     //Формировать зпрос
                     foreach (GroupSignalsSrc.SIGNALBiyskTMoraSrc s in m_arSignals)
-                    {
-                        m_strQuery += @"'" + s.m_NameTable + @"'" + strUnion;
-                    }
+                        if (s.IsFormula == false)
+                            m_strQuery += @"'" + s.m_NameTable + @"'" + strUnion;
+                        else
+                            ; // формула
 
                     // удалить "лишний" UNION
                     m_strQuery = m_strQuery.Substring(0, m_strQuery.Length - strUnion.Length);
@@ -103,17 +104,23 @@ namespace SrcBiysk
 
                         foreach (SIGNAL s in m_arSignals)
                         {
-                            arSel = value.Select(@"ID='" + (s as SIGNALBiyskTMoraSrc).m_NameTable + @"'", @"DATETIME DESC");
-
-                            if (arSel.Length > 0)
+                            if (s.IsFormula == false)
                             {
-                                rowAdd = tblVal.Rows.Add();
-                                rowAdd[@"ID"] = getIdMain (arSel[0][@"ID"].ToString());
-                                rowAdd[@"VALUE"] = arSel[0][@"VALUE"];
-                                rowAdd[@"DATETIME"] = arSel[0][@"DATETIME"];
-                                rowAdd[@"CNT"] = arSel.Length;
+                                arSel = value.Select(@"ID='" + (s as SIGNALBiyskTMoraSrc).m_NameTable + @"'", @"DATETIME DESC");
+
+                                if (arSel.Length > 0)
+                                {
+                                    rowAdd = tblVal.Rows.Add();
+                                    rowAdd[@"ID"] = getIdMain(arSel[0][@"ID"].ToString());
+                                    rowAdd[@"VALUE"] = arSel[0][@"VALUE"];
+                                    rowAdd[@"DATETIME"] = arSel[0][@"DATETIME"];
+                                    rowAdd[@"CNT"] = arSel.Length;
+                                }
+                                else
+                                    ;
                             }
                             else
+                                // формула
                                 ;
                             
                         }
@@ -132,7 +139,7 @@ namespace SrcBiysk
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
                 //ID_MAIN, TAG
-                return new SIGNALBiyskTMoraSrc((int)objs[0], objs[2] as string);
+                return new SIGNALBiyskTMoraSrc(this, (int)objs[0], objs[2] as string);
             }
         }
 

@@ -324,6 +324,11 @@ namespace uLoaderCommon
             /// </summary>
             public class SIGNAL
             {
+                private GroupSignals _parent;
+                /// <summary>
+                /// Строка с идентификатором формулы и указанием идентификаторов-аргументов
+                /// </summary>
+                private string m_strFormula;
                 /// <summary>
                 /// Идентификатор сигнала, уникальный в границах приложения
                 /// </summary>
@@ -332,9 +337,30 @@ namespace uLoaderCommon
                 /// Конструктор - основной (с параметром)
                 /// </summary>
                 /// <param name="idMain">Идентификатор сигнала, уникальный в границах приложения</param>
-                public SIGNAL(int idMain)
+                public SIGNAL(GroupSignals parent, int idMain, object formula)
                 {
+                    _parent = parent;
+
                     this.m_idMain = idMain;
+
+                    setFormula(formula);
+                }
+
+                public bool IsFormula { get { return m_strFormula.Equals(string.Empty) == false; } }
+
+                private void setFormula(object formula)
+                {
+                    m_strFormula = string.Empty;
+
+                    if (formula.GetType().Equals(typeof(string)) == true)
+                    {// требуется распознать формула ИЛИ стандартный текстовый идентификатор (например: KKS_NAME, nameTable)
+                        m_strFormula = formula as string;
+                    }
+                    else
+                        //if (formula.GetType().IsPrimitive == true)
+                        //    ;
+                        //else
+                            ;
                 }
             }
 

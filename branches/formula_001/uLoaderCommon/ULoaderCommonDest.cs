@@ -80,8 +80,8 @@ namespace uLoaderCommon
             {
                 public int m_idLink;
 
-                public SIGNALDest(int idMain, int idLink)
-                    : base(idMain)
+                public SIGNALDest(GroupSignals parent, int idMain, int idLink)
+                    : base(parent, idMain, string.Empty) // 2-й параметр может указывать на формулу, но в 'Dest' формулы пока не предусмотрены
                 {
                     this.m_idLink = idLink;
                 }
@@ -91,8 +91,8 @@ namespace uLoaderCommon
             {
                 public int m_idTarget;
 
-                public SIGNALIDsql(int idMain, int idLink, int idTarget)
-                    : base(idMain, idLink)
+                public SIGNALIDsql(GroupSignals parent, int idMain, int idLink, int idTarget)
+                    : base(parent, idMain, idLink)
                 {
                     m_idTarget = idTarget;
                 }
@@ -102,8 +102,8 @@ namespace uLoaderCommon
             {
                 public string m_strStatKKSName;
 
-                public SIGNALStatKKSNAMEsql(int idMain, int idLink, string statKKSName)
-                    : base(idMain, idLink)
+                public SIGNALStatKKSNAMEsql(GroupSignals parent, int idMain, int idLink, string statKKSName)
+                    : base(parent, idMain, idLink)
                 {
                     m_strStatKKSName = statKKSName;
                 }
@@ -891,7 +891,7 @@ namespace uLoaderCommon
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
                 //ID_MAIN, ID_SRC_SGNL, ID_STAT
-                return new SIGNALIDsql((int)objs[0], (int)objs[1], (int)objs[3]);
+                return new SIGNALIDsql(this, (int)objs[0], (int)objs[1], (int)objs[3]);
             }
 
             protected override object getIdTarget(int idLink)
@@ -980,7 +980,7 @@ namespace uLoaderCommon
                 int indxKKS_NAMEStat = -1;
                 //ID_MAIN, ID_SRC_SGNL, KKSNAME_STAT (??? всегда крайнее)
                 indxKKS_NAMEStat = objs.Length - 1;
-                return new SIGNALStatKKSNAMEsql((int)objs[0], (int)objs[1], (string)objs[indxKKS_NAMEStat]); //14.03.2016 было - 4
+                return new SIGNALStatKKSNAMEsql(this, (int)objs[0], (int)objs[1], (string)objs[indxKKS_NAMEStat]); //14.03.2016 было - 4
             }
 
             protected override object getIdTarget(int idLink)

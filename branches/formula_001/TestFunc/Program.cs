@@ -8,6 +8,11 @@ using System.Threading;
 using HClassLibrary;
 using uLoaderCommon;
 
+using ELW.Library.Math;
+using ELW.Library.Math.Exceptions;
+using ELW.Library.Math.Expressions;
+using ELW.Library.Math.Tools;
+
 namespace TestFunc
 {
     class Program
@@ -27,11 +32,13 @@ namespace TestFunc
                 //typeof(ClassDataTableDistinct)
                 ////Вариант №3
                 //typeof(ClassDataTableDistinct)
+                ////Вариант №4
+                //typeof(ClassQueueRemoveAt)
                 //Вариант №4
-                typeof(ClassQueueRemoveAt)
+                typeof(ClassFormulaParsing)
                 ;
 
-            try { objTest = Activator.CreateInstance(typeTest); }
+            try { objTest = Activator.CreateInstance(typeTest, @"a1+a2", new VariableValue[] { new VariableValue(1F, @"a1"), new VariableValue(2F, @"a2") }); }
             catch (Exception e)
             {
                 msg = e.Message;

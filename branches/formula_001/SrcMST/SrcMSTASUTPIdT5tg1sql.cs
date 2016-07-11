@@ -79,43 +79,49 @@ namespace SrcMST
             {
                 try
                 {
-                    rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal);
+                    if (sgnl.IsFormula == false)
+                    {
+                        rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal);
 
-                    if ((rowsSgnl.Length > 0)
-                        //??? если строк > 1
-                        && (((int)rowsSgnl[0][@"CNT"] % 60) == 0))
-                    {// только при кол-ве записей = 60 (все минуты часа)
-                        iHourAdding = 0;
-                        iHour = (int)rowsSgnl[0][@"HOUR"];
-                        if (iHour > 23)
-                            iHourAdding = 24;
+                        if ((rowsSgnl.Length > 0)
+                            //??? если строк > 1
+                            && (((int)rowsSgnl[0][@"CNT"] % 60) == 0))
+                        {// только при кол-ве записей = 60 (все минуты часа)
+                            iHourAdding = 0;
+                            iHour = (int)rowsSgnl[0][@"HOUR"];
+                            if (iHour > 23)
+                                iHourAdding = 24;
+                            else
+                                ;
+                            iHour -= iHourAdding;
+
+                            dtValue = new DateTime((int)rowsSgnl[0][@"YEAR"]
+                                , (int)rowsSgnl[0][@"MONTH"]
+                                , (int)rowsSgnl[0][@"DAY"]
+                                , iHour
+                                , 0
+                                , 0).AddHours(iHourAdding);
+
+                            dblSumValue = (double)rowsSgnl[0][@"VALUE"];
+
+                            // при необходимости найти среднее
+                            if (sgnl.m_bAVG == true)
+                                dblSumValue /= 60; //cntRec
+                            else
+                                ;
+                            // вставить строку
+                            tblRes.Rows.Add(new object[] {
+                                sgnl.m_idMain
+                                , dtValue
+                                , dblSumValue
+                            });
+                        }
                         else
-                            ;
-                        iHour -= iHourAdding;
-
-                        dtValue = new DateTime((int)rowsSgnl[0][@"YEAR"]
-                            , (int)rowsSgnl[0][@"MONTH"]
-                            , (int)rowsSgnl[0][@"DAY"]
-                            , iHour
-                            , 0
-                            , 0).AddHours(iHourAdding);
-
-                        dblSumValue = (double)rowsSgnl[0][@"VALUE"];
-
-                        // при необходимости найти среднее
-                        if (sgnl.m_bAVG == true)
-                            dblSumValue /= 60; //cntRec
-                        else
-                            ;
-                        // вставить строку
-                        tblRes.Rows.Add(new object[] {
-                            sgnl.m_idMain
-                            , dtValue
-                            , dblSumValue
-                        });
+                            ; // неполные данные
                     }
                     else
-                        ; // не полные данные
+                        // формула
+                        ;
                 }
                 catch (Exception e)
                 {
@@ -147,7 +153,10 @@ namespace SrcMST
                     ;
 
                 foreach (SIGNALIdsql sgnl in m_arSignals)
-                    strIds += sgnl.m_iIdLocal + @",";
+                    if (sgnl.IsFormula == false)
+                        strIds += sgnl.m_iIdLocal + @",";
+                    else
+                        ; // формула
                 // удалить "лишнюю" запятую
                 strIds = strIds.Substring(0, strIds.Length - 1);
 

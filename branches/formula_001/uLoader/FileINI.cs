@@ -38,7 +38,8 @@ namespace uLoader
             string[] SEC_SRC_TYPES
                 , KEY_TREE_SRC
                 , KEY_TREE_SGNLS;
-            string KEY_PARS;
+            string KEY_FORMULA
+                , KEY_PARS;
             /// <summary>
             /// Список групп источников
             /// </summary>
@@ -55,10 +56,14 @@ namespace uLoader
             public FileINI (string nameFile)
                 : base(nameFile, true)
             {
+                string sec = string.Empty;
+                Dictionary<string, string> dictSecValues = null;
+
                 //Получить наименования частей секций
                 SEC_SRC_TYPES = GetMainValueOfKey(@"SEC_SRC_TYPES").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUES]);
                 KEY_TREE_SRC = GetMainValueOfKey(@"KEY_TREE_SRC").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUES]);
                 KEY_TREE_SGNLS = GetMainValueOfKey(@"KEY_TREE_SGNLS").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUES]);
+                KEY_FORMULA = GetMainValueOfKey(@"KEY_FORMULA");
                 //Получить ключ для чтения параметров в секции
                 KEY_PARS = GetMainValueOfKey(@"KEY_PARS");
                 //Получить период для обновления информации на панели "Работа"
@@ -67,6 +72,7 @@ namespace uLoader
                 //if (Int32.TryParse (GetMainValueOfKey(@"PANEL_WORK_UPDATE"), out m_iSecPanelWorkUpdate) == false)
                 //    throw new Exception(@"FileINI::FileINI () - Параметр PANEL_WORK_UPDATE не удалось инициализировать ...");
                 //else ;
+                fillDictFormula();
 
                 //Создать все объекты, списки для значений из файла конфигурации
                 m_arListGroupValues = new SRC [(int)INDEX_SRC.COUNT_INDEX_SRC];
@@ -82,9 +88,9 @@ namespace uLoader
                     for (INDEX_SRC i = INDEX_SRC.SOURCE; i < INDEX_SRC.COUNT_INDEX_SRC; i++)
                     {
                         //Получить наименование секции для группы источников (в ~ от 'i')
-                        string sec = SEC_SRC_TYPES[(int)i];
+                        sec = SEC_SRC_TYPES[(int)i];
                         //Получить словарь параметров для панели 'Источник'
-                        Dictionary<string, string> dictSecValues = getSecValues(sec);
+                        dictSecValues = getSecValues(sec);
 
                         //Получить группы источников, сигналов (источник)
                         if (!(dictSecValues == null))
@@ -112,6 +118,37 @@ namespace uLoader
                     }
                 else
                     ;
+            }
+
+            /// <summary>
+            /// Словарь с формулами
+            /// </summary>
+            Dictionary<string, string> m_dictFormula;
+
+            /// <summary>
+            /// Заполнить словарь с формулами
+            /// </summary>
+            private void fillDictFormula()
+            {
+                string key = string.Empty
+                    , value = string.Empty;
+                
+                m_dictFormula = new Dictionary<string, string> ();
+
+                int i = 0;
+                while (true)
+                {
+                    key = KEY_FORMULA + i.ToString();
+                    value = GetMainValueOfKey(key);
+
+                    if (value.Equals(string.Empty) == true)
+                        break;
+                    else
+                    {
+                        m_dictFormula.Add(key, value);
+                        i++;
+                    }
+                }
             }
 
             /// <summary>
@@ -354,9 +391,11 @@ namespace uLoader
                                                 (itemSrc as GROUP_SIGNALS_SRC).m_listSgnls = new List<SIGNAL_SRC>();
                                             else
                                                 ;
-
+                                            // выделить память для сигнала
                                             (itemSrc as GROUP_SIGNALS_SRC).m_listSgnls.Add (new SIGNAL_SRC ());
+                                            // выделить память для параметров сигнала
                                             (itemSrc as GROUP_SIGNALS_SRC).m_listSgnls[(itemSrc as GROUP_SIGNALS_SRC).m_listSgnls.Count - 1].m_arSPars = new string[values.Length];
+                                            // ??? уточнить не является ли один из параметров формула
                                             values.CopyTo((itemSrc as GROUP_SIGNALS_SRC).m_listSgnls[(itemSrc as GROUP_SIGNALS_SRC).m_listSgnls.Count - 1].m_arSPars, 0);                                            
                                             break;
                                         default:
@@ -372,9 +411,30 @@ namespace uLoader
                             //Увеличить индекс элемента (источник, сигнал)
                             j++;
                         }
+
+                        if (indxTypeGroup == INDEX_TYPE_GROUP.SIGNAL)
+                        {// если была добавлена группа сигналов
+                            //key = KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.SIGNAL_OF_GROUP];
+                            foreach (SIGNAL_SRC sgnl in (itemSrc as GROUP_SIGNALS_SRC).m_listSgnls)
+                                for (j = 0; j < sgnl.m_arSPars.Length; j ++ )
+                                    foreach (string fKey in m_dictFormula.Keys)
+                                        if (sgnl.m_arSPars[j].IndexOf(fKey) == 0)
+                                        {
+                                            // найдена формула - требуется:
+                                            // 1) добавить к группе сигналов описание формулы
+                                            // 2) заменить идентификаторы аргументов-сигналов на локальные идентификаторы
+
+                                            j = sgnl.m_arSPars.Length; // прервать внешний цикл (второй формулы для сигнала не будет)
+                                            break; // прервать текущий цикл (по той же причине)
+                                        }
+                                        else
+                                            ;
+                        }
+                        else
+                            ;
                     }
                     else
-                        //Секция есть, но в ней не определен ни один источник...
+                        //Секция есть, но в ней не определен ни один источник(сигнал)...
                         iRes = -1; //???
                 }
                 else

@@ -47,29 +47,35 @@ namespace SrcMST
 
             foreach (GroupSignalsMSTIDsql.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
             {
-                rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal);
-
-                //??? если строк > 1
-                if (rowsSgnl.Length > 0)
+                if (sgnl.IsFormula == false)
                 {
-                    dtValue = (DateTime)rowsSgnl[0][@"DATETIME"];
+                    rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal);
 
-                    dblValue = (double)rowsSgnl[0][@"VALUE"];
+                    //??? если строк > 1
+                    if (rowsSgnl.Length > 0)
+                    {
+                        dtValue = (DateTime)rowsSgnl[0][@"DATETIME"];
 
-                    //// при необходимости найти среднее
-                    //if (sgnl.m_bAVG == true)
-                    //    dblSumValue /= 60; //cntRec
-                    //else
-                    //    ;
-                    // вставить строку
-                    tblRes.Rows.Add(new object[] {
-                        sgnl.m_idMain
-                        , dtValue
-                        , dblValue
-                    });
+                        dblValue = (double)rowsSgnl[0][@"VALUE"];
+
+                        //// при необходимости найти среднее
+                        //if (sgnl.m_bAVG == true)
+                        //    dblSumValue /= 60; //cntRec
+                        //else
+                        //    ;
+                        // вставить строку
+                        tblRes.Rows.Add(new object[] {
+                            sgnl.m_idMain
+                            , dtValue
+                            , dblValue
+                        });
+                    }
+                    else
+                        ; // неполные данные
                 }
                 else
-                    ; // не полные данные
+                    // формула
+                    ;
             }
 
             base.parseValues(tblRes);
@@ -88,7 +94,10 @@ namespace SrcMST
                 string strIds = string.Empty;
 
                 foreach (GroupSignalsSrc.SIGNALIdsql sgnl in m_arSignals)
-                    strIds += sgnl.m_iIdLocal + @",";
+                    if (sgnl.IsFormula == false)
+                        strIds += sgnl.m_iIdLocal + @",";
+                    else
+                        ; // формула
                 // удалить "лишнюю" запятую
                 strIds = strIds.Substring(0, strIds.Length - 1);
 

@@ -41,16 +41,17 @@ namespace SrcBiysk
 
                 //Формировать зпрос
                 foreach (GroupSignalsSrc.SIGNALBiyskTMoraSrc s in m_arSignals)
-                {
-                    m_strQuery += @"SELECT " + s.m_idMain + @" as ID, VALUE, QUALITY"
-                            + @", DATETIME + numtodsinterval(" + secUTCOffsetToData + @",'second') as DATETIME" 
-                        + @" FROM ARCH_SIGNALS." + s.m_NameTable
-                        + @" WHERE"
-                        + @" DATETIME > " + @"to_timestamp('" + (_parent as SrcBiyskTMLastora).m_dtServer.AddMilliseconds(m_msecServerOffsetToData).AddMinutes(-1).ToString(@"yyyyMMdd HHmmss") + @"', 'yyyymmdd hh24missFF9')" //@" SYSTIMESTAMP - interval '1' minute"
-                        //+ @" ORDER BY DATETIME DESC"
-                        + strUnion
-                    ;
-                }
+                    if (s.IsFormula == false)
+                        m_strQuery += @"SELECT " + s.m_idMain + @" as ID, VALUE, QUALITY"
+                                + @", DATETIME + numtodsinterval(" + secUTCOffsetToData + @",'second') as DATETIME"
+                            + @" FROM ARCH_SIGNALS." + s.m_NameTable
+                            + @" WHERE"
+                            + @" DATETIME > " + @"to_timestamp('" + (_parent as SrcBiyskTMLastora).m_dtServer.AddMilliseconds(m_msecServerOffsetToData).AddMinutes(-1).ToString(@"yyyyMMdd HHmmss") + @"', 'yyyymmdd hh24missFF9')" //@" SYSTIMESTAMP - interval '1' minute"
+                            //+ @" ORDER BY DATETIME DESC"
+                            + strUnion
+                        ;
+                    else
+                        ; // формула
 
                 // удалить "лишний" UNION
                 m_strQuery = m_strQuery.Substring(0, m_strQuery.Length - strUnion.Length);
@@ -103,7 +104,7 @@ namespace SrcBiysk
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
                 //ID_MAIN, TAG
-                return new SIGNALBiyskTMoraSrc((int)objs[0], objs[2] as string);
+                return new SIGNALBiyskTMoraSrc(this, (int)objs[0], objs[2] as string);
             }
 
             protected override object getIdMain(object id_link)

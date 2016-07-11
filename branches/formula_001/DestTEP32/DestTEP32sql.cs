@@ -37,7 +37,7 @@ namespace DestTEP32
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
-                return new SIGNALIDsql((int)objs[0], (int)objs[1], (int)objs[3]);
+                return new SIGNALIDsql(this, (int)objs[0], (int)objs[1], (int)objs[3]);
             }
 
             /// <summary>

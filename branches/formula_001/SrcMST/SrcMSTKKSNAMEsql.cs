@@ -35,7 +35,7 @@ namespace SrcMST
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
                 //ID_MAIN, KKSNAME
-                return new SIGNALMSTKKSNAMEsql((int)objs[0], (string)objs[2]);
+                return new SIGNALMSTKKSNAMEsql(this, (int)objs[0], (string)objs[2]);
             }
 
             protected override void setQuery()
@@ -44,7 +44,10 @@ namespace SrcMST
                 string strIds = string.Empty;
 
                 foreach (SIGNALMSTKKSNAMEsql sgnl in m_arSignals)
-                    strIds += @"'" + sgnl.m_kks_name + @"',";
+                    if (sgnl.IsFormula == false)
+                        strIds += @"'" + sgnl.m_kks_name + @"',";
+                    else
+                        ; // формула
                 // удалить "лишнюю" запятую
                 strIds = strIds.Substring(0, strIds.Length - 1);
 

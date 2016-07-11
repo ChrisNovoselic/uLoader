@@ -41,16 +41,17 @@ namespace SrcBiysk
 
                 //Формировать зпрос
                 foreach (GroupSignalsBiyskTMora.SIGNALBiyskTMoraSrc s in m_arSignals)
-                {
-                    m_strQuery += @"SELECT " + s.m_idMain + @" as ID, VALUE, QUALITY"
-                            + @", DATETIME + numtodsinterval(" + secUTCOffsetToData + @",'second') as DATETIME"
-                        + @" FROM ARCH_SIGNALS." + s.m_NameTable
-                        + @" WHERE"
-                        + @" DATETIME >=" + @" to_timestamp('" + DateTimeBeginFormat + @"', 'yyyymmdd hh24missFF9')"
-                        + @" AND DATETIME <" + @" to_timestamp('" + DateTimeEndFormat + @"', 'yyyymmdd hh24missFF9')"
-                        + strUnion
-                    ;
-                }
+                    if (s.IsFormula == false)
+                        m_strQuery += @"SELECT " + s.m_idMain + @" as ID, VALUE, QUALITY"
+                                + @", DATETIME + numtodsinterval(" + secUTCOffsetToData + @",'second') as DATETIME"
+                            + @" FROM ARCH_SIGNALS." + s.m_NameTable
+                            + @" WHERE"
+                            + @" DATETIME >=" + @" to_timestamp('" + DateTimeBeginFormat + @"', 'yyyymmdd hh24missFF9')"
+                            + @" AND DATETIME <" + @" to_timestamp('" + DateTimeEndFormat + @"', 'yyyymmdd hh24missFF9')"
+                            + strUnion
+                        ;
+                    else
+                        ; // формула
 
                 // удалить "лишний" UNION
                 m_strQuery = m_strQuery.Substring(0, m_strQuery.Length - strUnion.Length);
@@ -67,7 +68,7 @@ namespace SrcBiysk
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
                 //ID_MAIN, TAG
-                return new SIGNALBiyskTMoraSrc((int)objs[0], objs[2] as string);
+                return new SIGNALBiyskTMoraSrc(this, (int)objs[0], objs[2] as string);
             }
 
             protected override object getIdMain(object id_link)
