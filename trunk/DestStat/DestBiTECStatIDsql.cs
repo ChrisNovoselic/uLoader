@@ -34,7 +34,7 @@ namespace DestStat
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
-                return new GroupSignalsDest.SIGNALIDsql((int)objs[0], (int)objs[1], (int)objs[3]);
+                return new GroupSignalsDest.SIGNALIDsql(this, (int)objs[0], (int)objs[1], (int)objs[3]);
             }
 
             protected override void setTableRes()

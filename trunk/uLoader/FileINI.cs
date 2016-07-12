@@ -38,7 +38,8 @@ namespace uLoader
             string[] SEC_SRC_TYPES
                 , KEY_TREE_SRC
                 , KEY_TREE_SGNLS;
-            string KEY_PARS;
+            string KEY_FORMULA
+                , KEY_PARS;
             /// <summary>
             /// Список групп источников
             /// </summary>
@@ -55,10 +56,14 @@ namespace uLoader
             public FileINI (string nameFile)
                 : base(nameFile, true)
             {
+                string sec = string.Empty;
+                Dictionary<string, string> dictSecValues = null;
+
                 //Получить наименования частей секций
                 SEC_SRC_TYPES = GetMainValueOfKey(@"SEC_SRC_TYPES").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUES]);
                 KEY_TREE_SRC = GetMainValueOfKey(@"KEY_TREE_SRC").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUES]);
                 KEY_TREE_SGNLS = GetMainValueOfKey(@"KEY_TREE_SGNLS").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUES]);
+                KEY_FORMULA = GetMainValueOfKey(@"KEY_FORMULA");
                 //Получить ключ для чтения параметров в секции
                 KEY_PARS = GetMainValueOfKey(@"KEY_PARS");
                 //Получить период для обновления информации на панели "Работа"
@@ -67,6 +72,7 @@ namespace uLoader
                 //if (Int32.TryParse (GetMainValueOfKey(@"PANEL_WORK_UPDATE"), out m_iSecPanelWorkUpdate) == false)
                 //    throw new Exception(@"FileINI::FileINI () - Параметр PANEL_WORK_UPDATE не удалось инициализировать ...");
                 //else ;
+                fillDictFormula();
 
                 //Создать все объекты, списки для значений из файла конфигурации
                 m_arListGroupValues = new SRC [(int)INDEX_SRC.COUNT_INDEX_SRC];
@@ -82,9 +88,9 @@ namespace uLoader
                     for (INDEX_SRC i = INDEX_SRC.SOURCE; i < INDEX_SRC.COUNT_INDEX_SRC; i++)
                     {
                         //Получить наименование секции для группы источников (в ~ от 'i')
-                        string sec = SEC_SRC_TYPES[(int)i];
+                        sec = SEC_SRC_TYPES[(int)i];
                         //Получить словарь параметров для панели 'Источник'
-                        Dictionary<string, string> dictSecValues = getSecValues(sec);
+                        dictSecValues = getSecValues(sec);
 
                         //Получить группы источников, сигналов (источник)
                         if (!(dictSecValues == null))
@@ -114,6 +120,36 @@ namespace uLoader
                     ;
             }
 
+            /// <summary>
+            /// Словарь с формулами
+            /// </summary>
+            Dictionary<string, string> m_dictFormula;
+
+            /// <summary>
+            /// Заполнить словарь с формулами
+            /// </summary>
+            private void fillDictFormula()
+            {
+                string key = string.Empty
+                    , value = string.Empty;
+                
+                m_dictFormula = new Dictionary<string, string> ();
+
+                int i = 0;
+                while (true)
+                {
+                    key = KEY_FORMULA + i.ToString();
+                    value = GetMainValueOfKey(key);
+
+                    if (value.Equals(string.Empty) == true)
+                        break;
+                    else
+                    {
+                        m_dictFormula.Add(key, value);
+                        i++;
+                    }
+                }
+            }
             /// <summary>
             /// Заполнить объект группы значениями из секции файла конфигурации
             /// </summary>
@@ -164,6 +200,110 @@ namespace uLoader
             }
 
             /// <summary>
+            /// Возвратить объект добавленной группы источников
+            /// </summary>
+            /// <param name="iSrc">Индекс типа группы (источник, назначение)</param>
+            /// <param name="secGroup">Наименование секции группы источников</param>
+            /// <returns>Объект группы источников</returns>
+            private ITEM_SRC addGroupSources(int iSrc, string secGroup)
+            {
+                ITEM_SRC itemRes = null;
+                string msgErr = string.Empty;
+                
+                itemRes = new GROUP_SRC();
+                (itemRes as GROUP_SRC).m_IDCurrentConnSett = GetSecValueOfKey(secGroup, @"SCUR");
+                (itemRes as GROUP_SRC).m_strDLLName = GetSecValueOfKey(secGroup, @"DLL_NAME");
+
+                //Инициализировать список с параметрами для групп сигналов для группы источников
+                (itemRes as GROUP_SRC).m_listGroupSignalsPars = null;
+                (itemRes as GROUP_SRC).m_listGroupSignalsPars = new List<GROUP_SIGNALS_PARS>();
+
+                //Получить ниаменования параметров для групп сигналов
+                List<string> pars = GetSecValueOfKey(secGroup, KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + @"PARS").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]).ToList<string>();
+                string[] vals;
+                string key = string.Empty;
+
+                int j = 0;
+                while (true)
+                {
+                    key = KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + j.ToString();
+                    if (isSecKey(secGroup, key) == true)
+                    {
+                        vals = GetSecValueOfKey(secGroup, key).Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]);
+
+                        if (vals.Length == pars.Count)
+                        {
+                            //??? каждую итерацию будет определяться тип 'GROUP_SIGNAL_PARS'
+                            (itemRes as GROUP_SRC).SetGroupSignalsPars(pars, vals);
+                        }
+                        else
+                        {
+                            msgErr = @"FileINI::addGroupValues () - не установлены параметры для [" + secGroup + @", " + key + @"] - ...";
+                            ////Вариант №1 - аврийно завершить загрузку - работу приложения
+                            //throw new Exception(msgErr);
+                            //Вариант №2 - зафиксировать ошибку - продолжить загрузку
+                            Logging.Logg().Error(msgErr, Logging.INDEX_MESSAGE.NOT_SET);
+                        }
+                    }
+                    else
+                        break;
+
+                    j++;
+                }
+
+                m_arListGroupValues[iSrc].m_listGroupSrc.Add(itemRes as GROUP_SRC);
+
+                return itemRes;
+            }
+
+            private ITEM_SRC addGroupSignals(int iSrc)
+            {
+                ITEM_SRC itemRes = new GROUP_SIGNALS_SRC();
+                //(itemSrc as GROUP_SIGNALS_SRC).m_iAutoStart = bool.Parse(GetSecValueOfKey(secGroup, @"AUTO_START")) == true ? 1 : 0;
+                //(itemSrc as GROUP_SIGNALS_SRC).m_mode = bool.Parse(GetSecValueOfKey(secGroup, @"CUR_INTERVAL_STATE")) == true ? MODE_WORK.CUR_INTERVAL : MODE_WORK.COSTUMIZE;
+                //if (Int32.TryParse(GetSecValueOfKey(secGroup, @"CURINTERVAL_PERIODLOCAL"), out (itemSrc as GROUP_SIGNALS_SRC).m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval) == false)
+                //    (itemSrc as GROUP_SIGNALS_SRC).m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval = -1;
+                //else
+                //    ;
+                //parseWorkInterval(GetSecValueOfKey(secGroup, @"COSTUMIZE_VALUE"), ref (itemSrc as GROUP_SIGNALS_SRC).m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE]);
+                m_arListGroupValues[iSrc].m_listGroupSgnlsSrc.Add(itemRes as GROUP_SIGNALS_SRC);
+
+                return itemRes;
+            }
+            /// <summary>
+            /// Инициализация формул для группы сигналов
+            /// </summary>
+            /// <param name="item">Объект группы сигналов</param>
+            /// <param name="throwMsgDeatail">Детализация сообщения (идентификаторы группы сигналов) при возникновении исключения</param>
+            private void initGroupSignalsFormula(GROUP_SIGNALS_SRC item, string throwMsgDeatail)
+            {
+                string strRes = string.Empty;
+
+                if (!(m_dictFormula == null))
+                    for (int i = 0; i < item.m_listSgnls.Count; i++)
+                        for (int j = 0; j < item.m_listSgnls[i].m_arSPars.Length; j++)
+                            foreach (string fKey in m_dictFormula.Keys)
+                                if (item.m_listSgnls[i].m_arSPars[j].IndexOf(fKey) == 0)
+                                {
+                                    // найдена формула - требуется:
+                                    // 1) добавить к группе сигналов описание формулы
+                                    item.AddFormula(fKey, m_dictFormula[fKey]);
+                                    //// 2) заменить идентификаторы аргументов-сигналов на локальные идентификаторы ИЛИ индексы сигналов
+                                    //if (item.ReinitArgs(i, j) < 0)
+                                    //    throw new Exception(@"FileINI::ctor () - initGroupSignalsFormula (" + throwMsgDeatail + @") - ...");
+                                    //else
+                                    //    ;
+                                    // второй формулы для сигнала не будет - прерываем 2 цикла - продолжаем поиск со следующего сигнала
+                                    j = item.m_listSgnls[i].m_arSPars.Length; // установить признак для прерывания внешнего цикла
+                                    break; // прервать текущий цикл
+                                }
+                                else
+                                    ;
+                else
+                    ; // в словаре приложения нет ни одной формулы
+            }
+
+            /// <summary>
             /// Добавить группу и ее значения
             /// </summary>
             /// <param name="indxSrc">Индекс панели (источник, неазначение)</param>
@@ -175,6 +315,15 @@ namespace uLoader
                 int iRes = 0; //Результат выполнения
                 //Индекс типа элемента группы (источник, сигнал)
                 INDEX_TYPE_GROUP indxTypeGroup;
+                int iStartArgs = -1; //Индекс 1-го символа аргументов в формуле
+                string msgErr = string.Empty; // строка с сообщением об ошибке
+
+                string[] values //ЗначениЕ для элемента группы
+                        , vals; //ЗначениЕ для (1-го) параметра элемента группы
+                int j = -1; //Индекс для ключа элемента группы (источник, сигнал) в секции
+                string keyPars = string.Empty //Ключ для элемента группы (источник, сигнал) в секции
+                    , key = string.Empty;
+                Dictionary<string, string> dictSecValues = null; // словарь значений секции
 
                 ////Вариант №1
                 //switch (typeof(type))
@@ -200,60 +349,10 @@ namespace uLoader
                 switch (indxTypeGroup)
                 {
                     case INDEX_TYPE_GROUP.SRC: //Добавить группу источников
-                        itemSrc = new GROUP_SRC();
-                        (itemSrc as GROUP_SRC).m_IDCurrentConnSett = GetSecValueOfKey(secGroup, @"SCUR");
-                        (itemSrc as GROUP_SRC).m_strDLLName = GetSecValueOfKey(secGroup, @"DLL_NAME");
-
-                        //Инициализировать список с параметрами для групп сигналов для группы источников
-                        (itemSrc as GROUP_SRC).m_listGroupSignalsPars = null;
-                        (itemSrc as GROUP_SRC).m_listGroupSignalsPars = new List <GROUP_SIGNALS_PARS> ();
-                        
-                        //Получить ниаменования параметров для групп сигналов
-                        List <string> pars = GetSecValueOfKey(secGroup, KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + @"PARS").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]).ToList <string> ();
-                        string[] vals;
-                        string key = string.Empty;                        
-
-                        int j = 0;
-                        while (true)
-                        {
-                            key = KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + j.ToString ();
-                            if (isSecKey (secGroup, key) == true)
-                            {
-                                vals = GetSecValueOfKey(secGroup, key).Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]);
-
-                                if (vals.Length == pars.Count)
-                                {
-                                    //??? каждую итерацию будет определяться тип 'GROUP_SIGNAL_PARS'
-                                    (itemSrc as GROUP_SRC).SetGroupSignalsPars(pars, vals);
-                                }
-                                else
-                                {
-                                    string msg = @"FileINI::addGroupValues () - не установлены параметры для [" + secGroup + @", " + key + @"] - ...";
-                                    ////Вариант №1 - аврийно завершить загрузку - работу приложения
-                                    //throw new Exception(msg);
-                                    //Вариант №2 - зафиксировать ошибку - продолжить загрузку
-                                    Logging.Logg().Error(msg, Logging.INDEX_MESSAGE.NOT_SET);
-                                    
-                                }
-                            }
-                            else
-                                break;
-
-                            j ++;
-                        }
-
-                        m_arListGroupValues[(int)indxSrc].m_listGroupSrc.Add(itemSrc as GROUP_SRC);                        
+                        itemSrc = addGroupSources((int)indxSrc, secGroup);                        
                         break;
                     case INDEX_TYPE_GROUP.SIGNAL: //Добавить группу сигналов
-                        itemSrc = new GROUP_SIGNALS_SRC();
-                        //(itemSrc as GROUP_SIGNALS_SRC).m_iAutoStart = bool.Parse(GetSecValueOfKey(secGroup, @"AUTO_START")) == true ? 1 : 0;
-                        //(itemSrc as GROUP_SIGNALS_SRC).m_mode = bool.Parse(GetSecValueOfKey(secGroup, @"CUR_INTERVAL_STATE")) == true ? MODE_WORK.CUR_INTERVAL : MODE_WORK.COSTUMIZE;
-                        //if (Int32.TryParse(GetSecValueOfKey(secGroup, @"CURINTERVAL_PERIODLOCAL"), out (itemSrc as GROUP_SIGNALS_SRC).m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval) == false)
-                        //    (itemSrc as GROUP_SIGNALS_SRC).m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_iInterval = -1;
-                        //else
-                        //    ;
-                        //parseWorkInterval(GetSecValueOfKey(secGroup, @"COSTUMIZE_VALUE"), ref (itemSrc as GROUP_SIGNALS_SRC).m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE]);
-                        m_arListGroupValues[(int)indxSrc].m_listGroupSgnlsSrc.Add(itemSrc as GROUP_SIGNALS_SRC);
+                        itemSrc = addGroupSignals((int)indxSrc);
                         break;
                     default:
                         break;
@@ -267,9 +366,6 @@ namespace uLoader
                     itemSrc.m_strID = secGroup.Split(s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET])[1];
                     itemSrc.m_strShrName = shrName;
 
-                    string[] values //ЗначениЕ для элемента группы
-                        , vals; //ЗначениЕ для (1-го) параметра элемента группы
-
                     //Присвоить "дополнительные" значения для группы
                     //if (typeGroup == INDEX_TYPE_GROUP.SRC)
                     if (itemSrc is GROUP_SRC)
@@ -279,11 +375,8 @@ namespace uLoader
                     else
                         ;
 
-                    int j = -1; //Индекс для ключа элемента группы (источник, сигнал) в секции
-                    string key = string.Empty; //Ключ для элемента группы (источник, сигнал) в секции
-
                     //Получить словарь значений секции
-                    Dictionary<string, string> dictSecValues = getSecValues(secGroup);
+                    dictSecValues = getSecValues(secGroup);
                     ////ЗначениЯ для элемента группы
                     //// только для источника, т.к. для сигнала ... (см. 'SIGNAL_SRC')
                     //Dictionary <string, string> dictItemValues;
@@ -291,7 +384,7 @@ namespace uLoader
                     //Проверить наличие значений в секции
                     if (!(dictSecValues == null))
                     {
-                        string keyPars = (indxTypeGroup == INDEX_TYPE_GROUP.SRC ? KEY_TREE_SRC[(int)INDEX_KEY_SRC.SRC_OF_GROUP] : indxTypeGroup == INDEX_TYPE_GROUP.SIGNAL ? KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.SIGNAL_OF_GROUP] : string.Empty) + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + KEY_PARS;
+                        keyPars = (indxTypeGroup == INDEX_TYPE_GROUP.SRC ? KEY_TREE_SRC[(int)INDEX_KEY_SRC.SRC_OF_GROUP] : indxTypeGroup == INDEX_TYPE_GROUP.SIGNAL ? KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.SIGNAL_OF_GROUP] : string.Empty) + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + KEY_PARS;
 
                         //Получить наименовния параметров для элемента группы (источник, сигнал)
                         itemSrc.m_listSKeys = GetSecValueOfKey(secGroup, keyPars).Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]).ToList <string> ();
@@ -330,34 +423,11 @@ namespace uLoader
                                 if (values.Length == itemSrc.m_listSKeys.Count)
                                     switch (indxTypeGroup)
                                     {
-                                        case INDEX_TYPE_GROUP.SRC: //Источник
-                                            //Инициализация, если элемент группы 1-ый
-                                            if ((itemSrc as GROUP_SRC).m_dictConnSett == null)
-                                                (itemSrc as GROUP_SRC).m_dictConnSett = new Dictionary<string, ConnectionSettings>();
-                                            else
-                                                ;
-
-                                            (itemSrc as GROUP_SRC).m_dictConnSett.Add(KEY_TREE_SRC[(int)INDEX_KEY_SRC.SRC_OF_GROUP] + (itemSrc as GROUP_SRC).m_dictConnSett.Count
-                                                , new ConnectionSettings(
-                                                    Int32.Parse(values[itemSrc.m_listSKeys.IndexOf(@"ID")])
-                                                    , values[itemSrc.m_listSKeys.IndexOf(@"NAME_SHR")]
-                                                    , values[itemSrc.m_listSKeys.IndexOf(@"IP")]
-                                                    , Int32.Parse(values[itemSrc.m_listSKeys.IndexOf(@"PORT")])
-                                                    , values[itemSrc.m_listSKeys.IndexOf(@"DB_NAME")]
-                                                    , values[itemSrc.m_listSKeys.IndexOf(@"UID")]
-                                                    , values[itemSrc.m_listSKeys.IndexOf(@"PSWD*")]
-                                                ));
+                                        case INDEX_TYPE_GROUP.SRC: //Источник                                            
+                                            (itemSrc as GROUP_SRC).Add(KEY_TREE_SRC[(int)INDEX_KEY_SRC.SRC_OF_GROUP], values);
                                             break;
                                         case INDEX_TYPE_GROUP.SIGNAL: //Сигнал
-                                            //Инициализация, если элемент группы 1-ый
-                                            if ((itemSrc as GROUP_SIGNALS_SRC).m_listSgnls == null)
-                                                (itemSrc as GROUP_SIGNALS_SRC).m_listSgnls = new List<SIGNAL_SRC>();
-                                            else
-                                                ;
-
-                                            (itemSrc as GROUP_SIGNALS_SRC).m_listSgnls.Add (new SIGNAL_SRC ());
-                                            (itemSrc as GROUP_SIGNALS_SRC).m_listSgnls[(itemSrc as GROUP_SIGNALS_SRC).m_listSgnls.Count - 1].m_arSPars = new string[values.Length];
-                                            values.CopyTo((itemSrc as GROUP_SIGNALS_SRC).m_listSgnls[(itemSrc as GROUP_SIGNALS_SRC).m_listSgnls.Count - 1].m_arSPars, 0);                                            
+                                            (itemSrc as GROUP_SIGNALS_SRC).Add(values);
                                             break;
                                         default:
                                             break;
@@ -372,9 +442,22 @@ namespace uLoader
                             //Увеличить индекс элемента (источник, сигнал)
                             j++;
                         }
+
+                        if (indxTypeGroup == INDEX_TYPE_GROUP.SIGNAL)
+                        // если была добавлена группа сигналов
+                            try
+                            {
+                                initGroupSignalsFormula(itemSrc as GROUP_SIGNALS_SRC, indxSrc.ToString() + @", " + type.AssemblyQualifiedName + @", " + secGroup);
+                            }
+                            catch (Exception e)
+                            {
+                                Logging.Logg().Exception(e, @"FileINI::ctor () - addGroupValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                            }
+                        else
+                            ;
                     }
                     else
-                        //Секция есть, но в ней не определен ни один источник...
+                        //Секция есть, но в ней не определен ни один источник(сигнал)...
                         iRes = -1; //???
                 }
                 else

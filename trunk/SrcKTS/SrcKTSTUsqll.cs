@@ -31,7 +31,7 @@ namespace SrcKTS
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
                 //ID_MAIN, ID_LOCAL, AVG
-                return new SIGNALIdsql((int)objs[0], (int)objs[2], bool.Parse((string)objs[3]));
+                return new SIGNALIdsql(this, (int)objs[0], /*(int)*/objs[2], bool.Parse((string)objs[3]));
             }
 
             /// <summary>
@@ -47,22 +47,28 @@ namespace SrcKTS
                 i = 0;
                 foreach (GroupSignalsKTSTUsql.SIGNALIdsql s in m_arSignals)
                 {
-                    if (i == 0)
-                        cmd = @"List";
-                    else
-                        if (i == 1)
-                            cmd = @"ListAdd";
+                    if (s.IsFormula == false)
+                    {
+                        if (i == 0)
+                            cmd = @"List";
                         else
-                            ; // оставить без изменений
+                            if (i == 1)
+                                cmd = @"ListAdd";
+                            else
+                                ; // оставить без изменений
 
-                    m_strQuery += @"exec e6work.dbo.ep_AskVTIdata @cmd='" + cmd + @"',"
-                        + @"@idVTI=" + s.m_iIdLocal + @","
-                        + @"@TimeStart='" + DateTimeBeginFormat + @"',"
-                        + @"@TimeEnd='" + DateTimeEndFormat + @"',"
-                        + @"@idReq=" + idReq
-                        + @";";
+                        m_strQuery += @"exec e6work.dbo.ep_AskVTIdata @cmd='" + cmd + @"',"
+                            + @"@idVTI=" + s.m_iIdLocal + @","
+                            + @"@TimeStart='" + DateTimeBeginFormat + @"',"
+                            + @"@TimeEnd='" + DateTimeEndFormat + @"',"
+                            + @"@idReq=" + idReq
+                            + @";";
 
-                    i ++;
+                        i++;
+                    }
+                    else
+                        // формула
+                        ;
                 }
 
                 m_strQuery += @"SELECT idVTI as [ID],idReq,TimeIdx,TimeRTC,TimeSQL as [DATETIME],idState,ValueFl as [VALUE],ValueInt,IsInteger,idUnit"
@@ -119,47 +125,53 @@ namespace SrcKTS
 
             foreach (GroupSignalsKTSTUsql.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
             {
-                rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal, @"DATETIME");
-
-                if ((rowsSgnl.Length > 0)
-                    && (rowsSgnl.Length % 2 == 0))
+                if (sgnl.IsFormula == false)
                 {
-                    dtValue = (DateTime)rowsSgnl[0][@"DATETIME"];
-                    //У 1-го значения минуты д.б. = 30
-                    if (dtValue.Minute == 30)
+                    rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal, @"DATETIME");
+
+                    if ((rowsSgnl.Length > 0)
+                        && (rowsSgnl.Length % 2 == 0))
                     {
-                        //Для обработки метки времени по UTC
-                        dtValue = dtValue.AddHours((int)rowsSgnl[0][@"UTC_OFFSET"]).AddMinutes(30);
-                        //Вычислить суммарное значение для сигнала
-                        dblSumValue = 0F;
-                        //cntRec = 0;
-                        //??? обработка всех последующих строк, а если строк > 2
-                        foreach (DataRow r in rowsSgnl)
+                        dtValue = (DateTime)rowsSgnl[0][@"DATETIME"];
+                        //У 1-го значения минуты д.б. = 30
+                        if (dtValue.Minute == 30)
                         {
-                            dblSumValue += (double)r[@"VALUE"];
-                            //cntRec++;
+                            //Для обработки метки времени по UTC
+                            dtValue = dtValue.AddHours((int)rowsSgnl[0][@"UTC_OFFSET"]).AddMinutes(30);
+                            //Вычислить суммарное значение для сигнала
+                            dblSumValue = 0F;
+                            //cntRec = 0;
+                            //??? обработка всех последующих строк, а если строк > 2
+                            foreach (DataRow r in rowsSgnl)
+                            {
+                                dblSumValue += (double)r[@"VALUE"];
+                                //cntRec++;
+                            }
+                            // при необходимости найти среднее
+                            if (sgnl.m_bAVG == true)
+                                //dblSumValue /= cntRec;
+                                dblSumValue /= rowsSgnl.Length;
+                            else
+                                ;
+                            // вставить строку
+                            tblRes.Rows.Add(new object[] {
+                                sgnl.m_idMain
+                                , dtValue
+                                , dblSumValue
+                            });
                         }
-                        // при необходимости найти среднее
-                        if (sgnl.m_bAVG == true)
-                            //dblSumValue /= cntRec;
-                            dblSumValue /= rowsSgnl.Length;
                         else
+                            // значения за разные интервалы интегрирования
+                            //break
+                            continue
                             ;
-                        // вставить строку
-                        tblRes.Rows.Add(new object[] {
-                            sgnl.m_idMain
-                            , dtValue
-                            , dblSumValue
-                        });
                     }
                     else
-                        // значения за разные интервалы интегрирования
-                        //break
-                        continue
-                        ;
+                        ; // неполные данные
                 }
                 else
-                    ; // не полные данные
+                    // формула
+                    ;
             }
 
             base.parseValues(tblRes);

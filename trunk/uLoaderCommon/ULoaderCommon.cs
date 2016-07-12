@@ -293,6 +293,9 @@ namespace uLoaderCommon
 
             public virtual void Stop ()
             {
+                foreach (SIGNAL s in m_arSignals)
+                    s.ClearFormula();
+
                 State = GroupSignals.STATE.STOP;                
                 TableRecieved = null;
             }
@@ -324,6 +327,19 @@ namespace uLoaderCommon
             /// </summary>
             public class SIGNAL
             {
+                //private GroupSignals _parent;
+                /// <summary>
+                /// Строка с идентификатором формулы и указанием идентификаторов-аргументов
+                /// </summary>
+                private string m_strFormula;
+                /// <summary>
+                /// Ключ формулы
+                /// </summary>
+                public string m_fKey;
+                /// <summary>
+                /// Список идентификаторов (idMain) - аргументов формулы
+                /// </summary>
+                public List<int> m_listIdArgs;
                 /// <summary>
                 /// Идентификатор сигнала, уникальный в границах приложения
                 /// </summary>
@@ -332,9 +348,121 @@ namespace uLoaderCommon
                 /// Конструктор - основной (с параметром)
                 /// </summary>
                 /// <param name="idMain">Идентификатор сигнала, уникальный в границах приложения</param>
-                public SIGNAL(int idMain)
+                public SIGNAL(GroupSignals parent, int idMain, object formula)
                 {
+                    //_parent = parent;
+
                     this.m_idMain = idMain;
+
+                    setFormula(formula);
+                }
+
+                public bool IsFormula { get { return (m_strFormula.Equals(string.Empty) == false) && (m_fKey.Equals(string.Empty) == false); } }
+
+                private void setFormula(object oFormula)
+                {
+                    string formula = string.Empty;
+                    
+                    m_strFormula =
+                    m_fKey =
+                         string.Empty;
+
+                    if (oFormula.GetType().Equals(typeof(string)) == true)
+                    {// требуется распознать формула ИЛИ стандартный текстовый идентификатор (например: KKS_NAME, nameTable)
+                        formula = oFormula as string;
+                        //!!! наличие скобок - открыть, закрыть ПРИЗНАК формулы
+                        if ((!(formula.IndexOf('(') < 0))
+                            && (!(formula.IndexOf(')') < 0)))
+                        {
+                            m_strFormula = formula as string;
+                            m_fKey = m_strFormula.Substring(0, formula.IndexOf('('));
+                        }
+                        else
+                            ;
+                    }
+                    else
+                        //if (formula.GetType().IsPrimitive == true)
+                        //    ;
+                        //else
+                            ;
+                }
+                /// <summary>
+                /// Возвратить массив индексов сигналов, являющихся аргументами формулы
+                /// </summary>
+                /// <returns>Массив с индексами сигналов</returns>
+                public int[] GetIndexArgs(out int error)
+                {
+                    error = 0;
+                    
+                    int[] arRes = null;
+
+                    int iStartArgs = -1
+                        , indxArg = -1;
+                    string[] indxArgs = null;
+                    // индекс символа в строке, где начинается перечисление индексов сигналов
+                    iStartArgs = m_strFormula.IndexOf('(') + 1;
+                    // проверить наличие аргументов
+                    if (iStartArgs > 0)
+                    {
+                        // получить список индексов аргументов
+                        indxArgs = m_strFormula.Substring(iStartArgs, m_strFormula.Length - iStartArgs - 1).Split(';');
+                        if (indxArgs.Length > 0)
+                        {
+                            // выделить память для результата
+                            arRes = new int[indxArgs.Length];
+
+                            for (int i = 0; i < indxArgs.Length; i++)
+                            {
+                                if (int.TryParse(indxArgs[i], out indxArg) == true)
+                                    arRes[i] = indxArg;
+                                else
+                                {
+                                    error = -3;
+                                    arRes[i] = -1;
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                            error = -2; // кол-во аргументов = 0
+                    }
+                    else
+                    {
+                        error = -1; // нет аргументов
+
+                        arRes = new int[] { };
+                    }
+
+                    return arRes;
+                }
+                /// <summary>
+                /// Добавить идентификатор аргумента при вычислении формулы (порядок учитывать)
+                /// </summary>
+                /// <param name="idMain"></param>
+                public void AddIdArg(int idMain)
+                {
+                    if (m_listIdArgs == null)
+                        m_listIdArgs = new List<int>();
+                    else
+                        ;
+
+                    m_listIdArgs.Add(idMain);
+                }
+                /// <summary>
+                /// Очистить значение и аргументы для формулы (с проверкой наличия формулы)
+                /// </summary>
+                public void ClearFormula()
+                {
+                    if (IsFormula == true)
+                    {
+                        m_strFormula = string.Empty;
+                        if (!(m_listIdArgs == null))
+                            m_listIdArgs.Clear();
+                        else
+                            ;
+                    }
+                    else
+                        ;
                 }
             }
 
@@ -354,6 +482,10 @@ namespace uLoaderCommon
             /// <param name="pars">Параметры группы сигналов</param>
             public GroupSignals(HHandlerDbULoader parent, int id, object[] pars)
             {
+                int err = 0;
+
+                int[] indxArgs = null;
+                
                 //Владелец объекта
                 _parent = parent;
                 //Целочисленный идентификатор
@@ -368,9 +500,25 @@ namespace uLoaderCommon
                 if (pars.Length > 0)
                 {
                     m_arSignals = new SIGNAL[pars.Length];
-
+                    // создать сигналы
                     for (int i = 0; i < pars.Length; i++)
                         m_arSignals[i] = createSignal (pars[i] as object []);
+                    // при наличии формул определить и установить идентификаторы аргументов
+                    for (int i = 0; i < m_arSignals.Length; i++)
+                        if (m_arSignals[i].IsFormula == true)
+                        {
+                            indxArgs = m_arSignals[i].GetIndexArgs(out err);
+
+                            if (err == 0)
+                            {
+                                foreach (int indxArg in indxArgs)
+                                    m_arSignals[i].AddIdArg(m_arSignals[indxArg].m_idMain);
+                            }
+                            else
+                                Logging.Logg().Error(@"GroupSignals::ctor () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                        }
+                        else
+                            ; // нет формулы
                 }
                 else
                     ;
@@ -969,6 +1117,10 @@ namespace uLoaderCommon
         {
             int iRes = 0;
 
+            string[] arFormula = null;
+            string fKey = string.Empty
+                , formula = string.Empty;
+
             try
             {
                 lock (m_lockStateGroupSignals)
@@ -1009,6 +1161,8 @@ namespace uLoaderCommon
                                     m_dictGroupSignals[id].PeriodMain = (TimeSpan)pars[2];
                                     m_dictGroupSignals[id].PeriodLocal = (TimeSpan)pars[3];
                                     m_dictGroupSignals[id].MSecIntervalLocal = (int)pars[4];
+                                    // инициализация расчетных формул
+                                    // только для Source
                                 //}
 
                                 //Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -1414,11 +1568,11 @@ namespace uLoaderCommon
             {
                 //Console.WriteLine(@"HHandlerDbULoader::Stop (" + PlugInId + @") - ...");
                 Logging.Logg().Debug(@"HHandlerDbULoader::Stop (" + PlugInId + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
-
-                stopThreadQueue();
-
-                Activate (false);
-
+                // остановить поток обработки очереди событий
+                stopThreadQueue();                
+                //??? метод должен вызываться из-вне
+                //Activate (false);
+                // "забыть" парметры соединения
                 m_evtInitSource.Reset ();
                 m_connSett = null;
                 if (! (_iPlugin == null))

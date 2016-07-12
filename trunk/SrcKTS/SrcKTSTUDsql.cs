@@ -48,21 +48,28 @@ namespace SrcKTS
                 i = 0;
                 foreach (GroupSignalsKTSTUDsql.SIGNALIdsql s in m_arSignals)
                 {
-                    if (i == 0)
-                        cmd = @"List";
+                    if (s.IsFormula == false)
+                    {
+                        if (i == 0)
+                            cmd = @"List";
+                        else
+                            if (i == 1)
+                                cmd = @"ListAdd";
+                            else ;
+
+                        m_strQuery += @"exec e6work.dbo.ep_AskVTIdata @cmd='" + cmd + @"',"
+                            + @"@idVTI=" + s.m_iIdLocal + @","
+                            + @"@TimeStart='" + DateTimeBeginFormat + @"',"
+                            + @"@TimeEnd='" + DateTimeEndFormat + @"',"
+                            + @"@idReq=" + idReq
+                            + @";";
+
+                        i++;
+                    }
                     else
-                        if (i == 1)
-                            cmd = @"ListAdd";
-                        else ;
-
-                    m_strQuery += @"exec e6work.dbo.ep_AskVTIdata @cmd='" + cmd + @"',"
-                        + @"@idVTI=" + s.m_iIdLocal + @","
-                        + @"@TimeStart='" + DateTimeBeginFormat + @"',"
-                        + @"@TimeEnd='" + DateTimeEndFormat + @"',"
-                        + @"@idReq=" + idReq
-                        + @";";
-
-                    i++;
+                        // формула
+                        ;
+                    
                 }
 
                 m_strQuery += @"SELECT idVTI as [ID],idReq,TimeIdx,TimeRTC, DATEADD(Second," + secUTCOffsetToData + ",TimeSQL) as [DATETIME],idState,ValueFl as [VALUE],ValueInt,IsInteger,idUnit"
@@ -79,7 +86,7 @@ namespace SrcKTS
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
                 //ID_MAIN, ID_LOCAL, AVG
-                return new SIGNALIdsql((int)objs[0], (int)objs[2], bool.Parse((string)objs[3]));
+                return new SIGNALIdsql(this, (int)objs[0], /*(int)*/objs[2], bool.Parse((string)objs[3]));
             }
 
             protected override object getIdMain(object id_link)
@@ -119,39 +126,46 @@ namespace SrcKTS
             {
                 foreach (GroupSignalsKTSTUDsql.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
                 {
-                    rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal, @"DATETIME");
-                    //вывод данных только при полных сутках
-                    if ((rowsSgnl.Length > 0)
-                        && (rowsSgnl.Length % 48 == 0))
+                    if (sgnl.IsFormula == false)
                     {
-                        dtValue = ((DateTime)rowsSgnl[cntHour][@"DATETIME"]).AddMinutes(-30);
-                        //Для обработки метки времени по UTC
-                        //dtValue = dtValue.AddHours((int)rowsSgnl[0][@"UTC_OFFSET"]).AddMinutes(-30);
-                        //Вычислить суммарное значение для сигнала
-                        dblSumValue = 0F;
-                        //cntRec = 0;
-                        //??? обработка всех последующих строк, а если строк > 2
-                        //for (int j = cntHour; j < (cntHour + 47); j++)
+                        rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal, @"DATETIME");
+                        //вывод данных только при полных сутках
+                        if ((rowsSgnl.Length > 0)
+                            && (rowsSgnl.Length % 48 == 0))
+                        {
+                            dtValue = ((DateTime)rowsSgnl[cntHour][@"DATETIME"]).AddMinutes(-30);
+                            //Для обработки метки времени по UTC
+                            //dtValue = dtValue.AddHours((int)rowsSgnl[0][@"UTC_OFFSET"]).AddMinutes(-30);
+                            //Вычислить суммарное значение для сигнала
+                            dblSumValue = 0F;
+                            //cntRec = 0;
+                            //??? обработка всех последующих строк, а если строк > 2
+                            //for (int j = cntHour; j < (cntHour + 47); j++)
                             foreach (DataRow r in rowsSgnl)
-                            dblSumValue += Convert.ToSingle(r[@"VALUE"].ToString());
-                                //Convert.ToSingle(rowsSgnl[j][@"VALUE"].ToString());
-                       
-                        // при необходимости найти среднее
-                        if (sgnl.m_bAVG == true)
-                            dblSumValue /= rowsSgnl.Length;
+                                dblSumValue += Convert.ToSingle(r[@"VALUE"].ToString());
+                            //Convert.ToSingle(rowsSgnl[j][@"VALUE"].ToString());
+
+                            // при необходимости найти среднее
+                            if (sgnl.m_bAVG == true)
+                                dblSumValue /= rowsSgnl.Length;
+                            else
+                                ;
+                            // вставить строку
+                            tblRes.Rows.Add(new object[] {
+                                sgnl.m_idMain
+                                , dtValue
+                                , dblSumValue
+                            });
+                        }
                         else
-                            ;
-                        // вставить строку
-                        tblRes.Rows.Add(new object[] {
-                            sgnl.m_idMain
-                            , dtValue
-                            , dblSumValue
-                        });
+                            // неполные данные
+                            continue
+                            ;                        
                     }
                     else
+                        // формула
                         continue
                         ;
-                    // не полные данные
                 }
                 //cntHour = cntHour + 48;//за месяц
                 base.parseValues(tblRes);

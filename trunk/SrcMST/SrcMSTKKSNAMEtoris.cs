@@ -78,6 +78,7 @@ namespace SrcMST
 
                 for (int i = 0; i < m_arSignals.Length; i++)
                     m_TablePrevValue.Rows.Add(new object[] {
+                        // ??? формула
                         (m_arSignals[i] as uLoaderCommon.HHandlerDbULoaderSrc.GroupSignalsSrc.SIGNALMSTKKSNAMEsql).m_kks_name.ToString()
                         , Convert.ToDouble(0.ToString("F2"))
                         , DateTime.MinValue
@@ -94,7 +95,7 @@ namespace SrcMST
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
                 //ID_MAIN, KKSNAME
-                return new SIGNALMSTKKSNAMEsql((int)objs[0], (string)objs[2]);
+                return new SIGNALMSTKKSNAMEsql(this, (int)objs[0], (string)objs[2]);
             }
             /// <summary>
             /// Зарегистрировать сигнал(-ы) (подписаться) в OPC-сервере
@@ -107,7 +108,10 @@ namespace SrcMST
                 object[] parsToEvt = new object[] { m_Id, string.Empty };
 
                 foreach (SIGNALMSTKKSNAMEsql sgnl in m_arSignals)
-                    parsToEvt[1] += sgnl.m_kks_name + @",";
+                    if (sgnl.IsFormula == false)
+                        parsToEvt[1] += sgnl.m_kks_name + @",";
+                    else
+                        ; // формула
                 
                 if (((string)parsToEvt[1]).Equals(string.Empty) == false)
                 {// только, если есть сигналы для подписки
@@ -126,9 +130,12 @@ namespace SrcMST
             {
                 string parsToEvt = string.Empty;
                 IAsyncResult iar = null;
-                
+
                 foreach (SIGNALMSTKKSNAMEsql sgnl in m_arSignals)
-                    parsToEvt += sgnl.m_kks_name + @",";
+                    if (sgnl.IsFormula == false)
+                        parsToEvt += sgnl.m_kks_name + @",";
+                    else
+                        ; // формула
 
                 if (parsToEvt.Equals(string.Empty) == false)
                 {// только, если есть сигналы для отписки
