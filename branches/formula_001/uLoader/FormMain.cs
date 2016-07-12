@@ -130,7 +130,7 @@ namespace uLoader
                             s_state_execute = STATE_EXECUTE.MINIMIZE;
                             break;
                         default:
-                            strNameFileINI = string.Empty;
+                            //strNameFileINI = string.Empty;
                             break;
                     }
 

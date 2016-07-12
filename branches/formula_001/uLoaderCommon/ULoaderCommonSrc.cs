@@ -8,6 +8,12 @@ using System.Diagnostics;
 
 using HClassLibrary;
 
+using ELW;
+using ELW.Library.Math;
+using ELW.Library.Math.Exceptions;
+using ELW.Library.Math.Expressions;
+using ELW.Library.Math.Tools;
+
 namespace uLoaderCommon
 {
     public abstract class HHandlerDbULoaderSrc : HHandlerDbULoader, ILoaderSrc
@@ -91,11 +97,77 @@ namespace uLoaderCommon
             return iRes;
         }
 
+        protected Dictionary<string, CompiledExpression> m_dictCompiledExpression;
+
         public override int Initialize(int id, object[] pars)
         {
             int iRes = -1;            
 
-            iRes = base.Initialize(id, pars);            
+            iRes = base.Initialize(id, pars);
+
+            if (iRes == 0)
+            {
+                string[] arFormula = null;
+                string fKey = string.Empty
+                    , formula = string.Empty;
+
+                try
+                {
+                    lock (m_lockStateGroupSignals)
+                    {
+                        if (m_dictGroupSignals.Keys.Contains(id) == false)
+                            //Считать переданные параметры - параметрами сигналов                
+                            ; // выполнено в базлвой ф-и
+
+                        else
+                            //Сигналы д.б. инициализированы
+                            if (m_dictGroupSignals[id].Signals == null)
+                                ; // выполнено в базлвой ф-и
+                            else
+                                if (pars[0].GetType().IsArray == true)
+                                    //Считать переданные параметры - параметрами сигналов
+                                    // выполнено в базовой ф-и
+                                    ;
+                                else
+                                {//Считать переданные параметры - параметрами группы сигналов                                    
+                                    // репарсинг 5-го параметра (описание формул для группы сигналов)
+                                    if (((string)pars[5]).Equals(string.Empty) == false)
+                                    {
+                                        arFormula = ((string)pars[5]).Split(';');
+                                        for (int i = 0; i < arFormula.Length; i++)
+                                        {
+                                            fKey = arFormula[i].Split('=')[0];
+
+                                            if (m_dictCompiledExpression == null)
+                                                m_dictCompiledExpression = new Dictionary<string, CompiledExpression>();
+                                            else
+                                                ;
+
+                                            if (m_dictCompiledExpression.ContainsKey(fKey) == false)
+                                            {
+                                                formula = arFormula[i].Split('=')[1];
+                                                m_dictCompiledExpression.Add(fKey, ToolsHelper.Compiler.Compile(ToolsHelper.Parser.Parse(formula)));
+                                            }
+                                            else
+                                                ; // такая формула уже есть
+                                        }
+                                    }
+                                    else
+                                        ;
+                                }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, @"HHandlerDbULoader::Initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+
+                    iRes = -1;
+                }
+
+                return iRes;
+            }
+            else
+                ;
 
             return iRes;
         }
@@ -167,6 +239,11 @@ namespace uLoaderCommon
         public override void Stop()
         {
             stopTimerActivate();
+            // "забыть" формулы
+            if (!(m_dictCompiledExpression == null))
+                m_dictCompiledExpression.Clear();
+            else
+                ;
 
             base.Stop();
         }
@@ -524,8 +601,66 @@ namespace uLoaderCommon
         //Строка запроса для текущей (обрабатываемой) группы
         private string Query { get { return (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsSrc).Query; } }
 
+        protected virtual void calculateValues(ref DataTable tblRes)
+        {
+            double dblRes = -1F;
+            DataRow[] rowsSgnl = null;
+            List<VariableValue> variables = null;
+            DateTime dtValueRecieved
+                , dtValue = DateTime.MinValue;
+
+            foreach (GroupSignals.SIGNAL sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
+            {
+                if (sgnl.IsFormula == true)
+                {
+                    variables = new List<VariableValue>();
+
+                    for (int i = 0; i < sgnl.m_listIdArgs.Count; i ++)
+                    {
+                        rowsSgnl = tblRes.Select(@"ID=" + sgnl.m_listIdArgs[i]);
+
+                        if (rowsSgnl.Length == 1)
+                        {
+                            dtValueRecieved = (DateTime)rowsSgnl[0][@"DATETIME"];
+                            if (dtValue.Equals(DateTime.MinValue) == true)
+                                dtValue = dtValueRecieved;
+                            else
+                                if (dtValue > dtValueRecieved)
+                                    dtValue = dtValueRecieved;
+                                else
+                                    ;
+
+                            variables.Add(new VariableValue((float)rowsSgnl[0][@"VALUE"], @"a" + i.ToString()));
+                        }
+                        else
+                            ;
+                    }
+
+                    if ((variables.Count == sgnl.m_listIdArgs.Count)
+                        && (dtValue.Equals(DateTime.MinValue) == false))
+                    {
+                        dblRes = ToolsHelper.Calculator.Calculate(m_dictCompiledExpression[sgnl.m_fKey], variables);
+
+                        // вставить строку
+                        tblRes.Rows.Add(new object[] {
+                            sgnl.m_idMain
+                            , dtValue
+                            , dblRes
+                        });
+                    }
+                    else
+                        ; // не получено ни одного значения ни для одного bp аргументов формулы
+                }
+                else
+                    ;
+            }
+        }
+
         protected virtual void parseValues(DataTable table)
         {
+            // расчитать формулы
+            calculateValues(ref table);
+
             RowCountRecieved = table.Rows.Count;
 
             if (TableRecieved == null)

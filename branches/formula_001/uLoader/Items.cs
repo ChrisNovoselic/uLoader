@@ -13,6 +13,10 @@ using uLoaderCommon;
 
 namespace uLoader
 {
+    interface IItemSrc
+    {
+        void Initialize(string []values);
+    }
     /// <summary>
     /// Базовый класс для группы элементов (источников данных, сигналов)
     /// </summary>
@@ -157,6 +161,55 @@ namespace uLoader
         /// </summary>
         public GROUP_SIGNALS_SRC()
         {
+        }
+        /// <summary>
+        /// Добавить сигнал в группу
+        /// </summary>
+        /// <param name="values">Значения параметров сигнала</param>
+        public void Add(string []values)
+        {
+            //Инициализация, если элемент группы 1-ый
+            if (m_listSgnls == null)
+                m_listSgnls = new List<SIGNAL_SRC>();
+            else
+                ;
+            // выделить память для сигнала
+            m_listSgnls.Add(new SIGNAL_SRC());
+            // выделить память для параметров сигнала
+            m_listSgnls[m_listSgnls.Count - 1].m_arSPars = new string[values.Length];
+            // ??? уточнить не является ли один из параметров формула
+            values.CopyTo(m_listSgnls[m_listSgnls.Count - 1].m_arSPars, 0);
+        }
+        /// <summary>
+        /// Добавить описание формулы, используемой в группе
+        /// </summary>
+        /// <param name="fKey">Ключ формулы</param>
+        /// <param name="formula">Содержание формулы</param>
+        public void AddFormula(string fKey, string formula)
+        {
+            if (m_dictFormula == null)
+                m_dictFormula = new Dictionary<string, string>();
+            else
+                ;
+            // проверить не была ли формула уже добавлена
+            if (m_dictFormula.ContainsKey(fKey) == false)
+                m_dictFormula.Add(fKey, formula);
+            else
+                ;
+        }
+
+        public int ReinitArgs(int iSgnl, int iPar)
+        {
+            int iRes = 0; // признак ошибки (0 - нет ошибок)
+            
+            // найти в параметре 'item.m_listSgnls[i].m_arSPars[j]' скобки ('(', ')')
+            int iStartArgs = m_listSgnls[iSgnl].m_arSPars[iPar].IndexOf('(') + 1;
+            if (iStartArgs > 0)
+                ;
+            else
+                ;
+
+            return iRes;
         }
     };
     /// <summary>
@@ -403,6 +456,30 @@ namespace uLoader
             m_dictConnSett = new Dictionary<string, ConnectionSettings>();
             m_strDLLName = string.Empty;
             m_listGroupSignalsPars = new List <GROUP_SIGNALS_PARS> ();
+        }
+        /// <summary>
+        /// Добавить в группу источник
+        /// </summary>
+        /// <param name="key">Базовая строка для формирования ключа добавляемого источника</param>
+        /// <param name="values">Значения параметров источника (параметры соединения с БД)</param>
+        public void Add(string key, string [] values)
+        {
+            //Инициализация, если элемент группы 1-ый
+            if (m_dictConnSett == null)
+                m_dictConnSett = new Dictionary<string, ConnectionSettings>();
+            else
+                ;
+
+            m_dictConnSett.Add(key + m_dictConnSett.Count
+                , new ConnectionSettings(
+                    Int32.Parse(values[m_listSKeys.IndexOf(@"ID")])
+                    , values[m_listSKeys.IndexOf(@"NAME_SHR")]
+                    , values[m_listSKeys.IndexOf(@"IP")]
+                    , Int32.Parse(values[m_listSKeys.IndexOf(@"PORT")])
+                    , values[m_listSKeys.IndexOf(@"DB_NAME")]
+                    , values[m_listSKeys.IndexOf(@"UID")]
+                    , values[m_listSKeys.IndexOf(@"PSWD*")]
+                ));
         }
     };
     /// <summary>
@@ -717,8 +794,10 @@ namespace uLoader
                 foreach (string skey in srcItem.m_listSKeys)
                     this.m_listSKeys.Add (skey);
 
-                //??? Значения списка независимы
+                //??? Значения списков независимы
                 this.m_listSgnls = srcItem.m_listSgnls;
+                //??? Значения словарей независимы
+                this.m_dictFormula = srcItem.m_dictFormula;
 
                 //this.m_mode = srcItem.m_mode;
 
@@ -948,10 +1027,31 @@ namespace uLoader
             int iRes = 0;
             ID_DATA_ASKED_HOST idToSend = ID_DATA_ASKED_HOST.UNKNOWN;
 
-            GROUP_SIGNALS_PARS grpSgnlsPars = getGroupSignalsPars(iIDGroupSignals);
+            GroupSignals grpSgnls = null;
+            GROUP_SIGNALS_PARS grpSgnlsPars = null;
             object[] arDataAskedHost = null;
             MODE_WORK mode = MODE_WORK.UNKNOWN;
             TimeSpan tsPeriodMain = TimeSpan.FromMilliseconds (-1);
+            string srlzFormula = string.Empty;
+
+            // получить группу сигналов для сериализации словаря с формулами
+            grpSgnls = getGroupSignals(iIDGroupSignals);
+            // получить параметры группы сигналов
+            grpSgnlsPars = getGroupSignalsPars(iIDGroupSignals);
+            // сериализовать словарь с формулами
+            if (!(grpSgnls.m_dictFormula == null))
+                foreach (KeyValuePair<string, string> pair in grpSgnls.m_dictFormula)
+                    if (pair.Value.Equals(string.Empty) == false)
+                        srlzFormula += pair.Key + @"=" + pair.Value + @";";
+                    else
+                        ;
+            else
+                ; // нет ни одной формулы
+            // удалить лишний символ ';' из результирующей строки сериализованного словаоя с формулами
+            if (srlzFormula.Equals(string.Empty) == false)
+                srlzFormula = srlzFormula.Substring(0, srlzFormula.Length - 1);
+            else
+                ;
 
             switch (state)
             {
@@ -985,6 +1085,8 @@ namespace uLoader
                                 , TimeSpan.FromSeconds(tsPeriodMain.TotalSeconds)
                                 , TimeSpan.FromSeconds(grpSgnlsPars.m_arWorkIntervals [(int)mode].m_tsPeriodLocal.Value.TotalSeconds)
                                 , (int)grpSgnlsPars.m_arWorkIntervals [(int)mode].m_tsIntervalLocal.Value.TotalMilliseconds
+                                , srlzFormula
+                                ,
                             }
                         };
                 }
@@ -1007,7 +1109,9 @@ namespace uLoader
                                     , DateTime.MinValue
                                     , TimeSpan.Zero
                                     , TimeSpan.Zero
-                                    , -1
+                                    , -1 //TotalMilliseconds
+                                    , srlzFormula
+                                    ,
                                 }
                             };
                     else
