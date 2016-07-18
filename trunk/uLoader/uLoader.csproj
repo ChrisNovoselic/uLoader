@@ -204,11 +204,17 @@
     <None Include="FileINI\setup_ktstusql.ini" />
     <None Include="FileINI\setup_statistic.ini" />
     <None Include="FileINI\setup_toris_bitec.ini" />
+    <None Include="FileINI\setup_toris_bitec_xml.ini" />
     <None Include="FileINI\setup_toris_btec.ini" />
+    <None Include="FileINI\setup_toris_btec_xml.ini" />
     <None Include="FileINI\setup_toris_tec2.ini" />
+    <None Include="FileINI\setup_toris_tec2_xml.ini" />
     <None Include="FileINI\setup_toris_tec3.ini" />
+    <None Include="FileINI\setup_toris_tec3_xml.ini" />
     <None Include="FileINI\setup_toris_tec4.ini" />
+    <None Include="FileINI\setup_toris_tec4_xml.ini" />
     <None Include="FileINI\setup_toris_tec5.ini" />
+    <None Include="FileINI\setup_toris_tec5_xml.ini" />
     <None Include="Resources\IconMainULoader.ico" />
   </ItemGroup>
   <ItemGroup>
