@@ -187,19 +187,6 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="ClassDiagram1.cd" />
-    <None Include="setup_biysktmora.ini">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="setup_ktstusql.ini">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="setup_statistic.ini" />
-    <None Include="setup_toris_bitec.ini" />
-    <None Include="setup_toris_tec3.ini" />
-    <None Include="setup_toris_tec4.ini" />
-    <None Include="setup_toris_tec5.ini" />
-    <None Include="setup_toris_tec2.ini" />
-    <None Include="setup_toris_btec.ini" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\HClassLibrary\HClassLibrary.csproj">
@@ -212,6 +199,16 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="FileINI\setup_biysktmora.ini" />
+    <None Include="FileINI\setup_ktstudsql.ini" />
+    <None Include="FileINI\setup_ktstusql.ini" />
+    <None Include="FileINI\setup_statistic.ini" />
+    <None Include="FileINI\setup_toris_bitec.ini" />
+    <None Include="FileINI\setup_toris_btec.ini" />
+    <None Include="FileINI\setup_toris_tec2.ini" />
+    <None Include="FileINI\setup_toris_tec3.ini" />
+    <None Include="FileINI\setup_toris_tec4.ini" />
+    <None Include="FileINI\setup_toris_tec5.ini" />
     <None Include="Resources\IconMainULoader.ico" />
   </ItemGroup>
   <ItemGroup>
@@ -231,6 +228,7 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
