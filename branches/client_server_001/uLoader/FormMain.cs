@@ -40,6 +40,10 @@ namespace uLoader
         /// </summary>
         private PanelWork m_panelWork;
         /// <summary>
+        /// Панель с элементами управления - ClientServer
+        /// </summary>
+        private PanelCS m_panelCS;
+        /// <summary>
         /// Панель с элементами управления - действия по конфигурации приложения
         /// </summary>
         private PanelConfig m_panelConfig;        
@@ -62,11 +66,14 @@ namespace uLoader
 
             m_panelWork = new PanelWork(); m_panelWork.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelWork); m_panelWork.Start();
             m_panelConfig = new PanelConfig(); m_panelConfig.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelConfig); m_panelConfig.Start ();
+            m_panelCS = new PanelCS(new string[] { "NE2844", "NE3336", "NE3963", "vNE3963", "localhost" });
 
             работаToolStripMenuItem.CheckOnClick =
             конфигурацияToolStripMenuItem.CheckOnClick =
+            взаимодействиеToolStripMenuItem.CheckOnClick=
                  true;
 
+            взаимодействиеToolStripMenuItem.CheckStateChanged += new EventHandler(взаимодействиеToolStripMenuItem_CheckStateChanged);
             работаToolStripMenuItem.CheckStateChanged += new EventHandler(работаToolStripMenuItem_CheckStateChanged);
             конфигурацияToolStripMenuItem.CheckStateChanged += new EventHandler(конфигурацияToolStripMenuItem_CheckStateChanged);
 
@@ -175,6 +182,18 @@ namespace uLoader
             else
                 ;
 
+            //Проверить признак отображения вкладки "работа"
+            if (взаимодействиеToolStripMenuItem.Checked == true)
+            {
+                //Добавить вкладку
+                m_TabCtrl.AddTabPage(m_panelCS, взаимодействиеToolStripMenuItem.Text, 3, HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
+                m_panelCS.StartPanel();
+                //Запомнить "предыдущий" выбор
+                //m_TabCtrl.PrevSelectedIndex = 1;
+            }
+            else
+                ;
+
             m_formWait.StopWaitForm ();
 
             this.m_notifyIcon.Icon = this.Icon;
@@ -212,6 +231,7 @@ namespace uLoader
             m_notifyIcon.Visible = false;
             m_panelWork.Stop();
             m_panelConfig.Stop();
+            m_panelCS.Close();
 
             m_handler.Activate(false); m_handler.Stop();
         }
@@ -226,6 +246,9 @@ namespace uLoader
                 case 2: //Конфигурация
                     конфигурацияToolStripMenuItem.PerformClick();
                     break;
+                case 3: //Взаимодействие
+                    MessageBox.Show(this, "Вкладка \"Взаимодействие\" не может быть закрыта!", @"Внимание!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    break;
                 default:
                     break;
             }
@@ -233,7 +256,11 @@ namespace uLoader
 
         private void работаToolStripMenuItem_CheckStateChanged(object obj, EventArgs ev)
         {
-        }        
+        }
+
+        private void взаимодействиеToolStripMenuItem_CheckStateChanged(object obj, EventArgs ev)
+        {
+        }
 
         private void TabCtrl_OnPrevSelectedIndexChanged(int indx)
         {
@@ -241,18 +268,25 @@ namespace uLoader
 
             HPanelCommon panelCommon;
             //Проверить наличие вкладки для деактивации перед активации выбранной пользователем
+            
             if (!(m_TabCtrl.PrevSelectedIndex < 0)
                 && (m_TabCtrl.PrevSelectedIndex < m_TabCtrl.TabCount))
             {
-                // деактивировать предыдущую вкладку
-                panelCommon = (m_TabCtrl.TabPages[m_TabCtrl.PrevSelectedIndex].Controls[0] as HPanelCommon);
-                panelCommon.Activate(false);
+                if (m_TabCtrl.PrevSelectedIndex != 1)
+                {
+                    // деактивировать предыдущую вкладку
+                    panelCommon = (m_TabCtrl.TabPages[m_TabCtrl.PrevSelectedIndex].Controls[0] as HPanelCommon);
+                    panelCommon.Activate(false);
+                }
             }
             else
                 ;
-            // активировать выбранную вкладку
-            panelCommon = (m_TabCtrl.TabPages[m_TabCtrl.SelectedIndex].Controls[0] as HPanelCommon);
-            panelCommon.Activate(true);
+            if (m_TabCtrl.SelectedIndex != 1)
+            {
+                // активировать выбранную вкладку
+                panelCommon = (m_TabCtrl.TabPages[m_TabCtrl.SelectedIndex].Controls[0] as HPanelCommon);
+                panelCommon.Activate(true);
+            }
         }
 
         /// <summary>

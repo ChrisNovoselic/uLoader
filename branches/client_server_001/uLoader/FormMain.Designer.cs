@@ -39,6 +39,7 @@ namespace uLoader
             this.выходToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.видToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.работаToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.взаимодействиеToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.конфигурацияToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.помощьToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.оПрограммеToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -109,6 +110,7 @@ namespace uLoader
             // 
             this.видToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.работаToolStripMenuItem,
+            this.взаимодействиеToolStripMenuItem,
             this.конфигурацияToolStripMenuItem});
             this.видToolStripMenuItem.Name = "видToolStripMenuItem";
             this.видToolStripMenuItem.Size = new System.Drawing.Size(38, 20);
@@ -122,6 +124,15 @@ namespace uLoader
             this.работаToolStripMenuItem.Name = "работаToolStripMenuItem";
             this.работаToolStripMenuItem.Size = new System.Drawing.Size(159, 22);
             this.работаToolStripMenuItem.Text = "Работа";
+            // 
+            // взаимодействиеToolStripMenuItem
+            // 
+            this.взаимодействиеToolStripMenuItem.Checked = true;
+            this.взаимодействиеToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.взаимодействиеToolStripMenuItem.Enabled = false;
+            this.взаимодействиеToolStripMenuItem.Name = "взаимодействиеToolStripMenuItem";
+            this.взаимодействиеToolStripMenuItem.Size = new System.Drawing.Size(159, 22);
+            this.взаимодействиеToolStripMenuItem.Text = "Взаимодействие";
             // 
             // конфигурацияToolStripMenuItem
             // 
@@ -197,6 +208,7 @@ namespace uLoader
         private System.Windows.Forms.ToolStripMenuItem выходToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem видToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem работаToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem взаимодействиеToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem конфигурацияToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem помощьToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem оПрограммеToolStripMenuItem;
