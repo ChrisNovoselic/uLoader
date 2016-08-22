@@ -9,10 +9,12 @@ using System.Windows.Forms;
 
 using System.Threading;
 
+using HClassLibrary;
+
 
 namespace uLoader
 {
-    public partial class PanelCS : UserControl
+    public partial class PanelCS : PanelCommonDataHost
     {
         #region Переменные и константы
         /// <summary>
@@ -124,6 +126,7 @@ namespace uLoader
         /// </summary>
         /// <param name="arServerName">Список серверов</param>
         public PanelCS(string[] arServerName)
+            : base(3, 40)
         {
             thisLock = new Object();
             InitializeComponent();
@@ -179,6 +182,8 @@ namespace uLoader
             this.dgvMessage.Name = "dataGridView1";
             this.dgvMessage.Size = new System.Drawing.Size(513, 150);
             this.dgvMessage.TabIndex = 0;
+            this.dgvMessage.Dock = DockStyle.Fill;
+            this.dgvMessage.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             // 
             // listBox1
             // 
@@ -187,6 +192,7 @@ namespace uLoader
             this.commandBox.Name = "listBox1";
             this.commandBox.Size = new System.Drawing.Size(221, 277);
             this.commandBox.TabIndex = 1;
+            this.commandBox.Dock = DockStyle.Fill;
             // 
             // btnSendMessage
             // 
@@ -197,6 +203,7 @@ namespace uLoader
             this.btnSendMessage.Text = "Отправить";
             this.btnSendMessage.UseVisualStyleBackColor = true;
             this.btnSendMessage.Click += new System.EventHandler(this.btnSendMessage_Click);
+            //this.btnSendMessage.Dock = DockStyle.Fill;
             // 
             // comboBox1
             // 
@@ -205,6 +212,7 @@ namespace uLoader
             this.cbClients.Name = "comboBox1";
             this.cbClients.Size = new System.Drawing.Size(131, 21);
             this.cbClients.TabIndex = 3;
+            this.cbClients.Dock = DockStyle.Fill;
             // 
             // label1
             // 
@@ -214,6 +222,7 @@ namespace uLoader
             this.lblClients.Size = new System.Drawing.Size(92, 13);
             this.lblClients.TabIndex = 4;
             this.lblClients.Text = "Клиенты/сервер";
+            //this.lblClients.Dock = DockStyle.Fill;
             // 
             // textBox1
             // 
@@ -221,6 +230,7 @@ namespace uLoader
             this.argCommand.Name = "textBox1";
             this.argCommand.Size = new System.Drawing.Size(131, 20);
             this.argCommand.TabIndex = 5;
+            this.argCommand.Dock = DockStyle.Fill;
             // 
             // label2
             // 
@@ -230,6 +240,7 @@ namespace uLoader
             this.lblArg.Size = new System.Drawing.Size(55, 13);
             this.lblArg.TabIndex = 6;
             this.lblArg.Text = "Аргумент";
+            //this.lblArg.Dock = DockStyle.Fill;
             // 
             // label3
             // 
@@ -240,19 +251,35 @@ namespace uLoader
             this.lblStat.Size = new System.Drawing.Size(43, 13);
             this.lblStat.TabIndex = 7;
             this.lblStat.Text = "Paused";
+            //this.lblStat.Dock = DockStyle.Fill;
             // 
             // PanelCS
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.lblStat);
-            this.Controls.Add(this.lblArg);
-            this.Controls.Add(this.argCommand);
-            this.Controls.Add(this.lblClients);
-            this.Controls.Add(this.cbClients);
-            this.Controls.Add(this.btnSendMessage);
-            this.Controls.Add(this.commandBox);
-            this.Controls.Add(this.dgvMessage);
+            //this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            //this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.lblStat,0,0);
+            this.SetRowSpan(lblStat, 2);
+
+            this.Controls.Add(this.lblClients,0,2);
+            this.SetRowSpan(lblClients, 2);
+            this.Controls.Add(this.cbClients,0,4);
+            this.SetRowSpan(cbClients, 2);
+
+            this.Controls.Add(this.lblArg, 0, 6);
+            this.SetRowSpan(lblArg, 2);
+            this.Controls.Add(this.argCommand, 0, 8);
+            this.SetRowSpan(argCommand, 2);
+
+            this.Controls.Add(this.commandBox, 0, 10);
+            this.SetRowSpan(commandBox, 28);
+
+            this.Controls.Add(this.btnSendMessage,0,38);
+            this.SetRowSpan(btnSendMessage, 2);
+
+            this.Controls.Add(this.dgvMessage,1,0);
+            this.SetRowSpan(dgvMessage, 40);
+            this.SetColumnSpan(dgvMessage, 2);
+
             this.Name = "PanelCS";
             this.Size = new System.Drawing.Size(519, 441);
             ((System.ComponentModel.ISupportInitialize)(this.dgvMessage)).EndInit();
@@ -272,6 +299,23 @@ namespace uLoader
         private System.Windows.Forms.Label lblArg;
         private System.Windows.Forms.Label lblStat;
         #endregion
+
+        protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
+        {
+            initializeLayoutStyleEvenly();
+        }
+        
+        public override bool Activate(bool active)
+        {
+            bool bRes = base.Activate(active);
+
+            if (IsFirstActivated == true)
+            {
+                StartPanel();
+            }
+
+            return bRes;
+        }
 
         /// <summary>
         /// Запуск панели
@@ -550,16 +594,16 @@ namespace uLoader
                                             if (command_mes == arrCommand[(int)Command.Start])//обработка запроса запуска
                                             {
                                                 Invoke(d_statLbl, true);
-                                                if (Start != null)
-                                                    Start(this, new EventArgs());
+                                                if (StartWork != null)
+                                                    StartWork(this, new EventArgs());
                                                 else ;
                                             }
                                             else
                                                 if (command_mes == arrCommand[(int)Command.Stop])//обработка запроса остановки
                                                 {
                                                     Invoke(d_statLbl, false);
-                                                    if (Stop != null)
-                                                        Stop(this, new EventArgs());
+                                                    if (StopWork != null)
+                                                        StopWork(this, new EventArgs());
                                                     else ;
                                                 }
                                                 else
@@ -584,8 +628,8 @@ namespace uLoader
                                         if (command_mes == arrCommand[(int)Command.Start])//запрос запуска
                                         {
                                             Invoke(d_statLbl, true);
-                                            if (Start != null)
-                                                Start(this, new EventArgs());
+                                            if (StartWork != null)
+                                                StartWork(this, new EventArgs());
                                             else ;
                                                  
                                         }
@@ -593,8 +637,8 @@ namespace uLoader
                                             if (command_mes == arrCommand[(int)Command.Stop])//запрос остановки
                                             {
                                                 Invoke(d_statLbl, false);
-                                                if (Stop != null)
-                                                    Stop(this, new EventArgs());
+                                                if (StopWork != null)
+                                                    StopWork(this, new EventArgs());
                                                 else ;
                                             }
                             break;
@@ -725,7 +769,7 @@ namespace uLoader
         /// <summary>
         /// Событие
         /// </summary>
-        public StartEventHandler Start;
+        public StartEventHandler StartWork;
 
         
         /// <summary>
@@ -736,7 +780,7 @@ namespace uLoader
         /// <summary>
         /// Событие
         /// </summary>
-        public StopEventHandler Stop;
+        public StopEventHandler StopWork;
         #endregion
 
     }

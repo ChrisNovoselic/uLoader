@@ -156,7 +156,7 @@
     <Compile Include="HHandlerQueue.cs" />
     <Compile Include="Items.cs" />
     <Compile Include="PanelCS.cs">
-      <SubType>UserControl</SubType>
+      <SubType>Component</SubType>
     </Compile>
     <Compile Include="PanelWork.cs">
       <SubType>Component</SubType>

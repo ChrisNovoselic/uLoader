@@ -66,7 +66,7 @@ namespace uLoader
 
             m_panelWork = new PanelWork(); m_panelWork.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelWork); m_panelWork.Start();
             m_panelConfig = new PanelConfig(); m_panelConfig.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelConfig); m_panelConfig.Start ();
-            m_panelCS = new PanelCS(new string[] { "NE2844", "NE3336", "NE3963", "vNE3963", "localhost" });
+            m_panelCS = new PanelCS(new string[] { "NE2844", "NE3336", "NE3963", "vNE3963", "localhost" }); m_panelCS.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelCS); m_panelCS.Start();
 
             работаToolStripMenuItem.CheckOnClick =
             конфигурацияToolStripMenuItem.CheckOnClick =
@@ -187,7 +187,7 @@ namespace uLoader
             {
                 //Добавить вкладку
                 m_TabCtrl.AddTabPage(m_panelCS, взаимодействиеToolStripMenuItem.Text, 3, HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
-                m_panelCS.StartPanel();
+                //m_panelCS.StartPanel();
                 //Запомнить "предыдущий" выбор
                 //m_TabCtrl.PrevSelectedIndex = 1;
             }
@@ -272,21 +272,21 @@ namespace uLoader
             if (!(m_TabCtrl.PrevSelectedIndex < 0)
                 && (m_TabCtrl.PrevSelectedIndex < m_TabCtrl.TabCount))
             {
-                if (m_TabCtrl.PrevSelectedIndex != 1)
-                {
+                //if (m_TabCtrl.PrevSelectedIndex != 1)
+                //{
                     // деактивировать предыдущую вкладку
                     panelCommon = (m_TabCtrl.TabPages[m_TabCtrl.PrevSelectedIndex].Controls[0] as HPanelCommon);
                     panelCommon.Activate(false);
-                }
+                //}
             }
             else
                 ;
-            if (m_TabCtrl.SelectedIndex != 1)
-            {
+            //if (m_TabCtrl.SelectedIndex != 1)
+            //{
                 // активировать выбранную вкладку
                 panelCommon = (m_TabCtrl.TabPages[m_TabCtrl.SelectedIndex].Controls[0] as HPanelCommon);
                 panelCommon.Activate(true);
-            }
+            //}
         }
 
         /// <summary>
@@ -359,6 +359,16 @@ namespace uLoader
             EventArgsDataHost ev = obj as EventArgsDataHost;
             //ev.id - здесь всегда = -1
             m_handler.Push(m_panelConfig, ev.par as object[]);
+        }
+        /// <summary>
+        /// Обработчик события приема сообщений от вкладки (панели) "Конфигурация"
+        /// </summary>
+        /// <param name="obj">Массив объектов сообщения</param>
+        private void OnEvtDataAskedFormMain_PanelCS(object obj)
+        {
+            EventArgsDataHost ev = obj as EventArgsDataHost;
+            //ev.id - здесь всегда = -1
+            m_handler.Push(m_panelCS, ev.par as object[]);
         }
     }
 }
