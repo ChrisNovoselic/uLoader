@@ -1020,7 +1020,8 @@ namespace uLoader
             /// </summary>
             public void SendDisconnect()
             {
-                m_ss.WriteString("Disconnect;ClientName=" + m_Name);
+                if(m_client.IsConnected==true)
+                    m_ss.WriteString("Disconnect;ClientName=" + m_Name);
             }
 
             /// <summary>

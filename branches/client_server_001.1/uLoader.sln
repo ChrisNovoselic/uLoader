@@ -9,8 +9,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "uLoader", "uLoader\uLoader.csproj", "{33C90FD1-85FE-41F0-84AD-712E89AD8F2D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HClassLibrary", "..\HClassLibrary\HClassLibrary.csproj", "{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject_001", "TestProject_001\TestProject_001.csproj", "{C58DCFB6-6E0C-4743-9135-655B0DDF8E10}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestFunc", "TestFunc\TestFunc.csproj", "{FE9308E2-810E-4921-8F1A-55ED8CC9D460}"
@@ -59,21 +57,6 @@ Global
 		{33C90FD1-85FE-41F0-84AD-712E89AD8F2D}.Release|x64.Build.0 = Release|x64
 		{33C90FD1-85FE-41F0-84AD-712E89AD8F2D}.Release|x86.ActiveCfg = Release|x86
 		{33C90FD1-85FE-41F0-84AD-712E89AD8F2D}.Release|x86.Build.0 = Release|x86
-		{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}.Debug|Any CPU.ActiveCfg = Debug|x86
-		{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}.Debug|Any CPU.Build.0 = Debug|x86
-		{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}.Debug|x64.ActiveCfg = Debug|x64
-		{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}.Debug|x64.Build.0 = Debug|x64
-		{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}.Debug|x86.ActiveCfg = Debug|x86
-		{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}.Debug|x86.Build.0 = Debug|x86
-		{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}.Release|x64.ActiveCfg = Release|x64
-		{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}.Release|x64.Build.0 = Release|x64
-		{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}.Release|x86.ActiveCfg = Release|Any CPU
 		{C58DCFB6-6E0C-4743-9135-655B0DDF8E10}.Debug|Any CPU.ActiveCfg = Debug|x86
 		{C58DCFB6-6E0C-4743-9135-655B0DDF8E10}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
 		{C58DCFB6-6E0C-4743-9135-655B0DDF8E10}.Debug|x64.ActiveCfg = Debug|Any CPU

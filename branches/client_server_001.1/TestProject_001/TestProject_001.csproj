@@ -142,10 +142,6 @@
     <Shadow Include="Тестовые ссылки\uLoader.accessor" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\HClassLibrary\HClassLibrary.csproj">
-      <Project>{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}</Project>
-      <Name>HClassLibrary</Name>
-    </ProjectReference>
     <ProjectReference Include="..\uLoader\uLoader.csproj">
       <Project>{33C90FD1-85FE-41F0-84AD-712E89AD8F2D}</Project>
       <Name>uLoader</Name>
