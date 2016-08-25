@@ -80,8 +80,12 @@ namespace uLoader
             /// <summary>
             /// Комманды к клиенту/серверу
             /// </summary>
-            enum Command { GetDataTime, Start, Stop, ReConnect, GetName, GetStat, SetStat };
-            string[] arrCommand = new string[] { "GetDataTime", "Start", "Stop", "ReConnect", "GetName", "GetStat", "SetStat" };
+            enum Command { GetDataTime, Start, Stop, ReConnect, GetName, GetStat, SetStat, Status };
+            string[] arrCommand = new string[] { "GetDataTime", "Start", "Stop", "ReConnect", "GetName", "GetStat", "SetStat", "Status" };
+
+            bool m_b_isfirstActivate;
+
+            System.Windows.Forms.Timer timerUpdateStatus;
 
             /// <summary>
             /// Экземпляр сервера
@@ -144,6 +148,16 @@ namespace uLoader
             delReconn d_reconn;
 
             /// <summary>
+            /// Делегат для добавления/удаления объекта в listView
+            /// </summary>
+            /// <param name="obj">Строка в виде массива</param>
+            delegate void delUpdateLV(string name_client, string status);
+            /// <summary>
+            /// Экземпляр делегата добавления/удаления объекта в listView
+            /// </summary>
+            delUpdateLV d_updateLV;
+
+            /// <summary>
             /// Делегат для изменения label'a
             /// </summary>
             /// <param name="obj">Строка в виде массива</param>
@@ -176,12 +190,17 @@ namespace uLoader
             /// </summary>
             /// <param name="arServerName">Список серверов</param>
             public PanelCS(string[] arServerName, TypeApp type)
-                : base(3, 20)
+                : base(5, 20)
             {
+                m_b_isfirstActivate = true;
                 thisLock = new Object();
                 m_type_app = type;
 
                 InitializeComponent();
+
+                rbCommand.CheckedChanged += new EventHandler(rbChecked);
+                rbStatus.CheckedChanged += new EventHandler(rbChecked);
+
 
                 m_countRepCon = 2;
                 m_timeOut = 500;
@@ -215,6 +234,7 @@ namespace uLoader
             /// </summary>
             private void InitializeComponent()
             {
+                string[] column_name = {"ClientName","Status","LastUpdate"};
                 this.dgvMessage = new System.Windows.Forms.DataGridView();
                 this.commandBox = new System.Windows.Forms.ListBox();
                 this.btnSendMessage = new System.Windows.Forms.Button();
@@ -224,13 +244,38 @@ namespace uLoader
                 this.lblArg = new System.Windows.Forms.Label();
                 this.lblStat = new System.Windows.Forms.Label();
                 this.lblType = new System.Windows.Forms.Label();
+                this.panelStatus = new System.Windows.Forms.TableLayoutPanel();
+                this.panelCommand = new System.Windows.Forms.TableLayoutPanel();
+                this.rbStatus = new System.Windows.Forms.RadioButton();
+                this.rbCommand = new System.Windows.Forms.RadioButton();
+                this.lvStatus = new System.Windows.Forms.ListView();
                 ((System.ComponentModel.ISupportInitialize)(this.dgvMessage)).BeginInit();
+
                 this.SuspendLayout();
+                // 
+                // lvStatus
+                // 
+                this.lvStatus.Name = "lvStatus";
+                this.lvStatus.TabIndex = 0;
+                this.lvStatus.Dock = DockStyle.Fill;
+                this.lvStatus.Columns.AddRange(new ColumnHeader[] { new ColumnHeader(), new ColumnHeader(), new ColumnHeader(), });
+
+                this.lvStatus.FullRowSelect = true;
+                this.lvStatus.MultiSelect = false;
+                this.lvStatus.Size = new System.Drawing.Size(277, 245);
+                this.lvStatus.UseCompatibleStateImageBehavior = false;
+                this.lvStatus.View = System.Windows.Forms.View.Details;
+                foreach (ColumnHeader column in this.lvStatus.Columns)
+                {
+                    column.Text = column_name[column.Index];
+                    column.Name = column_name[column.Index];
+                    column.Width = 90;
+                }
+
                 // 
                 // dgvMessage
                 // 
                 this.dgvMessage.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-                this.dgvMessage.Location = new System.Drawing.Point(3, 288);
                 this.dgvMessage.Name = "dgvMessage";
                 this.dgvMessage.Size = new System.Drawing.Size(513, 150);
                 this.dgvMessage.TabIndex = 0;
@@ -240,27 +285,24 @@ namespace uLoader
                 // commandBox
                 // 
                 this.commandBox.FormattingEnabled = true;
-                this.commandBox.Location = new System.Drawing.Point(4, 4);
                 this.commandBox.Name = "commandBox";
-                this.commandBox.Size = new System.Drawing.Size(221, 277);
+                //this.commandBox.Size = new System.Drawing.Size(221, 277);
                 this.commandBox.TabIndex = 1;
                 this.commandBox.Dock = DockStyle.Fill;
                 // 
                 // btnSendMessage
                 // 
-                this.btnSendMessage.Location = new System.Drawing.Point(231, 97);
+                this.btnSendMessage.AutoSize = true;
                 this.btnSendMessage.Name = "btnSendMessage";
-                this.btnSendMessage.Size = new System.Drawing.Size(75, 23);
+                //this.btnSendMessage.Size = new System.Drawing.Size(75, 23);
                 this.btnSendMessage.TabIndex = 2;
                 this.btnSendMessage.Text = "Отправить";
                 this.btnSendMessage.UseVisualStyleBackColor = true;
                 this.btnSendMessage.Click += new System.EventHandler(this.btnSendMessage_Click);
-                //this.btnSendMessage.Dock = DockStyle.Fill;
                 // 
                 // cbClients
                 // 
                 this.cbClients.FormattingEnabled = true;
-                this.cbClients.Location = new System.Drawing.Point(231, 28);
                 this.cbClients.Name = "cbClients";
                 this.cbClients.Size = new System.Drawing.Size(131, 21);
                 this.cbClients.TabIndex = 3;
@@ -269,17 +311,14 @@ namespace uLoader
                 // lblClients
                 // 
                 this.lblClients.AutoSize = true;
-                this.lblClients.Location = new System.Drawing.Point(232, 9);
                 this.lblClients.Name = "lblClients";
                 this.lblClients.Size = new System.Drawing.Size(92, 13);
                 this.lblClients.TabIndex = 4;
                 this.lblClients.Text = "Клиенты/сервер";
-                //this.lblClients.Dock = DockStyle.Fill;
                 // 
                 // lblType
                 // 
                 this.lblType.AutoSize = true;
-                this.lblType.Location = new System.Drawing.Point(232, 9);
                 this.lblType.Name = "lblType";
                 this.lblType.Size = new System.Drawing.Size(92, 13);
                 this.lblType.TabIndex = 8;
@@ -288,61 +327,108 @@ namespace uLoader
                 // 
                 // argCommand
                 // 
-                this.argCommand.Location = new System.Drawing.Point(231, 71);
+                this.argCommand.AutoSize = true;
                 this.argCommand.Name = "argCommand";
-                this.argCommand.Size = new System.Drawing.Size(131, 20);
+                //this.argCommand.Size = new System.Drawing.Size(131, 20);
                 this.argCommand.TabIndex = 5;
                 this.argCommand.Dock = DockStyle.Fill;
                 // 
                 // lblArg
                 // 
                 this.lblArg.AutoSize = true;
-                this.lblArg.Location = new System.Drawing.Point(232, 52);
                 this.lblArg.Name = "lblArg";
-                this.lblArg.Size = new System.Drawing.Size(55, 13);
                 this.lblArg.TabIndex = 6;
                 this.lblArg.Text = "Аргумент";
-                //this.lblArg.Dock = DockStyle.Fill;
                 // 
                 // lblStat
                 // 
                 this.lblStat.AutoSize = true;
                 this.lblStat.BackColor = System.Drawing.Color.Red;
-                this.lblStat.Location = new System.Drawing.Point(232, 143);
                 this.lblStat.Name = "lblStat";
-                this.lblStat.Size = new System.Drawing.Size(43, 13);
                 this.lblStat.TabIndex = 7;
                 this.lblStat.Text = "Paused";
-                //this.lblStat.Dock = DockStyle.Fill;
+                // 
+                // rbStatus
+                // 
+                this.rbStatus.AutoSize = true;
+                this.rbStatus.Name = "rbStatus";
+                this.rbStatus.TabIndex = 9;
+                this.rbStatus.Text = "Статус";
+                this.rbStatus.Enabled = false;
+                // 
+                // rbCommand
+                // 
+                this.rbCommand.AutoSize = true;
+                this.rbCommand.Name = "rbCommand";
+                this.rbCommand.TabIndex = 10;
+                this.rbCommand.Text = "Команды";
+                this.rbCommand.Checked = true;
+                // 
+                // panelCommand
+                // 
+                //this.panelCommand.AutoSize = true;
+                this.panelCommand.Name = "panelCommand";
+                this.panelCommand.TabIndex = 10;
+                this.panelCommand.RowCount = 19;
+                this.panelCommand.Dock = DockStyle.Fill;
+                // 
+                // panelStatus
+                // 
+                //this.panelCommand.AutoSize = true;
+                this.panelStatus.Name = "panelStatus";
+                this.panelStatus.TabIndex = 10;
+                this.panelStatus.RowCount = 19;
+                this.panelStatus.Dock = DockStyle.Fill;
+                this.panelStatus.Visible = false;
+
                 // 
                 // PanelCS
-                // 
-                //this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-                //this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-                this.Controls.Add(this.lblStat, 0, 0);
-                this.SetRowSpan(lblStat, 1);
+                //
+                this.Controls.Add(this.rbStatus, 0, 0);
+                this.SetRowSpan(this.rbStatus, 2);
+                this.SetColumnSpan(this.rbStatus, 1);
 
-                this.Controls.Add(this.lblClients, 0, 1);
-                this.SetRowSpan(lblClients, 1);
-                this.Controls.Add(this.cbClients, 0, 2);
-                this.SetRowSpan(cbClients, 2);
+                this.Controls.Add(this.rbCommand, 1, 0);
+                this.SetRowSpan(this.rbCommand, 2);
+                this.SetColumnSpan(this.rbCommand, 1);
 
-                this.Controls.Add(this.lblArg, 0, 4);
-                this.SetRowSpan(lblArg, 1);
-                this.Controls.Add(this.argCommand, 0, 5);
-                this.SetRowSpan(argCommand, 2);
 
-                this.Controls.Add(this.commandBox, 0, 7);
-                this.SetRowSpan(commandBox, 10);
+                this.Controls.Add(this.panelCommand, 0, 2);
+                this.SetRowSpan(this.panelCommand, 18);
+                this.SetColumnSpan(this.panelCommand, 2);
 
-                this.Controls.Add(this.btnSendMessage, 0, 17);
-                this.SetRowSpan(btnSendMessage, 2);
+                this.Controls.Add(this.panelStatus, 0, 2);
+                this.SetRowSpan(this.panelStatus, 18);
+                this.SetColumnSpan(this.panelStatus, 2);
 
-                this.Controls.Add(this.lblType, 1, 0);
+                #region Command
+                panelCommand.Controls.Add(this.lblStat, 0, 0);
 
-                this.Controls.Add(this.dgvMessage, 1, 1);
+                panelCommand.Controls.Add(this.lblClients, 0, 1);
+                panelCommand.Controls.Add(this.cbClients, 0, 2);
+                panelCommand.SetRowSpan(this.cbClients, 2);
+
+                panelCommand.Controls.Add(this.lblArg, 0, 4);
+                panelCommand.Controls.Add(this.argCommand, 0, 5);
+                panelCommand.SetRowSpan(this.argCommand, 2);
+
+                panelCommand.Controls.Add(this.commandBox, 0, 7);
+                panelCommand.SetRowSpan(this.commandBox, 10);
+
+                panelCommand.Controls.Add(this.btnSendMessage, 0, 17);
+                panelCommand.SetRowSpan(this.btnSendMessage, 2);
+                #endregion
+
+                #region Status
+                panelStatus.Controls.Add(this.lvStatus, 0, 0);
+                panelStatus.SetRowSpan(this.lvStatus, 19);
+                #endregion
+
+                this.Controls.Add(this.lblType, 2, 0);
+
+                this.Controls.Add(this.dgvMessage, 2, 1);
                 this.SetRowSpan(dgvMessage, 19);
-                this.SetColumnSpan(dgvMessage, 2);
+                this.SetColumnSpan(dgvMessage, 3);
 
                 this.Name = "PanelCS";
                 this.Size = new System.Drawing.Size(519, 441);
@@ -363,6 +449,11 @@ namespace uLoader
             private System.Windows.Forms.Label lblArg;
             private System.Windows.Forms.Label lblStat;
             private System.Windows.Forms.Label lblType;
+            private System.Windows.Forms.TableLayoutPanel panelStatus;
+            private System.Windows.Forms.TableLayoutPanel panelCommand;
+            private System.Windows.Forms.RadioButton rbStatus;
+            private System.Windows.Forms.RadioButton rbCommand;
+            private System.Windows.Forms.ListView lvStatus;
             #endregion
 
             protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
@@ -374,9 +465,10 @@ namespace uLoader
             {
                 bool bRes = base.Activate(active);
 
-                if (IsFirstActivated == true)
+                if (m_b_isfirstActivate == true)
                 {
                     StartPanel();
+                    m_b_isfirstActivate = false;
                 }
 
                 return bRes;
@@ -392,6 +484,7 @@ namespace uLoader
                 d_operCB = operCBclient;
                 d_reconn = reconnect;
                 d_statLbl = setLbl;
+                d_updateLV = lvStatusUpdate;
                 //Размещение комманд в Control
                 getCommandToList();
                 //Инициализация экземпляра клиента/сервера
@@ -529,6 +622,14 @@ namespace uLoader
                         //Включение компонентов формы для сервера
                         cbClients.Enabled = true;
                         argCommand.Enabled = true;
+                        rbStatus.Enabled = true;
+                        rbStatus.Checked = true;
+
+                        timerUpdateStatus = new System.Windows.Forms.Timer();
+                        timerUpdateStatus.Interval = 10000;
+                        timerUpdateStatus.Tick += new EventHandler(timerUpdateStat_Tick);
+
+                        timerUpdateStatus.Start();
                     }
                 }
             }
@@ -543,7 +644,6 @@ namespace uLoader
                 m_server.ReadMessage += new Pipes.Server.ReadMessageEventHandler(newMessageToServer);
                 m_server.ConnectClient += new Pipes.Server.ConnectClientEventHandler(addToComList);
                 m_server.DisConnectClient += new Pipes.Server.DisConnectClientEventHandler(delFromComList);
-
                 m_server.StartServer();//запуск экземпляра сервера
                 //m_type_app = TypeApp.Server;//устанавливаем тип экземпляра приложения Сервер
                 m_myName = m_server.Name;//Устанавливаем собственное имя равное имени сервера
@@ -602,6 +702,26 @@ namespace uLoader
                 addMessage(message, m_servName, false);//Добавление сообщения и обработка
             }
             #endregion
+
+            private void rbChecked(object sender, EventArgs e)
+            {
+                if ((sender as RadioButton).Name == "rbStatus")
+                {
+                    if ((sender as RadioButton).Checked == true)
+                    {
+                        panelCommand.Visible = false;
+                        panelStatus.Visible = true;
+                    }
+                }
+                if ((sender as RadioButton).Name == "rbCommand")
+                {
+                    if ((sender as RadioButton).Checked == true)
+                    {
+                        panelStatus.Visible = false;
+                        panelCommand.Visible = true;
+                    }
+                }
+            }
 
             /// <summary>
             /// Обработчик кнопки Отправить
@@ -692,6 +812,11 @@ namespace uLoader
                                                             m_client.SendDisconnect();
                                                             Invoke(d_reconn, new object[] { "", true });
                                                         }
+                                                        else
+                                                            if (command_mes == arrCommand[(int)Command.Status])//обработка запроса изменения типа экземпляра
+                                                            {
+                                                                sendMessageFromClient(arrCommand[(int)Command.Status] + "=" + "OK");
+                                                            }
 
                                 break;
 
@@ -721,6 +846,11 @@ namespace uLoader
                                                         StopWork(this, new EventArgs());
                                                     else ;
                                                 }
+                                                else
+                                                    if (command_mes == arrCommand[(int)Command.Status])//обработка запроса изменения типа экземпляра
+                                                    {
+                                                        Invoke(d_updateLV, new object[] {name, argument});
+                                                    }
                                 break;
 
                             default:
@@ -745,6 +875,34 @@ namespace uLoader
                 }
             }
 
+            private void timerUpdateStat_Tick(object sender, EventArgs e)
+            {
+                foreach (string client in cbClients.Items)
+                {
+                    sendMessageFromServer(arrCommand[(int)Command.Status], client);
+                }
+            }
+
+            private void lvStatusUpdate(string client, string status)
+            {
+                foreach (ListViewItem item in lvStatus.Items)
+                {
+                    if (item.Text == client)
+                    {
+                        if (status == "OK")
+                        {
+                            item.SubItems[1].BackColor = Color.LimeGreen;
+                            item.SubItems[2].Text = DateTime.Now.ToString();
+                        }
+                        else
+                        {
+                            item.SubItems[1].BackColor = Color.Red;
+                            item.SubItems[1].Text = "Err";
+                        }
+                    }
+                }
+            }
+
             /// <summary>
             /// Добавление строки в DGV
             /// </summary>
@@ -762,12 +920,19 @@ namespace uLoader
                 switch (m_type_app)
                 {
                     case TypeApp.Client:
-                        m_client.SendDisconnect();//Отправка сообщения о разрыве соединения
-                        m_client.StopClient();//Остановка клиента
+                        if (m_client != null)
+                        {
+                            m_client.SendDisconnect();//Отправка сообщения о разрыве соединения
+                            m_client.StopClient();//Остановка клиента
+                        }
                         break;
                     case TypeApp.Server:
-                        m_server.SendDisconnect();//Отправка сообщения о разрыве соединения
-                        m_server.StopServer();//Остановка сервера
+                        if (m_server!=null)
+                        {
+                            timerUpdateStatus.Stop();
+                            m_server.SendDisconnect();//Отправка сообщения о разрыве соединения
+                            m_server.StopServer();//Остановка сервера
+                        }
                         break;
                 }
             }
@@ -793,12 +958,23 @@ namespace uLoader
                 if (add == true)//если добавление то
                 {
                     cbClients.Items.Add(idClient);//добавляем
+                    lvStatus.Items.Add(idClient);
+                    foreach (ListViewItem item in lvStatus.Items)
+                    {
+                        if (item.Text == idClient)
+                        {
+                            item.SubItems.Add("OK");
+                            item.SubItems.Add(DateTime.Now.ToString());
+                        }
+                    }
                 }
                 else//иначе
                 {
                     cbClients.Items.Remove(idClient);//удаляем клиента из списка и обновляем
                     cbClients.Text = string.Empty;
                     cbClients.Refresh();
+                    lvStatus.Items.Find(idClient, false)[0].Remove();
+                    lvStatus.Refresh();
                 }
             }
 
@@ -815,6 +991,7 @@ namespace uLoader
                         m_client.StopClient();//остановка клиента
                         break;
                     case TypeApp.Server:
+                        timerUpdateStatus.Stop();
                         m_server.StopServer();//остановка сервера
                         break;
                 }
@@ -863,6 +1040,7 @@ namespace uLoader
             public StopEventHandler StopWork;
             #endregion
 
+            
         }
 
     }

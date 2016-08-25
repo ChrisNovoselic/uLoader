@@ -66,7 +66,11 @@ namespace uLoader
 
             m_panelWork = new PanelWork(); m_panelWork.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelWork); m_panelWork.Start();
             m_panelConfig = new PanelConfig(); m_panelConfig.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelConfig); m_panelConfig.Start ();
-            m_panelCS = new PanelClienServer(new string[] { "NE2844", "NE3336", "NE3963", "vNE3963"}); m_panelCS.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelCS); m_panelCS.Start();
+            m_panelCS = new PanelClienServer(new string[] { 
+                //"NE2844", "NE3336", 
+                "NE3963"
+                //,"VNE3963"
+            }); m_panelCS.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelCS); m_panelCS.Start();
 
             работаToolStripMenuItem.CheckOnClick =
             конфигурацияToolStripMenuItem.CheckOnClick =
@@ -187,6 +191,8 @@ namespace uLoader
             {
                 //Добавить вкладку
                 m_TabCtrl.AddTabPage(m_panelCS, взаимодействиеToolStripMenuItem.Text, 3, HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
+
+                m_panelCS.Activate(true);
                 //m_panelCS.StartPanel();
                 //Запомнить "предыдущий" выбор
                 //m_TabCtrl.PrevSelectedIndex = 1;
