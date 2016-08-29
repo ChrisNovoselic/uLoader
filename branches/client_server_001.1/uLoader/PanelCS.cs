@@ -28,6 +28,7 @@ namespace uLoader
             m_panelClient.Dock = DockStyle.Fill;
             m_panelServer = new PanelCS(m_arServers, PanelCS.TypeApp.Server);
             m_panelServer.Dock = DockStyle.Fill;
+            m_panelServer.SetStat += new PanelCS.SetStatEventHandler(panelServerSetStat);
 
             this.Controls.Add(m_panelServer, 0, 0);
             this.Controls.Add(m_panelClient, 0, 1);
@@ -55,6 +56,14 @@ namespace uLoader
         {
             m_panelClient.Close();
             m_panelServer.Close();
+        }
+
+        private void panelServerSetStat(object sender, PanelCS.SetStatEventArgs e)
+        {
+            if (e.TypeApp == PanelCS.TypeApp.Client)
+            {
+                ReConnClient();
+            }
         }
 
         public void ReConnClient()
@@ -764,11 +773,13 @@ namespace uLoader
                 object rows = new object[] { DateTime.Now.ToString(), message, name, type_mes.ToString() };//новая строка сообщения
                 Invoke(d_addRow, rows);//добавление новой строки сообщения в DGV
 
+
                 string[] arrMessages = message.Split('=');//разбор сообщения
                 string command_mes = arrMessages[0];//комманда
                 string argument = string.Empty;//аргумент
                 if (arrMessages.Length > 1)
                     argument = arrMessages[1];
+               
                 switch (type_mes)
                 {
                     case TypeMes.Input://входящие
@@ -809,8 +820,11 @@ namespace uLoader
                                                     else
                                                         if (command_mes == arrCommand[(int)Command.SetStat])//обработка запроса изменения типа экземпляра
                                                         {
-                                                            m_client.SendDisconnect();
-                                                            Invoke(d_reconn, new object[] { "", true });
+                                                            if (argument == "Server")
+                                                            {
+                                                                m_client.SendDisconnect();
+                                                                Invoke(d_reconn, new object[] { "", true });
+                                                            }
                                                         }
                                                         else
                                                             if (command_mes == arrCommand[(int)Command.Status])//обработка запроса изменения типа экземпляра
@@ -851,6 +865,15 @@ namespace uLoader
                                                     {
                                                         Invoke(d_updateLV, new object[] {name, argument});
                                                     }
+                                                    else
+                                                        if (command_mes == arrCommand[(int)Command.SetStat])//обработка запроса изменения типа экземпляра
+                                                        {
+                                                            if (argument == "Client")
+                                                            {
+                                                                m_client.SendDisconnect();
+                                                                Invoke(d_reconn, new object[] { "", false });
+                                                            }
+                                                        }
                                 break;
 
                             default:
@@ -922,8 +945,11 @@ namespace uLoader
                     case TypeApp.Client:
                         if (m_client != null)
                         {
-                            m_client.SendDisconnect();//Отправка сообщения о разрыве соединения
-                            m_client.StopClient();//Остановка клиента
+                            if (m_client.b_Active == true)
+                            {
+                                m_client.SendDisconnect();//Отправка сообщения о разрыве соединения
+                                m_client.StopClient();//Остановка клиента
+                            }
                         }
                         break;
                     case TypeApp.Server:
@@ -992,10 +1018,14 @@ namespace uLoader
                         break;
                     case TypeApp.Server:
                         timerUpdateStatus.Stop();
+                        m_server.SendDisconnect();
                         m_server.StopServer();//остановка сервера
+                        if(SetStat!=null)
+                            SetStat(this, new SetStatEventArgs(TypeApp.Client));
                         break;
                 }
 
+                if(new_server!="")
                 initialize(new_server, stat);//подключение к новому серверу или запуск сервера
             }
 
@@ -1038,10 +1068,28 @@ namespace uLoader
             /// Событие
             /// </summary>
             public StopEventHandler StopWork;
+
+
+            public class SetStatEventArgs
+            {
+                public TypeApp TypeApp;
+                public SetStatEventArgs(TypeApp type)
+                {
+                    this.TypeApp = type;
+                }
+            }
+
+            /// <summary>
+            /// Тип делегата для обработки события
+            /// </summary>
+            public delegate void SetStatEventHandler(object obj, SetStatEventArgs e);
+
+            /// <summary>
+            /// Событие
+            /// </summary>
+            public SetStatEventHandler SetStat;
             #endregion
 
-            
         }
-
     }
 }

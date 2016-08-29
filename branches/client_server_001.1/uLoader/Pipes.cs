@@ -155,7 +155,14 @@ namespace uLoader
             {
                 foreach (StreamPipe stream in m_mainStream.dictServ.Values)//Перебираем все подключенные клиенты
                 {
-                    stream.WriteMessage("Disconnect");//Отправляем сообщение
+                    try
+                    {
+                        stream.WriteMessage("Disconnect");//Отправляем сообщение
+                    }
+                    catch
+                    {
+                        
+                    }
                     stream.StopPipe();//Останавливаем канал
                 }
                 m_mainStream.dictServ.Clear();//Очищаем словарь с клиентами
@@ -769,6 +776,8 @@ namespace uLoader
 
         public class Client
         {
+            public bool b_Active;
+
             /// <summary>
             /// Экземпляр канала клиента
             /// </summary>
@@ -887,6 +896,7 @@ namespace uLoader
                         SendConnect();//Отправлям сообщение о подключениии
                         thread = new Thread(ThreadRead);//Инициализация нового потока для работы канала
                         thread.Start();//Запуск потока
+                        b_Active = true;
                     }
                 }
             }
@@ -984,6 +994,7 @@ namespace uLoader
                 m_client.Close();//Закрытие канала
                 m_client.Dispose();//Освобождение ресурсов
                 m_client = null;//Обнуление
+                b_Active = false;
 
                 m_b_stopThread = true;//Меняем флаг для того чтобы завершить работу потока
 
