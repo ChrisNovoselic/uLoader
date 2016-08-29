@@ -67,6 +67,8 @@ namespace uLoader
                     {
                         m_server.Join(200);
                         m_server.Interrupt();
+                        if(m_server.ThreadState == System.Threading.ThreadState.Running)
+                                m_server.Abort();
                         m_server = null;
                     }
                 }
@@ -113,6 +115,7 @@ namespace uLoader
             /// <param name="message">Сообщение</param>
             public void WriteMessage(string idClient, string message)
             {
+                if(m_mainStream.dictServ.Count>0)
                 m_mainStream.dictServ[idClient].WriteMessage(message);
             }
 
@@ -253,14 +256,13 @@ namespace uLoader
                         m_thread.Start();//Старт потока
                     }
                 }
-
+                
                 /// <summary>
                 /// Остановка канала
                 /// </summary>
-                public void StopPipe()
+                public virtual void StopPipe()
                 {
                     m_b_stopThread = true;
-
                     if (m_pipeServer.IsConnected == true)//Если соединение установлено то
                         m_pipeServer.Disconnect();//Разрываем соединение
                     m_pipeServer.Close();//Закрываем канал
@@ -269,7 +271,7 @@ namespace uLoader
 
                     if (m_thread != null)
                     {
-                        if (m_thread.Join(1000) == false)//Ожидаем секунду, Если не завершился
+                        if (m_thread.Join(5000) == false)//Ожидаем секунду, Если не завершился
                         {
                             try
                             {
@@ -277,7 +279,7 @@ namespace uLoader
                             }
                             catch (ThreadAbortException e)
                             {
-                                m_thread.Join(200);
+                                m_thread.Join(1000);
                                 m_thread.Interrupt();
                                 m_thread = null;
                                 Thread.ResetAbort();
@@ -434,10 +436,16 @@ namespace uLoader
                         {
                             len = (int)UInt16.MaxValue;
                         }
-                        ioStream.WriteByte((byte)(len / 256));
-                        ioStream.WriteByte((byte)(len & 255));
-                        ioStream.Write(outBuffer, 0, len);
-                        ioStream.Flush();
+                        try
+                        {
+                            ioStream.WriteByte((byte)(len / 256));
+                            ioStream.WriteByte((byte)(len & 255));
+                            ioStream.Write(outBuffer, 0, len);
+                            ioStream.Flush();
+                        }
+                        catch
+                        {
+                        }
 
                         return outBuffer.Length + 2;
                     }

@@ -69,7 +69,7 @@ namespace uLoader
             m_panelCS = new PanelClienServer(new string[] { 
                 //"NE2844", "NE3336", 
                 "NE3963"
-                //, "localhost"
+                , "ITC563"
                 //,"VNE3963"
             }); m_panelCS.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelCS); m_panelCS.Start();
 
