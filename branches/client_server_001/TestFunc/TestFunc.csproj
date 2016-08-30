@@ -119,10 +119,6 @@
     <Compile Include="FormulaParsing.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\HClassLibrary\HClassLibrary.csproj">
-      <Project>{A4F24CAA-ACAA-4923-AA4F-CEF6CBA46291}</Project>
-      <Name>HClassLibrary</Name>
-    </ProjectReference>
     <ProjectReference Include="..\SrcBiysk\SrcBiysk.csproj">
       <Project>{ee2093ca-afe0-4513-8542-b56f3d418ef9}</Project>
       <Name>SrcBiysk</Name>
