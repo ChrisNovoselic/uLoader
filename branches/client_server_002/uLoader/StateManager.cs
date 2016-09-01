@@ -22,19 +22,19 @@ namespace uLoader
         /// </summary>
         public class ID : Object
         {
-            public int m_idTypeRegistred;
+            public int m_idOwner;
 
             public int m_idGroupSgnls;
 
             public ID(object[] ids)
             {
-                m_idTypeRegistred = (int)ids[0];
+                m_idOwner = (int)ids[0];
                 m_idGroupSgnls = (int)ids[1];
             }
 
             public override bool Equals(object obj)
             {
-                return (this.m_idTypeRegistred == (obj as ID).m_idTypeRegistred)
+                return (this.m_idOwner == (obj as ID).m_idOwner)
                     && (this.m_idGroupSgnls.Equals((obj as ID).m_idGroupSgnls) == true);
             }
 
@@ -115,14 +115,14 @@ namespace uLoader
             {
                 int indx = indexOfId(id);
                 //Console.WriteLine(@"HHandlerQueue.ListOManagement::AddItem (IdGrpSgnls=" + id.m_idGroupSgnls
-                //        + @", IdTypeRegistred=" + id.m_idTypeRegistred + @") - ДОБАВЛЕН!");
+                //        + @", IdOwner=" + id.m_idOwner + @") - ДОБАВЛЕН!");
 
                 if (indx < 0)
                     this.Add(new OManagement() { m_id = id, m_state = STATE.ADDED, m_tsLimit = tsLimit, m_dtUpdate = DateTime.Now });
                 else
                     // предупреждение - такой объект уже контролируется
                     Logging.Logg().Warning(@"HHandlerQueue.ListOManagement::AddItem (IdGrpSgnls=" + id.m_idGroupSgnls
-                        + @", IdTypeRegistred=" + id.m_idTypeRegistred + @") - добавляемый объект уже контролируется ...", Logging.INDEX_MESSAGE.NOT_SET);
+                        + @", IdOwner=" + id.m_idOwner + @") - добавляемый объект уже контролируется ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 return this.Count - 1;
             }
@@ -134,13 +134,13 @@ namespace uLoader
             {
                 int indx = indexOfId(id);
                 //Console.WriteLine(@"HHandlerQueue.ListOManagement::RemoveItem (IdGrpSgnls=" + id.m_idGroupSgnls
-                //        + @", IdTypeRegistred=" + id.m_idTypeRegistred + @") - удалЁн!");
+                //        + @", IdOwner=" + id.m_idOwner + @") - удалЁн!");
 
                 if (!(indx < 0))
                     this[indx].SetRemoved();
                 else
                     Logging.Logg().Error(@"HHandlerQueue.ListOManagement::RemoveItem (IdGrpSgnls=" + id.m_idGroupSgnls
-                        + @", IdTypeRegistred=" + id.m_idTypeRegistred + @") - объект для удаления не найден ...", Logging.INDEX_MESSAGE.NOT_SET);
+                        + @", IdOwner=" + id.m_idOwner + @") - объект для удаления не найден ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
             /// <summary>
             /// Подтвердить изменения состояния (добавление/удаление)
@@ -166,7 +166,7 @@ namespace uLoader
 
                 if (msgErr.Equals (string.Empty) == false)
                     Logging.Logg().Error(@"HHandlerQueue.ListOManagement::Confirm (IdGrpSgnls=" + id.m_idGroupSgnls
-                            + @", IdTypeRegistred=" + id.m_idTypeRegistred + @") - " + msgErr + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+                            + @", IdOwner=" + id.m_idOwner + @") - " + msgErr + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
                 else
                     ;
             }
@@ -239,8 +239,8 @@ namespace uLoader
                 m_listObjects.AddItem(id, tsLimit);
             }
 
-            //Console.WriteLine(@"StateManager::add (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - добавить объект; кол-во = " + m_listObjects.Count + @" ...");
-            Logging.Logg().Debug(@"StateManager::add (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - добавить объект; кол-во -> " + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+            //Console.WriteLine(@"StateManager::add (id=" + id.m_idOwner + @", key=" + id.m_idGroupSgnls + @") - добавить объект; кол-во = " + m_listObjects.Count + @" ...");
+            Logging.Logg().Debug(@"StateManager::add (id=" + id.m_idOwner + @", key=" + id.m_idGroupSgnls + @") - добавить объект; кол-во -> " + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
         /// <summary>
         /// Добавить новый объект для контроля
@@ -266,8 +266,8 @@ namespace uLoader
                 m_listObjects.RemoveItem (id);
             }
 
-            //Console.WriteLine(@"StateManager::remove (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - удалить объект; кол-во = " + m_listObjects.Count + @" ...");
-            Logging.Logg().Debug(@"StateManager::remove (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - удалить объект; кол-во <- " + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+            //Console.WriteLine(@"StateManager::remove (id=" + id.m_idOwner + @", key=" + id.m_idGroupSgnls + @") - удалить объект; кол-во = " + m_listObjects.Count + @" ...");
+            Logging.Logg().Debug(@"StateManager::remove (id=" + id.m_idOwner + @", key=" + id.m_idGroupSgnls + @") - удалить объект; кол-во <- " + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
         /// <summary>
         /// Удалить объект из списка контролируемых объектов
@@ -292,8 +292,8 @@ namespace uLoader
                 m_listObjects.Confirm(id);
             }
 
-            //Console.WriteLine(@"StateManager::confirm (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - подтвердить состояние объекта ...");
-            Logging.Logg().Debug(@"StateManager::confirm (id=" + id.m_idTypeRegistred + @", key=" + id.m_idGroupSgnls + @") - подтвердить состояние объекта; кол-во = " + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+            //Console.WriteLine(@"StateManager::confirm (id=" + id.m_idOwner + @", key=" + id.m_idGroupSgnls + @") - подтвердить состояние объекта ...");
+            Logging.Logg().Debug(@"StateManager::confirm (id=" + id.m_idOwner + @", key=" + id.m_idGroupSgnls + @") - подтвердить состояние объекта; кол-во = " + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
         /// <summary>
         /// Подтвердить изменение состояния контролируемого объекта
@@ -353,7 +353,7 @@ namespace uLoader
 
             for (INDEX_SRC type = INDEX_SRC.SOURCE; type < INDEX_SRC.COUNT_INDEX_SRC; type++)
                 foreach (GroupSources grpSrc in m_listGroupSources[(int)type])
-                    if (grpSrc.m_iIdTypePlugInObjectLoaded == ev.m_id.m_idTypeRegistred)
+                    if (grpSrc.m_iIdTypePlugInObjectLoaded == ev.m_id.m_idOwner)
                     {
                         switch (ev.m_state)
                         {
@@ -433,7 +433,7 @@ namespace uLoader
                 {
                     //new Thread (new ParameterizedThreadStart (onCrashed)).Start(new EventCrashedArgs() { m_id = o.m_id, m_state = o.m_state });
                     onCrashed(new EventCrashedArgs() { m_id = o.m_id, m_state = o.m_state });
-                    //Console.WriteLine(@"HHandlerQueue::targetFunc () - eventCrashed (id=" + o.m_id.m_idTypeRegistred
+                    //Console.WriteLine(@"HHandlerQueue::targetFunc () - eventCrashed (id=" + o.m_id.m_idOwner
                     //    + @", key=" + o.m_id.m_idGroupSgnls
                     //    + @", state=" + o.m_state.ToString () + @") - ...");
 
