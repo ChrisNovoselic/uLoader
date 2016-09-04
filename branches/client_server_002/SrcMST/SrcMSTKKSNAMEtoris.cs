@@ -184,10 +184,9 @@ namespace SrcMST
                         foreach (DataRow r in m_TablePrevValue.Rows)//Перебор таблицы с последними значениями сигналов
                         {
                             if (Convert.ToDateTime(r[2]) <= DateTime.UtcNow.AddSeconds(-s_repeatPrevValue_interval))
-                                if (RepeatSignal != null)
-                                    RepeatSignal(this, new RepeatSignalEventArgs("zero_count"
-                                                        , new object()
-                                                        ));
+                                RepeatSignal?.Invoke(this, new RepeatSignalEventArgs("zero_count"
+                    , new object()
+                    ));
                         }
 
                     return base.TableRecieved;
@@ -231,12 +230,9 @@ namespace SrcMST
                         {
                             if ((DateTime)r[2] <= DateTime.UtcNow.AddSeconds(-(s_repeatPrevValue_interval + s_repeatPrevValue_interval_offset)) & (DateTime)r[2] != DateTime.MinValue)//если метка времени последнего значения меньше текущего времени со смещением в период обновления
                             {
-                                if (RepeatSignal != null)
-                                {
-                                    RepeatSignal(this, new RepeatSignalEventArgs(r[0].ToString()
-                                                        , r[1]
-                                                        ));
-                                }
+                                RepeatSignal?.Invoke(this, new RepeatSignalEventArgs(r[0].ToString()
+                    , r[1]
+                    ));
                             }
                         }
                     }
@@ -263,10 +259,9 @@ namespace SrcMST
                                 }
                                 if ((DateTime)r[2] <= DateTime.UtcNow.AddSeconds(-(s_repeatPrevValue_interval + s_repeatPrevValue_interval_offset)) & (DateTime)r[2] != DateTime.MinValue)//если метка времени последнего значения меньше текущего времени со смещением в период обновления
                                 {
-                                    if (RepeatSignal != null)
-                                        RepeatSignal(this, new RepeatSignalEventArgs(r[0].ToString()
-                                                            , r[1]
-                                                            ));
+                                    RepeatSignal?.Invoke(this, new RepeatSignalEventArgs(r[0].ToString()
+                    , r[1]
+                    ));
                                 }
                             }
                         }

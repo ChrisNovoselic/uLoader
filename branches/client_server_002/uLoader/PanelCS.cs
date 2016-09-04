@@ -14,18 +14,18 @@ using HClassLibrary;
 
 namespace uLoader
 {
-    public partial class PanelClienServer : PanelCommonDataHost
+    public partial class PanelClientServer : PanelCommonDataHost
     {
-        PanelCS m_panelClient,
+        private PanelCS m_panelClient,
             m_panelServer;
 
-        string[] m_arServers;
+        private string[] m_arServers;
 
-        bool b_statPanelWork;
+        private bool b_statPanelWork;
 
-        System.Windows.Forms.Timer timer;
+        private System.Windows.Forms.Timer timer;
 
-        public PanelClienServer(string[] arServerName)
+        public PanelClientServer(string[] arServerName)
             : base(1, 2)
         {
             b_statPanelWork = false;
@@ -35,27 +35,27 @@ namespace uLoader
 
             m_arServers = arServerName;
             m_panelClient = new PanelCS(m_arServers, PanelCS.TypeApp.Client);
-            m_panelClient.Dock = DockStyle.Fill;
+            //m_panelClient.Dock = DockStyle.Fill; уже Fill
             m_panelServer = new PanelCS(m_arServers, PanelCS.TypeApp.Server);
-            m_panelServer.Dock = DockStyle.Fill;
+            //m_panelServer.Dock = DockStyle.Fill; уже Fill
             m_panelServer.SetStatEvent += new PanelCS.SetStatEventHandler(panelServerSetStat);
             m_panelClient.SetStatEvent += new PanelCS.SetStatEventHandler(panelServerSetStat);
 
-            m_panelClient.StartWorkEvent += new PanelCS.StartEventHandler(panelStartWork);
-            m_panelServer.StartWorkEvent += new PanelCS.StartEventHandler(panelStartWork);
-
-            m_panelClient.StopWorkEvent += new PanelCS.StopEventHandler(panelStopWork);
-            m_panelServer.StopWorkEvent += new PanelCS.StopEventHandler(panelStopWork);
-
-            m_panelClient.ExitEvent += new PanelCS.ExitEventHandler(exitProg);
-            m_panelServer.ExitEvent += new PanelCS.ExitEventHandler(exitProg);
-
-            m_panelClient.DisconnectEvent += new PanelCS.DisconnectEventHandler(disconnect);
-            m_panelServer.DisconnectEvent += new PanelCS.DisconnectEventHandler(disconnect);
+            m_panelClient.CommandEvent += new EventHandler(panelOnCommandEvent);
+            m_panelServer.CommandEvent += new EventHandler(panelOnCommandEvent);
 
             this.Controls.Add(m_panelServer, 0, 0);
             this.Controls.Add(m_panelClient, 0, 1);
 
+        }
+        /// <summary>
+        /// Обработчик приема команд от дочерних панелей
+        /// </summary>
+        /// <param name="sender">Панель, отправившая событие</param>
+        /// <param name="ev">Аргумент события</param>
+        private void panelOnCommandEvent(object sender, EventArgs ev)
+        {
+            DataAskedHost(ev as CommandEventArgs);
         }
 
         public bool StatPanelWork
@@ -125,30 +125,6 @@ namespace uLoader
             }
         }
 
-        private void exitProg(object sender, EventArgs e)
-        {
-            if (ExitEvent != null)
-            {
-                ExitEvent(this, new EventArgs());
-            }
-        }
-
-        private void panelStartWork(object sender, EventArgs e)
-        {
-            if (StartWorkEvent != null)
-            {
-                StartWorkEvent(this, new EventArgs());
-            }
-        }
-
-        private void panelStopWork(object sender, EventArgs e)
-        {
-            if (StopWorkEvent != null)
-            {
-                StopWorkEvent(this, new EventArgs());
-            }
-        }
-
         private void reConnClient()
         {
             m_panelClient.Close();
@@ -156,64 +132,30 @@ namespace uLoader
             m_panelClient.StartPanel();
         }
 
-        private void disconnect(object sender, EventArgs e)
+        #region События панели
+
+        public enum ID_EVENT : short { Unknown = -1
+            , Start, Stop, Exit, Disconnect
+        , Count}
+
+        public class CommandEventArgs : EventArgs
         {
-            if (DisconnectEvent != null)
-            {
-                DisconnectEvent(this, new EventArgs());
+            public ID_EVENT Id;
+
+            public CommandEventArgs(ID_EVENT id) {
+                Id = id;
             }
         }
 
-        #region События панели
-
-        /// <summary>
-        /// Тип делегата для обработки события
-        /// </summary>
-        public delegate void StartEventHandler(object obj, EventArgs e);
-
-        /// <summary>
-        /// Событие
-        /// </summary>
-        public StartEventHandler StartWorkEvent;
-
-
-        /// <summary>
-        /// Тип делегата для обработки события
-        /// </summary>
-        public delegate void StopEventHandler(object obj, EventArgs e);
-
-        /// <summary>
-        /// Событие
-        /// </summary>
-        public StopEventHandler StopWorkEvent;
-
-
-        /// <summary>
-        /// Тип делегата для обработки события
-        /// </summary>
-        public delegate void ExitEventHandler(object obj, EventArgs e);
-
-        /// <summary>
-        /// Событие
-        /// </summary>
-        public ExitEventHandler ExitEvent;
-
-        /// <summary>
-        /// Тип делегата для обработки события
-        /// </summary>
-        public delegate void DisconnectEventHandler(object obj, EventArgs e);
-
-        /// <summary>
-        /// Событие
-        /// </summary>
-        public DisconnectEventHandler DisconnectEvent;
+        ///// <summary>
+        ///// Событие
+        ///// </summary>
+        //public event EventHandler CommandEvent;
 
         #endregion
 
-
         private partial class PanelCS : PanelCommonDataHost
         {
-
             #region Переменные и константы
 
             public bool b_IsPanelWork;
@@ -268,17 +210,12 @@ namespace uLoader
             /// <summary>
             /// Тип экземпляра приложения
             /// </summary>
-            TypeApp m_type_app;
+            private TypeApp m_type_app;
 
-            /// <summary>
-            /// Делегат для добавления строки в DGV
-            /// </summary>
-            /// <param name="obj">Строка в виде массива</param>
-            delegate void delAddRow(object obj);
             /// <summary>
             /// Экземпляр делегата добавления строки в DGV
             /// </summary>
-            delAddRow d_addRow;
+            private DelegateObjectFunc d_addRow;
 
             /// <summary>
             /// Делегат для добавления/удаления объекта в comboBox
@@ -288,7 +225,7 @@ namespace uLoader
             /// <summary>
             /// Экземпляр делегата добавления/удаления объекта в comboBox
             /// </summary>
-            delOperCB d_operCB;
+            private delOperCB d_operCB;
 
             /// <summary>
             /// Делегат для добавления/удаления объекта в comboBox
@@ -298,7 +235,7 @@ namespace uLoader
             /// <summary>
             /// Экземпляр делегата добавления/удаления объекта в comboBox
             /// </summary>
-            delReconn d_reconn;
+            private delReconn d_reconn;
 
             /// <summary>
             /// Делегат для добавления/удаления объекта в listView
@@ -311,32 +248,19 @@ namespace uLoader
             delUpdateLV d_updateLV;
 
             /// <summary>
-            /// Делегат для изменения label'a
-            /// </summary>
-            /// <param name="obj">bool</param>
-            delegate void delLbl(bool start);
-            /// <summary>
             /// Экземпляр делегата изменения label'a
             /// </summary>
-            delLbl d_statLbl;
+            private DelegateBoolFunc d_statLbl;
 
-            /// <summary>
-            /// Делегат для exit
-            /// </summary>
-            delegate void exit();
             /// <summary>
             /// Экземпляр делегата exit
             /// </summary>
-            exit d_exit;
+            DelegateFunc d_exit;
 
-            /// <summary>
-            /// Делегат для disconnect
-            /// </summary>
-            delegate void disconnect();
             /// <summary>
             /// Экземпляр делегата disconnect
             /// </summary>
-            disconnect d_disconnect;
+            DelegateFunc d_disconnect;
 
             /// <summary>
             /// Объект синхронизации
@@ -997,17 +921,13 @@ namespace uLoader
                                                 if (command_mes == arrCommand[(int)Command.Start])//обработка запроса запуска
                                                 {
                                                     Invoke(d_statLbl, true);
-                                                    if (StartWorkEvent != null)
-                                                        StartWorkEvent(this, new EventArgs());
-                                                    else ;
+                                                    CommandEvent?.Invoke(this, new PanelCS.CommandEventArgs(PanelCS.ID_EVENT.Start));
                                                 }
                                                 else
                                                     if (command_mes == arrCommand[(int)Command.Stop])//обработка запроса остановки
                                                     {
                                                         Invoke(d_statLbl, false);
-                                                        if (StopWorkEvent != null)
-                                                            StopWorkEvent(this, new EventArgs());
-                                                        else ;
+                                                        CommandEvent?.Invoke(this, new PanelCS.CommandEventArgs(PanelCS.ID_EVENT.Stop));
                                                     }
                                                     else
                                                         if (command_mes == arrCommand[(int)Command.SetStat])//обработка запроса изменения типа экземпляра
@@ -1043,18 +963,14 @@ namespace uLoader
                                             if (command_mes == arrCommand[(int)Command.Start])//запрос запуска
                                             {
                                                 Invoke(d_statLbl, true);
-                                                if (StartWorkEvent != null)
-                                                    StartWorkEvent(this, new EventArgs());
-                                                else ;
+                                                CommandEvent(this, new CommandEventArgs(ID_EVENT.Start));
 
                                             }
                                             else
                                                 if (command_mes == arrCommand[(int)Command.Stop])//запрос остановки
                                                 {
                                                     Invoke(d_statLbl, false);
-                                                    if (StopWorkEvent != null)
-                                                        StopWorkEvent(this, new EventArgs());
-                                                    else ;
+                                                    CommandEvent(this, new CommandEventArgs(ID_EVENT.Stop));
                                                 }
                                                 else
                                                     if (command_mes == arrCommand[(int)Command.Status])//обработка запроса изменения типа экземпляра
@@ -1218,8 +1134,7 @@ namespace uLoader
                     case TypeApp.Client:
                         m_client.StopClient();//остановка клиента
                         b_IsPanelWork = false;
-                        if (SetStatEvent != null)
-                            SetStatEvent(this, new SetStatEventArgs(TypeApp.Server));
+                        SetStatEvent?.Invoke(this, new SetStatEventArgs(TypeApp.Server));
                         dgvMessage.Rows.Clear();
                         break;
                     case TypeApp.Server:
@@ -1229,8 +1144,7 @@ namespace uLoader
                         m_server.SendDisconnect();
                         //m_server.StopServer();//остановка сервера
                         b_IsPanelWork = false;
-                        if (SetStatEvent != null)
-                            SetStatEvent(this, new SetStatEventArgs(TypeApp.Client));
+                        SetStatEvent?.Invoke(this, new SetStatEventArgs(TypeApp.Client));
                         timerUpdateStatus.Start();
                         dgvMessage.Rows.Clear();
                         break;
@@ -1262,38 +1176,20 @@ namespace uLoader
 
             private void exit_program()
             {
-                if (ExitEvent != null)
-                    ExitEvent(this, new EventArgs());
+                CommandEvent?.Invoke(this, new CommandEventArgs(ID_EVENT.Exit));
             }
 
             private void disconnect_client()
             {
-                if (DisconnectEvent != null)
-                    DisconnectEvent(this, new EventArgs());
+                CommandEvent?.Invoke(this, new CommandEventArgs(ID_EVENT.Disconnect));
             }
 
             #region События панели
-            /// <summary>
-            /// Тип делегата для обработки события
-            /// </summary>
-            public delegate void StartEventHandler(object obj, EventArgs e);
 
             /// <summary>
             /// Событие
             /// </summary>
-            public StartEventHandler StartWorkEvent;
-
-
-            /// <summary>
-            /// Тип делегата для обработки события
-            /// </summary>
-            public delegate void StopEventHandler(object obj, EventArgs e);
-
-            /// <summary>
-            /// Событие
-            /// </summary>
-            public StopEventHandler StopWorkEvent;
-
+            public EventHandler CommandEvent;
 
             public class SetStatEventArgs
             {
@@ -1314,25 +1210,23 @@ namespace uLoader
             /// </summary>
             public SetStatEventHandler SetStatEvent;
 
-            /// <summary>
-            /// Тип делегата для обработки события
-            /// </summary>
-            public delegate void ExitEventHandler(object obj, EventArgs e);
+            private enum ID_EVENT : short { Unknown = -1
+                , Start, Stop
+                , Disconnect
+                , Exit
+            , Count                
+            };
 
-            /// <summary>
-            /// Событие
-            /// </summary>
-            public ExitEventHandler ExitEvent;
+            private class CommandEventArgs : EventArgs
+            {
+                public ID_EVENT Id;
 
-            /// <summary>
-            /// Тип делегата для обработки события
-            /// </summary>
-            public delegate void DisconnectEventHandler(object obj, EventArgs e);
+                public CommandEventArgs(ID_EVENT id)
+                {
+                    this.Id = id;
+                }
+            }
 
-            /// <summary>
-            /// Событие
-            /// </summary>
-            public DisconnectEventHandler DisconnectEvent;
             #endregion
 
         }

@@ -42,7 +42,7 @@ namespace uLoader
         /// <summary>
         /// Панель с элементами управления - ClientServer
         /// </summary>
-        private PanelClienServer m_panelCS;
+        private PanelClientServer m_panelCS;
         /// <summary>
         /// Панель с элементами управления - действия по конфигурации приложения
         /// </summary>
@@ -66,7 +66,8 @@ namespace uLoader
 
             m_panelWork = new PanelWork(); m_panelWork.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelWork); m_panelWork.Start();
             m_panelConfig = new PanelConfig(); m_panelConfig.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelConfig); m_panelConfig.Start ();
-            m_panelCS = new PanelClienServer(new string[] { 
+            //m_handler.Push();
+            m_panelCS = new PanelClientServer(new string[] { 
                 //"NE2844", "NE3336", 
                 "NE3963"
                 , "ITC563"
