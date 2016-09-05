@@ -55,7 +55,12 @@ namespace uLoader
         /// <param name="ev">Аргумент события</param>
         private void panelOnCommandEvent(object sender, EventArgs ev)
         {
-            DataAskedHost(ev as CommandEventArgs);
+            DataAskedHost(new object [] {
+                new object [] {
+                    -1
+                    , (ev as CommandEventArgs).Id
+                }
+            });
         }
 
         public bool StatPanelWork
@@ -779,7 +784,7 @@ namespace uLoader
 
             private void delFromComList(object sender, EventArgs e)
             {
-                Invoke(d_operCB, new object[] { (e as Pipes.Server.DisConnectClientEventArgs).IdServer, false });
+                Invoke(d_operCB, new object[] { (e as Pipes.Server.MainStreamPipe.DisConnectClientEventArgs).IdServer, false });
                 Invoke(d_disconnect);
             }
 
@@ -920,13 +925,13 @@ namespace uLoader
                                                 if (command_mes.Equals(COMMAND.Start.ToString ()) == true)//обработка запроса запуска
                                                 {
                                                     Invoke(d_statLbl, true);
-                                                    if (!(CommandEvent == null)) CommandEvent(this, new PanelCS.CommandEventArgs(PanelCS.ID_EVENT.Start)); else ;
+                                                    if (!(CommandEvent == null)) CommandEvent(this, new CommandEventArgs(ID_EVENT.Start)); else ;
                                                 }
                                                 else
                                                     if (command_mes.Equals(COMMAND.Stop.ToString ()) == true)//обработка запроса остановки
                                                     {
                                                         Invoke(d_statLbl, false);
-                                                        if (!(CommandEvent == null)) CommandEvent(this, new PanelCS.CommandEventArgs(PanelCS.ID_EVENT.Stop)); else ;
+                                                        if (!(CommandEvent == null)) CommandEvent(this, new CommandEventArgs(ID_EVENT.Stop)); else ;
                                                     }
                                                     else
                                                         if (command_mes.Equals(COMMAND.SetStat.ToString ()) == true)//обработка запроса изменения типа экземпляра
@@ -1199,13 +1204,13 @@ namespace uLoader
 
             private void exit_program()
             {
-                if (!(CommandEvent == null)) CommandEvent(this, new CommandEventArgs(ID_EVENT.Exit)); else ;
+                if (!(CommandEvent == null)) CommandEvent(this, new PanelClientServer.CommandEventArgs(PanelClientServer.ID_EVENT.Exit)); else ;
             }
 
             private void disconnect_client()
             {
                 if (!(CommandEvent == null))
-                    CommandEvent(this, new CommandEventArgs(ID_EVENT.Disconnect));
+                    CommandEvent(this, new PanelClientServer.CommandEventArgs(PanelClientServer.ID_EVENT.Disconnect));
                 else
                     ;
             }
@@ -1237,25 +1242,7 @@ namespace uLoader
             /// </summary>
             public SetStatEventHandler SetStatEvent;
 
-            private enum ID_EVENT : short { Unknown = -1
-                , Start, Stop
-                , Disconnect
-                , Exit
-            , Count                
-            };
-
-            private class CommandEventArgs : EventArgs
-            {
-                public ID_EVENT Id;
-
-                public CommandEventArgs(ID_EVENT id)
-                {
-                    this.Id = id;
-                }
-            }
-
             #endregion
-
         }
     }
 }

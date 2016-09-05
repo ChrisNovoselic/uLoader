@@ -8,6 +8,7 @@ using System.Threading;
 using System.Diagnostics;
 using System.IO.Pipes;
 
+using HClassLibrary;
 
 namespace uLoader
 {
@@ -61,23 +62,27 @@ namespace uLoader
             {
                 m_bStopServer = true;//Изменение зн-я флага для завершения работы потока
 
-                if (m_server != null)
+                try
                 {
-                    if (m_server.Join(1000) == false)//Ожидаем секунду, Если не завершился
+                    if (m_server != null)
                     {
-                        m_server.Join(200);
-                        m_server.Interrupt();
-                        if(m_server.ThreadState == System.Threading.ThreadState.Running)
+                        if (m_server.Join(1000) == false)//Ожидаем секунду, Если не завершился
+                        {
+                            m_server.Join(200);
+                            m_server.Interrupt();
+                            if (m_server.ThreadState == System.Threading.ThreadState.Running)
                                 m_server.Abort();
-                        m_server = null;
+                            m_server = null;
+                        }
                     }
+
+                    if (m_mainStream != null)
+                        m_mainStream.StopPipe();
                 }
-
-
-                if (m_mainStream != null)
-                    m_mainStream.StopPipe();
-
-                
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, @"Pipes.Server::StopServer () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
             }
 
             /// <summary>
@@ -202,7 +207,7 @@ namespace uLoader
                 /// <summary>
                 /// Флаг для остановки работы потока
                 /// </summary>
-                protected bool m_b_stopThread;
+                protected bool m_bStopThread;
 
                 /// <summary>
                 /// Конструктор основной
@@ -236,7 +241,7 @@ namespace uLoader
                 {
                     //Инициализация переменных
                     int err = 0;
-                    m_b_stopThread = false;
+                    m_bStopThread = false;
                     m_ErrServ = false;
                     
                     //Инициализация экземпляра канала
@@ -259,11 +264,16 @@ namespace uLoader
                 /// </summary>
                 public virtual void StopPipe()
                 {
-                    m_b_stopThread = true;
-                    if (m_pipeServer.IsConnected == true)//Если соединение установлено то
-                        m_pipeServer.Disconnect();//Разрываем соединение
-                    m_pipeServer.Close();//Закрываем канал
-                    m_pipeServer.Dispose();//Уничтожаем ресурсы
+                    m_bStopThread = true;
+                    if (!(m_pipeServer == null))
+                    {
+                        if (m_pipeServer.IsConnected == true)//Если соединение установлено то
+                            m_pipeServer.Disconnect();//Разрываем соединение
+                        m_pipeServer.Close();//Закрываем канал
+                        m_pipeServer.Dispose();//Уничтожаем ресурсы
+                    }
+                    else
+                        Logging.Logg().Error(@"::StopPipe () - объект канала сервера =NULL", Logging.INDEX_MESSAGE.NOT_SET);
                     m_pipeServer = null;//Обнуляем
 
                     if (m_thread != null)
@@ -345,7 +355,7 @@ namespace uLoader
                                                 break;
                                         }
                                     }
-                                    if (m_b_stopThread == true)//Был ли изменен флаг остановки потока
+                                    if (m_bStopThread == true)//Был ли изменен флаг остановки потока
                                     {
                                         break;//Прерываем цикл
                                     }
@@ -370,8 +380,13 @@ namespace uLoader
                 /// <param name="message"></param>
                 public void WriteMessage(string message)
                 {
-                    if (m_pipeServer.IsConnected == true)
-                        m_ss.WriteString(message);
+                    if (!(m_pipeServer == null))
+                        if (m_pipeServer.IsConnected == true)
+                            m_ss.WriteString(message);
+                        else
+                            ;
+                    else
+                        Logging.Logg().Error(string.Format(@"Pipes.Server.StreamPipe::WriteMessage (msg={0}) - канал сервера=NULL", message), Logging.INDEX_MESSAGE.NOT_SET);
                 }
 
                 /// <summary>
@@ -588,7 +603,9 @@ namespace uLoader
                 {
                     if ((e as ResServEventArgs).Value == true)
                     {
-                        if (DisConnectClient == null) DisConnectClient(this, new DisConnectClientEventArgs((e as ResServEventArgs).IdServer)); else ;
+                        if (!(DisConnectClient == null))
+                            DisConnectClient(this, new DisConnectClientEventArgs((e as ResServEventArgs).IdServer));
+                        else ;
 
                         dictServ[(e as ResServEventArgs).IdServer].StopPipe();//Остановка канала конкретного клиента
                         dictServ.Remove((e as ResServEventArgs).IdServer);//Удаление этого клиента из словаря подключенных
@@ -600,7 +617,7 @@ namespace uLoader
                 /// </summary>
                 public override void RestartPipe()
                 {
-                    m_b_stopThread = true; //Флаг остановки работы потока распределяющего канала
+                    m_bStopThread = true; //Флаг остановки работы потока распределяющего канала
 
                     if (m_thread != null)
                     {
