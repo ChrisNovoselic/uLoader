@@ -88,18 +88,22 @@ namespace uLoader
             /// <summary>
             /// Метод для потока сервера
             /// </summary>
-            /// <param name="data"></param>
+            /// <param name="data">Параметр при старте потоковой функции</param>
             private void ServerThread(object data)
             {
-                m_mainStream = new MainStreamPipe("MainPipe");//Новый экземпляр именованного канала, передаём его имя
-                
-                //Подписка на события
-                m_mainStream.ReadMessage += new EventHandler(readMessage);
-                m_mainStream.ResServ += new EventHandler(resServ);
-                m_mainStream.ConnectClient += new EventHandler(event_connectClient);
-                m_mainStream.DisConnectClient += new EventHandler(event_disConnectClient);
-                
-                m_mainStream.StartPipe();//Старт канала
+                try {
+                    m_mainStream = new MainStreamPipe("MainPipe");//Новый экземпляр именованного канала, передаём его имя
+
+                    //Подписка на события
+                    m_mainStream.ReadMessage += new EventHandler(readMessage);
+                    m_mainStream.ResServ += new EventHandler(resServ);
+                    m_mainStream.ConnectClient += new EventHandler(event_connectClient);
+                    m_mainStream.DisConnectClient += new EventHandler(event_disConnectClient);
+
+                    m_mainStream.StartPipe();//Старт канала
+                } catch (Exception e) {
+                    Logging.Logg().Exception(e, @"Pipes.Server::ServerThread () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
             }
 
             /// <summary>
@@ -226,12 +230,27 @@ namespace uLoader
                     err = 0;
                     try
                     {
-                        m_pipeServer.WaitForConnection();//Ожидание подключения
+                        //m_pipeServer.WaitForConnection();//Ожидание подключения
+                        m_pipeServer.BeginWaitForConnection(callbackConnection, null);
                     }
                     catch(Exception e)//Если таймаут превышен
                     {
                         err = 1;
                     }
+                }
+
+                private void callbackConnection(IAsyncResult res)
+                {
+                    if (!(m_pipeServer == null)) {
+                        m_pipeServer.EndWaitForConnection(res);
+
+                        if (m_pipeServer.IsConnected == true) {
+                            m_thread = new Thread(ThreadRead);//Новый поток работы канала
+                            m_thread.Start();//Старт потока
+                        } else
+                            ;
+                    } else
+                        ;
                 }
 
                 /// <summary>
@@ -245,18 +264,23 @@ namespace uLoader
                     m_ErrServ = false;
                     
                     //Инициализация экземпляра канала
-                    m_pipeServer = new NamedPipeServerStream(m_NamePipe, PipeDirection.InOut, 1, PipeTransmissionMode.Message, PipeOptions.Asynchronous, 1024 * 1024, 1024 * 1024);
-                    
+                    m_pipeServer = new NamedPipeServerStream(m_NamePipe
+                        , PipeDirection.InOut
+                        , 1
+                        , PipeTransmissionMode.Message
+                        , PipeOptions.Asynchronous
+                        , 1024 * 1024, 1024 * 1024);
+
                     //Инициализация экземпляра класса по работе с каналом
                     m_ss = new StreamString(m_pipeServer);
 
                     waitConnect(out err);//Ожидание подключения
 
-                    if (err == 0)//Если оштбок нет 
-                    {
-                        m_thread = new Thread(ThreadRead);//Новый поток работы канала
-                        m_thread.Start();//Старт потока
-                    }
+                    //if (err == 0)//Если ошибок нет, соединение установлено
+                    //{
+                    //    m_thread = new Thread(ThreadRead);//Новый поток работы канала
+                    //    m_thread.Start();//Старт потока
+                    //}
                 }
                 
                 /// <summary>
@@ -265,33 +289,38 @@ namespace uLoader
                 public virtual void StopPipe()
                 {
                     m_bStopThread = true;
-                    if (!(m_pipeServer == null))
-                    {
-                        if (m_pipeServer.IsConnected == true)//Если соединение установлено то
-                            m_pipeServer.Disconnect();//Разрываем соединение
-                        m_pipeServer.Close();//Закрываем канал
-                        m_pipeServer.Dispose();//Уничтожаем ресурсы
-                    }
-                    else
-                        Logging.Logg().Error(@"::StopPipe () - объект канала сервера =NULL", Logging.INDEX_MESSAGE.NOT_SET);
-                    m_pipeServer = null;//Обнуляем
 
-                    if (m_thread != null)
-                    {
-                        if (m_thread.Join(5000) == false)//Ожидаем секунду, Если не завершился
+                    try {
+                        if (!(m_pipeServer == null))
                         {
-                            try
+                            if (m_pipeServer.IsConnected == true)//Если соединение установлено то
+                                m_pipeServer.Disconnect();//Разрываем соединение
+                            m_pipeServer.Close();//Закрываем канал
+                            m_pipeServer.Dispose();//Уничтожаем ресурсы
+                        }
+                        else
+                            Logging.Logg().Error(@"::StopPipe () - объект канала сервера =NULL", Logging.INDEX_MESSAGE.NOT_SET);
+                        m_pipeServer = null;//Обнуляем
+
+                        if (m_thread != null)
+                        {
+                            if (m_thread.Join(5000) == false)//Ожидаем секунду, Если не завершился
                             {
-                                m_thread.Abort();//То завершаем принудительно
-                            }
-                            catch (ThreadAbortException e)
-                            {
-                                m_thread.Join(1000);
-                                m_thread.Interrupt();
-                                m_thread = null;
-                                Thread.ResetAbort();
+                                try
+                                {
+                                    m_thread.Abort();//То завершаем принудительно
+                                }
+                                catch (ThreadAbortException e)
+                                {
+                                    m_thread.Join(1000);
+                                    m_thread.Interrupt();
+                                    m_thread = null;
+                                    Thread.ResetAbort();
+                                }
                             }
                         }
+                    } catch (Exception e) {
+                        Logging.Logg().Exception(e, @"Pipes.Server::StopPipe () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
                 }
 
@@ -313,6 +342,10 @@ namespace uLoader
                 protected virtual void ThreadRead(object data)
                 {
                     int err = 0;
+
+                    string[] main_com = null
+                        , message = null;
+
                     while (m_ErrServ == false)//Ошибок при чтении
                     {
                         int errRead = 0;
@@ -340,8 +373,8 @@ namespace uLoader
                                     else
                                     {
                                         err = 0;
-                                        string[] main_com = stat.Split(';');//разбор сложного сообщения
-                                        string[] message = new string[0];
+                                        main_com = stat.Split(';');//разбор сложного сообщения
+                                        message = new string[0];
                                         switch (main_com[0])//переход по служебным сообщениям
                                         {
                                             case "Disconnect":
@@ -536,11 +569,15 @@ namespace uLoader
                 protected override void ThreadRead(object data)
                 {
                     int err = 0;
+
+                    int errRead = -1;
+                    string stat = string.Empty;
+
                     while (err < 50)
                     {
-                        int errRead = 0;
+                        errRead = 0;
 
-                        string stat = m_ss.ReadString(out errRead);//Чтение из канала
+                        stat = m_ss.ReadString(out errRead);//Чтение из канала
 
                         if (errRead > 0)
                         {
