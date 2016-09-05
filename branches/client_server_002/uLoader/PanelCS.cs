@@ -21,14 +21,14 @@ namespace uLoader
 
         private string[] m_arServers;
 
-        private bool b_statPanelWork;
+        private bool m_bStatPanelWork;
 
         private System.Windows.Forms.Timer timer;
 
         public PanelClientServer(string[] arServerName)
             : base(1, 2)
         {
-            b_statPanelWork = false;
+            m_bStatPanelWork = false;
             timer = new System.Windows.Forms.Timer();
             timer.Interval = 100;
             timer.Tick += new EventHandler(timer_Tick);
@@ -62,26 +62,26 @@ namespace uLoader
         {
             get
             {
-                return b_statPanelWork;
+                return m_bStatPanelWork;
             }
             set
             {
-                b_statPanelWork = value;
+                m_bStatPanelWork = value;
             }
         }
 
         private void timer_Tick(object sender, EventArgs e)
         {
             if (m_panelClient != null)
-                if (m_panelClient.b_IsPanelWork == true)
+                if (m_panelClient.m_bIsPanelWork == true)
                 {
-                    m_panelClient.StartedWork = b_statPanelWork;
+                    m_panelClient.StartedWork = m_bStatPanelWork;
                     m_panelServer.Enabled = false;
                     m_panelClient.Enabled = true;
                 }
                 else
                 {
-                    m_panelServer.StartedWork = b_statPanelWork;
+                    m_panelServer.StartedWork = m_bStatPanelWork;
                     m_panelServer.Enabled = true;
                     m_panelClient.Enabled = false;
                 }
@@ -158,7 +158,7 @@ namespace uLoader
         {
             #region Переменные и константы
 
-            public bool b_IsPanelWork;
+            public bool m_bIsPanelWork;
 
             /// <summary>
             /// Типы экземпляра
@@ -170,15 +170,17 @@ namespace uLoader
             /// </summary>
             enum TypeMes { Input, Output };
 
-            private bool b_startedWork;
+            private bool m_bStartedWork
+                , m_bIsFirstActivate;
 
             /// <summary>
             /// Комманды к клиенту/серверу
             /// </summary>
-            enum Command { GetDataTime, Start, Stop, ReConnect, GetName, GetStat, SetStat, Status, Exit };
-            string[] arrCommand = new string[] { "GetDataTime", "Start", "Stop", "ReConnect", "GetName", "GetStat", "SetStat", "Status", "Exit" };
-
-            bool m_b_isfirstActivate;
+            private enum COMMAND { Unknown = -1
+                , GetDataTime, Start, Stop, ReConnect, GetName, GetStat, SetStat, Status, Exit
+                , Count
+            };
+            //string[] arrCommand = new string[] { "GetDataTime", "Start", "Stop", "ReConnect", "GetName", "GetStat", "SetStat", "Status", "Exit" };            
 
             System.Windows.Forms.Timer timerUpdateStatus;
 
@@ -287,8 +289,8 @@ namespace uLoader
             public PanelCS(string[] arServerName, TypeApp type)
                 : base(5, 20)
             {
-                b_IsPanelWork = false;
-                m_b_isfirstActivate = true;
+                m_bIsPanelWork = false;
+                m_bIsFirstActivate = true;
                 thisLock = new Object();
                 m_type_app = type;
                 d_exit = exit_program;
@@ -310,11 +312,11 @@ namespace uLoader
             {
                 get
                 {
-                    return b_startedWork;
+                    return m_bStartedWork;
                 }
                 set
                 {
-                    b_startedWork = value;
+                    m_bStartedWork = value;
                 }
 
             }
@@ -577,10 +579,10 @@ namespace uLoader
             {
                 bool bRes = base.Activate(active);
 
-                if (m_b_isfirstActivate == true)
+                if (m_bIsFirstActivate == true)
                 {
                     StartPanel();
-                    m_b_isfirstActivate = false;
+                    m_bIsFirstActivate = false;
                 }
 
                 return bRes;
@@ -664,7 +666,7 @@ namespace uLoader
                         thread.Start(new string[] { name_serv }); //Старт потока со списком серверов переданным в initialize
                     thread.Join();
 
-                    if (m_client.b_IsConnected == true)
+                    if (m_client.m_bIsConnected == true)
                         argCommand.Enabled = true;
                 }
             }
@@ -687,34 +689,34 @@ namespace uLoader
                             m_client = new Pipes.Client(server, m_timeOut);//инициализация клиента
 
                             //Подписка на события клиента
-                            m_client.ReadMessage += new Pipes.Client.ReadMessageEventHandler(newMessageToClient);
-                            m_client.ResServ += new Pipes.Client.ResServEventHandler(resClient);
+                            m_client.ReadMessage += new EventHandler(newMessageToClient);
+                            m_client.ResServ += new EventHandler(resClient);
                             //несколько попыток подключения при неудаче
                             while (i < m_countRepCon)
                             {
                                 //!!!! необходимо будет вставить условие на исключение собственного имени из перебора
                                 m_client.StartClient();//Выполняем старт клиента и пытаемся подключиться к серверу
-                                if (m_client.b_IsConnected == true)//Если соединение установлено то
+                                if (m_client.m_bIsConnected == true)//Если соединение установлено то
                                 {
                                     //m_type_app = TypeApp.Client;//Тип экземпляра устанавливаем Клиент
                                     m_myName = m_client.m_Name;//Устанавливаем собственное имя равное имени клиента
-                                    m_client.WriteMessage(arrCommand[(int)Command.GetName]);//Запрашиваем имя сервера
+                                    m_client.WriteMessage(COMMAND.GetName.ToString());//Запрашиваем имя сервера
                                     break;//Прерываем перебор серверов
                                 }
                                 else
                                     i++;
                             }
                             //Если не было установлено подключение то
-                            if (m_client.b_IsConnected == false)
+                            if (m_client.m_bIsConnected == false)
                             {
                                 //отписываемся от событий
                                 m_client.ReadMessage -= newMessageToClient;
                                 m_client.ResServ -= resClient;
-                                b_IsPanelWork = false;
+                                m_bIsPanelWork = false;
                             }
                             else
                             {
-                                b_IsPanelWork = true;
+                                m_bIsPanelWork = true;
                             }
                             break;
                         }
@@ -765,9 +767,9 @@ namespace uLoader
             {
                 m_server = new Pipes.Server();//Создание экземпляра сервера
                 //Подписка на события сервера
-                m_server.ReadMessage += new Pipes.Server.ReadMessageEventHandler(newMessageToServer);
-                m_server.ConnectClient += new Pipes.Server.ConnectClientEventHandler(addToComList);
-                m_server.DisConnectClient += new Pipes.Server.DisConnectClientEventHandler(delFromComList);
+                m_server.ReadMessage += new EventHandler(newMessageToServer);
+                m_server.ConnectClient += new EventHandler(addToComList);
+                m_server.DisConnectClient += new EventHandler(delFromComList);
                 m_server.StartServer();//запуск экземпляра сервера
                 //m_type_app = TypeApp.Server;//устанавливаем тип экземпляра приложения Сервер
                 m_myName = m_server.Name;//Устанавливаем собственное имя равное имени сервера
@@ -775,32 +777,34 @@ namespace uLoader
             #endregion
 
             #region Обработчики сервера
-            private void addToComList(object sender, Pipes.Server.ConnectClientEventArgs e)
+            private void addToComList(object sender, EventArgs e)
             {
-                Invoke(d_operCB, new object[] { e.IdServer, true });
+                Invoke(d_operCB, new object[] { (e as Pipes.Server.ConnectClientEventArgs).IdServer, true });
             }
 
-            private void delFromComList(object sender, Pipes.Server.DisConnectClientEventArgs e)
+            private void delFromComList(object sender, EventArgs e)
             {
-                Invoke(d_operCB, new object[] { e.IdServer, false });
+                Invoke(d_operCB, new object[] { (e as Pipes.Server.DisConnectClientEventArgs).IdServer, false });
                 Invoke(d_disconnect);
             }
 
-            private void newMessageToServer(object sender, Pipes.Server.ReadMessageEventArgs e)
+            private void newMessageToServer(object sender, EventArgs e)
             {
-                addMessage(e.Value, e.IdServer, true);//Добавление сообщения и обработка
+                addMessage((e as Pipes.Server.ReadMessageEventArgs).Value
+                    , (e as Pipes.Server.ReadMessageEventArgs).IdServer
+                    , true);//Добавление сообщения и обработка
             }
             #endregion
 
             #region Обработчики клиента
-            private void newMessageToClient(object sender, Pipes.Client.ReadMessageEventArgs e)
+            private void newMessageToClient(object sender, EventArgs e)
             {
-                addMessage(e.Value, e.IdServer, true);//Добавление сообщения и обработка
-                m_servName = e.IdServer;
+                addMessage((e as Pipes.Client.ReadMessageEventArgs).Value, (e as Pipes.Client.ReadMessageEventArgs).IdServer, true);//Добавление сообщения и обработка
+                m_servName = (e as Pipes.Client.ReadMessageEventArgs).IdServer;
             }
 
-            private void resClient(object sender, Pipes.Client.ResServEventArgs e)
-            {
+            private void resClient(object sender, EventArgs e)
+            {//Pipes.Client.ResServeventArgs
                 Invoke(d_reconn, new object[] { "", false });
             }
             #endregion
@@ -858,7 +862,7 @@ namespace uLoader
                 switch (m_type_app)
                 {
                     case TypeApp.Server:
-                        if (commandBox.SelectedItem.ToString() == arrCommand[(int)Command.ReConnect])//Добавляет аргумент для реконнекта
+                        if (commandBox.SelectedItem.ToString() == COMMAND.ReConnect.ToString ())//Добавляет аргумент для реконнекта
                         {
                             sendMessageFromServer(commandBox.SelectedItem.ToString() + "=" + argCommand.Text, cbClients.Text);
                         }
@@ -903,91 +907,91 @@ namespace uLoader
                         switch (m_type_app)
                         {
                             case TypeApp.Client://для клиента
-                                if (command_mes == arrCommand[(int)Command.GetDataTime])//Обработка запроса даты
+                                if (command_mes.Equals(COMMAND.GetDataTime.ToString ()) == true)//Обработка запроса даты
                                     sendMessageFromClient(DateTime.Now.ToString());
                                 else
-                                    if (command_mes == arrCommand[(int)Command.GetName])//Обработка запроса имени
+                                    if (command_mes.Equals(COMMAND.GetName.ToString ()) == true)//Обработка запроса имени
                                         sendMessageFromClient("MyName=" + m_myName);
                                     else
-                                        if (command_mes == arrCommand[(int)Command.GetStat])//Обработка запроса типа экземпляра
+                                        if (command_mes.Equals(COMMAND.GetStat.ToString ()) == true)//Обработка запроса типа экземпляра
                                             sendMessageFromClient("Client");
                                         else
-                                            if (command_mes == arrCommand[(int)Command.ReConnect])//Обработка запроса на переподключение
+                                            if (command_mes.Equals(COMMAND.ReConnect.ToString ()) == true)//Обработка запроса на переподключение
                                             {
                                                 m_client.SendDisconnect();//отправка сообщения о разрыве соединения
                                                 Invoke(d_reconn, new object[] { argument, false });
                                             }
                                             else
-                                                if (command_mes == arrCommand[(int)Command.Start])//обработка запроса запуска
+                                                if (command_mes.Equals(COMMAND.Start.ToString ()) == true)//обработка запроса запуска
                                                 {
                                                     Invoke(d_statLbl, true);
-                                                    CommandEvent?.Invoke(this, new PanelCS.CommandEventArgs(PanelCS.ID_EVENT.Start));
+                                                    if (!(CommandEvent == null)) CommandEvent(this, new PanelCS.CommandEventArgs(PanelCS.ID_EVENT.Start)); else ;
                                                 }
                                                 else
-                                                    if (command_mes == arrCommand[(int)Command.Stop])//обработка запроса остановки
+                                                    if (command_mes.Equals(COMMAND.Stop.ToString ()) == true)//обработка запроса остановки
                                                     {
                                                         Invoke(d_statLbl, false);
-                                                        CommandEvent?.Invoke(this, new PanelCS.CommandEventArgs(PanelCS.ID_EVENT.Stop));
+                                                        if (!(CommandEvent == null)) CommandEvent(this, new PanelCS.CommandEventArgs(PanelCS.ID_EVENT.Stop)); else ;
                                                     }
                                                     else
-                                                        if (command_mes == arrCommand[(int)Command.SetStat])//обработка запроса изменения типа экземпляра
+                                                        if (command_mes.Equals(COMMAND.SetStat.ToString ()) == true)//обработка запроса изменения типа экземпляра
                                                         {
-                                                            if (argument == "Server")
+                                                            if (argument.Equals("Server") == true)
                                                             {
                                                                 m_client.SendDisconnect();
                                                                 Invoke(d_reconn, new object[] { "", true });
                                                             }
                                                         }
                                                         else
-                                                            if (command_mes == arrCommand[(int)Command.Status])//обработка запроса изменения типа экземпляра
+                                                            if (command_mes.Equals(COMMAND.Status.ToString ()) == true)//обработка запроса изменения типа экземпляра
                                                             {
-                                                                sendMessageFromClient(arrCommand[(int)Command.Status] + "=" + "OK");
+                                                                sendMessageFromClient(command_mes + "=" + "OK");
                                                             }
                                                             else
-                                                                if (command_mes == arrCommand[(int)Command.Exit])
+                                                                if (command_mes.Equals(COMMAND.Exit.ToString ()) == true)
                                                                 {
                                                                     Invoke(d_exit);
                                                                 }
                                 break;
 
                             case TypeApp.Server://входящие для сервера
-                                if (command_mes == arrCommand[(int)Command.GetDataTime])//запрос даты
+                                if (command_mes.Equals(COMMAND.GetDataTime.ToString ()) == true)//запрос даты
                                     sendMessageFromServer(DateTime.Now.ToString(), name);
                                 else
-                                    if (command_mes == arrCommand[(int)Command.GetName])//запрос имени
+                                    if (command_mes.Equals(COMMAND.GetName.ToString ()) == true)//запрос имени
                                         sendMessageFromServer(m_myName, name);
                                     else
-                                        if (command_mes == arrCommand[(int)Command.GetStat])//запрос типа текущего экземпляра
+                                        if (command_mes.Equals(COMMAND.GetStat.ToString ()) == true)//запрос типа текущего экземпляра
                                             sendMessageFromServer("Server", name);
                                         else
-                                            if (command_mes == arrCommand[(int)Command.Start])//запрос запуска
+                                            if (command_mes.Equals(COMMAND.Start.ToString ()) == true)//запрос запуска
                                             {
                                                 Invoke(d_statLbl, true);
                                                 CommandEvent(this, new CommandEventArgs(ID_EVENT.Start));
 
                                             }
                                             else
-                                                if (command_mes == arrCommand[(int)Command.Stop])//запрос остановки
+                                                if (command_mes.Equals(COMMAND.Stop.ToString ()) == true)//запрос остановки
                                                 {
                                                     Invoke(d_statLbl, false);
                                                     CommandEvent(this, new CommandEventArgs(ID_EVENT.Stop));
                                                 }
                                                 else
-                                                    if (command_mes == arrCommand[(int)Command.Status])//обработка запроса изменения типа экземпляра
+                                                    if (command_mes.Equals(COMMAND.Status.ToString ()) == true)//обработка запроса изменения типа экземпляра
                                                     {
                                                         Invoke(d_updateLV, new object[] { name, argument });
                                                     }
                                                     else
-                                                        if (command_mes == arrCommand[(int)Command.SetStat])//обработка запроса изменения типа экземпляра
+                                                        if (command_mes.Equals(COMMAND.SetStat.ToString ()) == true)//обработка запроса изменения типа экземпляра
                                                         {
-                                                            if (argument == "Client")
+                                                            if (argument.Equals("Client") == true)
                                                             {
                                                                 m_server.SendDisconnect();
                                                                 Invoke(d_reconn, new object[] { "", false });
                                                             }
                                                         }
                                                         else
-                                                            if (command_mes == arrCommand[(int)Command.Exit])
+                                                            if (command_mes.Equals(COMMAND.Exit.ToString ()) == true)
                                                             {
                                                                 Invoke(d_exit);
                                                             }
@@ -1014,31 +1018,49 @@ namespace uLoader
                         break;
                 }
             }
-
+            /// <summary>
+            /// Метод обработки события таймера
+            ///  отправка сообщений клиентам (опрос статуса)
+            /// </summary>
+            /// <param name="sender">Объект, инициировавший событие - таймер</param>
+            /// <param name="e">Аргумент события</param>
             private void timerUpdateStat_Tick(object sender, EventArgs e)
             {
                 foreach (string client in cbClients.Items)
                 {
-                    sendMessageFromServer(arrCommand[(int)Command.Status], client);
+                    sendMessageFromServer(COMMAND.Status.ToString (), client);
                 }
             }
-
+            /// <summary>
+            /// Метод обновления
+            /// </summary>
+            /// <param name="client"></param>
+            /// <param name="status"></param>
             private void lvStatusUpdate(string client, string status)
             {
+                Color clr = Color.Empty;
+                string text = string.Empty;
+                int col = -1;
+
                 foreach (ListViewItem item in lvStatus.Items)
                 {
                     if (item.Text == client)
                     {
                         if (status == "OK")
                         {
-                            item.SubItems[1].BackColor = Color.LimeGreen;
-                            item.SubItems[2].Text = DateTime.Now.ToString();
+                            clr = Color.LimeGreen;
+                            text = DateTime.Now.ToString();
+                            col = 2;
                         }
                         else
                         {
-                            item.SubItems[1].BackColor = Color.Red;
-                            item.SubItems[1].Text = "Err";
+                            clr = Color.Red;
+                            text = "Err";
+                            col = 1;
                         }
+
+                        item.SubItems[1].BackColor = clr;
+                        item.SubItems[col].Text = text;
                     }
                 }
             }
@@ -1085,9 +1107,9 @@ namespace uLoader
             /// </summary>
             private void getCommandToList()
             {
-                foreach (string command in arrCommand)//Перебор списка комманд
+                for (COMMAND command = COMMAND.Unknown; command < (COMMAND.Count - 1); command ++)//Перебор списка комманд
                 {
-                    commandBox.Items.Add(command);
+                    commandBox.Items.Add((command + 1).ToString());
                 }
             }
 
@@ -1133,8 +1155,8 @@ namespace uLoader
                 {
                     case TypeApp.Client:
                         m_client.StopClient();//остановка клиента
-                        b_IsPanelWork = false;
-                        SetStatEvent?.Invoke(this, new SetStatEventArgs(TypeApp.Server));
+                        m_bIsPanelWork = false;
+                        if (!(SetStatEvent == null)) SetStatEvent(this, new SetStatEventArgs(TypeApp.Server)); else ;
                         dgvMessage.Rows.Clear();
                         break;
                     case TypeApp.Server:
@@ -1143,8 +1165,8 @@ namespace uLoader
                         lvStatus.Items.Clear();
                         m_server.SendDisconnect();
                         //m_server.StopServer();//остановка сервера
-                        b_IsPanelWork = false;
-                        SetStatEvent?.Invoke(this, new SetStatEventArgs(TypeApp.Client));
+                        m_bIsPanelWork = false;
+                        if (!(SetStatEvent == null)) SetStatEvent(this, new SetStatEventArgs(TypeApp.Client)); else ;
                         timerUpdateStatus.Start();
                         dgvMessage.Rows.Clear();
                         break;
@@ -1160,28 +1182,37 @@ namespace uLoader
             /// <param name="start">Если запуск то true</param>
             private void setLbl(bool start)
             {
-                b_startedWork = start;
+                m_bStartedWork = start;
+
+                Color clr = Color.Empty;
+                string text = string.Empty;
 
                 if (start == true)
                 {
-                    lblStat.BackColor = System.Drawing.Color.GreenYellow;
-                    lblStat.Text = "Started";
+                    clr = System.Drawing.Color.GreenYellow;
+                    text = "Started";
                 }
                 else
                 {
-                    lblStat.BackColor = System.Drawing.Color.Red;
-                    lblStat.Text = "Paused";
+                    clr = System.Drawing.Color.Red;
+                    text = "Paused";
                 }
+
+                lblStat.BackColor = clr;
+                lblStat.Text = text;
             }
 
             private void exit_program()
             {
-                CommandEvent?.Invoke(this, new CommandEventArgs(ID_EVENT.Exit));
+                if (!(CommandEvent == null)) CommandEvent(this, new CommandEventArgs(ID_EVENT.Exit)); else ;
             }
 
             private void disconnect_client()
             {
-                CommandEvent?.Invoke(this, new CommandEventArgs(ID_EVENT.Disconnect));
+                if (!(CommandEvent == null))
+                    CommandEvent(this, new CommandEventArgs(ID_EVENT.Disconnect));
+                else
+                    ;
             }
 
             #region События панели

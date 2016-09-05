@@ -73,15 +73,14 @@ namespace uLoader
             /// Указать, что объект контролируется
             /// </summary>
             public void SetControled() { m_state = STATE.CONTROLED; }
-
+            /// <summary>
+            /// Указать, что метка времени объекта не была обновлена своевременно
+            /// </summary>
             public void SetCrashed() { m_state = STATE.CRASH; }
             /// <summary>
             /// Обновить метку времени крайнего обновления
             /// </summary>
-            public void Update()
-            {
-                m_dtUpdate = DateTime.Now;
-            }
+            public void Update() { m_dtUpdate = DateTime.Now; }
         }
         /// <summary>
         /// Интервал в милисекундах для проверки меток времени обновления

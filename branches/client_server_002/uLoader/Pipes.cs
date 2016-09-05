@@ -23,7 +23,7 @@ namespace uLoader
             /// <summary>
             /// Флаг для остановки потока сервера
             /// </summary>
-            bool m_b_stopServer;
+            bool m_bStopServer;
 
             /// <summary>
             /// Экземпляр главного распределяющего потока
@@ -50,7 +50,7 @@ namespace uLoader
             /// </summary>
             public void StartServer()
             {
-                m_b_stopServer = false;//инициализация переменной
+                m_bStopServer = false;//инициализация переменной
                 m_server.Start();//старт потока
             }
 
@@ -59,7 +59,7 @@ namespace uLoader
             /// </summary>
             public void StopServer()
             {
-                m_b_stopServer = true;//Изменение зн-я флага для завершения работы потока
+                m_bStopServer = true;//Изменение зн-я флага для завершения работы потока
 
                 if (m_server != null)
                 {
@@ -89,10 +89,10 @@ namespace uLoader
                 m_mainStream = new MainStreamPipe("MainPipe");//Новый экземпляр именованного канала, передаём его имя
                 
                 //Подписка на события
-                m_mainStream.ReadMessage += new StreamPipe.ReadMessageEventHandler(readMessage);
-                m_mainStream.ResServ += new StreamPipe.ResServEventHandler(resServ);
-                m_mainStream.ConnectClient += new MainStreamPipe.ConnectClientEventHandler(event_connectClient);
-                m_mainStream.DisConnectClient += new MainStreamPipe.DisConnectClientEventHandler(event_disConnectClient);
+                m_mainStream.ReadMessage += new EventHandler(readMessage);
+                m_mainStream.ResServ += new EventHandler(resServ);
+                m_mainStream.ConnectClient += new EventHandler(event_connectClient);
+                m_mainStream.DisConnectClient += new EventHandler(event_disConnectClient);
                 
                 m_mainStream.StartPipe();//Старт канала
             }
@@ -102,9 +102,9 @@ namespace uLoader
             /// </summary>
             /// <param name="sender"></param>
             /// <param name="e"></param>
-            private void readMessage(object sender, StreamPipe.ReadMessageEventArgs e)
+            private void readMessage(object sender, EventArgs e)
             {
-                ReadMessage?.Invoke(this, new ReadMessageEventArgs(e.Value, e.IdServer));
+                if (!(ReadMessage == null)) ReadMessage(this, (e as StreamPipe.ReadMessageEventArgs)); else ;
             }
 
             /// <summary>
@@ -123,8 +123,8 @@ namespace uLoader
             /// </summary>
             /// <param name="sender"></param>
             /// <param name="e"></param>
-            private void resServ(object sender, StreamPipe.ResServEventArgs e)
-            {
+            private void resServ(object sender, EventArgs e)
+            {//StreamPipe.ResServEventArgs
                 m_mainStream.RestartPipe();
             }
 
@@ -133,9 +133,9 @@ namespace uLoader
             /// </summary>
             /// <param name="sender"></param>
             /// <param name="e"></param>
-            private void event_connectClient(object sender, MainStreamPipe.ConnectClientEventArgs e)
-            {
-                ConnectClient?.Invoke(this, new ConnectClientEventArgs(e.IdServer));
+            private void event_connectClient(object sender, EventArgs e)
+            {//MainStreamPipe.ConnectClientEventArgs
+                if (!(ConnectClient == null)) ConnectClient(this, e); else ;
             }
 
             /// <summary>
@@ -143,9 +143,9 @@ namespace uLoader
             /// </summary>
             /// <param name="sender"></param>
             /// <param name="e"></param>
-            private void event_disConnectClient(object sender, MainStreamPipe.DisConnectClientEventArgs e)
+            private void event_disConnectClient(object sender, EventArgs e)
             {
-                DisConnectClient?.Invoke(this, new DisConnectClientEventArgs(e.IdServer));
+                if (!(DisConnectClient == null)) DisConnectClient(this, e); else ;
             }
 
             /// <summary>
@@ -290,7 +290,7 @@ namespace uLoader
                 /// </summary>
                 public virtual void RestartPipe()
                 {
-                    ReadMessage?.Invoke(this, new ReadMessageEventArgs("Клиент отключен...", m_NamePipe));
+                    if (!(ReadMessage == null)) ReadMessage(this, new ReadMessageEventArgs("Клиент отключен...", m_NamePipe)); else ;
                     m_pipeServer.Close();//Закрываем канал
                     m_pipeServer = null;
                     StartPipe();//Запускаем канал
@@ -337,11 +337,11 @@ namespace uLoader
                                             case "Disconnect":
                                                 message = main_com[1].Split('=');
                                                 m_ErrServ = true;
-                                                ReadMessage?.Invoke(this, new ReadMessageEventArgs(stat, m_NamePipe));//Вызов события передачи сообщения
+                                                if (!(ReadMessage == null)) ReadMessage(this, new ReadMessageEventArgs(stat, m_NamePipe)); else ;//Вызов события передачи сообщения
                                                 break;
 
                                             default:
-                                                ReadMessage?.Invoke(this, new ReadMessageEventArgs(stat, m_NamePipe));//Вызов события передачи сообщения
+                                                if (!(ReadMessage == null)) ReadMessage(this, new ReadMessageEventArgs(stat, m_NamePipe)); else ;//Вызов события передачи сообщения
                                                 break;
                                         }
                                     }
@@ -360,7 +360,7 @@ namespace uLoader
                     }
                     if (m_ErrServ == true)//Если есть ошибка то перезапускаем канал
                     {
-                        ResServ?.Invoke(this, new ResServEventArgs(m_NamePipe));//Вызов события о уничтожении канала
+                        if (!(ResServ == null)) ResServ(this, new ResServEventArgs(m_NamePipe)); else ;//Вызов события о уничтожении канала
                     }
                 }
 
@@ -464,14 +464,9 @@ namespace uLoader
                 }
 
                 /// <summary>
-                /// Тип делегата для обработки события
-                /// </summary>
-                public delegate void ReadMessageEventHandler(object obj, ReadMessageEventArgs e);
-
-                /// <summary>
                 /// Событие
                 /// </summary>
-                public ReadMessageEventHandler ReadMessage;
+                public EventHandler ReadMessage;
 
                 /// <summary>
                 /// Класс для описания аргумента события
@@ -493,14 +488,9 @@ namespace uLoader
                 }
 
                 /// <summary>
-                /// Тип делегата для обработки события
-                /// </summary>
-                public delegate void ResServEventHandler(object obj, ResServEventArgs e);
-
-                /// <summary>
                 /// Событие
                 /// </summary>
-                public ResServEventHandler ResServ;
+                public EventHandler ResServ;
             }
 
             /// <summary>
@@ -550,7 +540,7 @@ namespace uLoader
                                 case "Disconnect":
                                     message = main_com[1].Split('=');//Получаем имя канала от клиента
                                     dictServ[message[1]].StartPipe();//Запускаем канал по имени клиента
-                                    ConnectClient?.Invoke(this, new ConnectClientEventArgs(message[1]));
+                                    if (!(ConnectClient == null)) ConnectClient(this, new ConnectClientEventArgs(message[1])); else ;
                                     m_ErrServ = true;//Завершаем цикл и перезапускаем основной канал
                                     break;
 
@@ -561,8 +551,8 @@ namespace uLoader
                                     StreamPipe stream = new StreamPipe(new_pipe);//Создаём новый канал для клиента
                                     dictServ.Add(new_pipe, stream);//Добавляем в словарь клиента и поток
                                     //Подписываемся на события
-                                    dictServ[new_pipe].ReadMessage += new ReadMessageEventHandler(readMessage);
-                                    dictServ[new_pipe].ResServ += new ResServEventHandler(resServ);
+                                    dictServ[new_pipe].ReadMessage += new EventHandler(readMessage);
+                                    dictServ[new_pipe].ResServ += new EventHandler(resServ);
                                     break;
 
                                 default:
@@ -576,32 +566,32 @@ namespace uLoader
                         }
                     }
                     m_ErrServ = true;
-                    ResServ?.Invoke(this, new ResServEventArgs(m_NamePipe));
+                    if (!(ResServ == null)) ResServ(this, new ResServEventArgs(m_NamePipe)); else ;
                 }
 
                 /// <summary>
                 /// Обработчик события получения нового сообщения из канала
                 /// </summary>
-                /// <param name="sender"></param>
-                /// <param name="e"></param>
-                private void readMessage(object sender, ReadMessageEventArgs e)
+                /// <param name="sender">Объект, инициировавший событие</param>
+                /// <param name="e">Аргумент события</param>
+                private void readMessage(object sender, EventArgs e)
                 {
-                    ReadMessage?.Invoke(this, new ReadMessageEventArgs(e.Value, e.IdServer));
+                    if (!(ReadMessage == null)) ReadMessage(this, e as ReadMessageEventArgs); else ;
                 }
 
                 /// <summary>
                 /// Обработчик события отключения клиента
                 /// </summary>
-                /// <param name="sender"></param>
-                /// <param name="e"></param>
-                private void resServ(object sender, ResServEventArgs e)
+                /// <param name="sender">Объект, инициировавший событие</param>
+                /// <param name="e">Аргумент события</param>
+                private void resServ(object sender, EventArgs e)
                 {
-                    if (e.Value == true)
+                    if ((e as ResServEventArgs).Value == true)
                     {
-                        DisConnectClient?.Invoke(this, new DisConnectClientEventArgs(e.IdServer));
+                        if (DisConnectClient == null) DisConnectClient(this, new DisConnectClientEventArgs((e as ResServEventArgs).IdServer)); else ;
 
-                        dictServ[e.IdServer].StopPipe();//Остановка канала конкретного клиента
-                        dictServ.Remove(e.IdServer);//Удаление этого клиента из словаря подключенных
+                        dictServ[(e as ResServEventArgs).IdServer].StopPipe();//Остановка канала конкретного клиента
+                        dictServ.Remove((e as ResServEventArgs).IdServer);//Удаление этого клиента из словаря подключенных
                     }
                 }
 
@@ -652,14 +642,9 @@ namespace uLoader
                 }
 
                 /// <summary>
-                /// Тип делегата для обработки события
-                /// </summary>
-                public delegate void ConnectClientEventHandler(object obj, ConnectClientEventArgs e);
-
-                /// <summary>
                 /// Событие
                 /// </summary>
-                public ConnectClientEventHandler ConnectClient;
+                public EventHandler ConnectClient;
 
                 /// <summary>
                 /// Класс для описания аргумента события
@@ -678,16 +663,10 @@ namespace uLoader
                 }
 
                 /// <summary>
-                /// Тип делегата для обработки события
-                /// </summary>
-                public delegate void DisConnectClientEventHandler(object obj, DisConnectClientEventArgs e);
-
-                /// <summary>
                 /// Событие
                 /// </summary>
-                public DisConnectClientEventHandler DisConnectClient;
-            }
-            
+                public EventHandler DisConnectClient;
+            }            
 
             /// <summary>
             /// Класс для описания аргумента события
@@ -709,14 +688,9 @@ namespace uLoader
             }
 
             /// <summary>
-            /// Тип делегата для обработки события
-            /// </summary>
-            public delegate void ReadMessageEventHandler(object obj, ReadMessageEventArgs e);
-
-            /// <summary>
             /// Событие
             /// </summary>
-            public ReadMessageEventHandler ReadMessage;
+            public EventHandler ReadMessage;
 
             /// <summary>
             /// Класс для описания аргумента события
@@ -735,14 +709,9 @@ namespace uLoader
             }
 
             /// <summary>
-            /// Тип делегата для обработки события
-            /// </summary>
-            public delegate void ConnectClientEventHandler(object obj, ConnectClientEventArgs e);
-
-            /// <summary>
             /// Событие
             /// </summary>
-            public ConnectClientEventHandler ConnectClient;
+            public event EventHandler ConnectClient;
 
             /// <summary>
             /// Класс для описания аргумента события
@@ -761,18 +730,15 @@ namespace uLoader
             }
 
             /// <summary>
-            /// Тип делегата для обработки события
-            /// </summary>
-            public delegate void DisConnectClientEventHandler(object obj, DisConnectClientEventArgs e);
-
-            /// <summary>
             /// Событие
             /// </summary>
-            public DisConnectClientEventHandler DisConnectClient;
+            public EventHandler DisConnectClient;
         }
 
         public class Client
         {
+            private static int ERROR_MAX = 50;
+
             public bool b_Active;
 
             /// <summary>
@@ -783,7 +749,7 @@ namespace uLoader
             /// <summary>
             /// Флаг для остановки потока
             /// </summary>
-            bool m_b_stopThread;
+            bool m_bStopThread;
 
             /// <summary>
             /// Экземпляр класса получения/посылки сообщений в канале
@@ -793,7 +759,7 @@ namespace uLoader
             /// <summary>
             /// Состояние клиента
             /// </summary>
-            public bool b_IsConnected;
+            public bool m_bIsConnected;
 
             /// <summary>
             /// Имя клиента
@@ -832,7 +798,7 @@ namespace uLoader
                 //Инициализация переменных
                 m_timeOut = timeOut;
                 m_serverName = pcName;
-                b_IsConnected = false;
+                m_bIsConnected = false;
                 //Генерация имени клиента из имени ПК и идентификатора процесса
                 m_Name = Environment.MachineName + "_" + Process.GetCurrentProcess().Id;
             }
@@ -843,7 +809,7 @@ namespace uLoader
             public void StartClient()
             {
                 int err = 0;
-                m_b_stopThread = false;
+                m_bStopThread = false;
                 m_pipeName = string.Empty;
                 //Инициализация экземпляра клиента
                 m_client = new NamedPipeClientStream(m_serverName, "MainPipe", PipeDirection.InOut, PipeOptions.Asynchronous);
@@ -860,7 +826,7 @@ namespace uLoader
 
                 if (m_client.IsConnected == true)//Если подключен
                 {
-                    b_IsConnected = m_client.IsConnected;
+                    m_bIsConnected = m_client.IsConnected;
                     SendConnect();//Отправить сообщение серверу кто к нему подключился
                     string ms = m_ss.ReadString(out err);//Должен вернуть имя канала к которому подключиться
                     if (ms == "Non command")//Не понял команды и повторная попытка
@@ -871,7 +837,7 @@ namespace uLoader
                     m_pipeName = ms;
                     m_Name = m_pipeName;
                     SendDisconnect();//Отключаемся от основного канала
-                    b_IsConnected = m_client.IsConnected;
+                    m_bIsConnected = m_client.IsConnected;
 
                     m_client = null;
 
@@ -889,7 +855,7 @@ namespace uLoader
 
                     if (m_client.IsConnected == true)//Если был подключен
                     {
-                        b_IsConnected = m_client.IsConnected;
+                        m_bIsConnected = m_client.IsConnected;
                         SendConnect();//Отправлям сообщение о подключениии
                         thread = new Thread(ThreadRead);//Инициализация нового потока для работы канала
                         thread.Start();//Запуск потока
@@ -904,7 +870,7 @@ namespace uLoader
             /// <param name="data"></param>
             protected virtual void ThreadRead(object data)
             {
-                ReadMessage?.Invoke(this, new ReadMessageEventArgs("Соединение установлено", m_serverName));
+                if (!(ReadMessage == null)) ReadMessage(this, new ReadMessageEventArgs("Соединение установлено", m_serverName)); else ;
 
                 int err = 0;
 
@@ -938,24 +904,24 @@ namespace uLoader
                             switch (main_com[0])
                             {
                                 case "Disconnect"://Если есть дисконнект
-                                    ReadMessage?.Invoke(this, new ReadMessageEventArgs(stat, m_serverName));
+                                    if (!(ReadMessage == null)) ReadMessage(this, new ReadMessageEventArgs(stat, m_serverName)); else ;
                                     m_ErrServ = true;//Завершаем поток
                                     break;
 
                                 default:
                                     m_ErrServ = false;
                                     //Вызов события
-                                    ReadMessage?.Invoke(this, new ReadMessageEventArgs(stat, m_serverName));
+                                    if (!(ReadMessage ==  null)) ReadMessage(this, new ReadMessageEventArgs(stat, m_serverName)); else ;
                                     break;
                             }
                         }
 
-                        if (m_b_stopThread == true)//Есла флаг изменился то прервать цикл
+                        if (m_bStopThread == true)//Есла флаг изменился то прервать цикл
                         {
                             break;
                         }
 
-                        if (err >= 50)//Если ошибок при чтении будет более 50 то
+                        if (err >= ERROR_MAX)//Если ошибок при чтении будет более 50 то
                         {
                             m_ErrServ = true; //Наличие ошибки
                             break;//Прерывание цикла
@@ -965,7 +931,7 @@ namespace uLoader
                 if (m_ErrServ == true)//Если есть ошибка то
                 {
                     //Вызов события для перезапуска клиента
-                    ResServ?.Invoke(this, new ResServEventArgs(m_pipeName));
+                    if (!(ResServ == null)) ResServ(this, new ResServEventArgs(m_pipeName)); else ;
                 }
 
                 Thread.Sleep(1000);
@@ -976,7 +942,7 @@ namespace uLoader
             /// </summary>
             public void StopClient()
             {
-                ReadMessage?.Invoke(this, new ReadMessageEventArgs("Соединение разорвано", m_serverName));
+                if (!(ReadMessage == null)) ReadMessage(this, new ReadMessageEventArgs("Соединение разорвано", m_serverName)); else ;
 
 
                 m_client.Close();//Закрытие канала
@@ -984,7 +950,7 @@ namespace uLoader
                 m_client = null;//Обнуление
                 b_Active = false;
 
-                m_b_stopThread = true;//Меняем флаг для того чтобы завершить работу потока
+                m_bStopThread = true;//Меняем флаг для того чтобы завершить работу потока
 
                 if (thread != null)
                 {
@@ -1116,14 +1082,9 @@ namespace uLoader
             }
 
             /// <summary>
-            /// Тип делегата для обработки события
-            /// </summary>
-            public delegate void ReadMessageEventHandler(object obj, ReadMessageEventArgs e);
-
-            /// <summary>
             /// Событие
             /// </summary>
-            public ReadMessageEventHandler ReadMessage;
+            public EventHandler ReadMessage;
 
             /// <summary>
             /// Класс для описания аргумента события
@@ -1145,14 +1106,9 @@ namespace uLoader
             }
 
             /// <summary>
-            /// Тип делегата для обработки события
-            /// </summary>
-            public delegate void ResServEventHandler(object obj, ResServEventArgs e);
-
-            /// <summary>
             /// Событие
             /// </summary>
-            public ResServEventHandler ResServ;
+            public EventHandler ResServ;
         }
     }
 }
