@@ -220,34 +220,29 @@ namespace uLoader
             private DelegateObjectFunc d_addRow;
 
             /// <summary>
-            /// Делегат для добавления/удаления объекта в comboBox
-            /// </summary>
-            /// <param name="obj">Строка в виде массива</param>
-            delegate void delOperCB(string idClient, bool add);
-            /// <summary>
             /// Экземпляр делегата добавления/удаления объекта в comboBox
             /// </summary>
-            private delOperCB d_operCB;
+            private DelegateStrBoolFunc d_operCB;
 
             /// <summary>
             /// Делегат для добавления/удаления объекта в comboBox
             /// </summary>
             /// <param name="obj">Строка в виде массива</param>
-            delegate void delReconn(string name_serv, bool stat = false);
+            delegate void DelegateStrBoolFunc(string name_serv, bool stat = false);
             /// <summary>
             /// Экземпляр делегата добавления/удаления объекта в comboBox
             /// </summary>
-            private delReconn d_reconn;
+            private DelegateStrBoolFunc d_reconn;
 
             /// <summary>
             /// Делегат для добавления/удаления объекта в listView
             /// </summary>
             /// <param name="obj">Строка в виде массива</param>
-            delegate void delUpdateLV(string name_client, string status);
+            delegate void DelegateStrStrFunc(string name_client, string status);
             /// <summary>
             /// Экземпляр делегата добавления/удаления объекта в listView
             /// </summary>
-            delUpdateLV d_updateLV;
+            DelegateStrStrFunc d_updateLV;
 
             /// <summary>
             /// Экземпляр делегата изменения label'a
@@ -779,7 +774,7 @@ namespace uLoader
             #region Обработчики сервера
             private void addToComList(object sender, EventArgs e)
             {
-                Invoke(d_operCB, new object[] { (e as Pipes.Server.ConnectClientEventArgs).IdServer, true });
+                Invoke(d_operCB, new object[] { (e as Pipes.Server.MainStreamPipe.ConnectClientEventArgs).IdServer, true });
             }
 
             private void delFromComList(object sender, EventArgs e)
@@ -790,8 +785,8 @@ namespace uLoader
 
             private void newMessageToServer(object sender, EventArgs e)
             {
-                addMessage((e as Pipes.Server.ReadMessageEventArgs).Value
-                    , (e as Pipes.Server.ReadMessageEventArgs).IdServer
+                addMessage((e as Pipes.Server.StreamPipe.ReadMessageEventArgs).Value
+                    , (e as Pipes.Server.StreamPipe.ReadMessageEventArgs).IdServer
                     , true);//Добавление сообщения и обработка
             }
             #endregion
@@ -1225,6 +1220,7 @@ namespace uLoader
             public class SetStatEventArgs
             {
                 public TypeApp TypeApp;
+
                 public SetStatEventArgs(TypeApp type)
                 {
                     this.TypeApp = type;

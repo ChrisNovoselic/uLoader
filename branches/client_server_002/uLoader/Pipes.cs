@@ -135,7 +135,7 @@ namespace uLoader
             /// <param name="e"></param>
             private void event_connectClient(object sender, EventArgs e)
             {//MainStreamPipe.ConnectClientEventArgs
-                if (!(ConnectClient == null)) ConnectClient(this, e); else ;
+                if (!(ConnectClient == null)) ConnectClient(this, e as Pipes.Server.MainStreamPipe.ConnectClientEventArgs); else ;
             }
 
             /// <summary>
