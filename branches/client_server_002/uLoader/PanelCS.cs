@@ -14,50 +14,117 @@ using HClassLibrary;
 
 namespace uLoader
 {
-    public partial class PanelClientServer : PanelCommonDataHost
+    public partial class PanelClientServer : HPanelCommonDataHost
     {
         private PanelCS m_panelClient,
             m_panelServer;
 
         private bool m_bStatPanelWork;
-
+        /// <summary>
+        /// Таймер проверки значения 'm_bIsPanelWork'
+        /// </summary>
         private System.Windows.Forms.Timer timer;
 
-        public PanelClientServer(string[] arServerName)
+        public PanelClientServer(InteractionParameters? pars = null)
             : base(1, 2)
         {
+            if (!(pars == null))
+                initialize(pars.GetValueOrDefault());
+            else
+                ;
+
             m_bStatPanelWork = false;
-            timer = new System.Windows.Forms.Timer();
-            timer.Interval = 100;
-            timer.Tick += new EventHandler(timer_Tick);
-
-            m_panelClient = new PanelCS(arServerName, PanelCS.TypeApp.Client);
-            //m_panelClient.Dock = DockStyle.Fill; уже Fill
-            m_panelServer = new PanelCS(arServerName, PanelCS.TypeApp.Server);
-            //m_panelServer.Dock = DockStyle.Fill; уже Fill
-            m_panelServer.SetStatEvent += new PanelCS.SetStatEventHandler(panelServerSetStat);
-            m_panelClient.SetStatEvent += new PanelCS.SetStatEventHandler(panelServerSetStat);
-
-            m_panelClient.CommandEvent += new EventHandler(panelOnCommandEvent);
-            m_panelServer.CommandEvent += new EventHandler(panelOnCommandEvent);
-
-            this.Controls.Add(m_panelServer, 0, 0);
-            this.Controls.Add(m_panelClient, 0, 1);
-
         }
         /// <summary>
         /// Обработчик приема команд от дочерних панелей
         /// </summary>
         /// <param name="sender">Панель, отправившая событие</param>
         /// <param name="ev">Аргумент события</param>
-        private void panelOnCommandEvent(object sender, EventArgs ev)
+        private void panelOnCommandEvent(object pars)
         {
-            DataAskedHost(new object [] {
-                new object [] {
-                    -1
-                    , (ev as CommandEventArgs).Id
-                }
-            });
+            //Определить внутреннее сообщение или для передачи в родительскую форму
+            // по кол-ву параметров
+            bool bRedirect = true;
+
+            if (bRedirect == true)
+                DataAskedHost(new object[] {
+                    new object [] {
+                        -1
+                        ,
+                    }
+                });
+            else
+                // внутренне сообщение
+                if (true) //e.TypeApp == PanelCS.TypeApp.Client
+                    //reConnClient();
+                    ;
+                else //e.TypeApp == PanelCS.TypeApp.Server
+                    ; // ничего не делаем
+        }
+
+        //private void panelServerSetStat(object sender, PanelCS.SetStatEventArgs e)
+        //{
+        //    if (e.TypeApp == PanelCS.TypeApp.Client)
+        //    {
+        //        reConnClient();
+        //    }
+        //    if (e.TypeApp == PanelCS.TypeApp.Server)
+        //    {
+        //        //reConnClient();
+        //    }
+        //}
+
+        /// <summary>
+        /// Обработчик события получения данных по запросу (выполняется в текущем потоке)
+        /// </summary>
+        /// <param name="obj">Результат, полученный по запросу (массив 'object')</param>
+        protected override void onEvtDataRecievedHost(object obj)
+        {
+            //Обработанное состояние 
+            HHandlerQueue.StatesMachine state = (HHandlerQueue.StatesMachine)Int32.Parse((obj as object[])[0].ToString());
+            //Параметры (массив) в 1-ом элементе результата
+            object par = (obj as object[])[1];
+
+            int iRes = -1;
+
+            //InteractionParameters interactionPars;
+
+            switch (state)
+            {
+                case HHandlerQueue.StatesMachine.GET_INTERACTION_PARAMETERS:
+                    if (!(par == null))
+                    {
+                        iRes = initialize((InteractionParameters)par);
+
+                        DataAskedHost(new object[] { new object[] { HHandlerQueue.StatesMachine.INTERACTION_EVENT, ID_EVENT.Start } });
+                    }
+                    else
+                        ;
+                    break;
+                case HHandlerQueue.StatesMachine.FORMMAIN_COMMAND_TO_INTERACTION:
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private int initialize(InteractionParameters pars)
+        {
+            int iRes = 0;
+
+            timer = new System.Windows.Forms.Timer();
+            timer.Interval = 100;
+            timer.Tick += new EventHandler(timer_Tick);
+
+            m_panelClient = new PanelCS(pars.m_arNameServers, PanelCS.TypeApp.Client);
+            //m_panelClient.Dock = DockStyle.Fill; уже Fill
+            m_panelServer = new PanelCS(pars.m_arNameServers, PanelCS.TypeApp.Server);
+            //m_panelServer.Dock = DockStyle.Fill; уже Fill
+
+            this.Controls.Add(m_panelServer, 0, 0);
+            this.Controls.Add(m_panelClient, 0, 1);
+
+            return iRes;
         }
 
         public bool StatPanelWork
@@ -70,6 +137,17 @@ namespace uLoader
             {
                 m_bStatPanelWork = value;
             }
+        }
+
+        public override void Start()
+        {
+            base.Start();
+
+            DataAskedHost(new object[] {
+                new object[] {
+                    HHandlerQueue.StatesMachine.GET_INTERACTION_PARAMETERS
+                }
+            });
         }
 
         private void timer_Tick(object sender, EventArgs e)
@@ -115,18 +193,6 @@ namespace uLoader
             m_panelServer.Close();
         }
 
-        private void panelServerSetStat(object sender, PanelCS.SetStatEventArgs e)
-        {
-            if (e.TypeApp == PanelCS.TypeApp.Client)
-            {
-                reConnClient();
-            }
-            if (e.TypeApp == PanelCS.TypeApp.Server)
-            {
-                //reConnClient();
-            }
-        }
-
         private void reConnClient()
         {
             m_panelClient.Close();
@@ -140,14 +206,14 @@ namespace uLoader
             , Start, Stop, Exit, Disconnect
         , Count}
 
-        public class CommandEventArgs : EventArgs
-        {
-            public ID_EVENT Id;
+        //public class CommandEventArgs : EventArgs
+        //{
+        //    public ID_EVENT Id;
 
-            public CommandEventArgs(ID_EVENT id) {
-                Id = id;
-            }
-        }
+        //    public CommandEventArgs(ID_EVENT id) {
+        //        Id = id;
+        //    }
+        //}
 
         ///// <summary>
         ///// Событие
@@ -889,7 +955,6 @@ namespace uLoader
                 object rows = new object[] { DateTime.Now.ToString(), message, name, type_mes.ToString() };//новая строка сообщения
                 Invoke(d_addRow, rows);//добавление новой строки сообщения в DGV
 
-
                 string[] arrMessages = message.Split('=');//разбор сообщения
                 string command_mes = arrMessages[0];//комманда
                 string argument = string.Empty;//аргумент
@@ -899,7 +964,6 @@ namespace uLoader
                 switch (type_mes)
                 {
                     case TypeMes.Input://входящие
-
                         switch (m_type_app)
                         {
                             case TypeApp.Client://для клиента
@@ -921,13 +985,13 @@ namespace uLoader
                                                 if (command_mes.Equals(COMMAND.Start.ToString ()) == true)//обработка запроса запуска
                                                 {
                                                     Invoke(d_statLbl, true);
-                                                    if (!(CommandEvent == null)) CommandEvent(this, new CommandEventArgs(ID_EVENT.Start)); else ;
+                                                    DataAskedHost(new object[] { new object[] { this, m_type_app, type_mes, ID_EVENT.Start } });
                                                 }
                                                 else
                                                     if (command_mes.Equals(COMMAND.Stop.ToString ()) == true)//обработка запроса остановки
                                                     {
                                                         Invoke(d_statLbl, false);
-                                                        if (!(CommandEvent == null)) CommandEvent(this, new CommandEventArgs(ID_EVENT.Stop)); else ;
+                                                        DataAskedHost(new object[] { new object[] { this, m_type_app, type_mes, ID_EVENT.Stop } });
                                                     }
                                                     else
                                                         if (command_mes.Equals(COMMAND.SetStat.ToString ()) == true)//обработка запроса изменения типа экземпляра
@@ -963,14 +1027,13 @@ namespace uLoader
                                             if (command_mes.Equals(COMMAND.Start.ToString ()) == true)//запрос запуска
                                             {
                                                 Invoke(d_statLbl, true);
-                                                CommandEvent(this, new CommandEventArgs(ID_EVENT.Start));
-
+                                                DataAskedHost(new object[] { new object[] { this, m_type_app, type_mes, ID_EVENT.Start } });
                                             }
                                             else
                                                 if (command_mes.Equals(COMMAND.Stop.ToString ()) == true)//запрос остановки
                                                 {
                                                     Invoke(d_statLbl, false);
-                                                    CommandEvent(this, new CommandEventArgs(ID_EVENT.Stop));
+                                                    DataAskedHost(new object[] { new object[] { this, m_type_app, type_mes, ID_EVENT.Stop } });
                                                 }
                                                 else
                                                     if (command_mes.Equals(COMMAND.Status.ToString ()) == true)//обработка запроса изменения типа экземпляра
@@ -988,9 +1051,9 @@ namespace uLoader
                                                         }
                                                         else
                                                             if (command_mes.Equals(COMMAND.Exit.ToString ()) == true)
-                                                            {
                                                                 Invoke(d_exit);
-                                                            }
+                                                            else
+                                                                ; // неизвестная команда
                                 break;
 
                             default:
@@ -1039,10 +1102,9 @@ namespace uLoader
                 int col = -1;
 
                 foreach (ListViewItem item in lvStatus.Items)
-                {
-                    if (item.Text == client)
+                    if (item.Text.Equals(client) == true)
                     {
-                        if (status == "OK")
+                        if (status.Equals("OK") == true)
                         {
                             clr = Color.LimeGreen;
                             text = DateTime.Now.ToString();
@@ -1058,7 +1120,8 @@ namespace uLoader
                         item.SubItems[1].BackColor = clr;
                         item.SubItems[col].Text = text;
                     }
-                }
+                    else
+                        ;
             }
 
             /// <summary>
@@ -1152,7 +1215,7 @@ namespace uLoader
                     case TypeApp.Client:
                         m_client.StopClient();//остановка клиента
                         m_bIsPanelWork = false;
-                        if (!(SetStatEvent == null)) SetStatEvent(this, new SetStatEventArgs(TypeApp.Server)); else ;
+                        DataAskedHost(new object[] { new object[] { this, TypeApp.Server } });
                         dgvMessage.Rows.Clear();
                         break;
                     case TypeApp.Server:
@@ -1162,7 +1225,7 @@ namespace uLoader
                         m_server.SendDisconnect();
                         //m_server.StopServer();//остановка сервера
                         m_bIsPanelWork = false;
-                        if (!(SetStatEvent == null)) SetStatEvent(this, new SetStatEventArgs(TypeApp.Client)); else ;
+                        DataAskedHost(new object[] { new object[] { this, TypeApp.Client } });
                         timerUpdateStatus.Start();
                         dgvMessage.Rows.Clear();
                         break;
@@ -1200,45 +1263,27 @@ namespace uLoader
 
             private void exit_program()
             {
-                if (!(CommandEvent == null)) CommandEvent(this, new PanelClientServer.CommandEventArgs(PanelClientServer.ID_EVENT.Exit)); else ;
+                DataAskedHost(new object[] { new object[] { this, m_type_app, TypeMes.Input, ID_EVENT.Exit } });
             }
 
             private void disconnect_client()
             {
-                if (!(CommandEvent == null))
-                    CommandEvent(this, new PanelClientServer.CommandEventArgs(PanelClientServer.ID_EVENT.Disconnect));
-                else
-                    ;
+                DataAskedHost(new object[] { new object[] { this, m_type_app, TypeMes.Input, ID_EVENT.Disconnect } });
             }
+        }
 
-            #region События панели
+        public struct InteractionParameters
+        {
+            public string[] m_arNameServers;
 
-            /// <summary>
-            /// Событие
-            /// </summary>
-            public EventHandler CommandEvent;
+            public string m_NameMainPipe;
 
-            public class SetStatEventArgs
+            public InteractionParameters(string strServerNames, string strNameMainPipe)
             {
-                public TypeApp TypeApp;
+                m_arNameServers = strServerNames.Split(',');
 
-                public SetStatEventArgs(TypeApp type)
-                {
-                    this.TypeApp = type;
-                }
+                m_NameMainPipe = strNameMainPipe;
             }
-
-            /// <summary>
-            /// Тип делегата для обработки события
-            /// </summary>
-            public delegate void SetStatEventHandler(object obj, SetStatEventArgs e);
-
-            /// <summary>
-            /// Событие
-            /// </summary>
-            public SetStatEventHandler SetStatEvent;
-
-            #endregion
         }
     }
 }

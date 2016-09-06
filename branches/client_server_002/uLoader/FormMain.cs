@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Collections.Generic;
 using System.Windows.Forms;
 
@@ -14,7 +15,7 @@ namespace uLoader
         SOURCE,
         DEST
             , COUNT_INDEX_SRC
-    };
+    };    
 
     public partial class FormMain : Form
     {
@@ -34,7 +35,7 @@ namespace uLoader
         /// <summary>
         /// Перечисление - индексы вкладок в главном окне приложения
         /// </summary>
-        enum INDEX_TAB { WORK, CONFIG, COUNT_INDEX_TAB };
+        enum INDEX_TAB { WORK, INTERACTION, CONFIG, COUNT_INDEX_TAB };
         /// <summary>
         /// Панель с элементами управления - действия по выполнению целевых функций приложения
         /// </summary>
@@ -61,16 +62,17 @@ namespace uLoader
             //HHandlerQueue.MSEC_TIMERFUNC_UPDATE = 1006;
             //HHandlerQueue.MSEC_CONFIRM_WAIT = 6666;            
             m_handler = new HHandlerQueue(strNameFileINI);
+            m_handler.EventInteraction += new DelegateObjectFunc (onEventInteraction);
             m_handler.Start(); m_handler.Activate(true);
             //m_handler.EventCrashed += new HHandlerQueue.EventHandlerCrashed(onCrashed);
 
             m_panelWork = new PanelWork(); m_panelWork.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelWork); m_panelWork.Start();
             m_panelConfig = new PanelConfig(); m_panelConfig.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelConfig); m_panelConfig.Start ();
             //m_handler.Push();
-            m_panelCS = new PanelClientServer(new string[] { 
-                "NE2844", "NE3336",
-                //,"VNE3963"
-            }); m_panelCS.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelCS); m_panelCS.Start();
+            m_panelCS = new PanelClientServer(new PanelClientServer.InteractionParameters (
+                //@"NE2844, NE3336"
+                //, @"MainPipe"
+            )); m_panelCS.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelCS); m_panelCS.Start();
 
             работаToolStripMenuItem.CheckOnClick =
             конфигурацияToolStripMenuItem.CheckOnClick =
@@ -95,6 +97,11 @@ namespace uLoader
                     this.OnMaximumSizeChanged(null);
                     break;
             }
+        }
+
+        private void M_handler_EventInteraction()
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -164,33 +171,32 @@ namespace uLoader
             Close();
         }
 
-        /// <summary>
-        /// Обработка события окончания загрузки главной формы приложения
-        /// </summary>
-        /// <param name="sender">Объект, инийиирововший событие (форма)</param>
-        /// <param name="e">Аргументы события</param>
-        private void FormMain_Load(object sender, EventArgs e)
+        private void interactionInitializeComlpeted()
         {
-            m_formWait.StartWaitForm (Location, Size);
-
-            m_handler.AutoStart ();
+            m_handler.AutoStart();
 
             //Проверить признак отображения вкладки "работа"
             if (работаToolStripMenuItem.Checked == true)
             {
                 //Добавить вкладку
-                m_TabCtrl.AddTabPage(m_panelWork, работаToolStripMenuItem.Text, 1, HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
+                m_TabCtrl.AddTabPage(m_panelWork
+                    , работаToolStripMenuItem.Text
+                    , (int)INDEX_TAB.WORK
+                    , HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
                 //Запомнить "предыдущий" выбор
                 m_TabCtrl.PrevSelectedIndex = 0;
             }
             else
                 ;
 
-            //Проверить признак отображения вкладки "работа"
+            //Проверить признак отображения вкладки "взаимодействие"
             if (взаимодействиеToolStripMenuItem.Checked == true)
             {
                 //Добавить вкладку
-                m_TabCtrl.AddTabPage(m_panelCS, взаимодействиеToolStripMenuItem.Text, 3, HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
+                m_TabCtrl.AddTabPage(m_panelCS
+                    , взаимодействиеToolStripMenuItem.Text
+                    , (int)INDEX_TAB.INTERACTION
+                    , HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
 
                 m_panelCS.Activate(true);
                 //m_panelCS.StartPanel();
@@ -200,7 +206,29 @@ namespace uLoader
             else
                 ;
 
-            m_formWait.StopWaitForm ();
+            m_formWait.StopWaitForm();
+        }
+
+        private void onEventInteraction(object ev)
+        {
+            switch ((PanelClientServer.ID_EVENT)ev)
+            {
+                case PanelClientServer.ID_EVENT.Start:
+                    BeginInvoke(new DelegateFunc (interactionInitializeComlpeted));
+                    break;
+                default:
+                    break;
+            }            
+        }
+
+        /// <summary>
+        /// Обработка события окончания загрузки главной формы приложения
+        /// </summary>
+        /// <param name="sender">Объект, инийиирововший событие (форма)</param>
+        /// <param name="e">Аргументы события</param>
+        private void FormMain_Load(object sender, EventArgs e)
+        {
+            m_formWait.StartWaitForm (Location, Size);            
 
             this.m_notifyIcon.Icon = this.Icon;
         }
@@ -316,7 +344,10 @@ namespace uLoader
 
             if (конфигурацияToolStripMenuItem.Checked == true)
             {
-                m_TabCtrl.AddTabPage(m_panelConfig, strNameMenuItem, 2, HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
+                m_TabCtrl.AddTabPage(m_panelConfig
+                    , strNameMenuItem
+                    , (int)INDEX_TAB.CONFIG
+                    , HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
             }
             else
             {
@@ -376,5 +407,36 @@ namespace uLoader
             //ev.id - здесь всегда = -1
             m_handler.Push(m_panelCS, ev.par as object[]);
         }
+    }
+
+    public abstract class HPanelCommonDataHost : PanelCommonDataHost
+    {
+        public HPanelCommonDataHost(int cntCol, int cntRow)
+            : base(cntCol, cntRow)
+        {
+        }
+
+        public HPanelCommonDataHost(IContainer container, int cntCol, int cntRow)
+            : base(container, cntCol, cntRow)
+        {
+        }
+        /// <summary>
+        /// Обработчик события получения данных по запросу (выполняется в потоке получения результата)
+        /// </summary>
+        /// <param name="obj">Результат, полученный по запросу</param>
+        public override void OnEvtDataRecievedHost(object obj)
+        {
+            if (InvokeRequired == true)
+                if (IsHandleCreated == true)
+                    this.BeginInvoke(new DelegateObjectFunc(onEvtDataRecievedHost), obj);
+                else
+                    throw new Exception(@"::OnEvtDataRecievedHost () - IsHandleCreated==False");
+            else
+                onEvtDataRecievedHost(obj);
+
+            base.OnEvtDataRecievedHost(obj);
+        }
+
+        protected abstract void onEvtDataRecievedHost(object obj);
     }
 }

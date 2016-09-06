@@ -10,7 +10,7 @@ using uLoaderCommon;
 
 namespace uLoader
 {    
-    public partial class PanelWork : PanelCommonDataHost
+    public partial class PanelWork : HPanelCommonDataHost
     {
         ///// <summary>
         ///// Перечисление - индексы ПРЕДподготавливаемых параметров
@@ -187,7 +187,7 @@ namespace uLoader
         /// Обработчик события получения данных по запросу (выполняется в текущем потоке)
         /// </summary>
         /// <param name="obj">Результат, полученный по запросу (массив 'object')</param>
-        private void onEvtDataRecievedHost(object obj)
+        protected override void onEvtDataRecievedHost(object obj)
         {
             //Обработанное состояние 
             HHandlerQueue.StatesMachine state = (HHandlerQueue.StatesMachine)Int32.Parse((obj as object[])[0].ToString());
@@ -274,27 +274,6 @@ namespace uLoader
                 default:
                     break;
             }
-        }
-
-        /// <summary>
-        /// Обработчик события получения данных по запросу (выполняется в потоке получения результата)
-        /// </summary>
-        /// <param name="obj">Результат, полученный по запросу</param>
-        public override void OnEvtDataRecievedHost(object obj)
-        {
-            //Проверить признак необходимости переноса действий в "свой" поток
-            if (InvokeRequired == true)
-                //Проверить наличие дескриптора
-                if (IsHandleCreated == true)
-                    //Перенести выполнение в "свой" поток
-                    this.BeginInvoke(new DelegateObjectFunc(onEvtDataRecievedHost), obj);
-                else
-                    throw new Exception(@"PanelWork::OnEvtDataRecievedHost () - IsHandleCreated==" + IsHandleCreated);
-            else
-                //Выполнить в "вызывающем" потоке
-                onEvtDataRecievedHost(obj);
-
-            base.OnEvtDataRecievedHost(obj);
         }
 
         public override void Stop()

@@ -48,6 +48,9 @@ namespace uLoader
             , SET_TEXT_ADDING //Установить текст "дополнительных" параметров
             , SET_GROUP_SIGNALS_PARS //Установить параметры группы сигналов в группе источников при утрате фокуса ввода элементом управления (GroupBox) с их значениями
             , GET_GROUP_SIGNALS_DATETIME_PARS //Запросить параметры группы сигналов в группе источников при изменении типа параметров (CUR_DATETIME, COSTUMIZE)
+            , GET_INTERACTION_PARAMETERS //Запросить параметры для вкладки "Взаимодействие"
+            , INTERACTION_EVENT //Событие от вкладки "Взаимодействие"
+            , FORMMAIN_COMMAND_TO_INTERACTION //Команда для вкладки "Взаимодействие"
 #if _STATE_MANAGER
             , OMANAGEMENT_ADD
             , OMANAGEMENT_REMOVE
@@ -303,7 +306,9 @@ namespace uLoader
                 case StatesMachine.SET_TEXT_ADDING:
                 case StatesMachine.SET_GROUP_SIGNALS_PARS:
                 case StatesMachine.GET_GROUP_SIGNALS_DATETIME_PARS:
-                // группа событий диагностики/контроля
+                case StatesMachine.GET_INTERACTION_PARAMETERS:
+                case StatesMachine.INTERACTION_EVENT:
+                    // группа событий диагностики/контроля
 #if _STATE_MANAGER
                 case StatesMachine.OMANAGEMENT_ADD:
                 case StatesMachine.OMANAGEMENT_REMOVE:
@@ -356,6 +361,7 @@ namespace uLoader
                 case StatesMachine.DATA_SRC_GROUP_SIGNALS:
                 case StatesMachine.DATA_DEST_GROUP_SIGNALS:
                 case StatesMachine.GET_GROUP_SIGNALS_DATETIME_PARS:
+                case StatesMachine.GET_INTERACTION_PARAMETERS:
                     if ((!(itemQueue == null))
                         && (!(itemQueue.m_dataHostRecieved == null)))
                         itemQueue.m_dataHostRecieved.OnEvtDataRecievedHost(new object[] { state, obj });
@@ -367,6 +373,7 @@ namespace uLoader
                 case StatesMachine.SET_TEXT_ADDING:
                 case StatesMachine.SET_GROUP_SIGNALS_PARS:
                 case StatesMachine.CLEARVALUES_DEST_GROUP_SIGNALS:
+                case StatesMachine.INTERACTION_EVENT:
                 // группа событий диагностики/контроля
 #if _STATE_MANAGER
                 case StatesMachine.OMANAGEMENT_ADD:
@@ -383,6 +390,8 @@ namespace uLoader
 
             return iRes;
         }
+
+        public event DelegateObjectFunc EventInteraction;
 
         protected override int StateCheckResponse(int s, out bool error, out object outobj)
         {
@@ -712,6 +721,29 @@ namespace uLoader
                         iRes = 0;
                         break;
                     #endregion
+
+                    #region GET_INTERACTION_PARAMETERS
+                    case StatesMachine.GET_INTERACTION_PARAMETERS:
+                        error = false;
+                        itemQueue = Peek;
+
+                        outobj = m_fileINI.m_InteractionPars;
+
+                        iRes = 0;
+                        break;
+                    #endregion
+
+                    #region INTERACTION_EVENT
+                    case StatesMachine.INTERACTION_EVENT:
+                        error = false;
+                        itemQueue = Peek;
+
+                        EventInteraction(itemQueue.Pars[0]);
+
+                        iRes = 0;
+                        break;
+                    #endregion
+
 #if _STATE_MANAGER
                     #region OMANAGEMENT_ADD, OMANAGEMENT_REMOVE, OMANAGEMENT_CONFIRM, OMANAGEMENT_UPDATE, OMANAGEMENT_CONTROL
                     case StatesMachine.OMANAGEMENT_ADD:

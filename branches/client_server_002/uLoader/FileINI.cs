@@ -49,6 +49,8 @@ namespace uLoader
             /// </summary>
             public int SecondWorkUpdate { get { return m_iSecPanelWorkUpdate; } }
             private int m_iSecPanelWorkUpdate;
+
+            public PanelClientServer.InteractionParameters m_InteractionPars;
             /// <summary>
             /// Конструктор - основной
             /// </summary>
@@ -57,7 +59,7 @@ namespace uLoader
                 : base(nameFile, true)
             {
                 string sec = string.Empty;
-                Dictionary<string, string> dictSecValues = null;
+                Dictionary<string, string> dictSecValues = null;                
 
                 //Получить наименования частей секций
                 SEC_SRC_TYPES = GetMainValueOfKey(@"SEC_SRC_TYPES").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUES]);
@@ -66,12 +68,15 @@ namespace uLoader
                 KEY_FORMULA = GetMainValueOfKey(@"KEY_FORMULA");
                 //Получить ключ для чтения параметров в секции
                 KEY_PARS = GetMainValueOfKey(@"KEY_PARS");
-                //Получить период для обновления информации на панели "Работа"
-                Logging.Logg().Debug (@"FileINI::ctor () - PANEL_WORK_UPDATE = " + GetMainValueOfKey(@"PANEL_WORK_UPDATE"), Logging.INDEX_MESSAGE.NOT_SET);
-                m_iSecPanelWorkUpdate = Int32.Parse (GetMainValueOfKey(@"PANEL_WORK_UPDATE"));
-                //if (Int32.TryParse (GetMainValueOfKey(@"PANEL_WORK_UPDATE"), out m_iSecPanelWorkUpdate) == false)
-                //    throw new Exception(@"FileINI::FileINI () - Параметр PANEL_WORK_UPDATE не удалось инициализировать ...");
-                //else ;
+                //Получить период для обновления информации на панели "Работа"                
+                if (Int32.TryParse (GetMainValueOfKey(@"PANEL_WORK_UPDATE"), out m_iSecPanelWorkUpdate) == true)
+                    Logging.Logg().Debug(@"FileINI::ctor () - PANEL_WORK_UPDATE = " + m_iSecPanelWorkUpdate, Logging.INDEX_MESSAGE.NOT_SET);                
+                else
+                    Logging.Logg().Error(@"FileINI::FileINI () - Параметр PANEL_WORK_UPDATE не удалось инициализировать ...", Logging.INDEX_MESSAGE.NOT_SET);
+                //Инициализировать структуру с параметрами вкладки "Взаимодействие"
+                m_InteractionPars = new PanelClientServer.InteractionParameters(GetMainValueOfKey(@"INTERACTION_WS")
+                    , GetMainValueOfKey(@"INTERACTION_MAINPIPE"));
+                //Инициализировать словарь с формулами
                 fillDictFormula();
 
                 //Создать все объекты, списки для значений из файла конфигурации
