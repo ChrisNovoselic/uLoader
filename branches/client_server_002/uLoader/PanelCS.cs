@@ -19,8 +19,6 @@ namespace uLoader
         private PanelCS m_panelClient,
             m_panelServer;
 
-        private string[] m_arServers;
-
         private bool m_bStatPanelWork;
 
         private System.Windows.Forms.Timer timer;
@@ -33,10 +31,9 @@ namespace uLoader
             timer.Interval = 100;
             timer.Tick += new EventHandler(timer_Tick);
 
-            m_arServers = arServerName;
-            m_panelClient = new PanelCS(m_arServers, PanelCS.TypeApp.Client);
+            m_panelClient = new PanelCS(arServerName, PanelCS.TypeApp.Client);
             //m_panelClient.Dock = DockStyle.Fill; уже Fill
-            m_panelServer = new PanelCS(m_arServers, PanelCS.TypeApp.Server);
+            m_panelServer = new PanelCS(arServerName, PanelCS.TypeApp.Server);
             //m_panelServer.Dock = DockStyle.Fill; уже Fill
             m_panelServer.SetStatEvent += new PanelCS.SetStatEventHandler(panelServerSetStat);
             m_panelClient.SetStatEvent += new PanelCS.SetStatEventHandler(panelServerSetStat);
@@ -301,7 +298,6 @@ namespace uLoader
 
                 rbCommand.CheckedChanged += new EventHandler(rbChecked);
                 rbStatus.CheckedChanged += new EventHandler(rbChecked);
-
 
                 m_countRepCon = 2;
                 m_timeOut = 500;
@@ -655,12 +651,12 @@ namespace uLoader
             /// Запуск экземпляра клиента
             /// </summary>
             /// <param name="name_serv">Имя сервера для подключения, не передавать значение если нужно перебирать список</param>
-            private void runStartClient(string name_serv = "")
+            private void runStartClient(string name_serv = @"")
             {
                 if (m_type_app == TypeApp.Client)
                 {
                     thread = new Thread(connectToServer);//Инициализация экземпляра потока
-                    if (name_serv == "")
+                    if (name_serv.Equals(string.Empty) == true)
                         thread.Start(m_servers);//Старт потока со списком серверов из конструктора
                     else
                         thread.Start(new string[] { name_serv }); //Старт потока со списком серверов переданным в initialize
