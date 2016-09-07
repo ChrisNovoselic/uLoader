@@ -72,7 +72,7 @@ namespace uLoader
             m_panelCS = new PanelClientServer(new PanelClientServer.InteractionParameters (
                 //@"NE2844, NE3336"
                 //, @"MainPipe"
-            )); m_panelCS.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelCS); m_panelCS.Start();
+            )); m_panelCS.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelCS); m_panelCS.Start(); m_panelCS.Activate(true);
 
             работаToolStripMenuItem.CheckOnClick =
             конфигурацияToolStripMenuItem.CheckOnClick =
@@ -211,7 +211,7 @@ namespace uLoader
                 //m_TabCtrl.PrevSelectedIndex = 1;
             }
             else
-                m_panelCS.Close();
+                m_panelCS.Stop();
 
             m_formWait.StopWaitForm();
         }
@@ -230,11 +230,17 @@ namespace uLoader
             {
                 case Pipes.Pipe.ID_EVENT.Start:
                     if (pars.Length > 1)
-                        BeginInvoke(new DelegateObjectFunc(interactionInitializeComlpeted), pars[1]);
+                        if (InvokeRequired == true)
+                            BeginInvoke(new DelegateObjectFunc(interactionInitializeComlpeted), pars[1]);
+                        else
+                            interactionInitializeComlpeted(pars[1]);
                     else
-                        BeginInvoke(new DelegateFunc(autoStart));
+                        if (InvokeRequired == true)
+                            BeginInvoke(new DelegateFunc(autoStart));
+                        else
+                            autoStart ();
 
-                    m_panelCS.StatPanelWork = true;
+                    m_panelCS.PanelWorkState = PanelClientServer.TypePanelWorkState.Started;
                     break;
                 default:
                     break;
@@ -285,7 +291,7 @@ namespace uLoader
             m_notifyIcon.Visible = false;
             m_panelWork.Stop();
             m_panelConfig.Stop();
-            m_panelCS.Close();
+            m_panelCS.Stop();
 
             m_handler.Activate(false); m_handler.Stop();
         }
