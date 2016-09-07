@@ -738,7 +738,10 @@ namespace uLoader
                         error = false;
                         itemQueue = Peek;
 
-                        EventInteraction(itemQueue.Pars[0]);
+                        if (itemQueue.Pars.Length > 1)
+                            EventInteraction(new object [] { itemQueue.Pars[0], itemQueue.Pars[1] });
+                        else
+                            EventInteraction(new object[] { itemQueue.Pars[0]});
 
                         iRes = 0;
                         break;

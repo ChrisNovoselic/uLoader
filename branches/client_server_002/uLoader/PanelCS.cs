@@ -18,45 +18,49 @@ namespace uLoader
     {
         private PanelCS m_panelClient,
             m_panelServer;
-
-        private bool m_bStatPanelWork;
         /// <summary>
-        /// Таймер проверки значения 'm_bIsPanelWork'
+        /// Признак состояния внешней панели (Работа)
         /// </summary>
-        private System.Windows.Forms.Timer timer;
+        private bool m_bStatPanelWork;
+        ///// <summary>
+        ///// Таймер проверки значения 'm_bIsPanelWork'
+        ///// </summary>
+        //private System.Windows.Forms.Timer timer;
 
         public PanelClientServer(InteractionParameters? pars = null)
             : base(1, 2)
         {
-            if (!(pars == null))
+            if ((!(pars == null))
+                && (pars.GetValueOrDefault().Ready == true))
                 initialize(pars.GetValueOrDefault());
             else
                 ;
 
-            m_bStatPanelWork = false;
+            StatPanelWork = false;            
         }
         /// <summary>
         /// Обработчик приема команд от дочерних панелей
         /// </summary>
         /// <param name="sender">Панель, отправившая событие</param>
         /// <param name="ev">Аргумент события</param>
-        private void panelOnCommandEvent(object pars)
-        {
+        private void panelOnCommandEvent(object obj)
+        {            
+            EventArgsDataHost ev = obj as EventArgsDataHost;
+            // 1-ый(0) параметр - объект-вкладка
+            // 2-ой(1) - тип приложения (TypeApp)
+            // 3-ий(2) - тип сообщения (TypeMes)
+            // 4-ый(3) - идентификатор события (ID_EVENT)
+            object[] pars = (ev.par[0] as object[])[0] as object [];
             //Определить внутреннее сообщение или для передачи в родительскую форму
-            // по кол-ву параметров
-            bool bRedirect = true;
+            // по кол-ву параметров (короткие сообщения - внутренние)
+            bool bRedirect = pars.Length > 2;
 
             if (bRedirect == true)
-                DataAskedHost(new object[] {
-                    new object [] {
-                        -1
-                        ,
-                    }
-                });
+                DataAskedHost(new object[] { new object[] { HHandlerQueue.StatesMachine.INTERACTION_EVENT, (Pipes.Pipe.ID_EVENT)pars[3] } });
             else
-                // внутренне сообщение
-                if (true) //e.TypeApp == PanelCS.TypeApp.Client
-                    //reConnClient();
+                // внутреннее сообщение
+                if (((PanelCS.TypeApp)pars[1]) == PanelCS.TypeApp.Client) //e.TypeApp == PanelCS.TypeApp.Client
+                    reConnClient()
                     ;
                 else //e.TypeApp == PanelCS.TypeApp.Server
                     ; // ничего не делаем
@@ -96,7 +100,7 @@ namespace uLoader
                     {
                         iRes = initialize((InteractionParameters)par);
 
-                        DataAskedHost(new object[] { new object[] { HHandlerQueue.StatesMachine.INTERACTION_EVENT, ID_EVENT.Start } });
+                        DataAskedHost(new object[] { new object[] { HHandlerQueue.StatesMachine.INTERACTION_EVENT, Pipes.Pipe.ID_EVENT.Start, iRes } });
                     }
                     else
                         ;
@@ -112,20 +116,28 @@ namespace uLoader
         {
             int iRes = 0;
 
-            timer = new System.Windows.Forms.Timer();
-            timer.Interval = 100;
-            timer.Tick += new EventHandler(timer_Tick);
+            //timer = new System.Windows.Forms.Timer();
+            //timer.Interval = 100;
+            //timer.Tick += new EventHandler(timer_Tick);
 
             m_panelClient = new PanelCS(pars.m_arNameServers, PanelCS.TypeApp.Client);
+            m_panelClient.EvtDataAskedHost += new DelegateObjectFunc(panelOnCommandEvent);            
             //m_panelClient.Dock = DockStyle.Fill; уже Fill
             m_panelServer = new PanelCS(pars.m_arNameServers, PanelCS.TypeApp.Server);
+            m_panelServer.EvtDataAskedHost += new DelegateObjectFunc(panelOnCommandEvent);            
             //m_panelServer.Dock = DockStyle.Fill; уже Fill
+
+            EventStartedWorkChanged += new DelegateFunc(onEventStartedWorkChanged);
 
             this.Controls.Add(m_panelServer, 0, 0);
             this.Controls.Add(m_panelClient, 0, 1);
 
+            iRes = (m_panelClient.Ready == true) && (m_panelServer.Ready == true) ? 0 : -1;
+
             return iRes;
         }
+
+        public event DelegateFunc EventStartedWorkChanged;
 
         public bool StatPanelWork
         {
@@ -135,8 +147,33 @@ namespace uLoader
             }
             set
             {
-                m_bStatPanelWork = value;
+                if (!(m_bStatPanelWork == value))
+                {
+                    m_bStatPanelWork = value;
+                    EventStartedWorkChanged();                    
+                }
+                else
+                    ;
             }
+        }
+
+        private void onEventStartedWorkChanged()
+        {
+            if (m_panelClient != null)
+                if (m_panelClient.m_bIsPanelWork == true)
+                {
+                    m_panelClient.StartedWork = StatPanelWork;
+                    m_panelServer.Enabled = false;
+                    m_panelClient.Enabled = true;
+                }
+                else
+                {
+                    m_panelServer.StartedWork = StatPanelWork;
+                    m_panelServer.Enabled = true;
+                    m_panelClient.Enabled = false;
+                }
+            else
+                ;
         }
 
         public override void Start()
@@ -150,35 +187,36 @@ namespace uLoader
             });
         }
 
-        private void timer_Tick(object sender, EventArgs e)
-        {
-            if (m_panelClient != null)
-                if (m_panelClient.m_bIsPanelWork == true)
-                {
-                    m_panelClient.StartedWork = m_bStatPanelWork;
-                    m_panelServer.Enabled = false;
-                    m_panelClient.Enabled = true;
-                }
-                else
-                {
-                    m_panelServer.StartedWork = m_bStatPanelWork;
-                    m_panelServer.Enabled = true;
-                    m_panelClient.Enabled = false;
-                }
-        }
+        //private void timer_Tick(object sender, EventArgs e)
+        //{
+        //    if (m_panelClient != null)
+        //        if (m_panelClient.m_bIsPanelWork == true)
+        //        {
+        //            m_panelClient.StartedWork = m_bStatPanelWork;
+        //            m_panelServer.Enabled = false;
+        //            m_panelClient.Enabled = true;
+        //        }
+        //        else
+        //        {
+        //            m_panelServer.StartedWork = m_bStatPanelWork;
+        //            m_panelServer.Enabled = true;
+        //            m_panelClient.Enabled = false;
+        //        }
+        //}
 
         public override bool Activate(bool active)
         {
             bool bRes = base.Activate(active);
 
-            if (IsFirstActivated == true)
+            if ((bRes == true)
+                && (IsFirstActivated == true))
             {
                 m_panelServer.Start();
                 m_panelServer.Activate(active);
                 m_panelClient.Start();
                 m_panelClient.Activate(active);
 
-                timer.Start();
+                //timer.Start();
             }
 
             return bRes;
@@ -200,33 +238,48 @@ namespace uLoader
             m_panelClient.StartPanel();
         }
 
-        #region События панели
-
-        public enum ID_EVENT : short { Unknown = -1
-            , Start, Stop, Exit, Disconnect
-        , Count}
-
-        //public class CommandEventArgs : EventArgs
-        //{
-        //    public ID_EVENT Id;
-
-        //    public CommandEventArgs(ID_EVENT id) {
-        //        Id = id;
-        //    }
-        //}
-
-        ///// <summary>
-        ///// Событие
-        ///// </summary>
-        //public event EventHandler CommandEvent;
-
-        #endregion
-
         private partial class PanelCS : PanelCommonDataHost
         {
             #region Переменные и константы
 
+            private const string KEY_MYNAME = @"MyName";
+            private static int MS_TIMER_UPDATE_STATUS = 10000;
+
+            private enum INDEX_COLUMN_MESSAGES : short { UNKNOWN = -1
+                , DATETIME, MESSAGE, SOURCE, TYPE_IO
+                , COUNT
+            }
+            //Колонки таблицы со списком сообщений
+            private string[] m_arTextColumnMessages = new string[(int)INDEX_COLUMN_MESSAGES.COUNT] { "Дата/время", "Сообщение", "Источник", "Вход/исход" };
+
+            /// <summary>
+            /// Количество попыток подключения
+            /// </summary>
+            private static int MAX_ATTEMPT_CONNECT = 2;
+            /// <summary>
+            /// Таймаут подключения
+            /// </summary>
+            private static int MS_TIMEOUT_CONNECT_TO_SERVER = 500;
+            /// <summary>
+            /// Признак состояния внешней панели ("Работа")
+            /// </summary>
+            private bool m_bStartedWork;
+            /// <summary>
+            /// Признак активности текущего объекта(панели)
+            /// </summary>
             public bool m_bIsPanelWork;
+
+            //private bool m_bIsFirstActivate;
+
+            public bool Ready {
+                get {
+                    return
+                        //(!(m_client == null))
+                        //    && (!(m_server == null))
+                        m_servers.Length > 1    
+                            ;
+                }
+            }
 
             /// <summary>
             /// Типы экземпляра
@@ -237,9 +290,6 @@ namespace uLoader
             /// Тип сообщения
             /// </summary>
             enum TypeMes { Input, Output };
-
-            private bool m_bStartedWork
-                , m_bIsFirstActivate;
 
             /// <summary>
             /// Комманды к клиенту/серверу
@@ -261,16 +311,6 @@ namespace uLoader
             /// Экземпляр клиента
             /// </summary>
             Pipes.Client m_client;
-
-            /// <summary>
-            /// Количество попыток подключения
-            /// </summary>
-            int m_countRepCon;
-
-            /// <summary>
-            /// Таймаут подключения
-            /// </summary>
-            int m_timeOut;
 
             /// <summary>
             /// Массив имён серверов
@@ -353,7 +393,7 @@ namespace uLoader
                 : base(5, 20)
             {
                 m_bIsPanelWork = false;
-                m_bIsFirstActivate = true;
+                //m_bIsFirstActivate = true;
                 thisLock = new Object();
                 m_type_app = type;
                 d_exit = exit_program;
@@ -365,11 +405,12 @@ namespace uLoader
                 rbCommand.CheckedChanged += new EventHandler(rbChecked);
                 rbStatus.CheckedChanged += new EventHandler(rbChecked);
 
-                m_countRepCon = 2;
-                m_timeOut = 500;
                 m_servers = arServerName;
             }
 
+            /// <summary>
+            /// Признак состояния внешней панели (Работа)
+            /// </summary>
             public bool StartedWork
             {
                 get
@@ -378,9 +419,14 @@ namespace uLoader
                 }
                 set
                 {
-                    m_bStartedWork = value;
+                    if (!(m_bStartedWork == value))
+                    {
+                        if (!(d_statLbl == null)) d_statLbl(value); else ;
+                        m_bStartedWork = value;
+                    }
+                    else
+                        ;
                 }
-
             }
 
             #region Initialize
@@ -641,19 +687,21 @@ namespace uLoader
             {
                 bool bRes = base.Activate(active);
 
-                if (m_bIsFirstActivate == true)
+                //if (m_bIsFirstActivate == true)
+                if ((bRes == true)
+                    && (IsFirstActivated == true))
                 {
                     StartPanel();
-                    m_bIsFirstActivate = false;
+                    //m_bIsFirstActivate = false;
                 }
 
                 return bRes;
             }
 
-            public void ReActivate()
-            {
-                StartPanel();
-            }
+            //public void ReActivate()
+            //{
+            //    StartPanel();
+            //}
 
             /// <summary>
             /// Запуск панели
@@ -669,15 +717,10 @@ namespace uLoader
                 //Размещение комманд в Control
                 getCommandToList();
                 //Инициализация экземпляра клиента/сервера
-                switch (m_type_app)
-                {
-                    case TypeApp.Client:
-                        initialize();
-                        break;
-                    case TypeApp.Server:
-                        initialize("", true);
-                        break;
-                }
+                initialize(string.Empty
+                    , m_type_app == TypeApp.Client ? false :
+                        m_type_app == TypeApp.Server ? true :
+                            false);
             }
 
             #region Создание клиента/сервера
@@ -686,10 +729,8 @@ namespace uLoader
             /// </summary>
             /// <param name="name_serv">Имя сервера для подключения</param>
             /// <param name="is_serv">Если нужен сервер без запуска клиента то установить true</param>
-            private void initialize(string name_serv = "", bool is_serv = false)
+            private void initialize(string name_serv, bool is_serv_only)
             {
-                //Колонки таблицы со списком сообщений
-                string[] columns = new string[] { "Дата/время", "Сообщение", "Источник", "Вход/исход" };
                 cbClients.Enabled = false;
                 argCommand.Enabled = false;
 
@@ -700,16 +741,16 @@ namespace uLoader
 
                 //Добавление колонок в DGV
                 if (dgvMessage.Columns.Count == 0)
-                    foreach (string col in columns)
-                    {
+                    foreach (string col in m_arTextColumnMessages)
                         dgvMessage.Columns.Add(col, col);
-                    }
+                else
+                    ;
 
                 //Проверка флага запуска сервера
-                if (is_serv == false)
+                if (is_serv_only == false)
                     runStartClient(name_serv);
 
-                if (is_serv == true)
+                if (is_serv_only == true)
                     runStartServer();
             }
 
@@ -748,13 +789,13 @@ namespace uLoader
                         {
                             int i = 0;
 
-                            m_client = new Pipes.Client(server, m_timeOut);//инициализация клиента
+                            m_client = new Pipes.Client(server, MS_TIMEOUT_CONNECT_TO_SERVER);//инициализация клиента
 
                             //Подписка на события клиента
                             m_client.ReadMessage += new EventHandler(newMessageToClient);
                             m_client.ResServ += new EventHandler(resClient);
                             //несколько попыток подключения при неудаче
-                            while (i < m_countRepCon)
+                            while (i < MAX_ATTEMPT_CONNECT)
                             {
                                 //!!!! необходимо будет вставить условие на исключение собственного имени из перебора
                                 m_client.StartClient();//Выполняем старт клиента и пытаемся подключиться к серверу
@@ -805,6 +846,7 @@ namespace uLoader
                             thread = null; //обнуляем его
                         }
                         thread = new Thread(initializeServer);//Инициализируем поток создания сервера
+                        //??? подождать завершения - определить результат
                         thread.Start();//Потока
 
                         //Включение компонентов формы для сервера
@@ -814,7 +856,7 @@ namespace uLoader
                         rbStatus.Checked = true;
 
                         timerUpdateStatus = new System.Windows.Forms.Timer();
-                        timerUpdateStatus.Interval = 10000;
+                        timerUpdateStatus.Interval = MS_TIMER_UPDATE_STATUS;
                         timerUpdateStatus.Tick += new EventHandler(timerUpdateStat_Tick);
 
                         timerUpdateStatus.Start();
@@ -834,26 +876,26 @@ namespace uLoader
                 m_server.DisConnectClient += new EventHandler(delFromComList);
                 m_server.StartServer();//запуск экземпляра сервера
                 //m_type_app = TypeApp.Server;//устанавливаем тип экземпляра приложения Сервер
-                m_myName = m_server.Name;//Устанавливаем собственное имя равное имени сервера
+                m_myName = m_server.m_Name;//Устанавливаем собственное имя равное имени сервера
             }
             #endregion
 
             #region Обработчики сервера
             private void addToComList(object sender, EventArgs e)
             {
-                Invoke(d_operCB, new object[] { (e as Pipes.Server.MainStreamPipe.ConnectClientEventArgs).IdServer, true });
+                Invoke(d_operCB, new object[] { (e as Pipes.Server.ConnectionClientEventArgs).IdServer, true });
             }
 
             private void delFromComList(object sender, EventArgs e)
             {
-                Invoke(d_operCB, new object[] { (e as Pipes.Server.MainStreamPipe.DisConnectClientEventArgs).IdServer, false });
+                Invoke(d_operCB, new object[] { (e as Pipes.Server.ConnectionClientEventArgs).IdServer, false });
                 Invoke(d_disconnect);
             }
 
             private void newMessageToServer(object sender, EventArgs e)
             {
-                addMessage((e as Pipes.Server.StreamPipe.ReadMessageEventArgs).Value
-                    , (e as Pipes.Server.StreamPipe.ReadMessageEventArgs).IdServer
+                addMessage((e as Pipes.Pipe.ReadMessageEventArgs).Value
+                    , (e as Pipes.Pipe.ReadMessageEventArgs).IdServer
                     , true);//Добавление сообщения и обработка
             }
             #endregion
@@ -926,14 +968,14 @@ namespace uLoader
                     case TypeApp.Server:
                         if (commandBox.SelectedItem.ToString() == COMMAND.ReConnect.ToString ())//Добавляет аргумент для реконнекта
                         {
-                            sendMessageFromServer(commandBox.SelectedItem.ToString() + "=" + argCommand.Text, cbClients.Text);
+                            sendMessageFromServer(commandBox.SelectedItem.ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + argCommand.Text, cbClients.Text);
                         }
                         else
                             sendMessageFromServer(commandBox.SelectedItem.ToString(), cbClients.Text);
                         break;
 
                     case TypeApp.Client:
-                        sendMessageFromClient(commandBox.SelectedItem.ToString() + "=" + argCommand.Text);
+                        sendMessageFromClient(commandBox.SelectedItem.ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + argCommand.Text);
                         break;
                 }
                 argCommand.Clear();
@@ -955,7 +997,7 @@ namespace uLoader
                 object rows = new object[] { DateTime.Now.ToString(), message, name, type_mes.ToString() };//новая строка сообщения
                 Invoke(d_addRow, rows);//добавление новой строки сообщения в DGV
 
-                string[] arrMessages = message.Split('=');//разбор сообщения
+                string[] arrMessages = message.Split(Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR);//разбор сообщения
                 string command_mes = arrMessages[0];//комманда
                 string argument = string.Empty;//аргумент
                 if (arrMessages.Length > 1)
@@ -971,10 +1013,10 @@ namespace uLoader
                                     sendMessageFromClient(DateTime.Now.ToString());
                                 else
                                     if (command_mes.Equals(COMMAND.GetName.ToString ()) == true)//Обработка запроса имени
-                                        sendMessageFromClient("MyName=" + m_myName);
+                                        sendMessageFromClient(KEY_MYNAME + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + m_myName);
                                     else
                                         if (command_mes.Equals(COMMAND.GetStat.ToString ()) == true)//Обработка запроса типа экземпляра
-                                            sendMessageFromClient("Client");
+                                            sendMessageFromClient(TypeApp.Client.ToString());
                                         else
                                             if (command_mes.Equals(COMMAND.ReConnect.ToString ()) == true)//Обработка запроса на переподключение
                                             {
@@ -985,27 +1027,27 @@ namespace uLoader
                                                 if (command_mes.Equals(COMMAND.Start.ToString ()) == true)//обработка запроса запуска
                                                 {
                                                     Invoke(d_statLbl, true);
-                                                    DataAskedHost(new object[] { new object[] { this, m_type_app, type_mes, ID_EVENT.Start } });
+                                                    DataAskedHost(new object[] { new object[] { this, m_type_app, type_mes, Pipes.Pipe.ID_EVENT.Start } });
                                                 }
                                                 else
                                                     if (command_mes.Equals(COMMAND.Stop.ToString ()) == true)//обработка запроса остановки
                                                     {
                                                         Invoke(d_statLbl, false);
-                                                        DataAskedHost(new object[] { new object[] { this, m_type_app, type_mes, ID_EVENT.Stop } });
+                                                        DataAskedHost(new object[] { new object[] { this, m_type_app, type_mes, Pipes.Pipe.ID_EVENT.Stop } });
                                                     }
                                                     else
                                                         if (command_mes.Equals(COMMAND.SetStat.ToString ()) == true)//обработка запроса изменения типа экземпляра
                                                         {
-                                                            if (argument.Equals("Server") == true)
+                                                            if (argument.Equals(TypeApp.Server.ToString()) == true)
                                                             {
                                                                 m_client.SendDisconnect();
-                                                                Invoke(d_reconn, new object[] { "", true });
+                                                                Invoke(d_reconn, new object[] { string.Empty, true });
                                                             }
                                                         }
                                                         else
                                                             if (command_mes.Equals(COMMAND.Status.ToString ()) == true)//обработка запроса изменения типа экземпляра
                                                             {
-                                                                sendMessageFromClient(command_mes + "=" + "OK");
+                                                                sendMessageFromClient(command_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + Pipes.Pipe.MESSAGE_RECIEVED_OK);
                                                             }
                                                             else
                                                                 if (command_mes.Equals(COMMAND.Exit.ToString ()) == true)
@@ -1022,18 +1064,18 @@ namespace uLoader
                                         sendMessageFromServer(m_myName, name);
                                     else
                                         if (command_mes.Equals(COMMAND.GetStat.ToString ()) == true)//запрос типа текущего экземпляра
-                                            sendMessageFromServer("Server", name);
+                                            sendMessageFromServer(TypeApp.Server.ToString(), name);
                                         else
                                             if (command_mes.Equals(COMMAND.Start.ToString ()) == true)//запрос запуска
                                             {
                                                 Invoke(d_statLbl, true);
-                                                DataAskedHost(new object[] { new object[] { this, m_type_app, type_mes, ID_EVENT.Start } });
+                                                DataAskedHost(new object[] { new object[] { this, m_type_app, type_mes, Pipes.Pipe.ID_EVENT.Start } });
                                             }
                                             else
                                                 if (command_mes.Equals(COMMAND.Stop.ToString ()) == true)//запрос остановки
                                                 {
                                                     Invoke(d_statLbl, false);
-                                                    DataAskedHost(new object[] { new object[] { this, m_type_app, type_mes, ID_EVENT.Stop } });
+                                                    DataAskedHost(new object[] { new object[] { this, m_type_app, type_mes, Pipes.Pipe.ID_EVENT.Stop } });
                                                 }
                                                 else
                                                     if (command_mes.Equals(COMMAND.Status.ToString ()) == true)//обработка запроса изменения типа экземпляра
@@ -1043,7 +1085,7 @@ namespace uLoader
                                                     else
                                                         if (command_mes.Equals(COMMAND.SetStat.ToString ()) == true)//обработка запроса изменения типа экземпляра
                                                         {
-                                                            if (argument.Equals("Client") == true)
+                                                            if (argument.Equals(TypeApp.Client.ToString()) == true)
                                                             {
                                                                 m_server.SendDisconnect();
                                                                 Invoke(d_reconn, new object[] { "", false });
@@ -1062,10 +1104,10 @@ namespace uLoader
                         break;
 
                     case TypeMes.Output://исходящие
-                        string[] arMes = message.Split('=');
+                        string[] arMes = message.Split(Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR);
                         switch (arMes[0])
                         {
-                            case "MyName":
+                            case KEY_MYNAME:
                                 switch (m_type_app)
                                 {
                                     case TypeApp.Client:
@@ -1104,7 +1146,7 @@ namespace uLoader
                 foreach (ListViewItem item in lvStatus.Items)
                     if (item.Text.Equals(client) == true)
                     {
-                        if (status.Equals("OK") == true)
+                        if (status.Equals(Pipes.Pipe.MESSAGE_RECIEVED_OK) == true)
                         {
                             clr = Color.LimeGreen;
                             text = DateTime.Now.ToString();
@@ -1136,7 +1178,7 @@ namespace uLoader
             /// <summary>
             /// Метод для завершения клиент/серверной части
             /// </summary>
-            public void Close()
+            public /*override*/ void Close()
             {
                 switch (m_type_app)
                 {
@@ -1159,6 +1201,8 @@ namespace uLoader
                         }
                         break;
                 }
+
+                //base.Stop();
             }
 
             /// <summary>
@@ -1188,7 +1232,7 @@ namespace uLoader
                         if (item.Text == idClient)
                         {
                             item.Name = idClient;
-                            item.SubItems.Add("OK");
+                            item.SubItems.Add(Pipes.Pipe.MESSAGE_RECIEVED_OK);
                             item.SubItems.Add(DateTime.Now.ToString());
                         }
                     }
@@ -1209,14 +1253,10 @@ namespace uLoader
             /// <param name="new_server">Пустая строка при полном перезапуске или имя сервера для подключения к нему</param>
             private void reconnect(string new_server = "", bool stat = false)
             {
-                //Close();
                 switch (m_type_app)
                 {
                     case TypeApp.Client:
-                        m_client.StopClient();//остановка клиента
-                        m_bIsPanelWork = false;
-                        DataAskedHost(new object[] { new object[] { this, TypeApp.Server } });
-                        dgvMessage.Rows.Clear();
+                        m_client.StopClient();//остановка клиента                        
                         break;
                     case TypeApp.Server:
                         timerUpdateStatus.Stop();
@@ -1224,14 +1264,17 @@ namespace uLoader
                         lvStatus.Items.Clear();
                         m_server.SendDisconnect();
                         //m_server.StopServer();//остановка сервера
-                        m_bIsPanelWork = false;
-                        DataAskedHost(new object[] { new object[] { this, TypeApp.Client } });
-                        timerUpdateStatus.Start();
-                        dgvMessage.Rows.Clear();
+                        timerUpdateStatus.Start();                        
+                        break;
+                    default:
                         break;
                 }
 
-                if (new_server != "")
+                dgvMessage.Rows.Clear();
+                m_bIsPanelWork = false;
+                DataAskedHost(new object[] { new object[] { this, m_type_app } });
+
+                if (new_server.Equals(string.Empty) == false)
                     initialize(new_server, stat);//подключение к новому серверу или запуск сервера
             }
 
@@ -1241,7 +1284,7 @@ namespace uLoader
             /// <param name="start">Если запуск то true</param>
             private void setLbl(bool start)
             {
-                m_bStartedWork = start;
+                StartedWork = start;
 
                 Color clr = Color.Empty;
                 string text = string.Empty;
@@ -1263,12 +1306,12 @@ namespace uLoader
 
             private void exit_program()
             {
-                DataAskedHost(new object[] { new object[] { this, m_type_app, TypeMes.Input, ID_EVENT.Exit } });
+                DataAskedHost(new object[] { new object[] { this, m_type_app, TypeMes.Input, Pipes.Pipe.ID_EVENT.Exit } });
             }
 
             private void disconnect_client()
             {
-                DataAskedHost(new object[] { new object[] { this, m_type_app, TypeMes.Input, ID_EVENT.Disconnect } });
+                DataAskedHost(new object[] { new object[] { this, m_type_app, TypeMes.Input, Pipes.Pipe.ID_EVENT.Disconnect } });
             }
         }
 
@@ -1284,6 +1327,8 @@ namespace uLoader
 
                 m_NameMainPipe = strNameMainPipe;
             }
+
+            public bool Ready { get { return ((!(m_arNameServers == null)) && (m_arNameServers.Length > 1)) && m_NameMainPipe.Equals(string.Empty) == false; } }
         }
     }
 }

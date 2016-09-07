@@ -171,9 +171,14 @@ namespace uLoader
             Close();
         }
 
-        private void interactionInitializeComlpeted()
+        private void autoStart()
         {
             m_handler.AutoStart();
+        }
+
+        private void interactionInitializeComlpeted(object par)
+        {
+            autoStart();
 
             //Проверить признак отображения вкладки "работа"
             if (работаToolStripMenuItem.Checked == true)
@@ -188,6 +193,8 @@ namespace uLoader
             }
             else
                 ;
+
+            взаимодействиеToolStripMenuItem.Checked = (int)par == 0;
 
             //Проверить признак отображения вкладки "взаимодействие"
             if (взаимодействиеToolStripMenuItem.Checked == true)
@@ -204,17 +211,30 @@ namespace uLoader
                 //m_TabCtrl.PrevSelectedIndex = 1;
             }
             else
-                ;
+                m_panelCS.Close();
 
             m_formWait.StopWaitForm();
         }
-
-        private void onEventInteraction(object ev)
+        /// <summary>
+        /// Обработчик события StatesMachine.INTERACTION_EVENT
+        /// </summary>
+        /// <param name="obj">Параметры(аргументы) события</param>
+        private void onEventInteraction(object obj)
         {
-            switch ((PanelClientServer.ID_EVENT)ev)
+            //см. HandlerQueue::StateCheckResponse 'StatesMachine.INTERACTION_EVENT'
+            //1-ый(0) - идентификатор сообщения(Pipes.Pipe.ID_EVENT)
+            //2-ой(1) - дополнительная информация
+            object[] pars = obj as object[];
+
+            switch ((Pipes.Pipe.ID_EVENT)pars[0])
             {
-                case PanelClientServer.ID_EVENT.Start:
-                    BeginInvoke(new DelegateFunc (interactionInitializeComlpeted));
+                case Pipes.Pipe.ID_EVENT.Start:
+                    if (pars.Length > 1)
+                        BeginInvoke(new DelegateObjectFunc(interactionInitializeComlpeted), pars[1]);
+                    else
+                        BeginInvoke(new DelegateFunc(autoStart));
+
+                    m_panelCS.StatPanelWork = true;
                     break;
                 default:
                     break;
