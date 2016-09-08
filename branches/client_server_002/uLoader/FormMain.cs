@@ -72,7 +72,7 @@ namespace uLoader
             m_panelCS = new PanelClientServer(new PanelClientServer.InteractionParameters (
                 //@"NE2844, NE3336"
                 //, @"MainPipe"
-            )); m_panelCS.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelCS); m_panelCS.Start(); m_panelCS.Activate(true);
+            )); m_panelCS.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelCS); m_panelCS.Start();
 
             работаToolStripMenuItem.CheckOnClick =
             конфигурацияToolStripMenuItem.CheckOnClick =
@@ -178,40 +178,41 @@ namespace uLoader
 
         private void interactionInitializeComlpeted(object par)
         {
-            autoStart();
-
-            //Проверить признак отображения вкладки "работа"
-            if (работаToolStripMenuItem.Checked == true)
+            try
             {
-                //Добавить вкладку
-                m_TabCtrl.AddTabPage(m_panelWork
-                    , работаToolStripMenuItem.Text
-                    , (int)INDEX_TAB.WORK
-                    , HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
-                //Запомнить "предыдущий" выбор
-                m_TabCtrl.PrevSelectedIndex = 0;
+                autoStart();
+
+                //Проверить признак отображения вкладки "работа"
+                if (работаToolStripMenuItem.Checked == true)
+                {
+                    //Добавить вкладку
+                    m_TabCtrl.AddTabPage(m_panelWork
+                        , работаToolStripMenuItem.Text
+                        , (int)INDEX_TAB.WORK
+                        , HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
+                    //Запомнить "предыдущий" выбор
+                    m_TabCtrl.PrevSelectedIndex = 0;
+                }
+                else
+                    ;
+
+                взаимодействиеToolStripMenuItem.Checked = (int)par == 0;
+
+                //Проверить признак отображения вкладки "взаимодействие"
+                if (взаимодействиеToolStripMenuItem.Checked == true)
+                {
+                    //Добавить вкладку
+                    m_TabCtrl.AddTabPage(m_panelCS
+                        , взаимодействиеToolStripMenuItem.Text
+                        , (int)INDEX_TAB.INTERACTION
+                        , HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
+                }
+                else
+                    m_panelCS.Stop();
+            } catch (Exception e) {
+                Console.WriteLine(e.Message);
             }
-            else
-                ;
 
-            взаимодействиеToolStripMenuItem.Checked = (int)par == 0;
-
-            //Проверить признак отображения вкладки "взаимодействие"
-            if (взаимодействиеToolStripMenuItem.Checked == true)
-            {
-                //Добавить вкладку
-                m_TabCtrl.AddTabPage(m_panelCS
-                    , взаимодействиеToolStripMenuItem.Text
-                    , (int)INDEX_TAB.INTERACTION
-                    , HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
-
-                m_panelCS.Activate(true);
-                //m_panelCS.StartPanel();
-                //Запомнить "предыдущий" выбор
-                //m_TabCtrl.PrevSelectedIndex = 1;
-            }
-            else
-                m_panelCS.Stop();
 
             m_formWait.StopWaitForm();
         }
