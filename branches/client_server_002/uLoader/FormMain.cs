@@ -210,7 +210,8 @@ namespace uLoader
                 else
                     m_panelCS.Stop();
             } catch (Exception e) {
-                Console.WriteLine(e.Message);
+                //Console.WriteLine(e.Message);
+                Logging.Logg().Exception(e, @"FormMain::interactionInitializeComlpeted () - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
 
 
@@ -292,7 +293,10 @@ namespace uLoader
             m_notifyIcon.Visible = false;
             m_panelWork.Stop();
             m_panelConfig.Stop();
-            m_panelCS.Stop();
+            if (m_panelCS.Ready == 0)
+                m_panelCS.Stop();
+            else
+                ;
 
             m_handler.Activate(false); m_handler.Stop();
         }

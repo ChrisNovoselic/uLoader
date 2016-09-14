@@ -60,8 +60,11 @@ namespace uLoader
             _typePanelEnabled = TypePanel.Unknown;
         }
 
-        private int Ready {
-            get { return (m_arPanels[(int)TypePanel.Client].Ready == true) && (m_arPanels[(int)TypePanel.Server].Ready == true) ? 0 : -1; }
+        public int Ready {
+            get {
+                return (m_InteractionParameters.Ready == true) ? (!(m_arPanels == null)) && ((m_arPanels[(int)TypePanel.Client].Ready == true)
+                    && (m_arPanels[(int)TypePanel.Server].Ready == true)) ? 0 : 1 : -1;
+            }
         }
 
         /// <summary>
@@ -139,11 +142,11 @@ namespace uLoader
             InteractionParameters pars = m_InteractionParameters;
 
             m_arPanels = new PanelCS[(int)TypePanel.Count];
-            m_arPanels[(int)TypePanel.Client] = new PanelCS(pars.m_arNameServers, TypePanel.Client);
+            m_arPanels[(int)TypePanel.Client] = new PanelClient(pars.m_arNameServers);
             m_arPanels[(int)TypePanel.Client].EvtDataAskedHost += new DelegateObjectFunc(panelOnCommandEvent);
             m_arPanels[(int)TypePanel.Client].Start();
             //m_panelClient.Dock = DockStyle.Fill; уже Fill
-            m_arPanels[(int)TypePanel.Server] = new PanelCS(pars.m_arNameServers, TypePanel.Server);
+            m_arPanels[(int)TypePanel.Server] = new PanelServer(pars.m_arNameServers);
             m_arPanels[(int)TypePanel.Server].EvtDataAskedHost += new DelegateObjectFunc(panelOnCommandEvent);
             m_arPanels[(int)TypePanel.Server].Start();
             //m_panelServer.Dock = DockStyle.Fill; уже Fill
@@ -176,7 +179,10 @@ namespace uLoader
 
         private void onEventPanelWorkStateChanged()
         {
-            m_arPanels[(int)_typePanelEnabled].UpdatePanelWorkState();
+            if (!(m_arPanels == null))
+                m_arPanels[(int)_typePanelEnabled].UpdatePanelWorkState();
+            else
+                ;
         }
 
         private Semaphore m_semInteractionParameters;
@@ -193,24 +199,32 @@ namespace uLoader
 
             // ждать ответа
             m_semInteractionParameters.WaitOne();
+            // проверить корректность инициализации
+            if (! (Ready < 0))
+            {
+                start();
+                //BeginInvoke(new DelegateObjectFunc (start), par);
+                //eventRecievedInteractionParameters(par);
 
-            start();
-            //BeginInvoke(new DelegateObjectFunc (start), par);
-            //eventRecievedInteractionParameters(par);
+                if (m_arPanels[(int)TypePanel.Client].ClientIsConnected == true)
+                {
+                    _typePanelEnabled = TypePanel.Client;
+                }
+                else
+                {
+                    _typePanelEnabled = TypePanel.Server;
+                }
 
-            if (m_arPanels[(int)TypePanel.Client].ClientIsConnected == true) {
-                _typePanelEnabled = TypePanel.Client;
-            } else {
-                _typePanelEnabled = TypePanel.Server;
+                m_arPanels[(int)_typePanelEnabled].Enabled = true;
             }
-
-            m_arPanels[(int)_typePanelEnabled].Enabled = true;
+            else
+                ;
 
             DataAskedHost(new object[] {
-                new object[] {
-                    HHandlerQueue.StatesMachine.INTERACTION_EVENT, Pipes.Pipe.ID_EVENT.Start
-                    , Ready // признак успеха опаерации инициализации-старта
-            } });
+                    new object[] {
+                        HHandlerQueue.StatesMachine.INTERACTION_EVENT, Pipes.Pipe.ID_EVENT.Start
+                        , Ready // признак успеха опаерации инициализации-старта
+                } });
         }
 
         public override bool Activate(bool active)
@@ -233,8 +247,13 @@ namespace uLoader
         /// </summary>
         public override void Stop()
         {
-            m_arPanels[(int)TypePanel.Client].Stop();
-            m_arPanels[(int)TypePanel.Server].Stop();
+            if (!(m_arPanels == null))
+            {
+                m_arPanels[(int)TypePanel.Client].Stop();
+                m_arPanels[(int)TypePanel.Server].Stop();
+            }
+            else
+                ;
 
             base.Stop();
         }
@@ -246,11 +265,165 @@ namespace uLoader
             m_arPanels[(int)TypePanel.Client].Activate(true);
         }
 
-        private partial class PanelCS : PanelCommonDataHost
+        private class PanelClient : PanelCS
+        {
+            public PanelClient(string[] arServerName)
+                : base(arServerName, TypePanel.Client)
+            {
+            }
+            /// <summary>
+            /// Отправка сообщения из клиента
+            /// </summary>
+            /// <param name="message">Сообщение для отправки</param>
+            protected override void sendMessage(string message, string nameClient)
+            {
+                m_client.WriteMessage(message);//Отправка сообщения
+                addMessage(message, m_servName, TypeMes.Output);//Добавление сообщения и обработка
+            }
+
+            private void sendMessage(string message)
+            {
+                m_client.WriteMessage(message);//Отправка сообщения
+                addMessage(message, m_servName, TypeMes.Output);//Добавление сообщения и обработка
+            }
+
+            protected override void addMessage(string com_mes, string arg, string name)
+            {
+                if (com_mes.Equals(COMMAND.GetDataTime.ToString()) == true)//Обработка запроса даты
+                    sendMessage(DateTime.Now.ToString());
+                else
+                    if (com_mes.Equals(COMMAND.GetName.ToString()) == true)//Обработка запроса имени
+                        sendMessage(KEY_MYNAME + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + m_myName);
+                    else
+                        if (com_mes.Equals(COMMAND.GetStat.ToString()) == true)//Обработка запроса типа экземпляра
+                            sendMessage(TypePanel.Client.ToString());
+                        else
+                            if (com_mes.Equals(COMMAND.ReConnect.ToString()) == true)//Обработка запроса на переподключение
+                            {
+                                m_client.SendDisconnect();//отправка сообщения о разрыве соединения
+                                Invoke(d_reconn, new object[] { arg, false });
+                            }
+                            else
+                                if (com_mes.Equals(COMMAND.Start.ToString()) == true)//обработка запроса запуска
+                                {
+                                    Invoke(d_statLbl, true);
+                                    DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, Pipes.Pipe.ID_EVENT.Start } });
+                                }
+                                else
+                                    if (com_mes.Equals(COMMAND.Stop.ToString()) == true)//обработка запроса остановки
+                                    {
+                                        Invoke(d_statLbl, false);
+                                        DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, Pipes.Pipe.ID_EVENT.Stop } });
+                                    }
+                                    else
+                                        if (com_mes.Equals(COMMAND.SetStat.ToString()) == true)//обработка запроса изменения типа экземпляра
+                                        {
+                                            if (arg.Equals(TypePanel.Server.ToString()) == true)
+                                            {
+                                                m_client.SendDisconnect();
+                                                Invoke(d_reconn, new object[] { string.Empty, true });
+                                            }
+                                        }
+                                        else
+                                            if (com_mes.Equals(COMMAND.Status.ToString()) == true)//обработка запроса изменения типа экземпляра
+                                            {
+                                                sendMessage(com_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + Pipes.Pipe.MESSAGE_RECIEVED_OK);
+                                            }
+                                            else
+                                                if (com_mes.Equals(COMMAND.Exit.ToString()) == true)
+                                                {
+                                                    Invoke(d_exit);
+                                                }
+            }
+        }
+
+        private class PanelServer : PanelCS
+        {
+            public PanelServer(string []arServerName) : base (arServerName, TypePanel.Server)
+            {
+                d_disconnect = disconnect_client;
+            }
+
+            public override void Start()
+            {
+                base.Start();
+            }
+            /// <summary>
+            /// Экземпляр делегата disconnect
+            /// </summary>
+            private DelegateFunc d_disconnect;
+
+            private void disconnect_client()
+            {
+                DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, Pipes.Pipe.ID_EVENT.Disconnect } });
+            }
+
+            protected override void delFromComList(object sender, EventArgs e)
+            {
+                base.delFromComList(sender, e);
+                Invoke(d_disconnect);
+            }
+
+            /// <summary>
+            /// Отправка сообщения из сервера
+            /// </summary>
+            /// <param name="message">Сообщение</param>
+            /// <param name="nameClient">Имя клиента</param>
+            protected override void sendMessage(string message, string nameClient)
+            {
+                m_server.WriteMessage(nameClient, message);//Отправка
+                addMessage(message, nameClient, TypeMes.Output);//Добавление сообщения и обработка 
+            }
+
+            protected override void addMessage(string com_mes, string arg, string name)
+            {
+                if (com_mes.Equals(COMMAND.GetDataTime.ToString()) == true)//запрос даты
+                    sendMessage(DateTime.Now.ToString(), name);
+                else
+                    if (com_mes.Equals(COMMAND.GetName.ToString()) == true)//запрос имени
+                        sendMessage(m_myName, name);
+                    else
+                        if (com_mes.Equals(COMMAND.GetStat.ToString()) == true)//запрос типа текущего экземпляра
+                            sendMessage(TypePanel.Server.ToString(), name);
+                        else
+                            if (com_mes.Equals(COMMAND.Start.ToString()) == true)//запрос запуска
+                            {
+                                Invoke(d_statLbl, true);
+                                DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, Pipes.Pipe.ID_EVENT.Start } });
+                            }
+                            else
+                                if (com_mes.Equals(COMMAND.Stop.ToString()) == true)//запрос остановки
+                                {
+                                    Invoke(d_statLbl, false);
+                                    DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, Pipes.Pipe.ID_EVENT.Stop } });
+                                }
+                                else
+                                    if (com_mes.Equals(COMMAND.Status.ToString()) == true)//обработка запроса изменения типа экземпляра
+                                    {
+                                        Invoke(d_updateLV, new object[] { name, arg });
+                                    }
+                                    else
+                                        if (com_mes.Equals(COMMAND.SetStat.ToString()) == true)//обработка запроса изменения типа экземпляра
+                                        {
+                                            if (arg.Equals(TypePanel.Client.ToString()) == true)
+                                            {
+                                                m_server.SendDisconnect();
+                                                Invoke(d_reconn, new object[] { "", false });
+                                            }
+                                        }
+                                        else
+                                            if (com_mes.Equals(COMMAND.Exit.ToString()) == true)
+                                                Invoke(d_exit);
+                                            else
+                                                ; // неизвестная команда
+            }
+        }
+
+        private abstract partial class PanelCS : PanelCommonDataHost
         {
             #region Переменные и константы
 
-            private const string KEY_MYNAME = @"MyName";
+            protected const string KEY_MYNAME = @"MyName";
             private static int MS_TIMER_UPDATE_STATUS = 10000;
 
             private enum INDEX_COLUMN_MESSAGES : short { UNKNOWN = -1
@@ -292,12 +465,12 @@ namespace uLoader
             /// <summary>
             /// Тип сообщения
             /// </summary>
-            enum TypeMes { Input, Output };
+            protected enum TypeMes { Input, Output };
 
             /// <summary>
             /// Комманды к клиенту/серверу
             /// </summary>
-            private enum COMMAND { Unknown = -1
+            protected enum COMMAND { Unknown = -1
                 , GetDataTime, Start, Stop, ReConnect, GetName, GetStat, SetStat, Status, Exit
                 , Count
             };
@@ -308,12 +481,12 @@ namespace uLoader
             /// <summary>
             /// Экземпляр сервера
             /// </summary>
-            Pipes.Server m_server;
+            protected Pipes.Server m_server;
 
             /// <summary>
             /// Экземпляр клиента
             /// </summary>
-            Pipes.Client m_client;
+            protected Pipes.Client m_client;
 
             /// <summary>
             /// Массив имён серверов
@@ -323,7 +496,7 @@ namespace uLoader
             /// <summary>
             /// Тип экземпляра приложения
             /// </summary>
-            private TypePanel m_type_panel;
+            protected TypePanel m_type_panel;
 
             /// <summary>
             /// Экземпляр делегата добавления строки в DGV
@@ -336,6 +509,16 @@ namespace uLoader
             private DelegateStrBoolFunc d_operCB;
 
             /// <summary>
+            /// Делегат для добавления/удаления объекта в listView
+            /// </summary>
+            /// <param name="obj">Строка в виде массива</param>
+            protected delegate void DelegateStrStrFunc(string name_client, string status);
+            /// <summary>
+            /// Экземпляр делегата добавления/удаления объекта в listView
+            /// </summary>
+            protected DelegateStrStrFunc d_updateLV;
+
+            /// <summary>
             /// Делегат для добавления/удаления объекта в comboBox
             /// </summary>
             /// <param name="obj">Строка в виде массива</param>
@@ -343,32 +526,17 @@ namespace uLoader
             /// <summary>
             /// Экземпляр делегата добавления/удаления объекта в comboBox
             /// </summary>
-            private DelegateStringFunc d_reconn;
-
-            /// <summary>
-            /// Делегат для добавления/удаления объекта в listView
-            /// </summary>
-            /// <param name="obj">Строка в виде массива</param>
-            delegate void DelegateStrStrFunc(string name_client, string status);
-            /// <summary>
-            /// Экземпляр делегата добавления/удаления объекта в listView
-            /// </summary>
-            private DelegateStrStrFunc d_updateLV;
+            protected DelegateStringFunc d_reconn;
 
             /// <summary>
             /// Экземпляр делегата изменения label'a
             /// </summary>
-            private DelegateFunc d_statLbl;
+            protected DelegateFunc d_statLbl;
 
             /// <summary>
             /// Экземпляр делегата exit
             /// </summary>
-            private DelegateFunc d_exit;
-
-            /// <summary>
-            /// Экземпляр делегата disconnect
-            /// </summary>
-            private DelegateFunc d_disconnect;
+            protected DelegateFunc d_exit;
 
             /// <summary>
             /// Объект синхронизации
@@ -376,14 +544,14 @@ namespace uLoader
             private Object thisLock;
 
             /// <summary>
-            /// Имя ПК
-            /// </summary>
-            private string m_myName;
-
-            /// <summary>
             /// Имя сервера(если экземпляр Client)
             /// </summary>
-            private string m_servName;
+            protected string m_servName;
+
+            /// <summary>
+            /// Имя ПК
+            /// </summary>
+            protected string m_myName;
 
             private Thread thread;
             #endregion
@@ -397,8 +565,7 @@ namespace uLoader
             {
                 thisLock = new Object();
                 m_type_panel = type;
-                d_exit = exit_program;
-                d_disconnect = disconnect_client;
+                d_exit = exit_program;                
 
                 try {
                     InitializeComponent();
@@ -908,10 +1075,9 @@ namespace uLoader
                 Invoke(d_operCB, new object[] { (e as Pipes.Server.ConnectionClientEventArgs).IdServer, true });
             }
 
-            private void delFromComList(object sender, EventArgs e)
+            protected virtual void delFromComList(object sender, EventArgs e)
             {
                 Invoke(d_operCB, new object[] { (e as Pipes.Server.ConnectionClientEventArgs).IdServer, false });
-                Invoke(d_disconnect);
             }
 
             private void newMessageToServer(object sender, EventArgs e)
@@ -937,25 +1103,11 @@ namespace uLoader
 
             #region Отправка сообщений
             /// <summary>
-            /// Отправка сообщения из сервера
+            /// Отправка сообщения от клиента/сервера
             /// </summary>
             /// <param name="message">Сообщение</param>
             /// <param name="nameClient">Имя клиента</param>
-            private void sendMessageFromServer(string message, string nameClient)
-            {
-                m_server.WriteMessage(nameClient, message);//Отправка
-                addMessage(message, nameClient, TypeMes.Output);//Добавление сообщения и обработка 
-            }
-
-            /// <summary>
-            /// Отправка сообщения из клиента
-            /// </summary>
-            /// <param name="message">Сообщение для отправки</param>
-            private void sendMessageFromClient(string message)
-            {
-                m_client.WriteMessage(message);//Отправка сообщения
-                addMessage(message, m_servName, TypeMes.Output);//Добавление сообщения и обработка
-            }
+            protected abstract void sendMessage(string message, string nameClient);
             #endregion
 
             private void rbChecked(object sender, EventArgs ev)
@@ -999,18 +1151,20 @@ namespace uLoader
                     case TypePanel.Server:
                         if (commandBox.SelectedItem.ToString() == COMMAND.ReConnect.ToString ())//Добавляет аргумент для реконнекта
                         {
-                            sendMessageFromServer(commandBox.SelectedItem.ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + argCommand.Text, cbClients.Text);
+                            sendMessage(commandBox.SelectedItem.ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + argCommand.Text, cbClients.Text);
                         }
                         else
-                            sendMessageFromServer(commandBox.SelectedItem.ToString(), cbClients.Text);
+                            sendMessage(commandBox.SelectedItem.ToString(), cbClients.Text);
                         break;
 
                     case TypePanel.Client:
-                        sendMessageFromClient(commandBox.SelectedItem.ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + argCommand.Text);
+                        sendMessage(commandBox.SelectedItem.ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + argCommand.Text, string.Empty);
                         break;
                 }
                 argCommand.Clear();
             }
+
+            protected abstract void addMessage(string com_mes, string arg, string name);
 
             /// <summary>
             /// Обработка нового сообщения
@@ -1018,7 +1172,7 @@ namespace uLoader
             /// <param name="message">Сообщение</param>
             /// <param name="name">Имя отправителя</param>
             /// <param name="in_mes">true если входящее</param>
-            private void addMessage(string message, string name, TypeMes type_mes)
+            protected virtual void addMessage(string message, string name, TypeMes type_mes)
             {
                 object rows = null; // новая строка сообщения
 
@@ -1035,103 +1189,8 @@ namespace uLoader
                     switch (type_mes)
                     {
                         case TypeMes.Input://входящие
-                            switch (m_type_panel)
-                            {
-                                case TypePanel.Client://для клиента
-                                    if (command_mes.Equals(COMMAND.GetDataTime.ToString()) == true)//Обработка запроса даты
-                                        sendMessageFromClient(DateTime.Now.ToString());
-                                    else
-                                        if (command_mes.Equals(COMMAND.GetName.ToString()) == true)//Обработка запроса имени
-                                            sendMessageFromClient(KEY_MYNAME + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + m_myName);
-                                        else
-                                            if (command_mes.Equals(COMMAND.GetStat.ToString()) == true)//Обработка запроса типа экземпляра
-                                                sendMessageFromClient(TypePanel.Client.ToString());
-                                            else
-                                                if (command_mes.Equals(COMMAND.ReConnect.ToString()) == true)//Обработка запроса на переподключение
-                                                {
-                                                    m_client.SendDisconnect();//отправка сообщения о разрыве соединения
-                                                    Invoke(d_reconn, new object[] { argument, false });
-                                                }
-                                                else
-                                                    if (command_mes.Equals(COMMAND.Start.ToString()) == true)//обработка запроса запуска
-                                                    {
-                                                        Invoke(d_statLbl, true);
-                                                        DataAskedHost(new object[] { new object[] { this, m_type_panel, type_mes, Pipes.Pipe.ID_EVENT.Start } });
-                                                    }
-                                                    else
-                                                        if (command_mes.Equals(COMMAND.Stop.ToString()) == true)//обработка запроса остановки
-                                                        {
-                                                            Invoke(d_statLbl, false);
-                                                            DataAskedHost(new object[] { new object[] { this, m_type_panel, type_mes, Pipes.Pipe.ID_EVENT.Stop } });
-                                                        }
-                                                        else
-                                                            if (command_mes.Equals(COMMAND.SetStat.ToString()) == true)//обработка запроса изменения типа экземпляра
-                                                            {
-                                                                if (argument.Equals(TypePanel.Server.ToString()) == true)
-                                                                {
-                                                                    m_client.SendDisconnect();
-                                                                    Invoke(d_reconn, new object[] { string.Empty, true });
-                                                                }
-                                                            }
-                                                            else
-                                                                if (command_mes.Equals(COMMAND.Status.ToString()) == true)//обработка запроса изменения типа экземпляра
-                                                                {
-                                                                    sendMessageFromClient(command_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + Pipes.Pipe.MESSAGE_RECIEVED_OK);
-                                                                }
-                                                                else
-                                                                    if (command_mes.Equals(COMMAND.Exit.ToString()) == true)
-                                                                    {
-                                                                        Invoke(d_exit);
-                                                                    }
-                                    break;
-
-                                case TypePanel.Server://входящие для сервера
-                                    if (command_mes.Equals(COMMAND.GetDataTime.ToString()) == true)//запрос даты
-                                        sendMessageFromServer(DateTime.Now.ToString(), name);
-                                    else
-                                        if (command_mes.Equals(COMMAND.GetName.ToString()) == true)//запрос имени
-                                            sendMessageFromServer(m_myName, name);
-                                        else
-                                            if (command_mes.Equals(COMMAND.GetStat.ToString()) == true)//запрос типа текущего экземпляра
-                                                sendMessageFromServer(TypePanel.Server.ToString(), name);
-                                            else
-                                                if (command_mes.Equals(COMMAND.Start.ToString()) == true)//запрос запуска
-                                                {
-                                                    Invoke(d_statLbl, true);
-                                                    DataAskedHost(new object[] { new object[] { this, m_type_panel, type_mes, Pipes.Pipe.ID_EVENT.Start } });
-                                                }
-                                                else
-                                                    if (command_mes.Equals(COMMAND.Stop.ToString()) == true)//запрос остановки
-                                                    {
-                                                        Invoke(d_statLbl, false);
-                                                        DataAskedHost(new object[] { new object[] { this, m_type_panel, type_mes, Pipes.Pipe.ID_EVENT.Stop } });
-                                                    }
-                                                    else
-                                                        if (command_mes.Equals(COMMAND.Status.ToString()) == true)//обработка запроса изменения типа экземпляра
-                                                        {
-                                                            Invoke(d_updateLV, new object[] { name, argument });
-                                                        }
-                                                        else
-                                                            if (command_mes.Equals(COMMAND.SetStat.ToString()) == true)//обработка запроса изменения типа экземпляра
-                                                            {
-                                                                if (argument.Equals(TypePanel.Client.ToString()) == true)
-                                                                {
-                                                                    m_server.SendDisconnect();
-                                                                    Invoke(d_reconn, new object[] { "", false });
-                                                                }
-                                                            }
-                                                            else
-                                                                if (command_mes.Equals(COMMAND.Exit.ToString()) == true)
-                                                                    Invoke(d_exit);
-                                                                else
-                                                                    ; // неизвестная команда
-                                    break;
-
-                                default:
-                                    break;
-                            }
+                            addMessage(command_mes, argument, name);
                             break;
-
                         case TypeMes.Output://исходящие
                             string[] arMes = message.Split(Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR);
                             switch (arMes[0])
@@ -1164,47 +1223,9 @@ namespace uLoader
             {
                 try {
                     foreach (string client in cbClients.Items)
-                        sendMessageFromServer(COMMAND.Status.ToString (), client);
+                        sendMessage(COMMAND.Status.ToString (), client);
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, @"PanelClientServer.PanelCS::timerUpdateStat_Tick () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
-            }
-
-            /// <summary>
-            /// Метод обновления
-            /// </summary>
-            /// <param name="client">Наименование клиента</param>
-            /// <param name="status">Текст ответа</param>
-            private void lvStatusUpdate(string client, string status)
-            {
-                Color clr = Color.Empty;
-                string text = string.Empty;
-                int col = -1;
-
-                try {
-                    foreach (ListViewItem item in lvStatus.Items)
-                        if (item.Text.Equals(client) == true)
-                        {
-                            if (status.Equals(Pipes.Pipe.MESSAGE_RECIEVED_OK) == true)
-                            {
-                                clr = Color.LimeGreen;
-                                text = DateTime.Now.ToString();
-                                col = 2;
-                            }
-                            else
-                            {
-                                clr = Color.Red;
-                                text = "Err";
-                                col = 1;
-                            }
-
-                            item.SubItems[1].BackColor = clr;
-                            item.SubItems[col].Text = text;
-                        }
-                        else
-                            ;
-                } catch (Exception e) {
-                    Logging.Logg().Exception(e, string.Format (@"PanelClientServer.PanelCS::lvStatusUpdate (client={0}, status={1}) - ...", client, status), Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
 
@@ -1346,14 +1367,50 @@ namespace uLoader
                 }
             }
 
+            /// <summary>
+            /// Метод обновления
+            /// </summary>
+            /// <param name="client">Наименование клиента</param>
+            /// <param name="status">Текст ответа</param>
+            private void lvStatusUpdate(string client, string status)
+            {
+                Color clr = Color.Empty;
+                string text = string.Empty;
+                int col = -1;
+
+                try
+                {
+                    foreach (ListViewItem item in lvStatus.Items)
+                        if (item.Text.Equals(client) == true)
+                        {
+                            if (status.Equals(Pipes.Pipe.MESSAGE_RECIEVED_OK) == true)
+                            {
+                                clr = Color.LimeGreen;
+                                text = DateTime.Now.ToString();
+                                col = 2;
+                            }
+                            else
+                            {
+                                clr = Color.Red;
+                                text = "Err";
+                                col = 1;
+                            }
+
+                            item.SubItems[1].BackColor = clr;
+                            item.SubItems[col].Text = text;
+                        }
+                        else
+                            ;
+                }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, string.Format(@"PanelClientServer.PanelCS::lvStatusUpdate (client={0}, status={1}) - ...", client, status), Logging.INDEX_MESSAGE.NOT_SET);
+                }
+            }
+
             private void exit_program()
             {
                 DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, Pipes.Pipe.ID_EVENT.Exit } });
-            }
-
-            private void disconnect_client()
-            {
-                DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, Pipes.Pipe.ID_EVENT.Disconnect } });
             }
         }
 
