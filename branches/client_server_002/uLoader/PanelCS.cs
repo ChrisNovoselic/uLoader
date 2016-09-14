@@ -84,14 +84,21 @@ namespace uLoader
             // по кол-ву параметров (короткие сообщения - внутренние)
             bool bRedirect = pars.Length > 2;
 
-            if (bRedirect == true)
-                DataAskedHost(new object[] { new object[] { HHandlerQueue.StatesMachine.INTERACTION_EVENT, (Pipes.Pipe.ID_EVENT)pars[3] } });
-            else
-                // внутреннее сообщение
-                if (((TypePanel)pars[1]) == TypePanel.Client) //e.TypeApp == PanelCS.TypePanel.Client
-                    BeginInvoke(new DelegateFunc (reConnClient));
-                else //e.TypeApp == PanelCS.TypePanel.Server
-                    ; // ничего не делаем
+            try
+            {
+                if (bRedirect == true)
+                    DataAskedHost(new object[] { new object[] { HHandlerQueue.StatesMachine.INTERACTION_EVENT, (Pipes.Pipe.ID_EVENT)pars[3] } });
+                else
+                    // внутреннее сообщение
+                    if (((TypePanel)pars[1]) == TypePanel.Client) //e.TypeApp == PanelCS.TypePanel.Client
+                        BeginInvoke(new DelegateFunc(reConnClient));
+                    else //e.TypeApp == PanelCS.TypePanel.Server
+                        ; // ничего не делаем
+            }
+            catch (Exception e)
+            {
+                Logging.Logg().Exception(e, @"PanelClientServer::panelOnCommandEvent () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            }
         }
 
         private InteractionParameters m_InteractionParameters;
@@ -206,7 +213,7 @@ namespace uLoader
                 //BeginInvoke(new DelegateObjectFunc (start), par);
                 //eventRecievedInteractionParameters(par);
 
-                if (m_arPanels[(int)TypePanel.Client].ClientIsConnected == true)
+                if ((m_arPanels[(int)TypePanel.Client] as PanelClient).IsConnected == true)
                 {
                     _typePanelEnabled = TypePanel.Client;
                 }
@@ -260,25 +267,130 @@ namespace uLoader
 
         private void reConnClient()
         {
-            m_arPanels[(int)TypePanel.Client].Activate(false); m_arPanels[(int)TypePanel.Client].Stop();
-            m_arPanels[(int)TypePanel.Client].Start();
-            m_arPanels[(int)TypePanel.Client].Activate(true);
+            // чевидно, что _typePanelEnabled == TypePanel.Client
+            TypePanel prevTypePanelEnabled = _typePanelEnabled;
+            bool bIsConnected = false;
+
+            try {
+                m_arPanels[(int)TypePanel.Client].Activate(false); m_arPanels[(int)TypePanel.Client].Stop();
+                
+                m_arPanels[(int)TypePanel.Client].Start();
+                bIsConnected = (m_arPanels[(int)TypePanel.Client] as PanelClient).IsConnected;
+
+                if (bIsConnected == true)
+                    m_arPanels[(int)TypePanel.Client].Activate(true);
+                else
+                    _typePanelEnabled = TypePanel.Server;
+
+                if (!(prevTypePanelEnabled == _typePanelEnabled))
+                {
+                    m_arPanels[(int)prevTypePanelEnabled].Enabled = false;
+                    m_arPanels[(int)_typePanelEnabled].Enabled = true;
+                }
+                else
+                    ;
+            } catch (Exception e) {
+                Logging.Logg().Exception(e, @"PanelClientServer::reConnClient () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            }
         }
 
         private class PanelClient : PanelCS
         {
+            /// <summary>
+            /// Экземпляр клиента
+            /// </summary>
+            protected Pipes.Client m_client;
+
             public PanelClient(string[] arServerName)
                 : base(arServerName, TypePanel.Client)
             {
+            }
+
+            public bool IsConnected { get { return (!(m_client == null)) && (m_client.m_bIsConnected == true); } }
+            /// <summary>
+            /// Запуск экземпляра клиента
+            /// </summary>
+            /// <param name="name_serv">Имя сервера для подключения, не передавать значение если нужно перебирать список</param>
+            protected override void runStart(string name_serv)
+            {
+                m_client = null;
+
+                if (m_type_panel == TypePanel.Client)
+                {
+                    thread = new Thread(connectToServer);//Инициализация экземпляра потока
+                    if (name_serv.Equals(string.Empty) == true)
+                        thread.Start(m_servers);//Старт потока со списком серверов из конструктора
+                    else
+                        thread.Start(new string[] { name_serv }); //Старт потока со списком серверов переданным в initialize
+                    thread.Join();
+
+                    if (m_client.m_bIsConnected == true)
+                        argCommand.Enabled = true;
+                }
+            }
+            /// <summary>
+            /// Подключение к серверу (метод отдельного потока)
+            /// </summary>
+            /// <param name="data">Массив имен серверов</param>
+            private void connectToServer(object data)
+            {
+                string[] servers = (data as string[]);
+                int iAttempt = -1;
+
+                lock (thisLock)
+                {
+                    //Перебор серверов для подключения
+                    foreach (string server in servers)
+                    {
+                        if (server.Equals(Environment.MachineName) == false)
+                        {
+                            iAttempt = 0;
+
+                            m_client = new Pipes.Client(server, MS_TIMEOUT_CONNECT_TO_SERVER);//инициализация клиента
+
+                            //Подписка на события клиента
+                            m_client.ReadMessage += new EventHandler(newMessageToClient);
+                            m_client.ResServ += new EventHandler(resClient);
+                            //несколько попыток подключения при неудаче
+                            while (iAttempt < MAX_ATTEMPT_CONNECT)
+                            {
+                                //!!!! необходимо будет вставить условие на исключение собственного имени из перебора
+                                m_client.StartClient();//Выполняем старт клиента и пытаемся подключиться к серверу
+                                if (m_client.m_bIsConnected == true)//Если соединение установлено то
+                                {
+                                    //m_type_app = TypePanel.Client;//Тип экземпляра устанавливаем Клиент
+                                    m_myName = m_client.m_Name;//Устанавливаем собственное имя равное имени клиента
+                                    m_client.WriteMessage(COMMAND.GetName.ToString());//Запрашиваем имя сервера
+                                    //Прерываем попытки подключения
+                                    break;
+                                }
+                                else
+                                    iAttempt++;
+                            }
+                            //Проверить было ли установлено соединение
+                            if (m_client.m_bIsConnected == false)
+                            {// подключениене не было установлено
+                                //отписываемся от событий
+                                m_client.ReadMessage -= newMessageToClient;
+                                m_client.ResServ -= resClient;
+                            }
+                            else
+                            {
+                                // прерываем перебор серверов
+                                break;
+                            }
+
+                        }
+                    }
+                }
             }
             /// <summary>
             /// Отправка сообщения из клиента
             /// </summary>
             /// <param name="message">Сообщение для отправки</param>
-            protected override void sendMessage(string message, string nameClient)
+            protected override void sendMessage(string message, string notUses)
             {
-                m_client.WriteMessage(message);//Отправка сообщения
-                addMessage(message, m_servName, TypeMes.Output);//Добавление сообщения и обработка
+                sendMessage(message);
             }
 
             private void sendMessage(string message)
@@ -334,19 +446,111 @@ namespace uLoader
                                                 {
                                                     Invoke(d_exit);
                                                 }
+                                                else
+                                                    throw new Exception (string.Format(@"PanelClient::addMessage (COMMAND={0}) - неизвестная команда...", com_mes));
+            }
+
+            private void newMessageToClient(object sender, EventArgs e)
+            {
+                addMessage((e as Pipes.Client.ReadMessageEventArgs).Value, (e as Pipes.Client.ReadMessageEventArgs).IdServer, TypeMes.Input);//Добавление сообщения и обработка
+                m_servName = (e as Pipes.Client.ReadMessageEventArgs).IdServer;
+            }
+
+            private void resClient(object sender, EventArgs e)
+            {//Pipes.Client.ResServeventArgs
+                Invoke(d_reconn, string.Empty);
+            }
+
+            public override void Stop()
+            {
+                if (m_client != null)
+                {
+                    if (m_client.b_Active == true)
+                    {
+                        m_client.SendDisconnect();//Отправка сообщения о разрыве соединения
+                        m_client.StopClient();//Остановка клиента
+                    }
+                }
+
+                base.Stop();
+            }
+
+            protected override void reconnect(string new_server = "")
+            {
+                m_client.StopClient();//остановка клиента
+
+                base.reconnect(new_server);
             }
         }
 
         private class PanelServer : PanelCS
         {
+            /// <summary>
+            /// Экземпляр сервера
+            /// </summary>
+            private Pipes.Server m_server;
+
             public PanelServer(string []arServerName) : base (arServerName, TypePanel.Server)
             {
                 d_disconnect = disconnect_client;
             }
 
+            private System.Windows.Forms.Timer timerUpdateStatus;
+
+            /// <summary>
+            /// Запуск экземпляра сервера
+            /// </summary>
+            protected override void runStart(string notUse)
+            {
+                m_server = null;
+
+                lock (thisLock)
+                {
+                    if (thread != null)
+                    {
+                        if (thread.ThreadState == ThreadState.Running)
+                        {
+                            thread.Abort();//останавливем поток 
+                        }
+
+                        thread = null; //обнуляем его
+                    }
+                    thread = new Thread(initialize);//Инициализируем поток создания сервера
+                    //??? подождать завершения - определить результат
+                    thread.Start();//Потока
+
+                    //Включение компонентов формы для сервера
+                    cbClients.Enabled = true;
+                    argCommand.Enabled = true;
+                    rbStatus.Enabled = true;
+                    rbStatus.Checked = true;
+
+                    timerUpdateStatus = new System.Windows.Forms.Timer();
+                    timerUpdateStatus.Interval = MS_TIMER_UPDATE_STATUS;
+                    timerUpdateStatus.Tick += new EventHandler(timerUpdateStat_Tick);
+
+                    timerUpdateStatus.Start();
+                }
+            }
+
             public override void Start()
             {
                 base.Start();
+            }
+            /// <summary>
+            /// Запуск сервера (метод отдельного потока)
+            /// </summary>
+            /// <param name="data"></param>
+            private void initialize(object data)
+            {
+                m_server = new Pipes.Server();//Создание экземпляра сервера
+                //Подписка на события сервера
+                m_server.ReadMessage += new EventHandler(newMessageToServer);
+                m_server.ConnectClient += new EventHandler(addToComList);
+                m_server.DisConnectClient += new EventHandler(delFromComList);
+                m_server.StartServer();//запуск экземпляра сервера
+                //m_type_app = TypePanel.Server;//устанавливаем тип экземпляра приложения Сервер
+                m_myName = m_server.m_Name;//Устанавливаем собственное имя равное имени сервера
             }
             /// <summary>
             /// Экземпляр делегата disconnect
@@ -417,6 +621,57 @@ namespace uLoader
                                             else
                                                 ; // неизвестная команда
             }
+            /// <summary>
+            /// Метод обработки события таймера
+            ///  отправка сообщений клиентам (опрос статуса)
+            /// </summary>
+            /// <param name="sender">Объект, инициировавший событие - таймер</param>
+            /// <param name="e">Аргумент события</param>
+            private void timerUpdateStat_Tick(object sender, EventArgs ev)
+            {
+                try {
+                    foreach (string client in cbClients.Items)
+                        sendMessage(COMMAND.Status.ToString (), client);
+                } catch (Exception e) {
+                    Logging.Logg().Exception(e, @"PanelClientServer.PanelCS::timerUpdateStat_Tick () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
+            }
+
+            protected void addToComList(object sender, EventArgs e)
+            {
+                Invoke(d_operCB, new object[] { (e as Pipes.Server.ConnectionClientEventArgs).IdServer, true });
+            }
+
+            private void newMessageToServer(object sender, EventArgs e)
+            {
+                addMessage((e as Pipes.Pipe.ReadMessageEventArgs).Value
+                    , (e as Pipes.Pipe.ReadMessageEventArgs).IdServer
+                    , TypeMes.Input);//Добавление сообщения и обработка
+            }
+
+            public override void Stop()
+            {
+                if (m_server != null)
+                {
+                    timerUpdateStatus.Stop();
+                    m_server.SendDisconnect();//Отправка сообщения о разрыве соединения
+                    m_server.StopServer();//Остановка сервера
+                }
+
+                base.Stop();
+            }
+
+            protected override void reconnect(string new_server = "")
+            {
+                timerUpdateStatus.Stop();
+                cbClients.Items.Clear();
+                lvStatus.Items.Clear();
+                m_server.SendDisconnect();
+                //m_server.StopServer();//остановка сервера
+                timerUpdateStatus.Start();
+                
+                base.reconnect(new_server);
+            }
         }
 
         private abstract partial class PanelCS : PanelCommonDataHost
@@ -424,7 +679,7 @@ namespace uLoader
             #region Переменные и константы
 
             protected const string KEY_MYNAME = @"MyName";
-            private static int MS_TIMER_UPDATE_STATUS = 10000;
+            protected static int MS_TIMER_UPDATE_STATUS = 10000;
 
             private enum INDEX_COLUMN_MESSAGES : short { UNKNOWN = -1
                 , DATETIME, MESSAGE, SOURCE, TYPE_IO
@@ -436,11 +691,11 @@ namespace uLoader
             /// <summary>
             /// Количество попыток подключения
             /// </summary>
-            private static int MAX_ATTEMPT_CONNECT = 2;
+            protected static int MAX_ATTEMPT_CONNECT = 2;
             /// <summary>
             /// Таймаут подключения
             /// </summary>
-            private static int MS_TIMEOUT_CONNECT_TO_SERVER = 500;
+            protected static int MS_TIMEOUT_CONNECT_TO_SERVER = 500;
             ///// <summary>
             ///// Признак состояния внешней панели ("Работа")
             ///// </summary>
@@ -476,22 +731,10 @@ namespace uLoader
             };
             //string[] arrCommand = new string[] { "GetDataTime", "Start", "Stop", "ReConnect", "GetName", "GetStat", "SetStat", "Status", "Exit" };            
 
-            System.Windows.Forms.Timer timerUpdateStatus;
-
-            /// <summary>
-            /// Экземпляр сервера
-            /// </summary>
-            protected Pipes.Server m_server;
-
-            /// <summary>
-            /// Экземпляр клиента
-            /// </summary>
-            protected Pipes.Client m_client;
-
             /// <summary>
             /// Массив имён серверов
             /// </summary>
-            string[] m_servers;
+            protected string[] m_servers;
 
             /// <summary>
             /// Тип экземпляра приложения
@@ -501,12 +744,12 @@ namespace uLoader
             /// <summary>
             /// Экземпляр делегата добавления строки в DGV
             /// </summary>
-            private DelegateObjectFunc d_addRow;
+            private DelegateFunc d_addRow;
 
             /// <summary>
             /// Экземпляр делегата добавления/удаления объекта в comboBox
             /// </summary>
-            private DelegateStrBoolFunc d_operCB;
+            protected DelegateStrBoolFunc d_operCB;
 
             /// <summary>
             /// Делегат для добавления/удаления объекта в listView
@@ -522,7 +765,7 @@ namespace uLoader
             /// Делегат для добавления/удаления объекта в comboBox
             /// </summary>
             /// <param name="obj">Строка в виде массива</param>
-            delegate void DelegateStrBoolFunc(string name_serv, bool stat = false);
+            protected delegate void DelegateStrBoolFunc(string name_serv, bool stat = false);
             /// <summary>
             /// Экземпляр делегата добавления/удаления объекта в comboBox
             /// </summary>
@@ -541,7 +784,7 @@ namespace uLoader
             /// <summary>
             /// Объект синхронизации
             /// </summary>
-            private Object thisLock;
+            protected Object thisLock;
 
             /// <summary>
             /// Имя сервера(если экземпляр Client)
@@ -553,7 +796,7 @@ namespace uLoader
             /// </summary>
             protected string m_myName;
 
-            private Thread thread;
+            protected Thread thread;
             #endregion
 
             /// <summary>
@@ -565,7 +808,9 @@ namespace uLoader
             {
                 thisLock = new Object();
                 m_type_panel = type;
-                d_exit = exit_program;                
+                d_exit = exit_program;
+
+                m_listRowDGVAdding = new List<object>();
 
                 try {
                     InitializeComponent();
@@ -844,17 +1089,17 @@ namespace uLoader
             private System.Windows.Forms.DataGridView dgvMessage;
             private System.Windows.Forms.ListBox commandBox;
             private System.Windows.Forms.Button btnSendMessage;
-            private System.Windows.Forms.ComboBox cbClients;
+            protected System.Windows.Forms.ComboBox cbClients;
             private System.Windows.Forms.Label lblClients;
-            private System.Windows.Forms.TextBox argCommand;
+            protected System.Windows.Forms.TextBox argCommand;
             private System.Windows.Forms.Label lblArg;
             private System.Windows.Forms.Label lblStat;
             private System.Windows.Forms.Label lblType;
             private System.Windows.Forms.TableLayoutPanel panelStatus;
             private System.Windows.Forms.TableLayoutPanel panelCommand;
-            private System.Windows.Forms.RadioButton rbStatus;
-            private System.Windows.Forms.RadioButton rbCommand;
-            private System.Windows.Forms.ListView lvStatus;
+            protected System.Windows.Forms.RadioButton rbStatus;
+            protected System.Windows.Forms.RadioButton rbCommand;
+            protected System.Windows.Forms.ListView lvStatus;
             #endregion
 
             protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
@@ -862,24 +1107,19 @@ namespace uLoader
                 initializeLayoutStyleEvenly();
             }
 
-            public override bool Activate(bool active)
-            {
-                bool bRes = base.Activate(active);
-
-                //if (m_bIsFirstActivate == true)
-                if ((bRes == true)
-                    && (IsFirstActivated == true))
-                {
-                }
-                else
-                    ;
-
-                return bRes;
-            }
-
-            //public void ReActivate()
+            //public override bool Activate(bool active)
             //{
-            //    StartPanel();
+            //    bool bRes = base.Activate(active);
+
+            //    //if (m_bIsFirstActivate == true)
+            //    if ((bRes == true)
+            //        && (IsFirstActivated == true))
+            //    {
+            //    }
+            //    else
+            //        ;
+
+            //    return bRes;
             //}
 
             /// <summary>
@@ -899,11 +1139,8 @@ namespace uLoader
                 getCommandToList();
 
                 //Инициализация экземпляра клиента/сервера
-                initialize(string.Empty
-                    , m_type_panel);
+                initialize(string.Empty);
             }
-
-            public bool ClientIsConnected { get { return (!(m_client == null)) && (m_client.m_bIsConnected == true); } }
 
             #region Создание клиента/сервера
             /// <summary>
@@ -911,13 +1148,11 @@ namespace uLoader
             /// </summary>
             /// <param name="name_serv">Имя сервера для подключения</param>
             /// <param name="is_serv">Если нужен сервер без запуска клиента то установить true</param>
-            private void initialize(string name_serv, TypePanel runPipe)
+            private void initialize(string name_serv)
             {
                 cbClients.Enabled = false;
                 argCommand.Enabled = false;
 
-                m_server = null;
-                m_client = null;
                 //Тип экземпляра (клиент/сервер/неопределено)
                 //m_type_app = TypePanel.Unknown;
 
@@ -929,176 +1164,28 @@ namespace uLoader
                     ;
 
                 //Проверка флага запуска сервера
-                switch (runPipe)
-                {
-                    case TypePanel.Client:
-                        runStartClient(name_serv);
-                        break;
-                    case TypePanel.Server:
-                        runStartServer();
-                        break;
-                    default:
-                        break;
-                }
+                runStart(name_serv);
             }
 
             /// <summary>
             /// Запуск экземпляра клиента
             /// </summary>
             /// <param name="name_serv">Имя сервера для подключения, не передавать значение если нужно перебирать список</param>
-            private void runStartClient(string name_serv = @"")
-            {
-                if (m_type_panel == TypePanel.Client)
-                {
-                    thread = new Thread(connectToServer);//Инициализация экземпляра потока
-                    if (name_serv.Equals(string.Empty) == true)
-                        thread.Start(m_servers);//Старт потока со списком серверов из конструктора
-                    else
-                        thread.Start(new string[] { name_serv }); //Старт потока со списком серверов переданным в initialize
-                    thread.Join();
+            protected abstract void runStart(string name_serv);
 
-                    if (m_client.m_bIsConnected == true)
-                        argCommand.Enabled = true;
-                }
-            }
-            /// <summary>
-            /// Подключение к серверу (метод отдельного потока)
-            /// </summary>
-            /// <param name="data">Массив имен серверов</param>
-            private void connectToServer(object data)
-            {
-                string[] servers = (data as string[]);
-                int iAttempt = -1;
-
-                lock (thisLock)
-                {
-                    //Перебор серверов для подключения
-                    foreach (string server in servers)
-                    {
-                        if (server.Equals(Environment.MachineName) == false)
-                        {
-                            iAttempt = 0;
-
-                            m_client = new Pipes.Client(server, MS_TIMEOUT_CONNECT_TO_SERVER);//инициализация клиента
-
-                            //Подписка на события клиента
-                            m_client.ReadMessage += new EventHandler(newMessageToClient);
-                            m_client.ResServ += new EventHandler(resClient);
-                            //несколько попыток подключения при неудаче
-                            while (iAttempt < MAX_ATTEMPT_CONNECT)
-                            {
-                                //!!!! необходимо будет вставить условие на исключение собственного имени из перебора
-                                m_client.StartClient();//Выполняем старт клиента и пытаемся подключиться к серверу
-                                if (m_client.m_bIsConnected == true)//Если соединение установлено то
-                                {
-                                    //m_type_app = TypePanel.Client;//Тип экземпляра устанавливаем Клиент
-                                    m_myName = m_client.m_Name;//Устанавливаем собственное имя равное имени клиента
-                                    m_client.WriteMessage(COMMAND.GetName.ToString());//Запрашиваем имя сервера
-                                    //Прерываем попытки подключения
-                                    break;
-                                }
-                                else
-                                    iAttempt++;
-                            }
-                            //Проверить было ли установлено соединение
-                            if (m_client.m_bIsConnected == false)
-                            {// подключениене не было установлено
-                                //отписываемся от событий
-                                m_client.ReadMessage -= newMessageToClient;
-                                m_client.ResServ -= resClient;
-                            } else {
-                            // прерываем перебор серверов
-                                break;
-                            }
-                            
-                        }
-                    }
-                }
-            }
-
-            /// <summary>
-            /// Запуск экземпляра сервера
-            /// </summary>
-            private void runStartServer()
-            {
-                lock (thisLock)
-                {
-                    if (m_type_panel == TypePanel.Server)
-                    {
-                        if (thread != null)
-                        {
-                            if (thread.ThreadState == ThreadState.Running)
-                            {
-                                thread.Abort();//останавливем поток 
-                            }
-
-                            thread = null; //обнуляем его
-                        }
-                        thread = new Thread(initializeServer);//Инициализируем поток создания сервера
-                        //??? подождать завершения - определить результат
-                        thread.Start();//Потока
-
-                        //Включение компонентов формы для сервера
-                        cbClients.Enabled = true;
-                        argCommand.Enabled = true;
-                        rbStatus.Enabled = true;
-                        rbStatus.Checked = true;
-
-                        timerUpdateStatus = new System.Windows.Forms.Timer();
-                        timerUpdateStatus.Interval = MS_TIMER_UPDATE_STATUS;
-                        timerUpdateStatus.Tick += new EventHandler(timerUpdateStat_Tick);
-
-                        timerUpdateStatus.Start();
-                    }
-                }
-            }
-            /// <summary>
-            /// Запуск сервера (метод отдельного потока)
-            /// </summary>
-            /// <param name="data"></param>
-            private void initializeServer(object data)
-            {
-                m_server = new Pipes.Server();//Создание экземпляра сервера
-                //Подписка на события сервера
-                m_server.ReadMessage += new EventHandler(newMessageToServer);
-                m_server.ConnectClient += new EventHandler(addToComList);
-                m_server.DisConnectClient += new EventHandler(delFromComList);
-                m_server.StartServer();//запуск экземпляра сервера
-                //m_type_app = TypePanel.Server;//устанавливаем тип экземпляра приложения Сервер
-                m_myName = m_server.m_Name;//Устанавливаем собственное имя равное имени сервера
-            }
             #endregion
 
-            #region Обработчики сервера
-            private void addToComList(object sender, EventArgs e)
-            {
-                Invoke(d_operCB, new object[] { (e as Pipes.Server.ConnectionClientEventArgs).IdServer, true });
-            }
+            #region Обработчики сервера            
 
             protected virtual void delFromComList(object sender, EventArgs e)
             {
                 Invoke(d_operCB, new object[] { (e as Pipes.Server.ConnectionClientEventArgs).IdServer, false });
             }
 
-            private void newMessageToServer(object sender, EventArgs e)
-            {
-                addMessage((e as Pipes.Pipe.ReadMessageEventArgs).Value
-                    , (e as Pipes.Pipe.ReadMessageEventArgs).IdServer
-                    , TypeMes.Input);//Добавление сообщения и обработка
-            }
             #endregion
 
             #region Обработчики клиента
-            private void newMessageToClient(object sender, EventArgs e)
-            {
-                addMessage((e as Pipes.Client.ReadMessageEventArgs).Value, (e as Pipes.Client.ReadMessageEventArgs).IdServer, TypeMes.Input);//Добавление сообщения и обработка
-                m_servName = (e as Pipes.Client.ReadMessageEventArgs).IdServer;
-            }
-
-            private void resClient(object sender, EventArgs e)
-            {//Pipes.Client.ResServeventArgs
-                Invoke(d_reconn, string.Empty);
-            }
+            
             #endregion
 
             #region Отправка сообщений
@@ -1164,6 +1251,8 @@ namespace uLoader
                 argCommand.Clear();
             }
 
+            private List <object> m_listRowDGVAdding;
+
             protected abstract void addMessage(string com_mes, string arg, string name);
 
             /// <summary>
@@ -1184,7 +1273,13 @@ namespace uLoader
 
                 try {
                     rows = new object[] { DateTime.Now.ToString(), message, name, type_mes.ToString() }; // новая строка сообщения
-                    Invoke(d_addRow, rows); // добавление новой строки сообщения в DGV
+                    if (IsHandleCreated == true)
+                    {
+                        m_listRowDGVAdding.Add(rows);
+                        Invoke(d_addRow); // добавление новой строки сообщения в DGV
+                    }
+                    else
+                        m_listRowDGVAdding.Add(rows);
 
                     switch (type_mes)
                     {
@@ -1214,29 +1309,15 @@ namespace uLoader
             }
 
             /// <summary>
-            /// Метод обработки события таймера
-            ///  отправка сообщений клиентам (опрос статуса)
-            /// </summary>
-            /// <param name="sender">Объект, инициировавший событие - таймер</param>
-            /// <param name="e">Аргумент события</param>
-            private void timerUpdateStat_Tick(object sender, EventArgs ev)
-            {
-                try {
-                    foreach (string client in cbClients.Items)
-                        sendMessage(COMMAND.Status.ToString (), client);
-                } catch (Exception e) {
-                    Logging.Logg().Exception(e, @"PanelClientServer.PanelCS::timerUpdateStat_Tick () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
-            }
-
-            /// <summary>
             /// Добавление строки в DGV
             /// </summary>
-            /// <param name="row">Объект в виде массива строк</param>
-            private void addRowToDGV(object row)
+            private void addRowToDGV()
             {
                 try {
-                    dgvMessage.Rows.Add((row as object[]));//Добавление строки в DGV
+                    foreach (object obj in m_listRowDGVAdding)
+                        dgvMessage.Rows.Add((obj as object[]));//Добавление строки в DGV
+
+                    m_listRowDGVAdding.Clear();
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, string.Format(@"PanelClientServer.PanelCS::addRowToDGV () - ..."), Logging.INDEX_MESSAGE.NOT_SET);
                 }
@@ -1247,28 +1328,6 @@ namespace uLoader
             /// </summary>
             public override void Stop()
             {
-                switch (m_type_panel)
-                {
-                    case TypePanel.Client:
-                        if (m_client != null)
-                        {
-                            if (m_client.b_Active == true)
-                            {
-                                m_client.SendDisconnect();//Отправка сообщения о разрыве соединения
-                                m_client.StopClient();//Остановка клиента
-                            }
-                        }
-                        break;
-                    case TypePanel.Server:
-                        if (m_server != null)
-                        {
-                            timerUpdateStatus.Stop();
-                            m_server.SendDisconnect();//Отправка сообщения о разрыве соединения
-                            m_server.StopServer();//Остановка сервера
-                        }
-                        break;
-                }
-
                 base.Stop();
             }
 
@@ -1322,31 +1381,15 @@ namespace uLoader
             /// Метод перезапуска клиент/серверной части
             /// </summary>
             /// <param name="new_server">Пустая строка при полном перезапуске или имя сервера для подключения к нему</param>
-            private void reconnect(string new_server = "")
+            protected virtual void reconnect(string new_server = "")
             {
-                switch (m_type_panel)
-                {
-                    case TypePanel.Client:
-                        m_client.StopClient();//остановка клиента                        
-                        break;
-                    case TypePanel.Server:
-                        timerUpdateStatus.Stop();
-                        cbClients.Items.Clear();
-                        lvStatus.Items.Clear();
-                        m_server.SendDisconnect();
-                        //m_server.StopServer();//остановка сервера
-                        timerUpdateStatus.Start();                        
-                        break;
-                    default:
-                        break;
-                }
-
                 dgvMessage.Rows.Clear();
 
+                // внутренее сообщение
                 DataAskedHost(new object[] { new object[] { this, m_type_panel } });
 
-                if (new_server.Equals(string.Empty) == false)
-                    initialize(new_server, m_type_panel);//подключение к новому серверу или запуск сервера
+                //if (new_server.Equals(string.Empty) == false)
+                //    initialize(new_server);//подключение к новому серверу или запуск сервера
             }
 
             /// <summary>
