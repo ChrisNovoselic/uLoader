@@ -228,9 +228,9 @@ namespace uLoader
             //2-ой(1) - дополнительная информация
             object[] pars = obj as object[];
 
-            switch ((Pipes.Pipe.ID_EVENT)pars[0])
+            switch ((PanelClientServer.ID_EVENT)pars[0])
             {
-                case Pipes.Pipe.ID_EVENT.Start:
+                case PanelClientServer.ID_EVENT.Start:
                     if (pars.Length > 1)
                         if (InvokeRequired == true)
                             BeginInvoke(new DelegateObjectFunc(interactionInitializeComlpeted), pars[1]);
@@ -243,6 +243,14 @@ namespace uLoader
                             autoStart ();
 
                     m_panelCS.PanelWorkState = PanelClientServer.TypePanelWorkState.Started;
+                    break;
+                case PanelClientServer.ID_EVENT.Stop:
+                    break;
+                case PanelClientServer.ID_EVENT.Connect:
+                    break;
+                case PanelClientServer.ID_EVENT.Disconnect:
+                    break;
+                case PanelClientServer.ID_EVENT.Exit:
                     break;
                 default:
                     break;
