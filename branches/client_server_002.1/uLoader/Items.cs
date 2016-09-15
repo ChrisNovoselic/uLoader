@@ -475,6 +475,7 @@ namespace uLoader
                     Int32.Parse(values[m_listSKeys.IndexOf(@"ID")])
                     , values[m_listSKeys.IndexOf(@"NAME_SHR")]
                     , values[m_listSKeys.IndexOf(@"IP")]
+                    , string.Empty // Instanse
                     , Int32.Parse(values[m_listSKeys.IndexOf(@"PORT")])
                     , values[m_listSKeys.IndexOf(@"DB_NAME")]
                     , values[m_listSKeys.IndexOf(@"UID")]
@@ -1118,7 +1119,13 @@ namespace uLoader
                         ;
                 }
                 // установить контроль за группой сигналов
-                PerformDataAskedHostQueue(new EventArgsDataHost(m_iIdTypePlugInObjectLoaded, (int)idToSend, new object[] { iIDGroupSignals, tsPeriodMain }));
+                PerformDataAskedHostQueue(new EventArgsDataHost(
+                    (int)Index
+                    , FormMain.FileINI.GetIDIndex(m_strID)
+                    , new object[] { iIDGroupSignals
+                        , idToSend
+                        , tsPeriodMain }
+                    ));
             }
             else
                 if (idToSend == ID_DATA_ASKED_HOST.STOP)
@@ -1128,7 +1135,12 @@ namespace uLoader
                             iIDGroupSignals
                         };
                     // снять контроль за группой сигналов
-                    PerformDataAskedHostQueue(new EventArgsDataHost(m_iIdTypePlugInObjectLoaded, (int)idToSend, new object[] { iIDGroupSignals }));
+                    PerformDataAskedHostQueue(new EventArgsDataHost(
+                        (int)Index
+                        , FormMain.FileINI.GetIDIndex(m_strID)
+                        , new object[] { iIDGroupSignals
+                            , idToSend}
+                        ));
                 }
                 else
                     ; //??? других команд не предусмотрено
@@ -1137,6 +1149,8 @@ namespace uLoader
 
             return iRes;
         }
+
+        private INDEX_SRC Index { get { return this is GroupSourcesDest ? INDEX_SRC.DEST : INDEX_SRC.SOURCE; } }
         /// <summary>
         /// Обработка сообщений "от" библиотеки
         /// </summary>
@@ -1214,7 +1228,9 @@ namespace uLoader
                         break;
                     case ID_DATA_ASKED_HOST.TABLE_RES:
                         if ((!(grpSgnls == null))
-                            && (!(pars[2] == null)))
+                            && ((!(pars[2] == null))
+                                && (pars[2] is DataTable))
+                            )
                         {
                             msgDebugLog = @"получено строк=";
 
@@ -1226,7 +1242,12 @@ namespace uLoader
                             else
                                 msgDebugLog += 0.ToString();
 
-                            this.PerformDataAskedHostQueue(new EventArgsDataHost(m_iIdTypePlugInObjectLoaded, (int)id_cmd, new object[] { iIDGroupSignals }));
+                            this.PerformDataAskedHostQueue(new EventArgsDataHost(
+                                (int)Index
+                                , FormMain.FileINI.GetIDIndex(m_strID)
+                                , new object[] { iIDGroupSignals
+                                    , id_cmd }
+                                ));
                         }
                         else
                             ;
@@ -1238,7 +1259,13 @@ namespace uLoader
                         grpSgnls.StateChange();
                         //Подтвердить изменение состояния группы сигналов
                         // + установить/разорвать взаимосвязь между группами источников (при необходимости) - для 'GroupSourcesDest'
-                        this.PerformDataAskedHostQueue(new EventArgsDataHost(m_iIdTypePlugInObjectLoaded, (int)id_cmd, new object[] { iIDGroupSignals, ID_HEAD_ASKED_HOST.CONFIRM }));
+                        this.PerformDataAskedHostQueue(new EventArgsDataHost(
+                            (int)Index
+                            , FormMain.FileINI.GetIDIndex(m_strID)
+                            , new object[] { iIDGroupSignals
+                                , id_cmd
+                                , ID_HEAD_ASKED_HOST.CONFIRM }
+                            ));
 
                         msgDebugLog = @"подтверждено: " + id_cmd.ToString();
 
@@ -1969,8 +1996,10 @@ namespace uLoader
             //id_detail - команда на изменение состояния группы сигналов
             //В 0-ом параметре передан индекс (???идентификатор) группы сигналов
             int indxGrpSgnls = (int)(ev.par as object[])[0];
-            ////В 1-ом параметре передан признак инициирования/подтверждения изменения состояния группы сигналов
-            //ID_HEAD_ASKED_HOST idHeadAskedHost = (ID_HEAD_ASKED_HOST)(ev.par as object[])[1];
+            //Во 2-ом параметре передан признак инициирования/подтверждения изменения состояния группы сигналов
+            ID_DATA_ASKED_HOST idDataAskedHost = (ID_DATA_ASKED_HOST)(ev.par as object[])[1];
+            ////Во 2-ом параметре передан признак инициирования/подтверждения изменения состояния группы сигналов
+            //ID_HEAD_ASKED_HOST idHeadAskedHost = (ID_HEAD_ASKED_HOST)(ev.par as object[])[2];
 
             base.PerformDataAskedHostQueue(ev);
 
@@ -1984,7 +2013,7 @@ namespace uLoader
                     bEvtDataAskedHostQueue = false;
 
                     if (m_dictLinkedIndexGroupSources.ContainsKey(indx) == true)
-                        if ((ID_DATA_ASKED_HOST)ev.id_detail == ID_DATA_ASKED_HOST.START)
+                        if (idDataAskedHost == ID_DATA_ASKED_HOST.START)
                         {
                             m_dictLinkedIndexGroupSources[indx].Add(indxGrpSgnls);
 
@@ -1994,7 +2023,7 @@ namespace uLoader
                                 ;
                         }
                         else
-                            if ((ID_DATA_ASKED_HOST)ev.id_detail == ID_DATA_ASKED_HOST.STOP)
+                            if (idDataAskedHost == ID_DATA_ASKED_HOST.STOP)
                             {
                                 m_dictLinkedIndexGroupSources[indx].Remove(indxGrpSgnls);
 
@@ -2009,7 +2038,12 @@ namespace uLoader
                         ;
 
                     if (bEvtDataAskedHostQueue == true)
-                        base.PerformDataAskedHostQueue(new EventArgsDataHost(ev.id_main, ev.id_detail, new object[] { this, indx }));
+                        base.PerformDataAskedHostQueue(new EventArgsDataHost(
+                            ev.id_main
+                            , ev.id_detail
+                            , new object[] { this
+                                , ev.par[1] }
+                            ));
                     else
                         ;
                 }
