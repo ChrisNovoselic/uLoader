@@ -8,6 +8,8 @@ using System.Data;
 using System.Threading;
 using System.ComponentModel;
 
+using System.Diagnostics; //Debug
+
 using HClassLibrary;
 using uLoaderCommon;
 
@@ -20,7 +22,7 @@ namespace uLoader
         /// <summary>
         /// Класс для идентификации объекта контроля
         /// </summary>
-        public class ID : Object
+        public struct ID //: Object
         {
             public INDEX_SRC m_typeOwner;
             /// <summary>
@@ -47,20 +49,29 @@ namespace uLoader
 
             public override bool Equals(object obj)
             {
-                return (this.m_typeOwner == (obj as ID).m_typeOwner)
-                    && (this.m_idOwner == (obj as ID).m_idOwner)
-                    && (this.m_idGroupSgnls.Equals((obj as ID).m_idGroupSgnls) == true);
+                return (this.m_typeOwner == ((ID)obj).m_typeOwner)
+                    && (this.m_idOwner == ((ID)obj).m_idOwner)
+                    && (this.m_idGroupSgnls.Equals(((ID)obj).m_idGroupSgnls) == true);
             }
 
             public override int GetHashCode()
             {
                 return base.GetHashCode();
             }
+
+            public string ToPrint()
+            {
+                string strRes = string.Empty;
+
+                strRes = string.Format(@"TypeOwner={0}, IdOwner={1}, Id={2}", m_typeOwner, m_idOwner, m_idGroupSgnls);
+
+                return strRes;
+            }
         }
         /// <summary>
         /// Перечисление - состояния объектов контроля
         /// </summary>
-        private enum STATE { UNKNOWN, ADDED, REMOVED, CONTROLED, CRASH, CCRASH
+        private enum STATE { UNKNOWN, ADDED, REMOVED, CONTROLED, CRASH, FCRASH
             , COUNT }
         /// <summary>
         /// Класс для хранения информации о контролируемом объекте 
@@ -93,7 +104,7 @@ namespace uLoader
             /// </summary>
             public void SetCrashed() { m_state = STATE.CRASH; }
 
-            public void SetCCrashed() { m_state = STATE.CCRASH; }
+            public void SetCCrashed() { m_state = STATE.FCRASH; }
             /// <summary>
             /// Обновить метку времени крайнего обновления
             /// </summary>
@@ -141,6 +152,29 @@ namespace uLoader
                         + @", IdOwner=" + id.m_idOwner + @") - добавляемый объект уже контролируется ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 return this.Count - 1;
+            }
+            /// <summary>
+            /// Удалить (непосредственно) элементы - объекты контроля
+            ///  в случае аварийной выгрузки/загрузки библиотеки, установить признаки подготовки к удалению не представляется возможным
+            ///  команда 'Stop' не выполняется
+            /// </summary>
+            /// <param name="id">Фильтр (сложный идентификатор) для удаления</param>
+            /// <returns>Количество удалкенных элементов</returns>
+            public int DeleteItems(ID id)
+            {
+                int iRes = -1; // ошибка при удалении
+
+                List<OManagement> listToDelete =
+                    FindAll(item => (item.m_id.m_typeOwner == id.m_typeOwner)
+                        && (item.m_id.m_idOwner == id.m_idOwner));
+
+                while (listToDelete.Count > 0) {
+                    Remove(listToDelete[0]);
+
+                    listToDelete.RemoveAt(0);
+                }
+
+                return iRes;
             }
             /// <summary>
             /// Установить признак подготовки к удалению
@@ -230,11 +264,21 @@ namespace uLoader
         /// Список контролируемых объектов
         /// </summary>    
         ListOManagement m_listObjects;
-
+        /// <summary>
+        /// Класс для хранения статистической информации об объектах контроля
+        /// </summary>
         private class DictInfoCrashed : Dictionary<KeyValuePair <INDEX_SRC, int>, DictOManagementInfoCrashed>
         {
-            public void MarkedItem(HHandlerQueue.EventCrashedArgs e) { MarkedItem(e.m_id, e.m_state); }
-
+            /// <summary>
+            /// Сохранить состояние объекта контроля
+            /// </summary>
+            /// <param name="e">Аргумент события - аврийное состояние объекта контроля</param>
+            public void MarkedItem(HHandlerQueue.EventCrashedArgs e, STATE state) { MarkedItem(e.m_id, state); }
+            /// <summary>
+            /// Сохранить состояние объекта контроля
+            /// </summary>
+            /// <param name="id">Сложный идентификатор объекта контроля</param>
+            /// <param name="state">Состояние объекта контроля</param>
             public void MarkedItem(ID id, STATE state)
             {
                 KeyValuePair<INDEX_SRC, int> key = GetKey(id);
@@ -310,18 +354,23 @@ namespace uLoader
                 get {
                     bool bRes = false;
 
-                    if (Count > 1)
-                        //if ((pair.Value[cntIdCrushed - 2].m_IdTargetFunc == lPrevIdTargetFunc)
-                        //    && (pair.Value[cntIdCrushed - 1].m_IdTargetFunc == lCurIdTargetFunc))
+                    STATE prevState = STATE.UNKNOWN
+                        , curState = STATE.UNKNOWN;
+
+                    // произведено как минимум две проверки
+                    if (Count > 1) {
+                        prevState = this[Count - 2].m_state;
+                        curState = this[Count - 1].m_state;
+
                         if ((this[Count - 1].m_IdTargetFunc == _listOTargetFunc[_listOTargetFunc.Count - 1].m_lId)
-                            && (this[Count - 2].m_state == STATE.CRASH)
-                            && (this[Count - 1].m_state == STATE.CRASH)) {
-                                bRes = true;
+                                && (prevState == STATE.CRASH)
+                                && (curState == STATE.CRASH)) {
+                            bRes = true;
 
                             //pair.Value.RemoveRange(pair.Value.Count - 2, 2);
                         } else
                             ;
-                    else
+                    } else
                         ;
 
                     return bRes;
@@ -333,8 +382,15 @@ namespace uLoader
         /// </summary>
         private class DictOManagementInfoCrashed : Dictionary<int, ListInfoCrashed>
         {
-            public bool IsAbortReload;
-
+            /// <summary>
+            /// Признак аварийной выгрузки/загрузки библиотеки
+            /// </summary>
+            public bool IsForceReload;
+            /// <summary>
+            /// Сохранить состояние объекта контроля
+            /// </summary>
+            /// <param name="id">Идентификатор объекта контроля</param>
+            /// <param name="state">Состояние объекта контроля при событии</param>
             public void MarkedItem(int id, STATE state)
             {
                 if (ContainsKey(id) == true)
@@ -343,58 +399,34 @@ namespace uLoader
                 else
                     Add(id, new ListInfoCrashed());
 
-                if (state == STATE.CCRASH)
-                    IsAbortReload = true;
+                if (state == STATE.FCRASH)
+                    IsForceReload = true;
                 else
                     ;
 
                 // обновить дату/время события
                 this[id].MarkedItem(state);
             }
-
-            //private int CountCurrentCrashed {
-            //    get {
-            //        int iRes = 0;
-
-            //        long lIdCurrentTargetFunc = _listOTargetFunc[_listOTargetFunc.Count - 1].m_lId;
-
-            //        foreach (ListInfoCrashed list in Values)
-            //            if (!(list.Find(ic => { return ic.m_IdTargetFunc == lIdCurrentTargetFunc; }) == null))
-            //                iRes++;
-            //            else
-            //                ;
-
-            //        return iRes;
-            //    }
-            //}
-
-            public List<int> GetListIDCurrentCrashed()
+            /// <summary>
+            /// Возвратить список идентификаторов объектов контроля, требующих стоп/старт
+            /// </summary>
+            /// <returns>Список идентификаторов</returns>
+            public List<int> GetListIDCrashed()
             {
                 List<int> listRes = new List<int> ();
 
-                //long lPrevIdTargetFunc = -1L
-                //    , lCurIdTargetFunc = -1L;
-                int cntIdTargetFunc = _listOTargetFunc.Count
-                    , cntIdCrushed = -1;
-
-                if (cntIdTargetFunc > 1) {
-                    //lPrevIdTargetFunc = _listOTargetFunc[cntIdTargetFunc - 2].m_lId;
-                    //lCurIdTargetFunc = _listOTargetFunc[cntIdTargetFunc - 1].m_lId;
-
-                    foreach (KeyValuePair<int, ListInfoCrashed> pair in this) {
-                        if (pair.Value.IsCrashed == true)                        
-                            listRes.Add(pair.Key);
-                        else
-                            ;
-                    }
-                }
-                else
-                    ;
+                foreach (KeyValuePair<int, ListInfoCrashed> pair in this)
+                    if (pair.Value.IsCrashed == true)                        
+                        listRes.Add(pair.Key);
+                    else
+                        ;
 
                 return listRes;
             }
         }
-
+        /// <summary>
+        /// Словарь статистической информации об объектах контроля
+        /// </summary>
         DictInfoCrashed m_dictInfoCrashed;
         /// <summary>
         /// Функция обратного вызова для таймера
@@ -512,22 +544,50 @@ namespace uLoader
                 },
             });
         }        
-
+        /// <summary>
+        /// Класс для храннеия информации о событии - аварийное состояние объекта контроля
+        /// </summary>
         private class EventCrashedArgs : EventArgs
         {
+            /// <summary>
+            /// Конструктор - дополнительный (без параметров)
+            ///  чтобы нельзя было создать пустое событие
+            /// </summary>
+            private EventCrashedArgs() { }
+            /// <summary>
+            /// Конструктор - основной (с параметрами)
+            /// </summary>
+            /// <param name="id">Сложный идентификатор</param>
+            /// <param name="bForceReload">Признак аврийной выгрузки/загрузки библиотеки</param>
+            public EventCrashedArgs(ID id, bool bForceReload)
+            {
+                m_id = id;
+                m_bForceReload = bForceReload;
+            }
+            /// <summary>
+            /// Сложный идентификатор объекта контроля
+            /// </summary>
             public ID m_id;
-
-            public STATE m_state;
+            /// <summary>
+            /// Признак аврийной выгрузки/загрузки библиотеки
+            ///  действителен только для групп источников (ID::m_idGroupSgnls == -1)
+            /// </summary>
+            public bool m_bForceReload;
         }
 
         private delegate void EventHandlerCrashed (EventCrashedArgs arg);
 
+        private event EventHandlerCrashed eventCrashed;
+        /// <summary>
+        /// Поставить в очередь 2 события изменения состояния группы сигналов
+        /// </summary>
+        /// <param name="id">Сложный идентификатор группы сигналов (тип, источник, группа)</param>
         private void pushStateChangedGroupSignals(ID id)
         {
             object[] arToSend = null; // массив для аргументов состояния
-            GroupSources grpSrc = null;
-
-            grpSrc = m_listGroupSources[(int)id.m_typeOwner].Find(g => { return FormMain.FileINI.GetIDIndex (g.m_strID) == id.m_idOwner; });
+            GroupSources grpSrc =
+                m_listGroupSources[(int)id.m_typeOwner].Find(g => { return FormMain.FileINI.GetIDIndex (g.m_strID) == id.m_idOwner; });
+            string msgDebug = string.Empty;
 
             arToSend = new object[] {
                 (int)StatesMachine.STATE_CHANGED_GROUP_SIGNALS
@@ -543,7 +603,12 @@ namespace uLoader
                     ,
                 },
             });
+
+            msgDebug = string.Format(@"HHandlerQueue::pushStateChangedGroupSignals ({0}) - ...", id.ToPrint());
+            Logging.Logg().Debug(msgDebug, Logging.INDEX_MESSAGE.NOT_SET);
+            Debug.WriteLine(DateTime.Now.ToString() + @"- " + msgDebug);
         }
+#if _SEPARATE_APPDOMAIN
         /// <summary>
         /// Поставить в очередь 1(одно) состояние - полная выгрузка/загрузки библиотеки
         /// </summary>
@@ -552,6 +617,8 @@ namespace uLoader
         private void pushCommandReloadGroupSources(INDEX_SRC type, int idOwner, bool bAbort)
         {
             GroupSources grpSrc = null;
+            ID id;
+            string msgDebug = string.Empty;
 
             grpSrc = m_listGroupSources[(int)type].Find(g => { return FormMain.FileINI.GetIDIndex(g.m_strID) == idOwner; });
 
@@ -565,7 +632,13 @@ namespace uLoader
                     ,
                 },
             });
+
+            id = new ID(new object[] { type, idOwner, -1 });
+            msgDebug = string.Format(@"HHandlerQueue::pushCommandReloadGroupSources ({0}) - ...", id.ToPrint());
+            Logging.Logg().Debug(msgDebug, Logging.INDEX_MESSAGE.NOT_SET);
+            Debug.WriteLine(DateTime.Now.ToString() + @"- " + msgDebug);
         }
+#endif
 
         private struct OTargetFunc {
             public long m_lId;
@@ -584,7 +657,8 @@ namespace uLoader
 
             DateTime now = DateTime.Now;
             int msecLimit = -1;
-            List<int> listIDCurrentCrashed = null;
+            List<int> listID = null;
+            ID id;
 
             //_lIdCurrentTargetFunc = HMath.GetRandomNumber();
             _listOTargetFunc.Add(new OTargetFunc() { m_lId = HMath.GetRandomNumber(), m_datetime = DateTime.Now });
@@ -638,33 +712,52 @@ namespace uLoader
                         ;
             }
 
-            foreach (KeyValuePair<KeyValuePair<INDEX_SRC, int>, DictOManagementInfoCrashed> pair in m_dictInfoCrashed)
+            foreach (KeyValuePair<KeyValuePair<INDEX_SRC, int>, DictOManagementInfoCrashed> pair in m_dictInfoCrashed) {
 #if _SEPARATE_APPDOMAIN
-                if (pair.Value.IsAbortReload == true)
-                {
-                    pair.Value.IsAbortReload = false;
-                    // выгрузка библиотеки БЕЗ корректного останова
-                    pushCommandReloadGroupSources(pair.Key.Key, pair.Key.Value, true);
+                if (pair.Value.IsForceReload == true) {
+                    id = new ID(new object[] { pair.Key.Key, pair.Key.Value, -1 });
+                    // восстановить признак
+                    pair.Value.IsForceReload = false;
                     //??? самостоятельно выполнить ремове OManagement
-                }
-                else {
+                    m_listObjects.DeleteItems(id);
+                    // выгрузка библиотеки БЕЗ корректного останова
+                    eventCrashed(new EventCrashedArgs (id, true));
+                } else {
 #endif
-                    listIDCurrentCrashed = pair.Value.GetListIDCurrentCrashed();
-                    if (listIDCurrentCrashed.Count > 0)
+                    listID = pair.Value.GetListIDCrashed();
+                    if (listID.Count > 0)
 #if _SEPARATE_APPDOMAIN
-                        if (listIDCurrentCrashed.Count > MAX_COUNT_CRASHED_TO_RELOAD_GROUPSOURCES)
+                        if (listID.Count > MAX_COUNT_CRASHED_TO_RELOAD_GROUPSOURCES)
                             // выгрузка библиотеки с корректным остановом
-                            pushCommandReloadGroupSources(pair.Key.Key, pair.Key.Value, false);
+                            eventCrashed(new EventCrashedArgs(new ID(new object[] { pair.Key.Key, pair.Key.Value, -1 }), false));
                         else
 #endif
-                            foreach (int id in listIDCurrentCrashed)
-                                pushStateChangedGroupSignals(new ID(new object[] { pair.Key.Key, pair.Key.Value, id }));
+                            foreach (int item in listID) {
+                                id = new ID(new object[] { pair.Key.Key, pair.Key.Value, item });
+                                // стоп/старт объекта контроля
+                                eventCrashed(new EventCrashedArgs(id, false));
+                            }
                     else
                         ;
+#if _SEPARATE_APPDOMAIN
                 }
+#endif
+            }
         }
 #endif
 
+#if _STATE_MANAGER
+        private void onEventCrashed(EventCrashedArgs ev)
+        {
+            if (ev.m_id.m_idGroupSgnls < 0) {
+#if _SEPARATE_APPDOMAIN
+                pushCommandReloadGroupSources(ev.m_id.m_typeOwner, ev.m_id.m_idOwner, ev.m_bForceReload);
+#endif
+            } else {
+                pushStateChangedGroupSignals(ev.m_id);
+            }
+        }
+#endif
         public override bool Activate(bool active)
         {
             bool bRes = base.Activate(active);

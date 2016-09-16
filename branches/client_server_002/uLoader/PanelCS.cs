@@ -19,18 +19,17 @@ namespace uLoader
         public enum ID_EVENT : short
         {
             Unknown = -1
-                , Start, Stop, Exit, Connect,
-            Disconnect
-                , Count
+                , Start, Stop, Exit, Connect, Disconnect
+            , Count
         }
         /// <summary>
         /// Типы экземпляра дочерней панели
         /// </summary>
         protected enum TypePanel
         {
-            Unknown = -1, Client,
-            Server
-                , Count
+            Unknown = -1
+                , Client, Server
+            , Count
         }
         /// <summary>
         /// Массив дочерних панелей
@@ -39,9 +38,9 @@ namespace uLoader
 
         public enum TypePanelWorkState
         {
-            Unknown = -1, Paused,
-            Started
-                , Count
+            Unknown = -1
+                , Paused, Started
+            , Count
         }
         /// <summary>
         /// Признак состояния внешней панели (Работа)
@@ -75,10 +74,8 @@ namespace uLoader
             _typePanelEnabled = TypePanel.Unknown;
         }
 
-        public int Ready
-        {
-            get
-            {
+        public int Ready {
+            get {
                 return (m_InteractionParameters.Ready == true) ? (!(m_arPanels == null)) && ((m_arPanels[(int)TypePanel.Client].Ready == true)
                     && (m_arPanels[(int)TypePanel.Server].Ready == true)) ? 0 : 1 : -1;
             }
@@ -335,18 +332,31 @@ namespace uLoader
             {
                 _pipe = null;
 
-                if (m_type_panel == TypePanel.Client)
-                {
-                    thread = new Thread(connectToServer);//Инициализация экземпляра потока
-                    if (name_serv.Equals(string.Empty) == true)
-                        thread.Start(m_servers);//Старт потока со списком серверов из конструктора
-                    else
-                        thread.Start(new string[] { name_serv }); //Старт потока со списком серверов переданным в initialize
-                    thread.Join();
-                    // ожидать создания клиента
-                    if (_client.IsConnected == true)
-                        argCommand.Enabled = true;
-                }
+                thread = new Thread(connectToServer);//Инициализация экземпляра потока
+                if (name_serv.Equals(string.Empty) == true)
+                    thread.Start(m_servers);//Старт потока со списком серверов из конструктора
+                else
+                    thread.Start(new string[] { name_serv }); //Старт потока со списком серверов переданным в initialize
+                thread.Join();
+                // ожидать создания клиента
+                if ((!(_client == null))
+                    && (_client.IsConnected == true))
+                    argCommand.Enabled = true;
+                else
+                    ;
+            }
+
+            private static bool isEqualeHost(string host)
+            {
+                bool bRes = host.Equals(Environment.MachineName);
+
+                if (bRes == false)
+                    bRes = !(System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName()).AddressList.ToList().Find(
+                        adr => { return adr.ToString().Equals(host); }) == null);
+                else
+                    ;
+
+                return bRes;
             }
             /// <summary>
             /// Подключение к серверу (метод отдельного потока)
@@ -362,8 +372,7 @@ namespace uLoader
                     //Перебор серверов для подключения
                     foreach (string server in servers)
                     {
-                        if (server.Equals(Environment.MachineName) == false)
-                        {
+                        if (isEqualeHost(server) == false) {
                             iAttempt = 0;
 
                             _pipe = new Pipes.Client(server, MS_TIMEOUT_CONNECT_TO_SERVER);//инициализация клиента
@@ -1104,6 +1113,7 @@ namespace uLoader
                 this.dgvMessage.TabIndex = 0;
                 this.dgvMessage.Dock = DockStyle.Fill;
                 this.dgvMessage.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+                this.dgvMessage.AllowUserToAddRows = false;
                 // 
                 // commandBox
                 // 
@@ -1441,36 +1451,50 @@ namespace uLoader
                 }
                 argCommand.Clear();
             }
-
+            /// <summary>
+            /// Список сообщений (буфер) для отображения в элементе упарвления "Список сообщений"
+            /// </summary>
             private ListDGVMessage m_listRowDGVAdding;
 
             protected virtual int addMessage(string com_mes, string arg, string name)
             {
                 int iRes = 0;
 
-                if (com_mes.Trim().Equals(string.Empty) == true)
-                {
+                if (com_mes.Trim().Equals(string.Empty) == true) {
                     iRes = -1;
 
                     Logging.Logg().Error(string.Format(@"PanelClientServer.PanelCS::addMessage (com_mes={0}, arg={1}, name={2}) - пустая команда..."
                             , com_mes, arg, name)
                         , Logging.INDEX_MESSAGE.NOT_SET);
-                }
-                else
+                } else
                     ;
 
                 return iRes;
             }
-
+            /// <summary>
+            /// Класс для хранения списка сообщений
+            /// </summary>
             private class ListDGVMessage : List<object>
             {
+                /// <summary>
+                /// Максимальное кол-во сообщений, остальные (при переполнении) удаляются
+                /// </summary>
+                private int MAX_COUNT_MESSAGE = 16;
+                /// <summary>
+                /// Структура для хранения объектов одного сообщения
+                /// </summary>
                 private struct DGVMessage
                 {
                     public string m_dtNow
                         , m_message
                         , m_idServer
                         , m_typeMes;
-
+                    /// <summary>
+                    /// Конструктор - основной (с параметрами)
+                    /// </summary>
+                    /// <param name="mes">Сообщение</param>
+                    /// <param name="idServer">Источник сообщения</param>
+                    /// <param name="typeMes">Тип сообщения (вход/исход)</param>
                     public DGVMessage(string mes, string idServer, TypeMes typeMes)
                     {
                         m_dtNow = DateTime.Now.ToString();
@@ -1478,7 +1502,10 @@ namespace uLoader
                         m_idServer = idServer;
                         m_typeMes = typeMes.ToString();
                     }
-
+                    /// <summary>
+                    /// Подготовить сообщение к отображению
+                    /// </summary>
+                    /// <returns>Массив объектов, пригодный к добавлению в виде строки для 'DataGridView'</returns>
                     public object[] ToPrint()
                     {
                         return new object[] { m_dtNow, m_message, m_idServer, m_typeMes };
@@ -1488,12 +1515,18 @@ namespace uLoader
                 public int New(string mes, string idServer, TypeMes typeMes)
                 {
                     this.Add(new DGVMessage(mes, idServer, typeMes));
-
-                    //Logging.Logg().Debug(@"PanelCS::ListDGVMessage.Count=" + this.Count, Logging.INDEX_MESSAGE.NOT_SET);
+                    // ограничение кол-ва элементов
+                    while (Count > MAX_COUNT_MESSAGE)
+                    // удалить самый старый
+                        RemoveAt(0);
 
                     return this.Count;
                 }
-
+                /// <summary>
+                /// Подготовить сообщение к отображению
+                /// </summary>
+                /// <param name="indx">Индекс сообщения</param>
+                /// <returns>Массив объектов, пригодный к добавлению в виде строки для 'DataGridView'</returns>
                 public object[] ToPrint(int indx)
                 {
                     return ((DGVMessage)this[indx]).ToPrint();
@@ -1517,10 +1550,9 @@ namespace uLoader
                 else
                     ;
 
-                try
-                {
-                    if (command_mes.Trim().Equals(string.Empty) == false)
-                    {
+                try {
+                    if (command_mes.Trim().Equals(string.Empty) == false) {
+                        // добавление строки в ОЗУ (вкладка может не отображаться, а сообщения сохраняются)
                         m_listRowDGVAdding.New(mes.Value, mes.IdServer, type_mes);
 
                         if (IsHandleCreated == true)
@@ -1567,17 +1599,17 @@ namespace uLoader
             /// </summary>
             private void addRowToDGV()
             {
-                try
-                {
-                    while (m_listRowDGVAdding.Count > 0)
-                    {
+                try {
+                    // добавить все сообщения накопленные в "буфере"
+                    while (m_listRowDGVAdding.Count > 0) {
                         dgvMessage.Rows.Add(m_listRowDGVAdding.ToPrint(0));//Добавление строки в DGV
-
+                        // удалить сообщение из буфера
                         m_listRowDGVAdding.RemoveAt(0);
                     }
-                }
-                catch (Exception e)
-                {
+                    // удалить лишние строки из представления
+                    while (dgvMessage.RowCount > dgvMessage.DisplayedRowCount(false))
+                        dgvMessage.Rows.RemoveAt(0);
+                } catch (Exception e) {
                     Logging.Logg().Exception(e, string.Format(@"PanelClientServer.PanelCS::addRowToDGV () - ..."), Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }

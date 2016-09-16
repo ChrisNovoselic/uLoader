@@ -93,13 +93,15 @@ namespace uLoader
             }
             else
                 ;
-#if _STATE_MANAGER            
+#if _STATE_MANAGER
             //_lIdCurrentTargetFunc = -1L;
             _listOTargetFunc = new List<OTargetFunc>();
 
             m_timerFunc = new System.Threading.Timer(timerFunc);
             m_dictInfoCrashed = new DictInfoCrashed();
             m_listObjects = new ListOManagement();
+
+            eventCrashed += new EventHandlerCrashed(onEventCrashed);
 #endif
             //Прочитать и "разобрать" файл конфигурации
             m_fileINI = new FormMain.FileINI(strNameFileINI);
