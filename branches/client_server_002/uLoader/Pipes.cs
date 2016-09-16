@@ -21,7 +21,7 @@ namespace uLoader.Pipes
         {
             Unknown = -1
                 , Connect, Disconnect
-                , GetDataTime, GetName, GetStat, SetStat, Status
+                , DateTime, GetName, GetStat, SetStat, Status
                 , Start, Stop, ReConnect, Exit
             , Count
         };

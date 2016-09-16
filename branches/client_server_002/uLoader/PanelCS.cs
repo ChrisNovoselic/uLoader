@@ -419,8 +419,8 @@ namespace uLoader
                     //    {
                     //        switch (com)
                     //        {
-                    //            case Pipes.Pipe.COMMAND.GetDataTime:
-                    //                sendMessage(DateTime.Now.ToString());
+                    //            case Pipes.Pipe.COMMAND.DateTime:
+                    //                sendMessage(com_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + DateTime.Now.ToString());
                     //                break;
                     //            case Pipes.Pipe.COMMAND.GetName:
                     //                sendMessage(KEY_MYNAME + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + m_myName);
@@ -429,12 +429,12 @@ namespace uLoader
                     //                sendMessage(TypePanel.Client.ToString());
                     //                break;
                     //            case Pipes.Pipe.COMMAND.ReConnect:
-                    //                m_client.SendDisconnect();//отправка сообщения о разрыве соединения
+                    //                _client.SendDisconnect();//отправка сообщения о разрыве соединения
                     //                Invoke(d_reconn, new object[] { arg, false });
                     //                break;
                     //            case Pipes.Pipe.COMMAND.Start:
                     //                Invoke(d_statLbl, true);
-                    //                    DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Start } });
+                    //                DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Start } });
                     //                break;
                     //            case Pipes.Pipe.COMMAND.Stop:
                     //                Invoke(d_statLbl, false);
@@ -443,7 +443,7 @@ namespace uLoader
                     //            case Pipes.Pipe.COMMAND.SetStat:
                     //                if (arg.Equals(TypePanel.Server.ToString()) == true)
                     //                {
-                    //                    m_client.SendDisconnect();
+                    //                    _client.SendDisconnect();
                     //                    Invoke(d_reconn, new object[] { string.Empty, true });
                     //                }
                     //                else
@@ -467,22 +467,25 @@ namespace uLoader
                     //        ;
                     //// проверить найдена ли команда
                     //if (com > (Pipes.Pipe.COMMAND.Count - 1))
-                    //// команда не найдена
+                    //    // команда не найдена
                     //    //??? в команде присутствует некоманда
                     //    if ((com_mes.Equals(Pipes.Client.MESSAGE_CONNECT_TO_SERVER_OK) == true)
-                    //        || (com_mes.Equals(m_servName) == true))
+                    //        || (com_mes.Equals(Pipes.Client.MESSAGE_DISCONNECT) == true)
+                    //        || (com_mes.Equals(Pipes.Pipe.COMMAND.Disconnect.ToString()) == true)
+                    //        || (com_mes.Equals(m_servName) == true)
+                    //        )
                     //        // обработка не требуется
                     //        ;
                     //    else
-                    //        throw new Exception (string.Format(@"PanelClient::addMessage (COMMAND={0}) - неизвестная команда...", com_mes));
+                    //        throw new Exception(string.Format(@"PanelClient::addMessage (COMMAND={0}) - неизвестная команда...", com_mes));
                     //else
                     //    ; // команда найдена И/ИЛИ обработана
 
-                    if (com_mes.Equals(Pipes.Pipe.COMMAND.GetDataTime.ToString()) == true)//Обработка запроса даты
-                        sendMessage(DateTime.Now.ToString());
+                    if (com_mes.Equals(Pipes.Pipe.COMMAND.DateTime.ToString()) == true)//Обработка запроса даты
+                        sendMessage(com_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + DateTime.Now.ToString());
                     else
                         if (com_mes.Equals(Pipes.Pipe.COMMAND.GetName.ToString()) == true)//Обработка запроса имени
-                            sendMessage(KEY_MYNAME + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + m_myName);
+                            sendMessage(com_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + m_myName);
                         else
                             if (com_mes.Equals(Pipes.Pipe.COMMAND.GetStat.ToString()) == true)//Обработка запроса типа экземпляра
                                 sendMessage(TypePanel.Client.ToString());
@@ -531,12 +534,14 @@ namespace uLoader
                                                             || (com_mes.Equals(m_servName) == true))
                                                             // обработка не требуется
                                                             ;
-                                                        else {
+                                                        else
+                                                        {
                                                             iRes = -2;
                                                             throw new Exception(string.Format(@"PanelClient::addMessage (COMMAND={0}) - неизвестная команда...", com_mes));
                                                         }
-                } else
-                //??? двойная ошибка - пустая команда, проверка производилась выше
+                }
+                else
+                    //??? двойная ошибка - пустая команда, проверка производилась выше
                     ;
 
                 return iRes;
@@ -681,115 +686,111 @@ namespace uLoader
                 if (iRes == 0) {
                     Logging.Logg().Debug(string.Format(@"PanelClientServer.PanelServer::addMessage (COMMAND={0}, ARG={1}, name={2}) - ...", com_mes, arg, name), Logging.INDEX_MESSAGE.NOT_SET);
 
-                    //Pipes.Pipe.COMMAND com = Pipes.Pipe.COMMAND.Unknown;
+                    Pipes.Pipe.COMMAND com = Pipes.Pipe.COMMAND.Unknown;
 
-                    //for (com = Pipes.Pipe.COMMAND.Unknown; com < (Pipes.Pipe.COMMAND.Count - 1); com++)
-                    //    if (com_mes.Equals((com + 1).ToString()) == true)
-                    //    {
-                    //        switch (com)
-                    //        {
-                    //            case Pipes.Pipe.COMMAND.GetDataTime:
-                    //                sendMessage(DateTime.Now.ToString(), name);
-                    //                break;
-                    //            case Pipes.Pipe.COMMAND.GetName:
-                    //                sendMessage(m_myName, name);
-                    //                break;
-                    //            case Pipes.Pipe.COMMAND.GetStat:
-                    //                sendMessage(TypePanel.Server.ToString(), name);
-                    //                break;
-                    //            case Pipes.Pipe.COMMAND.Start:
-                    //                Invoke(d_statLbl, true);
-                    //                DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Start } });
-                    //                break;
-                    //            case Pipes.Pipe.COMMAND.Stop:
-                    //                Invoke(d_statLbl, false);
-                    //                DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Stop } });
-                    //                break;
-                    //            case Pipes.Pipe.COMMAND.Status:
-                    //                Invoke(d_updateLV, new object[] { name, arg });
-                    //                break;
-                    //            case Pipes.Pipe.COMMAND.SetStat:
-                    //                if (arg.Equals(TypePanel.Client.ToString()) == true)
-                    //                {
-                    //                    m_server.SendDisconnect();
-                    //                    Invoke(d_reconn, new object[] { string.Empty, false });
-                    //                }
-                    //                else
-                    //                    ;
-                    //                break;
-                    //            case Pipes.Pipe.COMMAND.Exit:
-                    //                Invoke(d_exit);
-                    //                break;
-                    //            case Pipes.Pipe.COMMAND.Connect:
-                    //            case Pipes.Pipe.COMMAND.Disconnect:
-                    //                // обработка не требуется
-                    //            default:
-                    //                break;
-                    //        }
-                    //    }
-                    //    else
-                    //        ;
-                    //// проверить найдена ли команда
-                    //if (com > (Pipes.Pipe.COMMAND.Count - 1))
-                    //    // команда не найдена
-                    //    //??? в команде присутствует некоманда
-                    //    if ((com_mes.Equals(Pipes.Client.MESSAGE_CONNECT_TO_SERVER_OK) == true)
-                    //        || (com_mes.Equals(m_servName) == true))
-                    //        // обработка не требуется
-                    //        ;
-                    //    else
-                    //        throw new Exception(string.Format(@"PanelServer::addMessage (COMMAND={0}) - неизвестная команда...", com_mes));
-                    //else
-                    //    ; // команда найдена И/ИЛИ обработана
-
-                    if (com_mes.Equals(Pipes.Pipe.COMMAND.GetDataTime.ToString()) == true)//запрос даты
-                        sendMessage(DateTime.Now.ToString(), name);
-                    else
-                        if (com_mes.Equals(Pipes.Pipe.COMMAND.GetName.ToString()) == true)//запрос имени
-                            sendMessage(m_myName, name);
-                        else
-                            if (com_mes.Equals(Pipes.Pipe.COMMAND.GetStat.ToString()) == true)//запрос типа текущего экземпляра
-                                sendMessage(TypePanel.Server.ToString(), name);
-                            else
-                                if (com_mes.Equals(Pipes.Pipe.COMMAND.Start.ToString()) == true)//запрос запуска
-                                {
+                    for (com = Pipes.Pipe.COMMAND.Unknown; com < (Pipes.Pipe.COMMAND.Count - 1); com++)
+                        if (com_mes.Equals((com + 1).ToString()) == true)
+                        {
+                            switch (com)
+                            {
+                                case Pipes.Pipe.COMMAND.DateTime:
+                                    sendMessage(com.ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + DateTime.Now.ToString(), name);
+                                    break;
+                                case Pipes.Pipe.COMMAND.GetName:
+                                    sendMessage(m_myName, name);
+                                    break;
+                                case Pipes.Pipe.COMMAND.GetStat:
+                                    sendMessage(TypePanel.Server.ToString(), name);
+                                    break;
+                                case Pipes.Pipe.COMMAND.Start:
                                     Invoke(d_statLbl, true);
                                     DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Start } });
-                                }
-                                else
-                                    if (com_mes.Equals(Pipes.Pipe.COMMAND.Stop.ToString()) == true)//запрос остановки
+                                    break;
+                                case Pipes.Pipe.COMMAND.Stop:
+                                    Invoke(d_statLbl, false);
+                                    DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Stop } });
+                                    break;
+                                case Pipes.Pipe.COMMAND.Status:
+                                    Invoke(d_updateLV, new object[] { name, arg });
+                                    break;
+                                case Pipes.Pipe.COMMAND.SetStat:
+                                    if (arg.Equals(TypePanel.Client.ToString()) == true)
                                     {
-                                        Invoke(d_statLbl, false);
-                                        DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Stop } });
+                                        _server.SendDisconnect();
+                                        Invoke(d_reconn, new object[] { string.Empty, false });
                                     }
                                     else
-                                        if (com_mes.Equals(Pipes.Pipe.COMMAND.Status.ToString()) == true)//обработка запроса изменения типа экземпляра
-                                        {
-                                            Invoke(d_updateLV, new object[] { name, arg });
-                                        }
-                                        else
-                                            if (com_mes.Equals(Pipes.Pipe.COMMAND.SetStat.ToString()) == true)//обработка запроса изменения типа экземпляра
-                                            {
-                                                if (arg.Equals(TypePanel.Client.ToString()) == true)
-                                                {
-                                                    _server.SendDisconnect();
-                                                    Invoke(d_reconn, new object[] { string.Empty, false });
-                                                }
-                                            }
-                                            else
-                                                if (com_mes.Equals(Pipes.Pipe.COMMAND.Exit.ToString()) == true)
-                                                    Invoke(d_exit);
-                                                else
-                                                    if ((com_mes.Equals(Pipes.Pipe.COMMAND.Connect.ToString()) == true)
-                                                        || (com_mes.Equals(Pipes.Pipe.COMMAND.Disconnect.ToString()) == true))
-                                                        // ничего не делать
-                                                        ;
-                                                    else
-                                                    {
-                                                        // неизвестная команда
-                                                        iRes = -2;
-                                                        throw new Exception(string.Format(@"PanelServer::addMessage (COMMAND={0}) - неизвестная команда...", com_mes));
-                                                    }
+                                        ;
+                                    break;
+                                case Pipes.Pipe.COMMAND.Exit:
+                                    Invoke(d_exit);
+                                    break;
+                                case Pipes.Pipe.COMMAND.Connect:
+                                case Pipes.Pipe.COMMAND.Disconnect:
+                                // обработка не требуется
+                                default:
+                                    break;
+                            }
+
+                            break;
+                        }
+                        else
+                            ;
+                    // проверить найдена ли команда
+                    if (com > (Pipes.Pipe.COMMAND.Count - 1))
+                        // команда не найдена                        
+                        throw new Exception(string.Format(@"PanelServer::addMessage (COMMAND={0}) - неизвестная команда...", com_mes));
+                    else
+                        ; // команда найдена И/ИЛИ обработана
+
+                    //if (com_mes.Equals(Pipes.Pipe.COMMAND.DateTime.ToString()) == true)//запрос даты
+                    //    sendMessage(com_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + DateTime.Now.ToString(), name);
+                    //else
+                    //    if (com_mes.Equals(Pipes.Pipe.COMMAND.GetName.ToString()) == true)//запрос имени
+                    //        sendMessage(m_myName, name);
+                    //    else
+                    //        if (com_mes.Equals(Pipes.Pipe.COMMAND.GetStat.ToString()) == true)//запрос типа текущего экземпляра
+                    //            sendMessage(TypePanel.Server.ToString(), name);
+                    //        else
+                    //            if (com_mes.Equals(Pipes.Pipe.COMMAND.Start.ToString()) == true)//запрос запуска
+                    //            {
+                    //                Invoke(d_statLbl, true);
+                    //                DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Start } });
+                    //            }
+                    //            else
+                    //                if (com_mes.Equals(Pipes.Pipe.COMMAND.Stop.ToString()) == true)//запрос остановки
+                    //                {
+                    //                    Invoke(d_statLbl, false);
+                    //                    DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Stop } });
+                    //                }
+                    //                else
+                    //                    if (com_mes.Equals(Pipes.Pipe.COMMAND.Status.ToString()) == true)//обработка запроса изменения типа экземпляра
+                    //                    {
+                    //                        Invoke(d_updateLV, new object[] { name, arg });
+                    //                    }
+                    //                    else
+                    //                        if (com_mes.Equals(Pipes.Pipe.COMMAND.SetStat.ToString()) == true)//обработка запроса изменения типа экземпляра
+                    //                        {
+                    //                            if (arg.Equals(TypePanel.Client.ToString()) == true)
+                    //                            {
+                    //                                _server.SendDisconnect();
+                    //                                Invoke(d_reconn, new object[] { string.Empty, false });
+                    //                            }
+                    //                        }
+                    //                        else
+                    //                            if (com_mes.Equals(Pipes.Pipe.COMMAND.Exit.ToString()) == true)
+                    //                                Invoke(d_exit);
+                    //                            else
+                    //                                if ((com_mes.Equals(Pipes.Pipe.COMMAND.Connect.ToString()) == true)
+                    //                                    || (com_mes.Equals(Pipes.Pipe.COMMAND.Disconnect.ToString()) == true))
+                    //                                    // ничего не делать
+                    //                                    ;
+                    //                                else
+                    //                                {
+                    //                                    // неизвестная команда
+                    //                                    iRes = -2;
+                    //                                    throw new Exception(string.Format(@"PanelServer::addMessage (COMMAND={0}) - неизвестная команда...", com_mes));
+                    //                                }
                 } else
                 // пустая команда
                     ;
@@ -846,7 +847,7 @@ namespace uLoader
         {
             #region Переменные и константы
 
-            protected const string KEY_MYNAME = @"MyName";
+            //protected const string KEY_MYNAME = @"MyName";
             protected static int MS_TIMER_UPDATE_STATUS = 10000;
 
             private enum INDEX_COLUMN_MESSAGES : short { UNKNOWN = -1
@@ -1494,17 +1495,17 @@ namespace uLoader
                                 addMessage(command_mes, argument, mes.IdServer);
                                 break;
                             case TypeMes.Output://исходящие
-                                switch (command_mes)
+                                if (command_mes.Equals (Pipes.Pipe.COMMAND.GetName.ToString()) == true)
                                 {
-                                    case KEY_MYNAME:
-                                        switch (m_type_panel)
-                                        {
-                                            case TypePanel.Client:
-                                                m_servName = argument;//разбор клиентом ответного сообщения с именем сервера
-                                                break;
-                                        }
-                                        break;
+                                    switch (m_type_panel)
+                                    {
+                                        case TypePanel.Client:
+                                            m_servName = argument;//разбор клиентом ответного сообщения с именем сервера
+                                            break;
+                                    }
                                 }
+                                break;
+                            default:
                                 break;
                         }
                     }
