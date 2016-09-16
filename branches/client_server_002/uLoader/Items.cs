@@ -1234,20 +1234,20 @@ namespace uLoader
                         {
                             msgDebugLog = @"получено строк=";
 
-                            if ((pars[2] as DataTable).Rows.Count > 0)
-                            {
+                            if ((pars[2] as DataTable).Rows.Count > 0) {
+                            // при наличии в ответе строк
                                 grpSgnls.m_tableData = (pars[2] as DataTable).Copy();
                                 msgDebugLog += grpSgnls.m_tableData.Rows.Count;
+                                // обновить состояние контролируемой группы сигналов
+                                this.PerformDataAskedHostQueue(new EventArgsDataHost(
+                                    (int)Index
+                                    , FormMain.FileINI.GetIDIndex(m_strID)
+                                    , new object[] { iIDGroupSignals
+                                        , id_cmd }
+                                    ));
                             }
                             else
                                 msgDebugLog += 0.ToString();
-
-                            this.PerformDataAskedHostQueue(new EventArgsDataHost(
-                                (int)Index
-                                , FormMain.FileINI.GetIDIndex(m_strID)
-                                , new object[] { iIDGroupSignals
-                                    , id_cmd }
-                                ));
                         }
                         else
                             ;
@@ -1407,7 +1407,7 @@ namespace uLoader
         /// Выгрузить/загрузить библиотеку (объект класса)
         /// </summary>
         /// <returns>Признак выполнения функции</returns>
-        public int Reload()
+        public int Reload(bool bAbort)
         {
             int iRes = 0;            
 

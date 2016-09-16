@@ -93,11 +93,13 @@ namespace uLoader
             }
             else
                 ;
-#if _STATE_MANAGER
+#if _STATE_MANAGER            
+            //_lIdCurrentTargetFunc = -1L;
+            _listOTargetFunc = new List<OTargetFunc>();
+
             m_timerFunc = new System.Threading.Timer(timerFunc);
             m_dictInfoCrashed = new DictInfoCrashed();
             m_listObjects = new ListOManagement();
-            eventCrashed += new /*HHandlerQueue.EventHandlerCrashed*/ DelegateObjectFunc(onEvtCrashed);
 #endif
             //Прочитать и "разобрать" файл конфигурации
             m_fileINI = new FormMain.FileINI(strNameFileINI);
@@ -643,7 +645,7 @@ namespace uLoader
                         error = false;
                         itemQueue = Peek;
 
-                        iRes = m_listGroupSources[(int)((INDEX_SRC)itemQueue.Pars[0])][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].Reload();
+                        iRes = m_listGroupSources[(int)((INDEX_SRC)itemQueue.Pars[0])][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].Reload(itemQueue.Pars.Length > 2 ? (bool)itemQueue.Pars[2] : false);
                         break;
                     #endregion
 
