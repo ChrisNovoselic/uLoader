@@ -22,19 +22,33 @@ namespace uLoader
         /// </summary>
         public class ID : Object
         {
+            public INDEX_SRC m_typeOwner;
+            /// <summary>
+            /// Идентификатор владельца контролируемого объекта
+            /// </summary>
             public int m_idOwner;
-
+            /// <summary>
+            /// НЕпосредственный идентификатор объекта контроля
+            /// </summary>
             public int m_idGroupSgnls;
-
+            /// <summary>
+            /// Конструктор - основной (с параметрами)
+            /// </summary>
+            /// <param name="ids">Массив объектов-идентификаторов для объекта контроля</param>
             public ID(object[] ids)
             {
-                m_idOwner = (int)ids[0];
-                m_idGroupSgnls = (int)ids[1];
+                if (ids[0].GetType().IsEnum == true)
+                    m_typeOwner = (INDEX_SRC)ids[0];
+                else
+                    throw new InvalidEnumArgumentException(@"HHandlerQueue.ID::ctor () - ...");
+                m_idOwner = (int)ids[1];
+                m_idGroupSgnls = (int)ids[2];
             }
 
             public override bool Equals(object obj)
             {
-                return (this.m_idOwner == (obj as ID).m_idOwner)
+                return (this.m_typeOwner == (obj as ID).m_typeOwner)
+                    && (this.m_idOwner == (obj as ID).m_idOwner)
                     && (this.m_idGroupSgnls.Equals((obj as ID).m_idGroupSgnls) == true);
             }
 
@@ -213,6 +227,103 @@ namespace uLoader
         /// Список контролируемых объектов
         /// </summary>    
         ListOManagement m_listObjects;
+
+        private class DictInfoCrashed : Dictionary<KeyValuePair <INDEX_SRC, int>, DictOManagementInfoCrashed>
+        {
+            public void AddItem(ID id)
+            {
+                KeyValuePair<INDEX_SRC, int> key = GetKey(id);
+
+                if (ContainsKey(key) == true)
+                    ; // группа источников уже добавлена
+                else
+                    Add(key, new DictOManagementInfoCrashed());
+                // добавить группу сигналов
+                this[key].AddItem(id.m_idGroupSgnls);
+            }
+
+            public void RemoveItem(ID id)
+            {
+                KeyValuePair<INDEX_SRC, int> key = GetKey(id);
+
+                if (ContainsKey(key) == true)
+                {
+                    this[key].Remove(id.m_idGroupSgnls);
+
+                    if (this[key].Count == 0)
+                        Remove(key);
+                    else
+                        ; // не удалять остались контролируемые группы сигналов
+                }
+                else
+                    ;
+            }
+
+            public void SetCrashed(INDEX_SRC indx, int idOwner)
+            {
+                KeyValuePair<INDEX_SRC, int> key = GetKey(indx, idOwner);
+
+                if (ContainsKey(key) == true)
+                    ; // группа источников уже добавлена
+                else
+                    Add(key, new DictOManagementInfoCrashed());
+                // установить признак для немедленной выгрузки/загрузки библиотеки
+                this[key].m_bCrashed = true;
+            }
+
+            public static KeyValuePair<INDEX_SRC, int> GetKey(ID id)
+            {
+                return GetKey(id.m_typeOwner, id.m_idOwner);
+            }
+
+            public static KeyValuePair<INDEX_SRC, int> GetKey(INDEX_SRC indx, int id)
+            {
+                return new KeyValuePair<INDEX_SRC, int>(indx, id);
+            }
+        }
+        /// <summary>
+        /// Словарь для хранения статистической информации
+        /// </summary>
+        private class DictOManagementInfoCrashed : Dictionary<int, long>
+        {
+            public bool IsCrashed { get { return CountCrashed > 1; } }
+
+            public void AddItem(int id)
+            {
+                if (ContainsKey(id) == true)
+                // группа сигналов уже добавлена
+                    // обновить дату/время события
+                    this[id] = _lIdCurrentTargetFunc;
+                else
+                    Add(id, _lIdCurrentTargetFunc);
+            }
+
+            public int CountCrashed {
+                get {
+                    int iRes = 0;
+
+                    foreach (long id in Values)
+                        if (id == _lIdCurrentTargetFunc)
+                            iRes++;
+                        else
+                            ;
+
+                    return iRes;
+                }
+            }
+
+            public int GetIdCrashed()
+            {
+                int iRes = -1;
+
+                foreach (KeyValuePair<int, long> pair in this)
+                    ;
+
+                return iRes;
+            }
+        }
+
+        DictInfoCrashed m_dictInfoCrashed;
         /// <summary>
         /// Функция обратного вызова для таймера
         /// </summary>
@@ -242,7 +353,7 @@ namespace uLoader
             Logging.Logg().Debug(@"StateManager::add (id=" + id.m_idOwner + @", key=" + id.m_idGroupSgnls + @") - добавить объект; кол-во -> " + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
         /// <summary>
-        /// Добавить новый объект для контроля
+        /// Поставить в очередь событие для добавления нового объекта для контроля
         /// </summary>
         /// <param name="id">Сложный идентификатор объекта</param>
         /// <param name="tsLimit">Интервал времени в течении которого состояние объекта остается актуальным без обновления</param>
@@ -269,7 +380,7 @@ namespace uLoader
             Logging.Logg().Debug(@"StateManager::remove (id=" + id.m_idOwner + @", key=" + id.m_idGroupSgnls + @") - удалить объект; кол-во <- " + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
         /// <summary>
-        /// Удалить объект из списка контролируемых объектов
+        /// Поставить в очередь событие для удаления объекта из списка контролируемых объектов
         /// </summary>
         /// <param name="id">Сложный идентификатор объекта</param>
         protected void remove(params object[] pars)
@@ -295,7 +406,7 @@ namespace uLoader
             Logging.Logg().Debug(@"StateManager::confirm (id=" + id.m_idOwner + @", key=" + id.m_idGroupSgnls + @") - подтвердить состояние объекта; кол-во = " + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
         }
         /// <summary>
-        /// Подтвердить изменение состояния контролируемого объекта
+        /// Поставить в очередь событие для подтверждения изменения состояния контролируемого объекта
         /// </summary>
         /// <param name="id">Сложный идентификатор объекта</param>
         protected void confirm(params object []pars)
@@ -344,62 +455,85 @@ namespace uLoader
         /// Обработчик события - состояние группы сигналов не актуально
         /// </summary>
         /// <param name="ev">Аргумент события</param>
-        private void onCrashed(/*HHandlerQueue.EventCrashedArgs*/ object obj)
+        private void onEvtCrashed(/*HHandlerQueue.EventCrashedArgs*/ object obj)
         {
             HHandlerQueue.EventCrashedArgs ev = obj as HHandlerQueue.EventCrashedArgs;
-            
-            object[] arToSend = null; // массив для аргументов состояния
 
-            for (INDEX_SRC type = INDEX_SRC.SOURCE; type < INDEX_SRC.COUNT_INDEX_SRC; type++)
-                foreach (GroupSources grpSrc in m_listGroupSources[(int)type])
-                    if (grpSrc.m_iIdTypePlugInObjectLoaded == ev.m_id.m_idOwner)
-                    {
+            //for (INDEX_SRC type = INDEX_SRC.SOURCE; type < INDEX_SRC.COUNT_INDEX_SRC; type++)
+            //    foreach (GroupSources grpSrc in m_listGroupSources[(int)type])
+            //        if ((type == ev.m_id.m_typeOwner)
+            //            && (FormMain.FileINI.GetIDIndex (grpSrc.m_strID) == ev.m_id.m_idOwner))
+            //        {
                         switch (ev.m_state)
                         {
                             case STATE.CONTROLED:// группа сигналов в работе
-                                arToSend = new object[] {
-                                    (int)StatesMachine.STATE_CHANGED_GROUP_SIGNALS
-                                    , type
-                                    , grpSrc.m_strID
-                                    , grpSrc.GetIdGroupSignals (ev.m_id.m_idGroupSgnls)
-                                };
-                                // поставить в очередь 2 состояния: последовательный останов/запуск группы сигналов
-                                Push(null, new object[] {
-                                    new object[] {
-                                        arToSend // для 'STOP'
-                                        , arToSend // для 'START'
-                                        ,
-                                    },
-                                });
+                                m_dictInfoCrashed.AddItem(ev.m_id);                                
                                 break;
                             case STATE.ADDED:
                             case STATE.REMOVED:
 #if _SEPARATE_APPDOMAIN
                                 // группа сигналов не получила подтверждения от библиотеки при изменении своего состояния
-                                // поставить в очередь 1 состояние - полная выгрузка/загрузки библиотеки
-                                Push(null, new object[] {
-                                    new object[] {
-                                        new object [] {
-                                            StatesMachine.COMMAND_RELAOD_GROUP_SOURCES
-                                            , type
-                                            , grpSrc.m_strID
-                                        }
-                                        ,
-                                    },
-                                });
+                                m_dictInfoCrashed.SetCrashed(ev.m_id.m_typeOwner, ev.m_id.m_idOwner);
 #endif
                                 break;
                             default:
                                 break;
                         }
 
-                        type = INDEX_SRC.COUNT_INDEX_SRC; // для прерывания внешнего цикла
+                    //    type = INDEX_SRC.COUNT_INDEX_SRC; // для прерывания внешнего цикла
 
-                        break; // прервать внутренний цикл
-                    }
-                    else
-                        ;
+                    //    break; // прервать внутренний цикл
+                    //}
+                    //else
+                    //    ;
         }
+
+        private void pushStateChangedGroupSignals(ID id)
+        {
+            object[] arToSend = null; // массив для аргументов состояния
+            GroupSources grpSrc = null;
+
+            grpSrc = m_listGroupSources[(int)id.m_typeOwner].Find(g => { return FormMain.FileINI.GetIDIndex (g.m_strID) == id.m_idOwner; });
+
+            arToSend = new object[] {
+                (int)StatesMachine.STATE_CHANGED_GROUP_SIGNALS
+                , id.m_typeOwner
+                , grpSrc.m_strID
+                , grpSrc.GetIdGroupSignals (id.m_idGroupSgnls)
+            };
+            // поставить в очередь 2 состояния: последовательный останов/запуск группы сигналов
+            Push(null, new object[] {
+                new object[] {
+                    arToSend // для 'STOP'
+                    , arToSend // для 'START'
+                    ,
+                },
+            });
+        }
+        /// <summary>
+        /// Поставить в очередь 1(одно) состояние - полная выгрузка/загрузки библиотеки
+        /// </summary>
+        /// <param name="type">Тип группы источников</param>
+        /// <param name="idOwner">Идентификатор (индекс) группы источников</param>
+        private void pushCommandReloadGroupSources(INDEX_SRC type, int idOwner)
+        {
+            GroupSources grpSrc = null;
+
+            grpSrc = m_listGroupSources[(int)type].Find(g => { return FormMain.FileINI.GetIDIndex(g.m_strID) == idOwner; });
+
+            Push(null, new object[] {
+                new object[] {
+                    new object [] {
+                        StatesMachine.COMMAND_RELAOD_GROUP_SOURCES
+                        , type
+                        , grpSrc.m_strID
+                    }
+                    ,
+                },
+            });
+        }
+
+        private static long _lIdCurrentTargetFunc;
         /// <summary>
         /// Целевая функция контроля
         /// </summary>
@@ -409,6 +543,8 @@ namespace uLoader
 
             DateTime now = DateTime.Now;
             int msecLimit = -1;
+
+            _lIdCurrentTargetFunc = HMath.GetRandomNumber();
 
             foreach (OManagement o in m_listObjects)
             {
@@ -430,18 +566,26 @@ namespace uLoader
                 if ((msecLimit > 0)
                     && (now - o.m_dtUpdate).TotalMilliseconds > msecLimit)
                 {
-                    //new Thread (new ParameterizedThreadStart (onCrashed)).Start(new EventCrashedArgs() { m_id = o.m_id, m_state = o.m_state });
-                    onCrashed(new EventCrashedArgs() { m_id = o.m_id, m_state = o.m_state });
+                    //Пополнить словарь событиями-нарушениями
+                    //new Thread (new ParameterizedThreadStart (onEvtCrashed)).Start(new EventCrashedArgs() { m_id = o.m_id, m_state = o.m_state });
+                    eventCrashed(new EventCrashedArgs() { m_id = o.m_id, m_state = o.m_state });
+                    //onEvtCrashed(new EventCrashedArgs() { m_id = o.m_id, m_state = o.m_state });
                     //Console.WriteLine(@"HHandlerQueue::targetFunc () - eventCrashed (id=" + o.m_id.m_idOwner
                     //    + @", key=" + o.m_id.m_idGroupSgnls
                     //    + @", state=" + o.m_state.ToString () + @") - ...");
-
+                    // исключить из следующей проверки
                     o.SetCrashed();
                     //o.Update();
                 }
                 else
                     ;
             }
+
+            foreach (KeyValuePair<KeyValuePair<INDEX_SRC, int>, DictOManagementInfoCrashed> pair in m_dictInfoCrashed)
+                if (pair.Value.IsCrashed == true)
+                    pushCommandReloadGroupSources(pair.Key.Key, pair.Key.Value);
+                else
+                    pushStateChangedGroupSignals (new ID (new object[] { pair.Key.Key, pair.Key.Value, pair.Value.GetIdCrashed () }));
         }
 #endif
 

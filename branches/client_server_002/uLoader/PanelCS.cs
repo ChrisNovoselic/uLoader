@@ -19,21 +19,30 @@ namespace uLoader
         public enum ID_EVENT : short
         {
             Unknown = -1
-                , Start, Stop, Exit, Connect, Disconnect
-            , Count
+                , Start, Stop, Exit, Connect,
+            Disconnect
+                , Count
         }
         /// <summary>
         /// Типы экземпляра дочерней панели
         /// </summary>
-        protected enum TypePanel { Unknown = -1, Client, Server
-            , Count }
+        protected enum TypePanel
+        {
+            Unknown = -1, Client,
+            Server
+                , Count
+        }
         /// <summary>
         /// Массив дочерних панелей
         /// </summary>
-        private PanelCS []m_arPanels;
+        private PanelCS[] m_arPanels;
 
-        public enum TypePanelWorkState { Unknown = -1, Paused, Started
-            , Count }
+        public enum TypePanelWorkState
+        {
+            Unknown = -1, Paused,
+            Started
+                , Count
+        }
         /// <summary>
         /// Признак состояния внешней панели (Работа)
         /// </summary>
@@ -59,15 +68,17 @@ namespace uLoader
             else
                 ;
 
-            EventPanelWorkStateChanged += new DelegateFunc (onEventPanelWorkStateChanged);
+            EventPanelWorkStateChanged += new DelegateFunc(onEventPanelWorkStateChanged);
             //eventTypePanelEnableInitialize += new DelegateFunc (onEventTypePanelEnableInitialize);
 
             m_PanelWorkState = TypePanelWorkState.Unknown;
             _typePanelEnabled = TypePanel.Unknown;
         }
 
-        public int Ready {
-            get {
+        public int Ready
+        {
+            get
+            {
                 return (m_InteractionParameters.Ready == true) ? (!(m_arPanels == null)) && ((m_arPanels[(int)TypePanel.Client].Ready == true)
                     && (m_arPanels[(int)TypePanel.Server].Ready == true)) ? 0 : 1 : -1;
             }
@@ -79,13 +90,13 @@ namespace uLoader
         /// <param name="sender">Панель, отправившая событие</param>
         /// <param name="ev">Аргумент события</param>
         private void panelOnCommandEvent(object obj)
-        {            
+        {
             EventArgsDataHost ev = obj as EventArgsDataHost;
             // 1-ый(0) параметр - объект-вкладка
             // 2-ой(1) - тип приложения (TypeApp)
             // 3-ий(2) - тип сообщения (TypeMes)
             // 4-ый(3) - идентификатор события (ID_EVENT)
-            object[] pars = (ev.par[0] as object[])[0] as object [];
+            object[] pars = (ev.par[0] as object[])[0] as object[];
             //Определить внутреннее сообщение или для передачи в родительскую форму
             // по кол-ву параметров (короткие сообщения - внутренние)
             bool bRedirect = pars.Length > 2;
@@ -100,7 +111,9 @@ namespace uLoader
                         BeginInvoke(new DelegateFunc(reConnClient));
                     else //e.TypeApp == PanelCS.TypePanel.Server
                         ; // ничего не делаем
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 Logging.Logg().Exception(e, @"PanelClientServer::panelOnCommandEvent () - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
@@ -136,7 +149,7 @@ namespace uLoader
                         //        TypePanel.Unknown;
 
                         m_InteractionParameters = (InteractionParameters)par;
-                        m_semInteractionParameters.Release (1);
+                        m_semInteractionParameters.Release(1);
                     }
                     else
                         ;
@@ -211,7 +224,7 @@ namespace uLoader
             // ждать ответа
             m_semInteractionParameters.WaitOne();
             // проверить корректность инициализации
-            if (! (Ready < 0))
+            if (!(Ready < 0))
             {
                 start();
                 //BeginInvoke(new DelegateObjectFunc (start), par);
@@ -275,9 +288,10 @@ namespace uLoader
             TypePanel prevTypePanelEnabled = _typePanelEnabled;
             bool bIsConnected = false;
 
-            try {
+            try
+            {
                 m_arPanels[(int)TypePanel.Client].Activate(false); m_arPanels[(int)TypePanel.Client].Stop();
-                
+
                 m_arPanels[(int)TypePanel.Client].Start();
                 bIsConnected = (m_arPanels[(int)TypePanel.Client] as PanelClient).IsConnected;
 
@@ -293,7 +307,9 @@ namespace uLoader
                 }
                 else
                     ;
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 Logging.Logg().Exception(e, @"PanelClientServer::reConnClient () - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
@@ -402,14 +418,15 @@ namespace uLoader
                 Logging.Logg().Debug(string.Format(@"PanelClientServer.PanelClient::sendMessage (text={0}) - ...", message), Logging.INDEX_MESSAGE.NOT_SET);
 
                 _client.WriteMessage(message);//Отправка сообщения
-                addMessage(new Pipes.Pipe.ReadMessageEventArgs (message, m_servName), TypeMes.Output);//Добавление сообщения и обработка
+                addMessage(new Pipes.Pipe.ReadMessageEventArgs(message, m_servName), TypeMes.Output);//Добавление сообщения и обработка
             }
 
             protected override int addMessage(string com_mes, string arg, string name)
             {
-                int iRes = base.addMessage (com_mes, arg, name);
+                int iRes = base.addMessage(com_mes, arg, name);
 
-                if (iRes == 0) {
+                if (iRes == 0)
+                {
                     Logging.Logg().Debug(string.Format(@"PanelClientServer.PanelClient::addMessage (COMMAND={0}, ARG={1}, name={2}) - ...", com_mes, arg, name), Logging.INDEX_MESSAGE.NOT_SET);
 
                     //Pipes.Pipe.COMMAND com = Pipes.Pipe.COMMAND.Unknown;
@@ -576,7 +593,7 @@ namespace uLoader
             protected override void reconnect(string new_server = "")
             {
                 Logging.Logg().Debug(string.Format(@"PanelClientServer.PanelClient::reconnect (new_server={0}) - ...", new_server), Logging.INDEX_MESSAGE.NOT_SET);
-                
+
                 _client.StopClient();//остановка клиента
 
                 base.reconnect(new_server);
@@ -590,7 +607,8 @@ namespace uLoader
             /// </summary>
             private Pipes.Server _server { get { return _pipe == null ? null : _pipe as Pipes.Server; } }
 
-            public PanelServer(string []arServerName) : base (arServerName, TypePanel.Server)
+            public PanelServer(string[] arServerName)
+                : base(arServerName, TypePanel.Server)
             {
                 d_disconnect = disconnect_client;
             }
@@ -676,14 +694,15 @@ namespace uLoader
             protected override void sendMessage(string message, string nameClient)
             {
                 _server.WriteMessage(nameClient, message);//Отправка
-                addMessage(new Pipes.Pipe.ReadMessageEventArgs (message, nameClient), TypeMes.Output);//Добавление сообщения и обработка 
+                addMessage(new Pipes.Pipe.ReadMessageEventArgs(message, nameClient), TypeMes.Output);//Добавление сообщения и обработка 
             }
 
             protected override int addMessage(string com_mes, string arg, string name)
             {
                 int iRes = base.addMessage(com_mes, arg, name);
 
-                if (iRes == 0) {
+                if (iRes == 0)
+                {
                     Logging.Logg().Debug(string.Format(@"PanelClientServer.PanelServer::addMessage (COMMAND={0}, ARG={1}, name={2}) - ...", com_mes, arg, name), Logging.INDEX_MESSAGE.NOT_SET);
 
                     Pipes.Pipe.COMMAND com = Pipes.Pipe.COMMAND.Unknown;
@@ -791,8 +810,9 @@ namespace uLoader
                     //                                    iRes = -2;
                     //                                    throw new Exception(string.Format(@"PanelServer::addMessage (COMMAND={0}) - неизвестная команда...", com_mes));
                     //                                }
-                } else
-                // пустая команда
+                }
+                else
+                    // пустая команда
                     ;
 
                 return iRes;
@@ -805,10 +825,13 @@ namespace uLoader
             /// <param name="e">Аргумент события</param>
             private void timerUpdateStat_Tick(object sender, EventArgs ev)
             {
-                try {
+                try
+                {
                     foreach (string client in cbClients.Items)
                         sendMessage(Pipes.Pipe.COMMAND.Status.ToString(), client);
-                } catch (Exception e) {
+                }
+                catch (Exception e)
+                {
                     Logging.Logg().Exception(e, @"PanelClientServer.PanelCS::timerUpdateStat_Tick () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
@@ -838,7 +861,7 @@ namespace uLoader
                 _server.SendDisconnect();
                 //m_server.StopServer();//остановка сервера
                 timerUpdateStatus.Start();
-                
+
                 base.reconnect(new_server);
             }
         }
@@ -850,9 +873,12 @@ namespace uLoader
             //protected const string KEY_MYNAME = @"MyName";
             protected static int MS_TIMER_UPDATE_STATUS = 10000;
 
-            private enum INDEX_COLUMN_MESSAGES : short { UNKNOWN = -1
-                , DATETIME, MESSAGE, SOURCE, TYPE_IO
-                , COUNT
+            private enum INDEX_COLUMN_MESSAGES : short
+            {
+                UNKNOWN = -1
+                    , DATETIME, MESSAGE, SOURCE,
+                TYPE_IO
+                    , COUNT
             }
             //Колонки таблицы со списком сообщений
             private string[] m_arTextColumnMessages = new string[(int)INDEX_COLUMN_MESSAGES.COUNT] { "Дата/время", "Сообщение", "Источник", "Вход/исход" };
@@ -868,12 +894,14 @@ namespace uLoader
 
             protected Pipes.Pipe _pipe;
 
-            public bool Ready {
-                get {
+            public bool Ready
+            {
+                get
+                {
                     return
                         //(!(m_client == null))
                         //    && (!(m_server == null))
-                        m_servers.Length > 1    
+                        m_servers.Length > 1
                             ;
                 }
             }
@@ -962,11 +990,14 @@ namespace uLoader
                 m_type_panel = type;
                 d_exit = exit_program;
 
-                m_listRowDGVAdding = new ListDGVMessage ();
+                m_listRowDGVAdding = new ListDGVMessage();
 
-                try {
+                try
+                {
                     InitializeComponent();
-                } catch (Exception e) {
+                }
+                catch (Exception e)
+                {
                     Logging.Logg().Exception(e, @"PanelCS::ctor () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
 
@@ -1332,7 +1363,7 @@ namespace uLoader
 
             #endregion
 
-            #region Обработчики сервера            
+            #region Обработчики сервера
 
             protected virtual void delFromComList(object sender, EventArgs e)
             {
@@ -1342,7 +1373,7 @@ namespace uLoader
             #endregion
 
             #region Обработчики клиента
-            
+
             #endregion
 
             #region Отправка сообщений
@@ -1356,7 +1387,8 @@ namespace uLoader
 
             private void rbChecked(object sender, EventArgs ev)
             {
-                try {
+                try
+                {
                     if ((sender as RadioButton).Name == "rbStatus")
                     {
                         if ((sender as RadioButton).Checked == true)
@@ -1378,7 +1410,9 @@ namespace uLoader
                     }
                     else
                         ;
-                } catch (Exception e) {
+                }
+                catch (Exception e)
+                {
                     Logging.Logg().Exception(e, @"PanelClientServer.PanelCS::::rbChecked () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
@@ -1393,7 +1427,7 @@ namespace uLoader
                 switch (m_type_panel)
                 {
                     case TypePanel.Server:
-                        if (commandBox.SelectedItem.ToString() == Pipes.Pipe.COMMAND.ReConnect.ToString ())//Добавляет аргумент для реконнекта
+                        if (commandBox.SelectedItem.ToString() == Pipes.Pipe.COMMAND.ReConnect.ToString())//Добавляет аргумент для реконнекта
                         {
                             sendMessage(commandBox.SelectedItem.ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + argCommand.Text, cbClients.Text);
                         }
@@ -1414,7 +1448,8 @@ namespace uLoader
             {
                 int iRes = 0;
 
-                if (com_mes.Trim().Equals(string.Empty) == true) {
+                if (com_mes.Trim().Equals(string.Empty) == true)
+                {
                     iRes = -1;
 
                     Logging.Logg().Error(string.Format(@"PanelClientServer.PanelCS::addMessage (com_mes={0}, arg={1}, name={2}) - пустая команда..."
@@ -1444,12 +1479,14 @@ namespace uLoader
                         m_typeMes = typeMes.ToString();
                     }
 
-                    public object[] ToPrint  () {
+                    public object[] ToPrint()
+                    {
                         return new object[] { m_dtNow, m_message, m_idServer, m_typeMes };
                     }
                 }
 
-                public int New(string mes, string idServer, TypeMes typeMes) {
+                public int New(string mes, string idServer, TypeMes typeMes)
+                {
                     this.Add(new DGVMessage(mes, idServer, typeMes));
 
                     //Logging.Logg().Debug(@"PanelCS::ListDGVMessage.Count=" + this.Count, Logging.INDEX_MESSAGE.NOT_SET);
@@ -1457,7 +1494,8 @@ namespace uLoader
                     return this.Count;
                 }
 
-                public object[] ToPrint(int indx) {
+                public object[] ToPrint(int indx)
+                {
                     return ((DGVMessage)this[indx]).ToPrint();
                 }
             }
@@ -1479,7 +1517,8 @@ namespace uLoader
                 else
                     ;
 
-                try {
+                try
+                {
                     if (command_mes.Trim().Equals(string.Empty) == false)
                     {
                         m_listRowDGVAdding.New(mes.Value, mes.IdServer, type_mes);
@@ -1495,7 +1534,7 @@ namespace uLoader
                                 addMessage(command_mes, argument, mes.IdServer);
                                 break;
                             case TypeMes.Output://исходящие
-                                if (command_mes.Equals (Pipes.Pipe.COMMAND.GetName.ToString()) == true)
+                                if (command_mes.Equals(Pipes.Pipe.COMMAND.GetName.ToString()) == true)
                                 {
                                     switch (m_type_panel)
                                     {
@@ -1510,11 +1549,13 @@ namespace uLoader
                         }
                     }
                     else
-                    //??? пустая команда
+                        //??? пустая команда
                         Logging.Logg().Error(string.Format(@"PanelClientServer.PanelCS::addMessage (message={}, name={1}, type_mes={2}) - пустая команда..."
                                 , mes.Value, mes.IdServer, type_mes)
                             , Logging.INDEX_MESSAGE.NOT_SET);
-                } catch (Exception e) {
+                }
+                catch (Exception e)
+                {
                     Logging.Logg().Exception(e
                         , string.Format(@"PanelClientServer.PanelCS::addMessage (mes={0}, name={1}, typeMes={2}) - ...", mes.Value, mes.IdServer, type_mes)
                         , Logging.INDEX_MESSAGE.NOT_SET);
@@ -1526,13 +1567,17 @@ namespace uLoader
             /// </summary>
             private void addRowToDGV()
             {
-                try {
-                    while (m_listRowDGVAdding.Count > 0) {
+                try
+                {
+                    while (m_listRowDGVAdding.Count > 0)
+                    {
                         dgvMessage.Rows.Add(m_listRowDGVAdding.ToPrint(0));//Добавление строки в DGV
 
                         m_listRowDGVAdding.RemoveAt(0);
                     }
-                } catch (Exception e) {
+                }
+                catch (Exception e)
+                {
                     Logging.Logg().Exception(e, string.Format(@"PanelClientServer.PanelCS::addRowToDGV () - ..."), Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
@@ -1563,7 +1608,8 @@ namespace uLoader
             /// <param name="add">true если добавление</param>
             private void operCBclient(string idClient, bool add)
             {
-                try {
+                try
+                {
                     if (add == true)//если добавление то
                     {
                         cbClients.Items.Add(idClient);//добавляем
@@ -1586,7 +1632,9 @@ namespace uLoader
                         lvStatus.Items.Find(idClient, false)[0].Remove();
                         lvStatus.Refresh();
                     }
-                } catch (Exception e) {
+                }
+                catch (Exception e)
+                {
                     Logging.Logg().Exception(e, @"PanelClientServer.PanelCS::operCBclient", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
@@ -1616,10 +1664,13 @@ namespace uLoader
                         (PanelWorkState == TypePanelWorkState.Paused) ? Color.Red :
                             Color.LightGray;
 
-                try {
+                try
+                {
                     lblStat.BackColor = clr;
                     lblStat.Text = PanelWorkState.ToString();
-                } catch (Exception e) {
+                }
+                catch (Exception e)
+                {
                     Logging.Logg().Exception(e, @"PanelClientServer.PanelCS::setLbl () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
@@ -1658,7 +1709,9 @@ namespace uLoader
                         }
                         else
                             ;
-                } catch (Exception e) {
+                }
+                catch (Exception e)
+                {
                     Logging.Logg().Exception(e, string.Format(@"PanelClientServer.PanelCS::lvStatusUpdate (client={0}, status={1}) - ...", client, status), Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }

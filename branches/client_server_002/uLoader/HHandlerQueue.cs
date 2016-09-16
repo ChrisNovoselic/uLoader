@@ -95,8 +95,9 @@ namespace uLoader
                 ;
 #if _STATE_MANAGER
             m_timerFunc = new System.Threading.Timer(timerFunc);
+            m_dictInfoCrashed = new DictInfoCrashed();
             m_listObjects = new ListOManagement();
-            eventCrashed += new /*HHandlerQueue.EventHandlerCrashed*/ DelegateObjectFunc(onCrashed);
+            eventCrashed += new /*HHandlerQueue.EventHandlerCrashed*/ DelegateObjectFunc(onEvtCrashed);
 #endif
             //Прочитать и "разобрать" файл конфигурации
             m_fileINI = new FormMain.FileINI(strNameFileINI);
@@ -117,58 +118,63 @@ namespace uLoader
             EventArgsDataHost ev = par as EventArgsDataHost;
             object []pars = ev.par as object [];
 
-            // массив параметров различается в ~ от типа объекта в 'pars[0]'
-            // для 'GroupSourcesSrc, GroupSourcesDest' - длина=2 (набор исходный): [0] - индекс группы сигналов, [1 | при необходимости] - 'ID_HEAD_ASKED_HOST'
-            // для 'GroupSourcesDest' - длина=2 (набор изменен): [0] - объект 'GroupSourcesDest', [1] - индекс группы источников
+            // массив параметров
+            // id_main - индекс типа группы источников (INDEX_SRC)
+            // id_detail - индекс группы источников (идентификатор)
+            //  'par' различается в ~ от типа объекта в 'pars[0]'
+            // для 'GroupSourcesSrc, GroupSourcesDest' - длина=3 (набор исходный): [0] - индекс группы сигналов, [1] - команда, [2 | при необходимости] - 'ID_HEAD_ASKED_HOST'
+            // для 'GroupSourcesDest' - длина=2 (набор изменен): [0] - объект 'GroupSourcesDest', [1] - команда
             GroupSourcesDest grpSrcDest = null; // только для 2-го набора
             int indx = -1; // для разных наборов - различное значение
-            ID_HEAD_ASKED_HOST idHeadAskedHost = ID_HEAD_ASKED_HOST.UNKNOWN; // только для исходного набора (для START, STOP всегда = 'CONFIRM')
+            ID_HEAD_ASKED_HOST idHeadAskedHost = ID_HEAD_ASKED_HOST.UNKNOWN; // только для исходного набора (для [START | STOP] всегда = 'CONFIRM')
+            ID_DATA_ASKED_HOST id_cmd = (ID_DATA_ASKED_HOST)pars[1];
 
             if (pars[0].GetType().IsPrimitive == true)
-            {// действия поо набору-1
+            {// действия по набору-1
                 indx = (int)pars[0]; // индекс группы сигналов
-                if (pars.Length == 1)
+                if (pars.Length == 2)
                 // единственный параметр
-                    switch ((ID_DATA_ASKED_HOST)ev.id_detail)
+                    switch (id_cmd)
                     {
                         //case ID_DATA_ASKED_HOST.START:
                         //    add(new object [] { ev.id_main, indx }, TimeSpan.FromMilliseconds (16667));
                         //    break;
                         case ID_DATA_ASKED_HOST.STOP:
 #if _STATE_MANAGER
-                            remove(ev.id_main, indx);
+                            remove(ev.id_main, ev.id_detail, indx);
 #endif
                             break;
                         case ID_DATA_ASKED_HOST.TABLE_RES:
 #if _STATE_MANAGER
-                            update(ev.id_main, indx);
+                            update(ev.id_main, ev.id_detail, indx);
 #endif
                             break;
                         default:
                             break;
                     }
                 else
-                // 2 параметра
-                    if (pars.Length == 2)
+                // 3 параметра
+                    if (pars.Length == 3)
                     {
-                        if (pars[1].GetType().IsEnum == true)
+                        if (pars[2].GetType().IsEnum == true)
                         {//ID_DATA_ASKED_HOST.START, ID_DATA_ASKED_HOST.STOP; ID_HEAD_ASKED_HOST.CONFIRM
-                            idHeadAskedHost = (ID_HEAD_ASKED_HOST)pars[1];
+                            idHeadAskedHost = (ID_HEAD_ASKED_HOST)pars[2];
 
                             if (idHeadAskedHost == ID_HEAD_ASKED_HOST.CONFIRM)
 #if _STATE_MANAGER
-                                confirm(ev.id_main, indx)
+                                confirm(ev.id_main, ev.id_detail, indx)
 #else
 #endif
                                     ;
                             else
-                                throw new MissingMemberException(); // ошибка - переменная имеет непредвиденное значение                            
+                            // ошибка - переменная имеет непредвиденное значение
+                                throw new MissingMemberException(@"HHandleQueue::onEvtDataAskedHostQueue_GroupSources () - ...");
                         }
                         else
                         {//ID_DATA_ASKED_HOST.START
 #if _STATE_MANAGER
                             // добавить группу сигналов в список контролируемых
-                            add(new object[] { ev.id_main, indx }, TimeSpan.FromMilliseconds(((TimeSpan)pars[1]).TotalMilliseconds));
+                            add(new object[] { ev.id_main, ev.id_detail, indx }, TimeSpan.FromMilliseconds(((TimeSpan)pars[2]).TotalMilliseconds));
 #else
 #endif
                         }
@@ -177,19 +183,19 @@ namespace uLoader
                         ; // других вариантов по количеству параметров - нет
             }
             else
-            {// действия поо набору-2 (для установления взаимосвязи между "связанными" (по конф./файлу) по "цепочке" сигналов - групп сигналов - групп источников)
+            {// действия по набору-2 (для установления взаимосвязи между "связанными" (по конф./файлу) по "цепочке" сигналов - групп сигналов - групп источников)
                 if (pars[0] is GroupSourcesDest)
                 {
                     grpSrcDest = pars[0] as GroupSourcesDest;
-                    indx = (int)pars[1]; // индекс группы источников
+                    indx = ev.id_detail; // индекс группы источников
 
                     foreach (GroupSources grpSrcSource in m_listGroupSources[(int)INDEX_SRC.SOURCE])
                         if (FormMain.FileINI.GetIDIndex(grpSrcSource.m_strID) == indx) //indxNeededGroupSources
                         {
-                            if ((ID_DATA_ASKED_HOST)ev.id_detail == ID_DATA_ASKED_HOST.START)
+                            if (id_cmd == ID_DATA_ASKED_HOST.START)
                                 grpSrcSource.AddDelegatePlugInOnEvtDataAskedHost(FormMain.FileINI.GetIDIndex(grpSrcDest.m_strID), grpSrcDest.Clone_OnEvtDataAskedHost);
                             else
-                                if ((ID_DATA_ASKED_HOST)ev.id_detail == ID_DATA_ASKED_HOST.STOP)
+                                if (id_cmd == ID_DATA_ASKED_HOST.STOP)
                                     grpSrcSource.RemoveDelegatePlugInOnEvtDataAskedHost(FormMain.FileINI.GetIDIndex(grpSrcDest.m_strID), grpSrcDest.Clone_OnEvtDataAskedHost);
                                 else
                                     ;
@@ -200,7 +206,8 @@ namespace uLoader
                             ;
                 }
                 else
-                    throw new InvalidCastException(); // ошибка - объект имеет неизвестный тип
+                // ошибка - объект имеет неизвестный тип
+                    throw new InvalidCastException(@"HHandleQueue::onEvtDataAskedHostQueue_GroupSources () - ...");
             }
         }
 
