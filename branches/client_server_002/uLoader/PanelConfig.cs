@@ -12,7 +12,7 @@ using HClassLibrary;
 
 namespace uLoader
 {
-    public partial class PanelConfig : HPanelCommonDataHost
+    partial class PanelConfig : HPanelCommonDataHost
     {
         private class PanelSources : PanelCommonDataHost
         {

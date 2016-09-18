@@ -14,7 +14,7 @@ using HClassLibrary;
 
 namespace uLoader
 {
-    public partial class PanelClientServer : HPanelCommonDataHost
+    partial class PanelClientServer : HPanelCommonDataHost
     {
         public enum ID_EVENT : short
         {
@@ -1756,15 +1756,65 @@ namespace uLoader
 
         public struct InteractionParameters
         {
+            private enum INDEX_PARAMETER {
+                UNKNOWN = -1
+                , WS, MAIN_PIPE
+            , COUNT }
+
             public string[] m_arNameServers;
 
             public string m_NameMainPipe;
 
-            public InteractionParameters(string strServerNames, string strNameMainPipe)
+            public InteractionParameters(string ini)
             {
-                m_arNameServers = strServerNames.Split(',');
+                m_arNameServers = new string[] { };
+                m_NameMainPipe = string.Empty;
 
-                m_NameMainPipe = strNameMainPipe;
+                List<string> listNameServers = new List<string> ();
+                string[] arPars = null
+                    , values = null;
+
+                try {
+                    if (ini.Equals(string.Empty) == false) {
+                        arPars = ini.Split(FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.PAIR_VAL]);
+
+                        foreach (string key_val in arPars)
+                            for (INDEX_PARAMETER par = (INDEX_PARAMETER.UNKNOWN + 1); par < INDEX_PARAMETER.COUNT; par++)
+                                if (key_val.IndexOf(par.ToString()) == 0) {
+                                    values = key_val.Split(FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE]);
+
+                                    if (values.Length == 2)
+                                        if (values[1].Equals(string.Empty) == false)
+                                            switch (par) {
+                                                case INDEX_PARAMETER.WS:
+                                                    listNameServers.Add(values[1]);
+                                                    break;
+                                                case INDEX_PARAMETER.MAIN_PIPE:
+                                                    m_NameMainPipe = values[1];
+                                                    break;
+                                                default:
+                                                    break;
+                                            }
+                                        else
+                                            Logging.Logg().Warning(string.Format(@"PanelClientServer.InteractionParameters::ctor (ключ={0}) - значение=не_установлено", par.ToString())
+                                                , Logging.INDEX_MESSAGE.NOT_SET);
+                                    else
+                                        throw new Exception(string.Format(@"PanelClientServer.InteractionParameters::ctor (ключ={0}) - пара ключ:значение не распознана", par.ToString()));
+
+                                    break;
+                                }
+                                else
+                                    ;
+
+                        m_arNameServers = listNameServers.ToArray();
+                    }
+                    else
+                        ;
+                }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, @"PanelClientServer.InteractionParameters::ctor () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
             }
 
             public bool Ready { get { return ((!(m_arNameServers == null)) && (m_arNameServers.Length > 1)) && m_NameMainPipe.Equals(string.Empty) == false; } }

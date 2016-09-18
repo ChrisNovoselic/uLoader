@@ -112,6 +112,8 @@ namespace uLoader
             setListGroupSources(INDEX_SRC.SOURCE, m_fileINI.AllObjectsSrcGroupSources, m_fileINI.AllObjectsSrcGroupSignals);
             // панель - назначение
             setListGroupSources(INDEX_SRC.DEST, m_fileINI.AllObjectsDestGroupSources, m_fileINI.AllObjectsDestGroupSignals);
+
+            m_stateManager = new StateManager(m_fileINI.GetMainValueOfKey(@"STATE_MANAGER"));
         }
         /// <summary>
         /// Обработчик события 'EvtDataAskedHostQueue'
@@ -191,9 +193,9 @@ namespace uLoader
                 if (pars[0] is GroupSourcesDest)
                 {
                     grpSrcDest = pars[0] as GroupSourcesDest;
-                    indx = ev.id_detail; // индекс группы источников
+                    indx = ev.id_detail; // индекс "чужой-связанной" группы источников
 
-                    foreach (GroupSources grpSrcSource in m_listGroupSources[(int)INDEX_SRC.SOURCE])
+                    foreach (GroupSources grpSrcSource in m_listGroupSources[(int)INDEX_SRC.SOURCE]) // можно использовать 'ev.id_main'
                         if (FormMain.FileINI.GetIDIndex(grpSrcSource.m_strID) == indx) //indxNeededGroupSources
                         {
                             if (id_cmd == ID_DATA_ASKED_HOST.START)
@@ -738,7 +740,7 @@ namespace uLoader
                         error = false;
                         itemQueue = Peek;
 
-                        outobj = m_fileINI.m_InteractionPars;
+                        outobj = new PanelClientServer.InteractionParameters (m_fileINI.GetMainValueOfKey(@"INTERACTION"));
 
                         iRes = 0;
                         break;

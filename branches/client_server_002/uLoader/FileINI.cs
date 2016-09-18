@@ -8,7 +8,7 @@ using uLoaderCommon;
 
 namespace uLoader
 {
-    public partial class FormMain
+    partial class FormMain
     {
         public class FileINI : HClassLibrary.FileINI
         {
@@ -49,8 +49,10 @@ namespace uLoader
             /// </summary>
             public int SecondWorkUpdate { get { return m_iSecPanelWorkUpdate; } }
             private int m_iSecPanelWorkUpdate;
-
-            public PanelClientServer.InteractionParameters m_InteractionPars;
+            ///// <summary>
+            ///// Объект для описания парметров взаимодействия экземпляров приложения
+            ///// </summary>
+            //public PanelClientServer.InteractionParameters m_InteractionPars;
             /// <summary>
             /// Конструктор - основной
             /// </summary>
@@ -72,10 +74,7 @@ namespace uLoader
                 if (Int32.TryParse (GetMainValueOfKey(@"PANEL_WORK_UPDATE"), out m_iSecPanelWorkUpdate) == true)
                     Logging.Logg().Debug(@"FileINI::ctor () - PANEL_WORK_UPDATE = " + m_iSecPanelWorkUpdate, Logging.INDEX_MESSAGE.NOT_SET);                
                 else
-                    Logging.Logg().Error(@"FileINI::FileINI () - Параметр PANEL_WORK_UPDATE не удалось инициализировать ...", Logging.INDEX_MESSAGE.NOT_SET);
-                //Инициализировать структуру с параметрами вкладки "Взаимодействие"
-                m_InteractionPars = new PanelClientServer.InteractionParameters(GetMainValueOfKey(@"INTERACTION_WS")
-                    , GetMainValueOfKey(@"INTERACTION_MAINPIPE"));
+                    Logging.Logg().Error(@"FileINI::FileINI () - Параметр PANEL_WORK_UPDATE не удалось инициализировать ...", Logging.INDEX_MESSAGE.NOT_SET);                
                 //Инициализировать словарь с формулами
                 fillDictFormula();
 
@@ -284,7 +283,8 @@ namespace uLoader
             {
                 string strRes = string.Empty;
 
-                if (!(m_dictFormula == null))
+                if ((!(m_dictFormula == null))
+                    && (!(item.m_listSgnls == null)))
                     for (int i = 0; i < item.m_listSgnls.Count; i++)
                         for (int j = 0; j < item.m_listSgnls[i].m_arSPars.Length; j++)
                             foreach (string fKey in m_dictFormula.Keys)
@@ -305,7 +305,7 @@ namespace uLoader
                                 else
                                     ;
                 else
-                    ; // в словаре приложения нет ни одной формулы
+                    ; // в словаре приложения нет ни одной формулы ИЛИ нет ни одного сигнала к к оторому можно применить хотя бы одну ыормулу
             }
 
             /// <summary>
@@ -450,12 +450,13 @@ namespace uLoader
 
                         if (indxTypeGroup == INDEX_TYPE_GROUP.SIGNAL)
                         // если была добавлена группа сигналов
-                            try
-                            {
-                                initGroupSignalsFormula(itemSrc as GROUP_SIGNALS_SRC, indxSrc.ToString() + @", " + type.AssemblyQualifiedName + @", " + secGroup);
-                            }
-                            catch (Exception e)
-                            {
+                            try {
+                                if ((!((itemSrc as GROUP_SIGNALS_SRC).m_listSgnls == null))
+                                    && ((itemSrc as GROUP_SIGNALS_SRC).m_listSgnls.Count > 0))
+                                    initGroupSignalsFormula(itemSrc as GROUP_SIGNALS_SRC, indxSrc.ToString() + @", " + type.AssemblyQualifiedName + @", " + secGroup);
+                                else
+                                    ; // нет ни одного сигнала
+                            } catch (Exception e) {
                                 Logging.Logg().Exception(e, @"FileINI::ctor () - addGroupValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                             }
                         else
@@ -518,6 +519,7 @@ namespace uLoader
             {
                 return getObjectSrcGroupSources(INDEX_SRC.SOURCE, id);
             }
+
             public GROUP_SIGNALS_SRC[] AllObjectsSrcGroupSignals { get { return m_arListGroupValues[(int)INDEX_SRC.SOURCE].m_listGroupSgnlsSrc.ToArray(); } }
             public GROUP_SIGNALS_SRC GetObjectSrcGroupSignals(string id)
             {
@@ -530,6 +532,7 @@ namespace uLoader
             {
                 return getObjectSrcGroupSources(INDEX_SRC.DEST, id);
             }
+
             public GROUP_SIGNALS_SRC[] AllObjectsDestGroupSignals { get { return m_arListGroupValues[(int)INDEX_SRC.DEST].m_listGroupSgnlsSrc.ToArray(); } }
             public GROUP_SIGNALS_SRC GetObjectDestGroupSignals(string id)
             {

@@ -18,6 +18,94 @@ namespace uLoader
     //public class StateManager : HClassLibrary.HHandlerQueue
     partial class HHandlerQueue
     {
+        public class StateManager
+        {
+            private enum INDEX_PARAMETER { UNKNOWN = -1
+                , TURN, SHEDULE_TIMESTART, SHEDULE_TIMESPAN
+            , COUNT }
+
+            public bool m_bTurn;
+
+            private DateTime m_dtStart;
+
+            private DateTime m_dtReload;
+
+            private DateTime m_dtShedule;
+
+            private TimeSpan m_tsShedule;
+
+            private StateManager()
+            {
+                m_dtStart = DateTime.Now;
+
+                m_dtReload = DateTime.MinValue;
+
+                m_bTurn = false;
+                m_dtShedule = DateTime.MinValue;
+                m_tsShedule = TimeSpan.Zero;
+            }
+
+            public StateManager(string ini) : this ()
+            {
+                string[] arPars = null
+                    , values = null;
+
+                try {
+                    if (ini.Equals(string.Empty) == false) {
+                        arPars = ini.Split(FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.PAIR_VAL]);
+
+                        foreach (string key_val in arPars)
+                            for (INDEX_PARAMETER par = (INDEX_PARAMETER.UNKNOWN + 1); par < INDEX_PARAMETER.COUNT; par++)                            
+                                if (key_val.IndexOf(par.ToString()) == 0) {
+                                    values = key_val.Split(FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE]);
+
+                                    if (values.Length == 2)
+                                        if (values[1].Equals(string.Empty) == false)
+                                            switch (par) {
+                                                case INDEX_PARAMETER.TURN:
+                                                    bool.TryParse(values[1], out m_bTurn);
+                                                    break;
+                                                case INDEX_PARAMETER.SHEDULE_TIMESTART:
+                                                    break;
+                                                case INDEX_PARAMETER.SHEDULE_TIMESPAN:
+                                                    m_tsShedule = new HTimeSpan(values[1]).Value;
+                                                    break;
+                                                default:
+                                                    break;
+                                            }
+                                        else
+                                            Logging.Logg().Warning(string.Format(@"HHandlerQueue.StateManager::ctor (ключ={0}) - значение=не_установлено", par.ToString())
+                                                , Logging.INDEX_MESSAGE.NOT_SET);
+                                    else
+                                        throw new Exception(string.Format(@"HHandlerQueue.StateManager::ctor (ключ={0}) - пара ключ:значение не распознана", par.ToString()));
+
+                                    break;
+                                } else
+                                    ;
+                    } else
+                        ;
+                } catch (Exception e) {
+                    Logging.Logg().Exception(e, @"HHandlerQueue.StateManager::ctor () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
+            }
+
+            public bool IsReload {
+                get {
+                    bool bRes = false;
+
+                    bRes = m_tsShedule == TimeSpan.Zero ?
+                        false :
+                            ((DateTime.Now - (m_dtReload == DateTime.MinValue ? m_dtStart : m_dtReload)) - m_tsShedule).TotalMinutes > 0;
+
+                    if (bRes == true)
+                        m_dtReload = DateTime.Now;
+                    else
+                        ;
+
+                    return bRes;
+            } }
+        }
+        public HHandlerQueue.StateManager m_stateManager;
 #if _STATE_MANAGER
         /// <summary>
         /// Класс для идентификации объекта контроля
@@ -104,7 +192,7 @@ namespace uLoader
             /// </summary>
             public void SetCrashed() { m_state = STATE.CRASH; }
 
-            public void SetCCrashed() { m_state = STATE.FCRASH; }
+            public void SetFCrashed() { m_state = STATE.FCRASH; }
             /// <summary>
             /// Обновить метку времени крайнего обновления
             /// </summary>
@@ -289,6 +377,15 @@ namespace uLoader
                     Add(key, new DictOManagementInfoCrashed());
                 // добавить группу сигналов
                 this[key].MarkedItem(id.m_idGroupSgnls, state);
+
+                //Debug.WriteLine
+                Logging.Logg().Debug
+                (
+                    string.Format(@"MARKED- {0}- {1} [STATE={2}]"
+                    , DateTime.Now.ToString()
+                    , id.ToPrint(), state)
+                        , Logging.INDEX_MESSAGE.NOT_SET
+                );
             }
 
             //public void RemoveItem(ID id)
@@ -606,7 +703,7 @@ namespace uLoader
 
             msgDebug = string.Format(@"HHandlerQueue::pushStateChangedGroupSignals ({0}) - ...", id.ToPrint());
             Logging.Logg().Debug(msgDebug, Logging.INDEX_MESSAGE.NOT_SET);
-            Debug.WriteLine(DateTime.Now.ToString() + @"- " + msgDebug);
+            //Debug.WriteLine(DateTime.Now.ToString() + @"- " + msgDebug);
         }
 #if _SEPARATE_APPDOMAIN
         /// <summary>
@@ -636,7 +733,7 @@ namespace uLoader
             id = new ID(new object[] { type, idOwner, -1 });
             msgDebug = string.Format(@"HHandlerQueue::pushCommandReloadGroupSources ({0}) - ...", id.ToPrint());
             Logging.Logg().Debug(msgDebug, Logging.INDEX_MESSAGE.NOT_SET);
-            Debug.WriteLine(DateTime.Now.ToString() + @"- " + msgDebug);
+            //Debug.WriteLine(DateTime.Now.ToString() + @"- " + msgDebug);
         }
 #endif
 
@@ -656,8 +753,10 @@ namespace uLoader
             //Logging.Logg().Debug(@"StateManager::targetFunc () - итерация контроля; кол-во объектов=" + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
             DateTime now = DateTime.Now;
-            int msecLimit = -1;
-            List<int> listID = null;
+            double msecLimit = -1F
+                , msecCurrent = -1F;
+            List<int> listIdCrashed = null;
+            List<ID?> listIDToReload = null;
             ID id;
 
             //_lIdCurrentTargetFunc = HMath.GetRandomNumber();
@@ -666,82 +765,102 @@ namespace uLoader
             while (_listOTargetFunc.Count > MAX_HISTORY_INFOCRASHED)
                 _listOTargetFunc.RemoveAt(0);
 
-            foreach (OManagement o in m_listObjects)
-            {
-                msecLimit = 0; // признак необходимости проверки объекта в текущей итерации
+#if _SEPARATE_APPDOMAIN
+            if (m_stateManager.IsReload == true) {
+            // выгрузка/загрузка по расписанию
+                listIDToReload = new List<ID?>();
 
-                switch (o.m_state)
-                {
-                    case STATE.CRASH:
-                    //    msecLimit = -1;
-                    //    break;
-                    case STATE.ADDED:
-                    case STATE.REMOVED:
-                        msecLimit = MSEC_CONFIRM_WAIT;
-                        break;
-                    case STATE.CONTROLED:
-                        msecLimit = (int)o.m_tsLimit.TotalMilliseconds;
-                        break;
-                    default:
-                        break;
+                foreach (OManagement o in m_listObjects) {
+                    if (listIDToReload.Find(item => {
+                            return ((item.GetValueOrDefault().m_typeOwner == o.m_id.m_typeOwner)
+                                && (item.GetValueOrDefault().m_idOwner == o.m_id.m_idOwner));
+                        }) == null)
+                        listIDToReload.Add(new ID(new object[] { o.m_id.m_typeOwner, o.m_id.m_idOwner, -1 }));
+                    else
+                        ;
                 }
 
-                if ((msecLimit > 0)
-                    && (now - o.m_dtUpdate).TotalMilliseconds > msecLimit) {
-                // 1-ое состояние сбоя
+                foreach (ID item in listIDToReload)
+                // выгрузка библиотеки БЕЗ корректного останова
+                    eventCrashed(new EventCrashedArgs(item, true));
+            } else {
+#endif
+                foreach (OManagement o in m_listObjects) {
+                    msecLimit = 0; // признак необходимости проверки объекта в текущей итерации                    
+
                     switch (o.m_state) {
                         case STATE.CONTROLED:
-                            o.SetCrashed();
+                            msecLimit = (int)o.m_tsLimit.TotalMilliseconds;
                             break;
                         case STATE.ADDED:
                         case STATE.REMOVED:
-                            o.SetCCrashed();
-                            break;
                         case STATE.CRASH:
+                            msecLimit = MSEC_CONFIRM_WAIT;
+                            break;
                         default:
                             break;
                     }
 
-                    m_dictInfoCrashed.MarkedItem(o.m_id, o.m_state);
-                }
-                else
-                    if (msecLimit < 0)
-                        // объект повторил состояние сбоя
-                        ;
-                    else
-                        ;
-            }
+                    msecCurrent = (now - o.m_dtUpdate).TotalMilliseconds;
 
-            foreach (KeyValuePair<KeyValuePair<INDEX_SRC, int>, DictOManagementInfoCrashed> pair in m_dictInfoCrashed) {
-#if _SEPARATE_APPDOMAIN
-                if (pair.Value.IsForceReload == true) {
-                    id = new ID(new object[] { pair.Key.Key, pair.Key.Value, -1 });
-                    // восстановить признак
-                    pair.Value.IsForceReload = false;
-                    //??? самостоятельно выполнить ремове OManagement
-                    m_listObjects.DeleteItems(id);
-                    // выгрузка библиотеки БЕЗ корректного останова
-                    eventCrashed(new EventCrashedArgs (id, true));
-                } else {
-#endif
-                    listID = pair.Value.GetListIDCrashed();
-                    if (listID.Count > 0)
-#if _SEPARATE_APPDOMAIN
-                        if (listID.Count > MAX_COUNT_CRASHED_TO_RELOAD_GROUPSOURCES)
-                            // выгрузка библиотеки с корректным остановом
-                            eventCrashed(new EventCrashedArgs(new ID(new object[] { pair.Key.Key, pair.Key.Value, -1 }), false));
-                        else
-#endif
-                            foreach (int item in listID) {
-                                id = new ID(new object[] { pair.Key.Key, pair.Key.Value, item });
-                                // стоп/старт объекта контроля
-                                eventCrashed(new EventCrashedArgs(id, false));
-                            }
+                    //Debug.WriteLine(string.Format(@"{0}- {1}, STATE={2} [CURRENT={3}, LIMIT={4}]"
+                    //    , DateTime.Now.ToString()
+                    //    , o.m_id.ToPrint(), o.m_state
+                    //    , msecCurrent, msecLimit));
+
+                    if ((msecLimit > 0)
+                        && (msecCurrent > msecLimit)) {
+                        switch (o.m_state) {
+                            case STATE.CONTROLED:
+                                o.SetCrashed();
+                                break;
+                            case STATE.ADDED:
+                            case STATE.REMOVED:
+                                o.SetFCrashed();
+                                break;
+                            case STATE.CRASH:
+                            //??? почему не ForceCrashed. Т.к.  'eventCrashed' принимается на основе 2-х подряд STATE::CRASH
+                            default:
+                                break;
+                        }
+
+                        m_dictInfoCrashed.MarkedItem(o.m_id, o.m_state);
+                    }
                     else
                         ;
-#if _SEPARATE_APPDOMAIN
                 }
+
+                foreach (KeyValuePair<KeyValuePair<INDEX_SRC, int>, DictOManagementInfoCrashed> pair in m_dictInfoCrashed) {
+#if _SEPARATE_APPDOMAIN
+                    if (pair.Value.IsForceReload == true) {
+                        id = new ID(new object[] { pair.Key.Key, pair.Key.Value, -1 });
+                        // восстановить признак
+                        pair.Value.IsForceReload = false;
+                        //??? самостоятельно выполнить ремове OManagement
+                        m_listObjects.DeleteItems(id);
+                        // выгрузка библиотеки БЕЗ корректного останова
+                        eventCrashed(new EventCrashedArgs(id, true));
+                    } else {
 #endif
+                        listIdCrashed = pair.Value.GetListIDCrashed();
+                        if (listIdCrashed.Count > 0)
+#if _SEPARATE_APPDOMAIN
+                            if (listIdCrashed.Count > MAX_COUNT_CRASHED_TO_RELOAD_GROUPSOURCES)
+                                // выгрузка библиотеки с корректным остановом
+                                eventCrashed(new EventCrashedArgs(new ID(new object[] { pair.Key.Key, pair.Key.Value, -1 }), false));
+                            else
+#endif
+                                foreach (int item in listIdCrashed) {
+                                    id = new ID(new object[] { pair.Key.Key, pair.Key.Value, item });
+                                    // стоп/старт объекта контроля
+                                    eventCrashed(new EventCrashedArgs(id, false));
+                                }
+                        else
+                            ;
+#if _SEPARATE_APPDOMAIN
+                    }
+#endif
+                }
             }
         }
 #endif
@@ -767,19 +886,23 @@ namespace uLoader
 
             if (bRes == true)
                 if (active == true)
-                {
-                    due = 0;
-                    period = MSEC_TIMERFUNC_UPDATE;
-                }
+                    if (m_stateManager.m_bTurn == true) {
+                        due = 0;
+                        period = MSEC_TIMERFUNC_UPDATE;
+                    } else
+                        if (active == false)
+                            ; // оставить значения по умолчанию
+                        else
+                            ; // других состояний 'bool' не существует
                 else
-                    if (active == false)
-                        ; // оставить значения по умолчанию
-                    else
-                        ; // других состояний 'bool' не существует
+                    ; // отмена активации
+            else
+                ; // состояние не изменилось
 
-            Logging.Logg().Debug(@"StateManager::Activate (active=" + active + @") - "
-                + (due == System.Threading.Timeout.Infinite ? @"ДЕ" : string.Empty) + @"Активация объекта контроля ..."
+            Logging.Logg().Debug(string.Format(@"StateManager::Activate (active={0}, TURN={1}) - "
+                + (due == System.Threading.Timeout.Infinite ? @"ДЕ" : string.Empty) + @"Активация объекта контроля ...", active, m_stateManager.m_bTurn)
                 , Logging.INDEX_MESSAGE.NOT_SET);
+
             m_timerFunc.Change(due, period);
 #endif
             return bRes;

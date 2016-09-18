@@ -10,7 +10,7 @@ using uLoaderCommon;
 
 namespace uLoader
 {    
-    public partial class PanelWork : HPanelCommonDataHost
+    partial class PanelWork : HPanelCommonDataHost
     {
         ///// <summary>
         ///// Перечисление - индексы ПРЕДподготавливаемых параметров

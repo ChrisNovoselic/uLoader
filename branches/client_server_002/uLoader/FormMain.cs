@@ -10,7 +10,7 @@ namespace uLoader
     /// <summary>
     /// Перечисление для индексирования 'SEC_SRC_TYPES' (источник, назначение)
     /// </summary>
-    public enum INDEX_SRC
+    enum INDEX_SRC
     {
         SOURCE,
         DEST
@@ -97,11 +97,6 @@ namespace uLoader
                     this.OnMaximumSizeChanged(null);
                     break;
             }
-        }
-
-        private void M_handler_EventInteraction()
-        {
-            throw new NotImplementedException();
         }
 
         /// <summary>

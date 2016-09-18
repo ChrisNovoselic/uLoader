@@ -579,27 +579,23 @@ namespace uLoader
 
             m_plugIns.LoadPlugIn(this.m_strDLLName, out _iStateDLL);
 
-            if (_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
-            {
+            if (_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED) {
                 loader = m_plugIns.Loader;
 
-                strTypeName = this.m_strDLLName.Split(new char[] { ':' }, StringSplitOptions.None)[1];
-                if (loader.CreateObject(strTypeName) == 0)
-                {
-                    _iIdTypePlugInObjectLoaded = loader.KeySingleton; //plugInRes.GetKeyType(strTypeName);
+                if (!(loader == null)) {
+                    strTypeName = this.m_strDLLName.Split(new char[] { ':' }, StringSplitOptions.None)[1];
 
+                    if (loader.CreateObject(strTypeName) == 0) {
                     //Взаимная "привязка" для обмена сообщениями
-                    if (!(loader == null))
-                    {
+                        _iIdTypePlugInObjectLoaded = loader.KeySingleton; //plugInRes.GetKeyType(strTypeName);                    
                         // библиотека - объект класса
                         loader.EvtDataAskedHost += new DelegateObjectFunc(plugIn_OnEvtDataAskedHost);
                         // объект класса - библиотека
                         EvtDataAskedHostPlugIn += loader.OnEvtDataRecievedHost;
                         ////??? - повторная установка значения
-                        //_iStateDLL = HClassLibrary.HPlugIns.STATE_DLL.LOADED;
-                    }
-                    else
-                        ;
+                        //_iStateDLL = HClassLibrary.HPlugIns.STATE_DLL.LOADED;                    
+                    } else
+                        _iStateDLL = HClassLibrary.HPlugIns.STATE_DLL.NOT_LOAD; // NOT_CREATED
                 }
                 else
                     ;
@@ -1120,11 +1116,11 @@ namespace uLoader
                 }
                 // установить контроль за группой сигналов
                 PerformDataAskedHostQueue(new EventArgsDataHost(
-                    (int)Index
-                    , FormMain.FileINI.GetIDIndex(m_strID)
-                    , new object[] { iIDGroupSignals
-                        , idToSend
-                        , tsPeriodMain }
+                    (int)Index // тип группы источников (источник/назначение)
+                    , FormMain.FileINI.GetIDIndex(m_strID) // индекс/идентификатор группы источников
+                    , new object[] { iIDGroupSignals // индекс/идентификатор группы сигналов
+                        , idToSend // команда для группы сигналов
+                        , tsPeriodMain } // опционально - главный период группы сигналов (для источника период за который запрашиваются/агрегируются данные)
                     ));
             }
             else
@@ -1240,10 +1236,10 @@ namespace uLoader
                                 msgDebugLog += grpSgnls.m_tableData.Rows.Count;
                                 // обновить состояние контролируемой группы сигналов
                                 this.PerformDataAskedHostQueue(new EventArgsDataHost(
-                                    (int)Index
-                                    , FormMain.FileINI.GetIDIndex(m_strID)
-                                    , new object[] { iIDGroupSignals
-                                        , id_cmd }
+                                    (int)Index // тип группы источников (источник/назначение)
+                                    , FormMain.FileINI.GetIDIndex(m_strID) // индекс/идентификатор группы источников
+                                    , new object[] { iIDGroupSignals // индекс/идентификатор группы сигналов
+                                        , id_cmd } // команда для группы сигналов
                                     ));
                             }
                             else
@@ -1264,7 +1260,7 @@ namespace uLoader
                             , FormMain.FileINI.GetIDIndex(m_strID)
                             , new object[] { iIDGroupSignals
                                 , id_cmd
-                                , ID_HEAD_ASKED_HOST.CONFIRM }
+                                , ID_HEAD_ASKED_HOST.CONFIRM } // опционально - признак подтверждения выполнения команды
                             ));
 
                         msgDebugLog = @"подтверждено: " + id_cmd.ToString();
@@ -1814,9 +1810,7 @@ namespace uLoader
         /// <returns>Объект группы сигналов</returns>
         protected override GroupSignals createGroupSignals(GROUP_SIGNALS_SRC grpSgnls)
         {
-            GroupSignals grpSgnlsRes = createGroupSignals(typeof(GroupSignalsDest), grpSgnls) as GroupSignals;
-
-            return grpSgnlsRes;
+            return createGroupSignals(typeof(GroupSignalsDest), grpSgnls) as GroupSignals;
         }
 
         /// <summary>
@@ -1891,8 +1885,6 @@ namespace uLoader
         /// <param name="obj"></param>
         public void Clone_OnEvtDataAskedHost(object obj)
         {
-            //Logging.Logg().Debug(@"GroupSources::Clone_OnEvtDataAskedHost () - NAME=" + m_strShrName + @"...", Logging.INDEX_MESSAGE.NOT_SET);
-
             EventArgsDataHost ev = obj as EventArgsDataHost;
             int iIDGroupSignals = 0; //??? д.б. указана в "запросе"
             //pars[0] - идентификатор события
@@ -1901,6 +1893,8 @@ namespace uLoader
             //??? pars[3] - object [] с доп./параметрами, для ретрансляции
             object[] pars = ev.par as object[];
             object[] parsToSend = null;
+
+            //Logging.Logg().Debug(string.Format(@"GroupSourcesDest::Clone_OnEvtDataAskedHost (ev.par.Length={0}) - NAME={1}...", pars.Length, m_strShrName), Logging.INDEX_MESSAGE.NOT_SET);
 
             //pars[0] - идентификатор события
             switch ((ID_DATA_ASKED_HOST)pars[0])
@@ -2023,11 +2017,11 @@ namespace uLoader
                                 ;
                         }
                         else
-                            if (idDataAskedHost == ID_DATA_ASKED_HOST.STOP)
-                            {
+                            if (idDataAskedHost == ID_DATA_ASKED_HOST.STOP) {
                                 m_dictLinkedIndexGroupSources[indx].Remove(indxGrpSgnls);
 
                                 if (m_dictLinkedIndexGroupSources[indx].Count == 0)
+                                // удаление выполнено корректно
                                     bEvtDataAskedHostQueue = true;
                                 else
                                     ;
@@ -2039,10 +2033,10 @@ namespace uLoader
 
                     if (bEvtDataAskedHostQueue == true)
                         base.PerformDataAskedHostQueue(new EventArgsDataHost(
-                            ev.id_main
-                            , ev.id_detail
-                            , new object[] { this
-                                , ev.par[1] }
+                            (int)INDEX_SRC.SOURCE //!!! подмена - передать "чужой" тип группы источников (не используется в обработчике)
+                            , indx //!!! подмена - передать индекс "чужой" группы источников, но связанной с текущей
+                            , new object[] { this //!!! подмена - вместо идентификатора группы сигналов: сам текущий объект группы источников
+                                , ev.par[1] } // стандартно - команда, копия из полученного объекта - аргумента события
                             ));
                     else
                         ;
