@@ -67,7 +67,7 @@ namespace uLoader
             else
                 ;
 
-            EventPanelWorkStateChanged += new DelegateFunc(onEventPanelWorkStateChanged);
+            eventPanelWorkStateChanged += new DelegateFunc(onEventPanelWorkStateChanged);
             //eventTypePanelEnableInitialize += new DelegateFunc (onEventTypePanelEnableInitialize);
 
             m_PanelWorkState = TypePanelWorkState.Unknown;
@@ -177,23 +177,22 @@ namespace uLoader
             this.Controls.Add(m_arPanels[(int)TypePanel.Server], 0, 0);
             this.Controls.Add(m_arPanels[(int)TypePanel.Client], 0, 1);
         }
-
-        public event DelegateFunc EventPanelWorkStateChanged;
+        /// <summary>
+        /// Внутреннее событие - для изменения содержания подписи - состояния внешнй (рабочей) панели
+        /// </summary>
+        private event DelegateFunc eventPanelWorkStateChanged;
 
         public TypePanelWorkState PanelWorkState
         {
-            get
-            {
+            get {
                 return m_PanelWorkState;
             }
-            set
-            {
-                if (!(m_PanelWorkState == value))
-                {
+
+            set {
+                if (!(m_PanelWorkState == value)) {
                     m_PanelWorkState = value;
-                    EventPanelWorkStateChanged();
-                }
-                else
+                    eventPanelWorkStateChanged();
+                } else
                     ;
             }
         }
@@ -221,20 +220,15 @@ namespace uLoader
             // ждать ответа
             m_semInteractionParameters.WaitOne();
             // проверить корректность инициализации
-            if (!(Ready < 0))
-            {
+            if (!(Ready < 0)) {
                 start();
                 //BeginInvoke(new DelegateObjectFunc (start), par);
                 //eventRecievedInteractionParameters(par);
 
                 if ((m_arPanels[(int)TypePanel.Client] as PanelClient).IsConnected == true)
-                {
                     _typePanelEnabled = TypePanel.Client;
-                }
                 else
-                {
                     _typePanelEnabled = TypePanel.Server;
-                }
 
                 m_arPanels[(int)_typePanelEnabled].Enabled = true;
             }
@@ -252,12 +246,10 @@ namespace uLoader
         {
             bool bRes = base.Activate(active);
 
-            if (bRes == true)
-            {
+            if (bRes == true) {
                 m_arPanels[(int)TypePanel.Server].Activate(active);
                 m_arPanels[(int)TypePanel.Client].Activate(active);
-            }
-            else
+            } else
                 ;
 
             return bRes;
@@ -268,8 +260,7 @@ namespace uLoader
         /// </summary>
         public override void Stop()
         {
-            if (!(m_arPanels == null))
-            {
+            if (!(m_arPanels == null)) {
                 m_arPanels[(int)TypePanel.Client].Stop();
                 m_arPanels[(int)TypePanel.Server].Stop();
             }
@@ -278,35 +269,36 @@ namespace uLoader
 
             base.Stop();
         }
-
+        /// <summary>
+        /// Попытка нового подключения к серверу
+        /// </summary>
         private void reConnClient()
         {
-            // чевидно, что _typePanelEnabled == TypePanel.Client
+            // очевидно, что _typePanelEnabled == TypePanel.Client
             TypePanel prevTypePanelEnabled = _typePanelEnabled;
             bool bIsConnected = false;
 
-            try
-            {
+            try {
+                // остановить текущего клиента
                 m_arPanels[(int)TypePanel.Client].Activate(false); m_arPanels[(int)TypePanel.Client].Stop();
-
+                // запустить нового
                 m_arPanels[(int)TypePanel.Client].Start();
                 bIsConnected = (m_arPanels[(int)TypePanel.Client] as PanelClient).IsConnected;
-
+                // проверить результат подключения
                 if (bIsConnected == true)
+                    // роль (клиент) осталась без изменений
                     m_arPanels[(int)TypePanel.Client].Activate(true);
                 else
+                    // роль изменилась
                     _typePanelEnabled = TypePanel.Server;
-
-                if (!(prevTypePanelEnabled == _typePanelEnabled))
-                {
+                // проверить изменение роли
+                if (!(prevTypePanelEnabled == _typePanelEnabled)) {
+                // роль изменилась - приложение становится сервером
                     m_arPanels[(int)prevTypePanelEnabled].Enabled = false;
                     m_arPanels[(int)_typePanelEnabled].Enabled = true;
-                }
-                else
+                } else
                     ;
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 Logging.Logg().Exception(e, @"PanelClientServer::reConnClient () - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
@@ -345,7 +337,11 @@ namespace uLoader
                 else
                     ;
             }
-
+            /// <summary>
+            /// Установить соответствие текущей машины и свойства переданного в аргументе
+            /// </summary>
+            /// <param name="host">Наименоввание(IP-адрес) рабочей станции в сети</param>
+            /// <returns>Признак соответствия</returns>
             private static bool isEqualeHost(string host)
             {
                 bool bRes = host.Equals(Environment.MachineName);
@@ -1640,8 +1636,7 @@ namespace uLoader
             /// <param name="add">true если добавление</param>
             private void operCBclient(string idClient, bool add)
             {
-                try
-                {
+                try {
                     if (add == true)//если добавление то
                     {
                         cbClients.Items.Add(idClient);//добавляем
@@ -1655,8 +1650,7 @@ namespace uLoader
                                 item.SubItems.Add(DateTime.Now.ToString());
                             }
                         }
-                    }
-                    else//иначе
+                    } else//иначе
                     {
                         cbClients.Items.Remove(idClient);//удаляем клиента из списка и обновляем
                         cbClients.Text = string.Empty;
@@ -1664,9 +1658,7 @@ namespace uLoader
                         lvStatus.Items.Find(idClient, false)[0].Remove();
                         lvStatus.Refresh();
                     }
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     Logging.Logg().Exception(e, @"PanelClientServer.PanelCS::operCBclient", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
@@ -1696,13 +1688,10 @@ namespace uLoader
                         (PanelWorkState == TypePanelWorkState.Paused) ? Color.Red :
                             Color.LightGray;
 
-                try
-                {
+                try {
                     lblStat.BackColor = clr;
                     lblStat.Text = PanelWorkState.ToString();
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     Logging.Logg().Exception(e, @"PanelClientServer.PanelCS::setLbl () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
@@ -1718,19 +1707,15 @@ namespace uLoader
                 string text = string.Empty;
                 int col = -1;
 
-                try
-                {
+                try {
                     foreach (ListViewItem item in lvStatus.Items)
-                        if (item.Text.Equals(client) == true)
-                        {
+                        if (item.Text.Equals(client) == true) {
                             if (status.Equals(Pipes.Pipe.MESSAGE_RECIEVED_OK) == true)
                             {
                                 clr = Color.LimeGreen;
                                 text = DateTime.Now.ToString();
                                 col = 2;
-                            }
-                            else
-                            {
+                            } else {
                                 clr = Color.Red;
                                 text = "Err";
                                 col = 1;
@@ -1738,12 +1723,9 @@ namespace uLoader
 
                             item.SubItems[1].BackColor = clr;
                             item.SubItems[col].Text = text;
-                        }
-                        else
+                        } else
                             ;
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     Logging.Logg().Exception(e, string.Format(@"PanelClientServer.PanelCS::lvStatusUpdate (client={0}, status={1}) - ...", client, status), Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
@@ -1753,18 +1735,27 @@ namespace uLoader
                 DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Exit } });
             }
         }
-
+        /// <summary>
+        /// Структура для хранения параметров взаимодействия экземпляров приложения
+        /// </summary>
         public struct InteractionParameters
         {
             private enum INDEX_PARAMETER {
                 UNKNOWN = -1
                 , WS, MAIN_PIPE
             , COUNT }
-
+            /// <summary>
+            /// Список взаимодействущих серверов на которых выполняются взаимодействующие экземпляры
+            /// </summary>
             public string[] m_arNameServers;
-
+            /// <summary>
+            /// Наименование главного канала для реализации взаимодействия
+            /// </summary>
             public string m_NameMainPipe;
-
+            /// <summary>
+            /// Констрктор - основной (с парметрами)
+            /// </summary>
+            /// <param name="ini">Строка из конфигурационного файла с параметрами</param>
             public InteractionParameters(string ini)
             {
                 m_arNameServers = new string[] { };
@@ -1775,16 +1766,24 @@ namespace uLoader
                     , values = null;
 
                 try {
+                    // проверить наличие параметров
                     if (ini.Equals(string.Empty) == false) {
+                    // параметры в строке есть
+                        // получить все параметры
                         arPars = ini.Split(FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.PAIR_VAL]);
-
+                        // цикл по всем переданным параметрам и их значеням
                         foreach (string key_val in arPars)
+                            // цикл по всем известным параметрам
                             for (INDEX_PARAMETER par = (INDEX_PARAMETER.UNKNOWN + 1); par < INDEX_PARAMETER.COUNT; par++)
                                 if (key_val.IndexOf(par.ToString()) == 0) {
-                                    values = key_val.Split(FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE]);
-
+                                // переданная пара парметра ключ:значения распознана
+                                    // разделить пару ключ:значение
+                                    values = key_val.Split(FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE]/*, StringSplitOptions.RemoveEmptyEntries*/);
+                                    // проверить успешность разделения пары ключ:значение
                                     if (values.Length == 2)
+                                        // проверить наличие значения
                                         if (values[1].Equals(string.Empty) == false)
+                                            // в ~ от парамера, установить для него значение
                                             switch (par) {
                                                 case INDEX_PARAMETER.WS:
                                                     listNameServers.Add(values[1]);
@@ -1800,19 +1799,16 @@ namespace uLoader
                                                 , Logging.INDEX_MESSAGE.NOT_SET);
                                     else
                                         throw new Exception(string.Format(@"PanelClientServer.InteractionParameters::ctor (ключ={0}) - пара ключ:значение не распознана", par.ToString()));
-
+                                    // прервать обработку внутреннего цикла, т.к. в текущей паре параметра ключ:значение, 2-го параметра не можыть быть
                                     break;
-                                }
-                                else
-                                    ;
+                                } else
+                                    ; // параметр не найден - перйти к следующему
 
                         m_arNameServers = listNameServers.ToArray();
                     }
                     else
                         ;
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     Logging.Logg().Exception(e, @"PanelClientServer.InteractionParameters::ctor () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
