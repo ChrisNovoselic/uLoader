@@ -20,18 +20,44 @@ namespace uLoader
     {
         public class StateManager
         {
+            /// <summary>
+            /// Интервал в милисекундах для проверки меток времени обновления
+            /// </summary>
+            public static int MSEC_TIMERFUNC_UPDATE = -1;
+            /// <summary>
+            /// Интервал времени, в течении которого состояние объекта считать актуальным
+            /// </summary>
+            public static int MSEC_CONFIRM_WAIT = -1;
+
+            public static int MAX_HISTORY_INFOCRASHED = 6
+                , MAX_COUNT_CRASHED_TO_RELOAD_GROUPSOURCES = 1;
+            /// <summary>
+            /// Перечисление - параметры менеджера управления состояниями
+            /// </summary>
             private enum INDEX_PARAMETER { UNKNOWN = -1
-                , TURN, SHEDULE_TIMESTART, SHEDULE_TIMESPAN
+                , TIMER_UPDATE
+                , SHEDULE_TIMESTART, SHEDULE_TIMESPAN
             , COUNT }
 
             public bool m_bTurn;
+            /// <summary>
+            /// Признак выполнения операции выгрузки/загрузки по расписанию
+            ///  должен быть указан интервал, при этом интервал д.б. == или более 1 ч
+            /// </summary>
+            private bool sheduleTurn { get { return m_tsShedule == TimeSpan.Zero ? false : (!(m_tsShedule.TotalHours < 1)) ? true : false; } }
 
             private DateTime m_dtStart;
-
+            /// <summary>
+            /// Метка даты/времени крайнего выполнения выгрузки/загрузки
+            /// </summary>
             private DateTime m_dtReload;
-
+            /// <summary>
+            /// Смещение от начала часа выполнения операции выгрузки/загрузки
+            /// </summary>
             private DateTime m_dtShedule;
-
+            /// <summary>
+            /// Интервал выполнения операции выгрузки/загрузки
+            /// </summary>
             private TimeSpan m_tsShedule;
 
             private StateManager()
@@ -62,9 +88,14 @@ namespace uLoader
                                     if (values.Length == 2)
                                         if (values[1].Equals(string.Empty) == false)
                                             switch (par) {
-                                                case INDEX_PARAMETER.TURN:
-                                                    bool.TryParse(values[1], out m_bTurn);
+                                                case INDEX_PARAMETER.TIMER_UPDATE:
+                                                    MSEC_TIMERFUNC_UPDATE = (int)new HTimeSpan(values[1]).Value.TotalSeconds * 1000;
+                                                    //??? почему такое значение, а не другое
+                                                    MSEC_CONFIRM_WAIT = MSEC_TIMERFUNC_UPDATE;
+                                                    m_bTurn = !(MSEC_TIMERFUNC_UPDATE < 6006);
                                                     break;
+                                                //case INDEX_PARAMETER.SHEDULE_TURN:
+                                                //    break;
                                                 case INDEX_PARAMETER.SHEDULE_TIMESTART:
                                                     break;
                                                 case INDEX_PARAMETER.SHEDULE_TIMESPAN:
@@ -93,9 +124,8 @@ namespace uLoader
                 get {
                     bool bRes = false;
 
-                    bRes = m_tsShedule == TimeSpan.Zero ?
-                        false :
-                            ((DateTime.Now - (m_dtReload == DateTime.MinValue ? m_dtStart : m_dtReload)) - m_tsShedule).TotalMinutes > 0;
+                    bRes = (sheduleTurn == true)
+                        && (((DateTime.Now - (m_dtReload == DateTime.MinValue ? m_dtStart : m_dtReload)) - m_tsShedule).TotalMinutes > 0);
 
                     if (bRes == true)
                         m_dtReload = DateTime.Now;
@@ -198,14 +228,6 @@ namespace uLoader
             /// </summary>
             public void Update() { m_dtUpdate = DateTime.Now; }
         }
-        /// <summary>
-        /// Интервал в милисекундах для проверки меток времени обновления
-        /// </summary>
-        public static int MSEC_TIMERFUNC_UPDATE = 6006;
-        /// <summary>
-        /// Интервал времени, в течении которого состояние объекта считать актуальным
-        /// </summary>
-        public static int MSEC_CONFIRM_WAIT = 2 * MSEC_TIMERFUNC_UPDATE;
         ///// <summary>
         ///// Перечисление - состояния для организации контроля списка объектов
         ///// </summary>
@@ -434,16 +456,13 @@ namespace uLoader
             }
         }
 
-        private static int MAX_HISTORY_INFOCRASHED = 6
-            , MAX_COUNT_CRASHED_TO_RELOAD_GROUPSOURCES = 1;
-
         private class ListInfoCrashed : List<InfoCrashed>
         {
             public void MarkedItem(STATE state)
             {
                 Add(new InfoCrashed(state));
 
-                while (Count > MAX_HISTORY_INFOCRASHED)
+                while (Count > StateManager.MAX_HISTORY_INFOCRASHED)
                     RemoveAt(0);
             }
 
@@ -762,7 +781,7 @@ namespace uLoader
             //_lIdCurrentTargetFunc = HMath.GetRandomNumber();
             _listOTargetFunc.Add(new OTargetFunc() { m_lId = HMath.GetRandomNumber(), m_datetime = DateTime.Now });
 
-            while (_listOTargetFunc.Count > MAX_HISTORY_INFOCRASHED)
+            while (_listOTargetFunc.Count > StateManager.MAX_HISTORY_INFOCRASHED)
                 _listOTargetFunc.RemoveAt(0);
 
 #if _SEPARATE_APPDOMAIN
@@ -795,7 +814,7 @@ namespace uLoader
                         case STATE.ADDED:
                         case STATE.REMOVED:
                         case STATE.CRASH:
-                            msecLimit = MSEC_CONFIRM_WAIT;
+                            msecLimit = StateManager.MSEC_CONFIRM_WAIT;
                             break;
                         default:
                             break;
@@ -845,7 +864,7 @@ namespace uLoader
                         listIdCrashed = pair.Value.GetListIDCrashed();
                         if (listIdCrashed.Count > 0)
 #if _SEPARATE_APPDOMAIN
-                            if (listIdCrashed.Count > MAX_COUNT_CRASHED_TO_RELOAD_GROUPSOURCES)
+                            if (listIdCrashed.Count > StateManager.MAX_COUNT_CRASHED_TO_RELOAD_GROUPSOURCES)
                                 // выгрузка библиотеки с корректным остановом
                                 eventCrashed(new EventCrashedArgs(new ID(new object[] { pair.Key.Key, pair.Key.Value, -1 }), false));
                             else
@@ -888,7 +907,7 @@ namespace uLoader
                 if (active == true)
                     if (m_stateManager.m_bTurn == true) {
                         due = 0;
-                        period = MSEC_TIMERFUNC_UPDATE;
+                        period = StateManager.MSEC_TIMERFUNC_UPDATE;
                     } else
                         if (active == false)
                             ; // оставить значения по умолчанию
