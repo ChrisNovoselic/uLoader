@@ -12,6 +12,15 @@ namespace uLoader
 {    
     partial class PanelWork : HPanelCommonDataHost
     {
+        /// <summary>
+        /// Перечисление - возможные состояния рабочей панели
+        ///  неизвестное, данные (не)загружаются
+        /// </summary>
+        public enum STATE {
+            Unknown = -1
+                , Paused, Started
+            , Count
+        }
         ///// <summary>
         ///// Перечисление - индексы ПРЕДподготавливаемых параметров
         ///// </summary>

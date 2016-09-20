@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 using HClassLibrary; //HHandler
 using uLoaderCommon;
@@ -798,7 +799,7 @@ namespace uLoader
                         iRes = 0;
                         error = false;
 
-                        targetFunc();
+                        new Thread(new ThreadStart(targetFunc)).Start();
                         break;
                     #endregion
 #endif

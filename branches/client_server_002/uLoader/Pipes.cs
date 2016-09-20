@@ -20,13 +20,10 @@ namespace uLoader.Pipes
         public enum COMMAND
         {
             Unknown = -1
-                , Connect,
-            Disconnect
-                , DateTime, GetName, GetStat, SetStat,
-            Status
-                , Start, Stop, ReConnect,
-            Exit
-                , Count
+                , Connect, Disconnect
+                , DateTime, GetName, GetStat, SetStat, Status
+                , Start, Stop, ReConnect, Exit
+            , Count
         };
 
         /// <summary>
@@ -81,8 +78,8 @@ namespace uLoader.Pipes
 
         protected static string NAME_MAINPIPE = @"MainPipe";
 
-        public static string MESSAGE_RECIEVED_OK = @"OK"
-            , MESSAGE_CLIENT_OFFLINE = "Клиент отключен..."
+        public static string /*MESSAGE_RECIEVED_OK = @"OK",*/
+            MESSAGE_CLIENT_OFFLINE = "Клиент отключен..."
             , MESSAGE_UNRECOGNIZED_COMMAND = @"Non command";
 
         public static Char

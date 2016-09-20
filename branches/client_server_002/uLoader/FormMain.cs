@@ -175,8 +175,6 @@ namespace uLoader
         {
             try
             {
-                autoStart();
-
                 //Проверить признак отображения вкладки "работа"
                 if (работаToolStripMenuItem.Checked == true)
                 {
@@ -190,7 +188,7 @@ namespace uLoader
                 }
                 else
                     ;
-
+                // сообщение приходит только в случае готовности панели "Взаимодействие"
                 взаимодействиеToolStripMenuItem.Checked = (int)par == 0;
 
                 //Проверить признак отображения вкладки "взаимодействие"
@@ -223,21 +221,35 @@ namespace uLoader
             //2-ой(1) - дополнительная информация
             object[] pars = obj as object[];
 
+            bool bStarted = false;
+
             switch ((PanelClientServer.ID_EVENT)pars[0])
             {
                 case PanelClientServer.ID_EVENT.Start:
-                    if (pars.Length > 1)
+                    if (pars.Length > 1) {
                         if (InvokeRequired == true)
-                            BeginInvoke(new DelegateObjectFunc(interactionInitializeComlpeted), pars[1]);
+                            BeginInvoke(new DelegateObjectFunc(interactionInitializeComlpeted), m_panelCS.Ready);
                         else
-                            interactionInitializeComlpeted(pars[1]);
+                            interactionInitializeComlpeted(m_panelCS.Ready);
+                        // в ~ от состояния взаимодействующей панели (старт с условием)
+                        bStarted = m_panelCS.Ready == 0 ?
+                            ((PanelWork.STATE)pars[1] == PanelWork.STATE.Paused) || ((PanelWork.STATE)pars[1] == PanelWork.STATE.Unknown) :
+                                true;
+                    }
                     else
+                    // команда старт от взаимодействующего экземпляра
+                        bStarted = true;
+
+                    if (bStarted == true) {
                         if (InvokeRequired == true)
                             BeginInvoke(new DelegateFunc(autoStart));
                         else
-                            autoStart ();
+                            autoStart();
 
-                    m_panelCS.PanelWorkState = PanelClientServer.TypePanelWorkState.Started;
+                        m_panelCS.StateLocalPanelWork = PanelWork.STATE.Started;
+                    }
+                    else
+                        m_panelCS.StateLocalPanelWork = PanelWork.STATE.Paused;
                     break;
                 case PanelClientServer.ID_EVENT.Stop:
                     break;
