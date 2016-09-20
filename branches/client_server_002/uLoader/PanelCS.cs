@@ -19,7 +19,8 @@ namespace uLoader
         public enum ID_EVENT : short
         {
             Unknown = -1
-                , Start, Stop, Exit, Connect, Disconnect
+                , Start, Stop
+                , State, Exit, Connect, Disconnect
             , Count
         }
         /// <summary>
@@ -85,7 +86,7 @@ namespace uLoader
             // 1-ый(0) параметр - объект-вкладка
             // 2-ой(1) - тип приложения (TypePanel)
             // 3-ий(2) - тип сообщения (TypeMes)
-            // 4-ый(3) - идентификатор события (ID_EVENT)
+            // 4-ый(3) - идентификатор события (Pipes.Pipe.COMMAND)
             object[] pars = (ev.par[0] as object[])[0] as object[];
             //Определить: 1) внутреннее сообщение или 2) для передачи в родительскую форму
             // по кол-ву параметров (короткие сообщения - внутренние)
@@ -94,9 +95,22 @@ namespace uLoader
             try
             {
                 if (bRedirect == true) {
-                    switch ((ID_EVENT)pars[3]) {
-                        case ID_EVENT.Start:
-                            DataAskedHost(new object[] { new object[] { HHandlerQueue.StatesMachine.INTERACTION_EVENT, (ID_EVENT)pars[3], pars.Length > 4 ? pars[4] : null } });
+                    switch ((Pipes.Pipe.COMMAND)pars[3]) {
+                        case Pipes.Pipe.COMMAND.Start:
+                            DataAskedHost(new object[] { new object[] { HHandlerQueue.StatesMachine.INTERACTION_EVENT
+                                , ID_EVENT.Start }
+                            });
+                            break;
+                        case Pipes.Pipe.COMMAND.Stop:
+                            DataAskedHost(new object[] { new object[] { HHandlerQueue.StatesMachine.INTERACTION_EVENT
+                                , ID_EVENT.Stop }
+                            });
+                            break;
+                        case Pipes.Pipe.COMMAND.AppState:
+                            DataAskedHost(new object[] { new object[] { HHandlerQueue.StatesMachine.INTERACTION_EVENT
+                                , ID_EVENT.State
+                                , pars.Length > 4 ? pars[4] : null }
+                            });
                             break;
                         default:
                             break;
@@ -241,7 +255,7 @@ namespace uLoader
             // если сервер, значит значит статус спрашивать не у кого (считаем, что рабочая панель ни у одного экземпляра не активна)
                 DataAskedHost(new object[] {
                     new object[] { 
-                        HHandlerQueue.StatesMachine.INTERACTION_EVENT, ID_EVENT.Start
+                        HHandlerQueue.StatesMachine.INTERACTION_EVENT, ID_EVENT.State
                         , PanelWork.STATE.Unknown // состояние взаимодействующего экземпляра
                 } });
             else
@@ -392,7 +406,7 @@ namespace uLoader
                                 {
                                     //m_type_app = TypePanel.Client;//Тип экземпляра устанавливаем Клиент
                                     m_myName = _client.m_Name;//Устанавливаем собственное имя равное имени клиента
-                                    _client.WriteMessage(Pipes.Pipe.COMMAND.GetName.ToString());//Запрашиваем имя сервера
+                                    _client.WriteMessage(Pipes.Pipe.COMMAND.Name.ToString());//Запрашиваем имя сервера
                                     //Прерываем попытки подключения
                                     break;
                                 }
@@ -513,10 +527,12 @@ namespace uLoader
                     if (com_mes.Equals(Pipes.Pipe.COMMAND.DateTime.ToString()) == true)//Обработка запроса даты
                         sendMessage(com_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + DateTime.Now.ToString());
                     else
-                        if (com_mes.Equals(Pipes.Pipe.COMMAND.GetName.ToString()) == true)//Обработка запроса имени
+                        if (com_mes.Equals(Pipes.Pipe.COMMAND.Name.ToString()) == true)//Обработка запроса имени
+                        //??? требуется проверка наличия аргумента. М.б. это пришел ответ с запрашенным именем
                             sendMessage(com_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + m_myName);
                         else
-                            if (com_mes.Equals(Pipes.Pipe.COMMAND.GetStat.ToString()) == true)//Обработка запроса типа экземпляра
+                            if (com_mes.Equals(Pipes.Pipe.COMMAND.PipeRole.ToString()) == true)//Обработка запроса типа экземпляра
+                            //??? требуется проверка наличия аргумента. М.б. это пришел ответ с запрошенной ролью
                                 sendMessage(TypePanel.Client.ToString());
                             else
                                 if (com_mes.Equals(Pipes.Pipe.COMMAND.ReConnect.ToString()) == true)//Обработка запроса на переподключение
@@ -528,16 +544,16 @@ namespace uLoader
                                     if (com_mes.Equals(Pipes.Pipe.COMMAND.Start.ToString()) == true)//обработка запроса запуска
                                     {
                                         Invoke(d_statLbl, true);
-                                        DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Start } });
+                                        DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, Pipes.Pipe.COMMAND.Start } });
                                     }
                                     else
                                         if (com_mes.Equals(Pipes.Pipe.COMMAND.Stop.ToString()) == true)//обработка запроса остановки
                                         {
                                             Invoke(d_statLbl, false);
-                                            DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Stop } });
+                                            DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, Pipes.Pipe.COMMAND.Stop } });
                                         }
                                         else
-                                            if (com_mes.Equals(Pipes.Pipe.COMMAND.SetStat.ToString()) == true)//обработка запроса изменения типа экземпляра
+                                            if (com_mes.Equals(Pipes.Pipe.COMMAND.PipeRole.ToString()) == true)//обработка запроса изменения типа экземпляра
                                             {
                                                 if (arg.Equals(TypePanel.Server.ToString()) == true)
                                                 {
@@ -546,7 +562,7 @@ namespace uLoader
                                                 }
                                             }
                                             else
-                                                if (com_mes.Equals(Pipes.Pipe.COMMAND.Status.ToString()) == true)//обработка запроса изменения типа экземпляра
+                                                if (com_mes.Equals(Pipes.Pipe.COMMAND.AppState.ToString()) == true)//обработка запроса извещения о состоянии экземпляра
                                                 {
                                                     // запомнить текущее состояние взаимодействующего экземпляра
                                                     stateRemotePanelWork = (PanelWork.STATE)arg[0];
@@ -730,33 +746,35 @@ namespace uLoader
                                 case Pipes.Pipe.COMMAND.DateTime:
                                     sendMessage(com.ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + DateTime.Now.ToString(), name);
                                     break;
-                                case Pipes.Pipe.COMMAND.GetName:
+                                case Pipes.Pipe.COMMAND.Name:
                                     sendMessage(m_myName, name);
                                     break;
-                                case Pipes.Pipe.COMMAND.GetStat:
-                                    sendMessage(TypePanel.Server.ToString(), name);
+                                case Pipes.Pipe.COMMAND.PipeRole:
+                                    if (arg.Equals(string.Empty) == true)
+                                    // ответ на запрос роли
+                                        sendMessage(TypePanel.Server.ToString(), name);
+                                    else
+                                    // обработка команды на изменение роли
+                                        if (arg.Equals(TypePanel.Client.ToString()) == true) {
+                                            _server.SendDisconnect();
+                                            Invoke(d_reconn, new object[] { string.Empty, false });
+                                        }
+                                        else
+                                            ;
                                     break;
                                 case Pipes.Pipe.COMMAND.Start:
                                     Invoke(d_statLbl, true);
-                                    DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Start } });
+                                    DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, Pipes.Pipe.COMMAND.Start } });
                                     break;
-                                case Pipes.Pipe.COMMAND.Stop:
+                                case Pipes.Pipe.COMMAND.Stop: // прием команды 
                                     Invoke(d_statLbl, false);
-                                    DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Stop } });
+                                    DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, Pipes.Pipe.COMMAND.Stop } });
                                     break;
-                                case Pipes.Pipe.COMMAND.Status:
+                                case Pipes.Pipe.COMMAND.AppState: // прием состояния взаимодействующего приложения
+                                    // отображение его на панели
                                     Invoke(d_updateLV, new object[] { name, arg });
                                     break;
-                                case Pipes.Pipe.COMMAND.SetStat:
-                                    if (arg.Equals(TypePanel.Client.ToString()) == true)
-                                    {
-                                        _server.SendDisconnect();
-                                        Invoke(d_reconn, new object[] { string.Empty, false });
-                                    }
-                                    else
-                                        ;
-                                    break;
-                                case Pipes.Pipe.COMMAND.Exit:
+                                case Pipes.Pipe.COMMAND.Exit: // прием команды на завершение приложения
                                     Invoke(d_exit);
                                     break;
                                 case Pipes.Pipe.COMMAND.Connect:
@@ -843,7 +861,7 @@ namespace uLoader
                 try
                 {
                     foreach (string client in cbClients.Items)
-                        sendMessage(Pipes.Pipe.COMMAND.Status.ToString(), client);
+                        sendMessage(Pipes.Pipe.COMMAND.AppState.ToString() + +Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + stateLocalPanelWork, client);
                 }
                 catch (Exception e)
                 {
@@ -1043,11 +1061,12 @@ namespace uLoader
                 set {
                     if (!(_stateRemotePanelWork == value))
                     // оповестить родительскую панель об изменении состояния
+                    //  взаимодействующего экземпляра приложения
                         DataAskedHost(new object[] {
                             new object[] { this
                                 , m_type_panel
                                 , TypeMes.Input
-                                , ID_EVENT.Start //??? Pipes.Pipe.COMMAND.Start
+                                , ID_EVENT.State //??? Pipes.Pipe.COMMAND.Start
                                 , value // состояние взаимодействующего экземпляра
                         } });
                     else
@@ -1596,7 +1615,7 @@ namespace uLoader
                                 addMessage(command_mes, argument, mes.IdServer);
                                 break;
                             case TypeMes.Output://исходящие
-                                if (command_mes.Equals(Pipes.Pipe.COMMAND.GetName.ToString()) == true)
+                                if (command_mes.Equals(Pipes.Pipe.COMMAND.Name.ToString()) == true)
                                 {
                                     switch (m_type_panel)
                                     {
