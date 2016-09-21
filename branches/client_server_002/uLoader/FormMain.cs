@@ -225,7 +225,7 @@ namespace uLoader
 
             switch ((PanelClientServer.ID_EVENT)pars[0])
             {
-                case PanelClientServer.ID_EVENT.Start:
+                case PanelClientServer.ID_EVENT.State:
                     if (pars.Length > 1) {
                         if (InvokeRequired == true)
                             BeginInvoke(new DelegateObjectFunc(interactionInitializeComlpeted), m_panelCS.Ready);

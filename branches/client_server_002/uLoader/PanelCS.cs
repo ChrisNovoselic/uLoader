@@ -543,13 +543,13 @@ namespace uLoader
                                 else
                                     if (com_mes.Equals(Pipes.Pipe.COMMAND.Start.ToString()) == true)//обработка запроса запуска
                                     {
-                                        Invoke(d_statLbl, true);
+                                        //??? Invoke(d_statLbl);
                                         DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, Pipes.Pipe.COMMAND.Start } });
                                     }
                                     else
                                         if (com_mes.Equals(Pipes.Pipe.COMMAND.Stop.ToString()) == true)//обработка запроса остановки
                                         {
-                                            Invoke(d_statLbl, false);
+                                            //??? Invoke(d_statLbl);
                                             DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, Pipes.Pipe.COMMAND.Stop } });
                                         }
                                         else
@@ -565,7 +565,7 @@ namespace uLoader
                                                 if (com_mes.Equals(Pipes.Pipe.COMMAND.AppState.ToString()) == true)//обработка запроса извещения о состоянии экземпляра
                                                 {
                                                     // запомнить текущее состояние взаимодействующего экземпляра
-                                                    stateRemotePanelWork = (PanelWork.STATE)arg[0];
+                                                    stateRemotePanelWork = GetPanelWorkState(arg);
                                                     // отправить информацию о своем состоянии
                                                     sendMessage(com_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + stateLocalPanelWork/*Pipes.Pipe.MESSAGE_RECIEVED_OK*/);                                                    
                                                 }
@@ -861,7 +861,7 @@ namespace uLoader
                 try
                 {
                     foreach (string client in cbClients.Items)
-                        sendMessage(Pipes.Pipe.COMMAND.AppState.ToString() + +Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + stateLocalPanelWork, client);
+                        sendMessage(Pipes.Pipe.COMMAND.AppState.ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + stateLocalPanelWork, client);
                 }
                 catch (Exception e)
                 {
@@ -1059,17 +1059,24 @@ namespace uLoader
                 get { return _stateRemotePanelWork; }
 
                 set {
-                    if (!(_stateRemotePanelWork == value))
-                    // оповестить родительскую панель об изменении состояния
-                    //  взаимодействующего экземпляра приложения
+                    if (!(_stateRemotePanelWork == value)) {
+                        // оповестить родительскую панель об изменении состояния
+                        //  взаимодействующего экземпляра приложения
                         DataAskedHost(new object[] {
                             new object[] { this
                                 , m_type_panel
                                 , TypeMes.Input
-                                , ID_EVENT.State //??? Pipes.Pipe.COMMAND.Start
+                                , Pipes.Pipe.COMMAND.AppState //??? ID_EVENT.State
                                 , value // состояние взаимодействующего экземпляра
                         } });
-                    else
+
+                        _stateRemotePanelWork = value;
+
+                        if (InvokeRequired == true)
+                            Invoke(d_statLbl);
+                        else
+                            setLbl ();
+                    } else
                         ;
 
                     _stateRemotePanelWork = value;
@@ -1737,13 +1744,13 @@ namespace uLoader
             private void setLbl()
             {
                 Color clr = Enabled == true ? Color.DarkGray :
-                    (stateLocalPanelWork == PanelWork.STATE.Started) ? Color.GreenYellow :
-                        (stateLocalPanelWork == PanelWork.STATE.Paused) ? Color.Red :
+                    (stateRemotePanelWork == PanelWork.STATE.Started) ? Color.GreenYellow :
+                        (stateRemotePanelWork == PanelWork.STATE.Paused) ? Color.Red :
                             Color.LightGray;
 
                 try {
                     lblStat.BackColor = clr;
-                    lblStat.Text = stateLocalPanelWork.ToString();
+                    lblStat.Text = stateRemotePanelWork.ToString();
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, @"PanelClientServer.PanelCS::setLbl () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
@@ -1787,6 +1794,21 @@ namespace uLoader
             private void exit_program()
             {
                 DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Exit } });
+            }
+
+            public PanelWork.STATE GetPanelWorkState(string strState)
+            {
+                PanelWork.STATE stateRes = PanelWork.STATE.Unknown;
+
+                for (PanelWork.STATE state = PanelWork.STATE.Unknown; state < PanelWork.STATE.Count; state++)
+                    if (state.ToString().Equals(strState) == true) {
+                        stateRes = state;
+
+                        break;
+                    } else
+                        ;
+
+                return stateRes;
             }
         }
         /// <summary>
