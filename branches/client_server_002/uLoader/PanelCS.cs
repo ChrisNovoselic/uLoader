@@ -251,7 +251,7 @@ namespace uLoader
             else
                 ;
             // проверить тип активной панели
-            if (_typePanelEnabled == TypePanel.Server)
+            if (!(_typePanelEnabled == TypePanel.Client))
             // если сервер, значит значит статус спрашивать не у кого (считаем, что рабочая панель ни у одного экземпляра не активна)
                 DataAskedHost(new object[] {
                     new object[] { 
@@ -401,7 +401,7 @@ namespace uLoader
                             while (iAttempt < MAX_ATTEMPT_CONNECT)
                             {
                                 //!!!! необходимо будет вставить условие на исключение собственного имени из перебора
-                                _client.StartClient();//Выполняем старт клиента и пытаемся подключиться к серверу
+                                _client.Start();//Выполняем старт клиента и пытаемся подключиться к серверу
                                 if (_client.IsConnected == true)//Если соединение установлено то
                                 {
                                     //m_type_app = TypePanel.Client;//Тип экземпляра устанавливаем Клиент
@@ -539,20 +539,17 @@ namespace uLoader
                                 {
                                     _client.SendDisconnect();//отправка сообщения о разрыве соединения
                                     Invoke(d_reconn, new object[] { arg, false });
-                                }
-                                else
+                                } else
                                     if (com_mes.Equals(Pipes.Pipe.COMMAND.Start.ToString()) == true)//обработка запроса запуска
                                     {
                                         //??? Invoke(d_statLbl);
                                         DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, Pipes.Pipe.COMMAND.Start } });
-                                    }
-                                    else
+                                    } else
                                         if (com_mes.Equals(Pipes.Pipe.COMMAND.Stop.ToString()) == true)//обработка запроса остановки
                                         {
                                             //??? Invoke(d_statLbl);
                                             DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, Pipes.Pipe.COMMAND.Stop } });
-                                        }
-                                        else
+                                        } else
                                             if (com_mes.Equals(Pipes.Pipe.COMMAND.PipeRole.ToString()) == true)//обработка запроса изменения типа экземпляра
                                             {
                                                 if (arg.Equals(TypePanel.Server.ToString()) == true)
@@ -560,33 +557,36 @@ namespace uLoader
                                                     _client.SendDisconnect();
                                                     Invoke(d_reconn, new object[] { string.Empty, true });
                                                 }
-                                            }
-                                            else
+                                                else
+                                                    ;
+                                            } else
                                                 if (com_mes.Equals(Pipes.Pipe.COMMAND.AppState.ToString()) == true)//обработка запроса извещения о состоянии экземпляра
                                                 {
                                                     // запомнить текущее состояние взаимодействующего экземпляра
                                                     stateRemotePanelWork = GetPanelWorkState(arg);
                                                     // отправить информацию о своем состоянии
                                                     sendMessage(com_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + stateLocalPanelWork/*Pipes.Pipe.MESSAGE_RECIEVED_OK*/);                                                    
-                                                }
-                                                else
-                                                    if (com_mes.Equals(Pipes.Pipe.COMMAND.Exit.ToString()) == true)
-                                                    {
+                                                } else
+                                                    if (com_mes.Equals(Pipes.Pipe.COMMAND.Exit.ToString()) == true) {
                                                         Invoke(d_exit);
-                                                    }
-                                                    else
-                                                        //??? в команде присутствует некоманда
-                                                        if ((com_mes.Equals(Pipes.Client.MESSAGE_CONNECT_TO_SERVER_OK) == true)
-                                                            || (com_mes.Equals(Pipes.Client.MESSAGE_DISCONNECT) == true)
-                                                            || (com_mes.Equals(Pipes.Pipe.COMMAND.Disconnect.ToString()) == true)
-                                                            || (com_mes.Equals(m_servName) == true))
-                                                            // обработка не требуется
+                                                    } else
+                                                        if (com_mes.Equals(Pipes.Pipe.COMMAND.Disconnect.ToString()) == true)
                                                             ;
                                                         else
-                                                        {
-                                                            iRes = -2;
-                                                            throw new Exception(string.Format(@"PanelClient::addMessage (COMMAND={0}) - неизвестная команда...", com_mes));
-                                                        }
+                                                        //??? в команде присутствует некоманда
+                                                            if ((com_mes.Equals(Pipes.Client.MESSAGE_CONNECT_TO_SERVER_OK) == true)
+                                                                || (com_mes.Equals(Pipes.Client.MESSAGE_DISCONNECT) == true)
+                                                                || (com_mes.Equals(m_servName) == true))
+                                                                if (com_mes.Equals(Pipes.Client.MESSAGE_DISCONNECT) == true)
+                                                                // обработка дисконнекта сервера
+                                                                    stateRemotePanelWork = PanelWork.STATE.Unknown;
+                                                                else
+                                                                // обработка не требуется
+                                                                    ;
+                                                            else {
+                                                                iRes = -2;
+                                                                throw new Exception(string.Format(@"PanelClient::addMessage (COMMAND={0}) - неизвестная команда...", com_mes));
+                                                            }
                 }
                 else
                     //??? двойная ошибка - пустая команда, проверка производилась выше
@@ -614,7 +614,7 @@ namespace uLoader
                     if (_client.b_Active == true)
                     {
                         _client.SendDisconnect();//Отправка сообщения о разрыве соединения
-                        _client.StopClient();//Остановка клиента
+                        _client.Stop();//Остановка клиента
                     }
                 }
 
@@ -625,7 +625,7 @@ namespace uLoader
             {
                 Logging.Logg().Debug(string.Format(@"PanelClientServer.PanelClient::reconnect (new_server={0}) - ...", new_server), Logging.INDEX_MESSAGE.NOT_SET);
 
-                _client.StopClient();//остановка клиента
+                _client.Stop();//остановка клиента
 
                 base.reconnect(new_server);
             }
@@ -697,7 +697,7 @@ namespace uLoader
                 _server.ReadMessage += new EventHandler(recievedMessage);
                 _server.ConnectClient += new EventHandler(addToComList);
                 _server.DisConnectClient += new EventHandler(delFromComList);
-                _server.StartServer();//запуск экземпляра сервера
+                _server.Start();//запуск экземпляра сервера
                 //m_type_app = TypePanel.Server;//устанавливаем тип экземпляра приложения Сервер
                 m_myName = _server.m_Name;//Устанавливаем собственное имя равное имени сервера
             }
@@ -880,7 +880,7 @@ namespace uLoader
                 {
                     timerUpdateStatus.Stop();
                     _server.SendDisconnect();//Отправка сообщения о разрыве соединения
-                    _server.StopServer();//Остановка сервера
+                    _server.Stop();//Остановка сервера
                 }
 
                 base.Stop();
@@ -1094,6 +1094,10 @@ namespace uLoader
                     ;
             }
 
+            private static Color ColorUnknown = Color.DarkGray
+                , ColorStarted = Color.GreenYellow
+                , ColorPaused = Color.Red;
+
             #region Initialize
             /// <summary> 
             /// Требуется переменная конструктора.
@@ -1192,6 +1196,7 @@ namespace uLoader
                 // cbClients
                 // 
                 this.cbClients.FormattingEnabled = true;
+                this.cbClients.DropDownStyle = ComboBoxStyle.DropDownList;
                 this.cbClients.Name = "cbClients";
                 this.cbClients.Size = new System.Drawing.Size(131, 21);
                 this.cbClients.TabIndex = 3;
@@ -1232,10 +1237,10 @@ namespace uLoader
                 // lblStat
                 // 
                 this.lblStat.AutoSize = true;
-                this.lblStat.BackColor = System.Drawing.Color.Red;
+                this.lblStat.BackColor = ColorUnknown;
                 this.lblStat.Name = "lblStat";
                 this.lblStat.TabIndex = 7;
-                this.lblStat.Text = "Paused";
+                this.lblStat.Text = PanelWork.STATE.Unknown.ToString();
                 // 
                 // rbStatus
                 // 
@@ -1743,10 +1748,10 @@ namespace uLoader
             /// </summary>
             private void setLbl()
             {
-                Color clr = Enabled == true ? Color.DarkGray :
-                    (stateRemotePanelWork == PanelWork.STATE.Started) ? Color.GreenYellow :
-                        (stateRemotePanelWork == PanelWork.STATE.Paused) ? Color.Red :
-                            Color.LightGray;
+                Color clr = Enabled == false ? ColorUnknown :
+                    (stateRemotePanelWork == PanelWork.STATE.Started) ? ColorStarted :
+                        (stateRemotePanelWork == PanelWork.STATE.Paused) ? ColorPaused :
+                            ColorUnknown;
 
                 try {
                     lblStat.BackColor = clr;
@@ -1764,28 +1769,30 @@ namespace uLoader
             private void lvStatusUpdate(string client, string state)
             {
                 Color clr = Color.Empty;
+                ListViewItem item = null;
                 string text = string.Empty;
                 int col = -1;
 
                 try {
-                    foreach (ListViewItem item in lvStatus.Items)
-                        if (item.Text.Equals(client) == true) {
-                            if (state.Equals(PanelWork.STATE.Started) == true) {
-                                clr = Color.LimeGreen;
-                                text = DateTime.Now.ToString();
-                                col = 2;
-                            } else
-                                if (state.Equals(PanelWork.STATE.Paused) == true) {
-                                    clr = Color.Red;
-                                    text = "Err";
-                                    col = 1;
-                                } else
-                                    ;
-
-                            item.SubItems[1].BackColor = clr;
-                            item.SubItems[col].Text = text;
+                    item = lvStatus.FindItemWithText(client);
+                    
+                    if (!(item == null)) {
+                        if (state.Equals(PanelWork.STATE.Started) == true) {
+                            clr = ColorStarted;
+                            text = DateTime.Now.ToString();
+                            col = 2;
                         } else
-                            ;
+                            if (state.Equals(PanelWork.STATE.Paused) == true) {
+                                clr = ColorPaused;
+                                text = DateTime.Now.ToString();
+                                col = 1;
+                            } else
+                                ;
+
+                        item.SubItems[1].BackColor = clr;
+                        item.SubItems[col].Text = text;
+                    } else
+                        ;
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, string.Format(@"PanelClientServer.PanelCS::lvStatusUpdate (client={0}, status={1}) - ...", client, state), Logging.INDEX_MESSAGE.NOT_SET);
                 }
