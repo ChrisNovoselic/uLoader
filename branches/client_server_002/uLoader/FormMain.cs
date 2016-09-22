@@ -73,14 +73,14 @@ namespace uLoader
                 //@"NE2844, NE3336"
                 //, @"MainPipe"
             )); m_panelCS.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelCS); m_panelCS.Start();
-
+            // автоматическое изменение состояния п.меню
             работаToolStripMenuItem.CheckOnClick =
             конфигурацияToolStripMenuItem.CheckOnClick =
             взаимодействиеToolStripMenuItem.CheckOnClick=
                  true;
-
-            взаимодействиеToolStripMenuItem.CheckStateChanged += new EventHandler(взаимодействиеToolStripMenuItem_CheckStateChanged);
-            работаToolStripMenuItem.CheckStateChanged += new EventHandler(работаToolStripMenuItem_CheckStateChanged);
+            // п.п.меню заблокированы - изменение состояния только программно
+            //взаимодействиеToolStripMenuItem.CheckStateChanged += new EventHandler(взаимодействиеToolStripMenuItem_CheckStateChanged);
+            //работаToolStripMenuItem.CheckStateChanged += new EventHandler(работаToolStripMenuItem_CheckStateChanged);
             конфигурацияToolStripMenuItem.CheckStateChanged += new EventHandler(конфигурацияToolStripMenuItem_CheckStateChanged);
 
             m_TabCtrl.EventHTabCtrlExClose += new HTabCtrlEx.DelegateHTabCtrlEx(onCloseTabPage);
@@ -278,27 +278,33 @@ namespace uLoader
                     break;
             }            
         }
-
         /// <summary>
         /// Обработка события окончания загрузки главной формы приложения
         /// </summary>
         /// <param name="sender">Объект, инийиирововший событие (форма)</param>
-        /// <param name="e">Аргументы события</param>
+        /// <param name="e">Аргумент события</param>
         private void FormMain_Load(object sender, EventArgs e)
         {
             m_formWait.StartWaitForm (Location, Size);            
 
             this.m_notifyIcon.Icon = this.Icon;
         }
-
+        /// <summary>
+        /// Обработчик события - нажатие на пиктограмму в области системных оповещений ОС
+        /// </summary>
+        /// <param name="sender">Объект - инициатор события - ???</param>
+        /// <param name="e">Аргумент события</param>
         private void NotifyIcon_Click(object sender, EventArgs e)
         {
             this.WindowState = FormWindowState.Normal;
             this.ShowInTaskbar = true;
             m_notifyIcon.Visible = false;
         }
-
-        // Перехват нажатия на кнопку свернуть
+        /// <summary>
+        /// Переопределение ф-и обработки оконных событий
+        ///  переопрделение нажатия на кнопку свернуть
+        /// </summary>
+        /// <param name="m">Объект сообщения</param>
         protected override void WndProc(ref Message m)
         {
             if (m.Msg == 0x112)
@@ -317,7 +323,11 @@ namespace uLoader
 
             base.WndProc(ref m);
         }
-
+        /// <summary>
+        /// Обработчик события - закрытие формы
+        /// </summary>
+        /// <param name="sender">Объект, инициировавший событие (форма)</param>
+        /// <param name="e">Аргумент события</param>
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
             m_notifyIcon.Visible = false;
@@ -330,7 +340,11 @@ namespace uLoader
 
             m_handler.Activate(false); m_handler.Stop();
         }
-
+        /// <summary>
+        /// Обработчик события - закрытие вкладки
+        /// </summary>
+        /// <param name="obj">Объект, инициировавший событие (менеджер вкладок)</param>
+        /// <param name="ev">Аргумент события</param>
         private void onCloseTabPage(object obj, HTabCtrlExEventArgs ev)
         {
             switch (ev.Id)
@@ -348,15 +362,19 @@ namespace uLoader
                     break;
             }
         }
+        // п.п.меню заблокированы - изменение состояния только программно
+        //private void работаToolStripMenuItem_CheckStateChanged(object obj, EventArgs ev)
+        //{
+        //}
 
-        private void работаToolStripMenuItem_CheckStateChanged(object obj, EventArgs ev)
-        {
-        }
+        //private void взаимодействиеToolStripMenuItem_CheckStateChanged(object obj, EventArgs ev)
+        //{
+        //}
 
-        private void взаимодействиеToolStripMenuItem_CheckStateChanged(object obj, EventArgs ev)
-        {
-        }
-
+        /// <summary>
+        /// Обработчик события - изменения свойства - предыдущий индекс выбранной вкладки
+        /// </summary>
+        /// <param name="indx">Новое значение для индекса</param>
         private void TabCtrl_OnPrevSelectedIndexChanged(int indx)
         {
             Logging.Logg().Action(@"Смена вкладки: активная - " + m_TabCtrl.SelectedTab.Text, Logging.INDEX_MESSAGE.NOT_SET);
@@ -418,6 +436,7 @@ namespace uLoader
 
             activateMenuItemConfig(конфигурацияToolStripMenuItem.Checked);
         }
+
         /// <summary>
         /// Иизменить доступность п. меню "Файл - конфигурация"
         /// </summary>
@@ -426,6 +445,7 @@ namespace uLoader
         {
             this.файлКонфигурацияToolStripMenuItem.Enabled = activate;
         }
+
         /// <summary>
         /// Обработчик события - выбор п. меню "О программе"
         /// </summary>

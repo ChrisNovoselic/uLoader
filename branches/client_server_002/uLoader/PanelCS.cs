@@ -616,6 +616,13 @@ namespace uLoader
                 Invoke(delegateReconnect, string.Empty);
             }
 
+            public override void Start()
+            {
+                base.Start();
+
+                delegateUpdateRemotePanelWorkState = setLabelStateText;
+            }
+
             public override void Stop()
             {
                 if (_client != null)
@@ -637,6 +644,27 @@ namespace uLoader
                 _client.Stop();//остановка клиента
 
                 base.reconnect(new_server);
+            }
+
+            /// <summary>
+            /// Метод для изменения label'a состояния внешней панели (Работа)
+            /// </summary>
+            private void setLabelStateText()
+            {
+                Color clr = Enabled == false ? ColorUnknown :
+                    (stateRemotePanelWork == PanelWork.STATE.Started) ? ColorStarted :
+                        (stateRemotePanelWork == PanelWork.STATE.Paused) ? ColorPaused :
+                            ColorUnknown;
+
+                try
+                {
+                    lblStateRemotePanelWork.BackColor = clr;
+                    lblStateRemotePanelWork.Text = stateRemotePanelWork.ToString();
+                }
+                catch (Exception e)
+                {
+                    Logging.Logg().Exception(e, @"PanelClientServer.PanelCS::setLbl () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
             }
         }
 
@@ -694,6 +722,8 @@ namespace uLoader
             public override void Start()
             {
                 base.Start();
+
+                delegateUpdateRemotePanelWorkState = updateListViewClientState;
             }
             /// <summary>
             /// Запуск сервера (метод отдельного потока)
@@ -772,11 +802,11 @@ namespace uLoader
                                             ;
                                     break;
                                 case Pipes.Pipe.COMMAND.Start:
-                                    Invoke(delegateSetLabelStateText, true);
+                                    Invoke(delegateUpdateRemotePanelWorkState, true);
                                     DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, Pipes.Pipe.COMMAND.Start } });
                                     break;
                                 case Pipes.Pipe.COMMAND.Stop: // прием команды 
-                                    Invoke(delegateSetLabelStateText, false);
+                                    Invoke(delegateUpdateRemotePanelWorkState, false);
                                     DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, Pipes.Pipe.COMMAND.Stop } });
                                     break;
                                 case Pipes.Pipe.COMMAND.AppState: // прием состояния взаимодействующего приложения
@@ -859,6 +889,55 @@ namespace uLoader
                     ;
 
                 return iRes;
+            }
+            /// <summary>
+            /// Метод обновления клиентов и их актуальных состояний
+            ///  аргумент 'client' вырожденный, т.к. клиент пока только один
+            /// </summary>
+            /// <param name="client">Наименование клиента</param>
+            private void updateListViewClientState(/*string client = @""*/)
+            {
+                Color clr = Color.Empty;
+                ListViewItem item = null;
+                string text = string.Empty;
+                int col = -1;
+                // временно
+                string client = string.Empty;
+
+                try {
+                    item =
+                        //lvStateClients.FindItemWithText(client)
+                        lvStateClients.Items[0]
+                        ;
+                    // временно
+                    client = item.SubItems[0].Text;
+
+                    if (!(item == null)) {
+                        Logging.Logg().Debug(string.Format(@"PanelClientServer.PanelServer::updateListViewClientState (client={0}, status={1}) - ..."
+                                , client, stateRemotePanelWork)
+                            , Logging.INDEX_MESSAGE.NOT_SET);
+
+                        if (stateRemotePanelWork.Equals(PanelWork.STATE.Started) == true) {
+                            clr = ColorStarted;
+                            text = DateTime.Now.ToString();
+                            col = 2;
+                        } else
+                            if (stateRemotePanelWork.Equals(PanelWork.STATE.Paused) == true) {
+                                clr = ColorPaused;
+                                text = DateTime.Now.ToString();
+                                col = 1;
+                            } else
+                                ;
+
+                        item.SubItems[1].BackColor = clr;
+                        item.SubItems[col].Text = text;
+                    } else
+                        ;
+                } catch (Exception e) {
+                    Logging.Logg().Exception(e
+                        , string.Format(@"PanelClientServer.PanelServer::updateListViewClientState (client={0}, status={1}) - ...", client, stateRemotePanelWork)
+                        , Logging.INDEX_MESSAGE.NOT_SET);
+                }
             }
             /// <summary>
             /// Метод обработки события таймера
@@ -979,10 +1058,10 @@ namespace uLoader
             /// </summary>
             /// <param name="obj">Строка в виде массива</param>
             protected delegate void DelegateStrStrFunc(string name_client, string status);
-            /// <summary>
-            /// Экземпляр делегата добавления/удаления объекта в listView
-            /// </summary>
-            protected DelegateStrStrFunc delegateUpdateListViewClients;
+            ///// <summary>
+            ///// Экземпляр делегата добавления/удаления объекта в listView
+            ///// </summary>
+            //protected DelegateStrStrFunc delegateUpdateListViewClients;
 
             /// <summary>
             /// Делегат для добавления/удаления объекта в comboBox
@@ -997,7 +1076,7 @@ namespace uLoader
             /// <summary>
             /// Экземпляр делегата изменения label'a состояния внешней панели
             /// </summary>
-            protected DelegateFunc delegateSetLabelStateText;
+            protected DelegateFunc delegateUpdateRemotePanelWorkState;
 
             /// <summary>
             /// Экземпляр делегата exit
@@ -1075,9 +1154,9 @@ namespace uLoader
                         _stateRemotePanelWork = value;
 
                         if (InvokeRequired == true)
-                            Invoke(delegateSetLabelStateText);
+                            Invoke(delegateUpdateRemotePanelWorkState);
                         else
-                            setLabelStateText ();
+                            delegateUpdateRemotePanelWorkState();
                     } else
                         ;
                 }
@@ -1092,15 +1171,15 @@ namespace uLoader
             {
                 if (IsHandleCreated == true)
                     if (InvokeRequired == true)
-                        BeginInvoke(delegateSetLabelStateText);
+                        BeginInvoke(delegateUpdateRemotePanelWorkState);
                     else
-                        delegateSetLabelStateText();
+                        delegateUpdateRemotePanelWorkState();
                 else
                     ;
             }
 
-            private static Color ColorUnknown = Color.DarkGray
-                , ColorStarted = Color.GreenYellow
+            protected static Color ColorUnknown = Color.DarkGray
+                , ColorStarted = Color.LightGreen
                 , ColorPaused = Color.Red;
 
             #region Initialize
@@ -1352,7 +1431,7 @@ namespace uLoader
             private System.Windows.Forms.Label lblClients;
             protected System.Windows.Forms.TextBox tbxArgCommand;
             private System.Windows.Forms.Label lblArgCommand;
-            private System.Windows.Forms.Label lblStateRemotePanelWork;
+            protected System.Windows.Forms.Label lblStateRemotePanelWork;
             private System.Windows.Forms.Label lblTypePanel;
             private System.Windows.Forms.TableLayoutPanel panelStatus;
             private System.Windows.Forms.TableLayoutPanel panelCommand;
@@ -1392,8 +1471,8 @@ namespace uLoader
                 delegateAddRow = addRowToDGV;
                 delegateManageComboBoxClient = manageComboBoxClient;
                 delegateReconnect = reconnect;
-                delegateSetLabelStateText = setLabelStateText;
-                delegateUpdateListViewClients = lvStatusUpdate;
+                //delegateUpdateRemotePanelWorkState = setLabelStateText;
+                //delegateUpdateListViewClientState = updateListViewClientState;
                 //Размещение комманд в Control
                 getCommandToList();
 
@@ -1750,61 +1829,6 @@ namespace uLoader
 
                 //if (new_server.Equals(string.Empty) == false)
                 //    initialize(new_server);//подключение к новому серверу или запуск сервера
-            }
-
-            /// <summary>
-            /// Метод для изменения label'a состояния внешней панели (Работа)
-            /// </summary>
-            private void setLabelStateText()
-            {
-                Color clr = Enabled == false ? ColorUnknown :
-                    (stateRemotePanelWork == PanelWork.STATE.Started) ? ColorStarted :
-                        (stateRemotePanelWork == PanelWork.STATE.Paused) ? ColorPaused :
-                            ColorUnknown;
-
-                try {
-                    lblStateRemotePanelWork.BackColor = clr;
-                    lblStateRemotePanelWork.Text = stateRemotePanelWork.ToString();
-                } catch (Exception e) {
-                    Logging.Logg().Exception(e, @"PanelClientServer.PanelCS::setLbl () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
-            }
-
-            /// <summary>
-            /// Метод обновления
-            /// </summary>
-            /// <param name="client">Наименование клиента</param>
-            /// <param name="status">Текст ответа</param>
-            private void lvStatusUpdate(string client, string state)
-            {
-                Color clr = Color.Empty;
-                ListViewItem item = null;
-                string text = string.Empty;
-                int col = -1;
-
-                try {
-                    item = lvStateClients.FindItemWithText(client);
-                    
-                    if (!(item == null)) {
-                        if (state.Equals(PanelWork.STATE.Started) == true) {
-                            clr = ColorStarted;
-                            text = DateTime.Now.ToString();
-                            col = 2;
-                        } else
-                            if (state.Equals(PanelWork.STATE.Paused) == true) {
-                                clr = ColorPaused;
-                                text = DateTime.Now.ToString();
-                                col = 1;
-                            } else
-                                ;
-
-                        item.SubItems[1].BackColor = clr;
-                        item.SubItems[col].Text = text;
-                    } else
-                        ;
-                } catch (Exception e) {
-                    Logging.Logg().Exception(e, string.Format(@"PanelClientServer.PanelCS::lvStatusUpdate (client={0}, status={1}) - ...", client, state), Logging.INDEX_MESSAGE.NOT_SET);
-                }
             }
 
             private void exit_program()
