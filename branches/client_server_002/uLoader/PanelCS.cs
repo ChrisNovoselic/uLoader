@@ -35,11 +35,7 @@ namespace uLoader
         /// <summary>
         /// Массив дочерних панелей
         /// </summary>
-        private PanelCS[] m_arPanels;
-        /// <summary>
-        /// Признак состояния внешней панели (Работа)
-        /// </summary>
-        private PanelWork.STATE _stateLocalPanelWork;
+        private PanelCS[] m_arPanels;        
         /// <summary>
         /// Тип включенной(активной) дочерней панели
         /// </summary>
@@ -106,11 +102,21 @@ namespace uLoader
                                 , ID_EVENT.Stop }
                             });
                             break;
-                        case Pipes.Pipe.COMMAND.AppState:
-                            DataAskedHost(new object[] { new object[] { HHandlerQueue.StatesMachine.INTERACTION_EVENT
-                                , ID_EVENT.State
-                                , pars.Length > 4 ? pars[4] : null }
-                            });
+                        case Pipes.Pipe.COMMAND.AppState: // передать состояние взаимодействующего экземпляра
+                            if (pars.Length > 5)
+                                DataAskedHost(new object[] { new object[] { HHandlerQueue.StatesMachine.INTERACTION_EVENT
+                                    , ID_EVENT.State
+                                    , pars[4] // предыдущее состояние взаимодействующего экземпляра
+                                    , pars[5] } // новое состояние взаимодействующего  экземпляра
+                                });
+                            else
+                                ;
+                            break;
+                        case Pipes.Pipe.COMMAND.Disconnect:
+                            if (pars[2].Equals(string.Empty) == false)
+                                ;
+                            else
+                                ;
                             break;
                         default:
                             break;
@@ -137,10 +143,10 @@ namespace uLoader
         /// <param name="obj">Результат, полученный по запросу (массив 'object')</param>
         protected override void onEvtDataRecievedHost(object obj)
         {
-            //Обработанное состояние 
-            HHandlerQueue.StatesMachine state = (HHandlerQueue.StatesMachine)Int32.Parse((obj as object[])[0].ToString());
             //Параметры (массив) в 1-ом элементе результата
-            object par = (obj as object[])[1];
+            object[] pars = obj as object[];
+            //Обработанное состояние (всегда в 'pars[0]')
+            HHandlerQueue.StatesMachine state = (HHandlerQueue.StatesMachine)Int32.Parse(pars[0].ToString());            
 
             int iRes = -1;
 
@@ -149,23 +155,21 @@ namespace uLoader
             switch (state)
             {
                 case HHandlerQueue.StatesMachine.GET_INTERACTION_PARAMETERS:
-                    if (!(par == null))
-                    {
-                        //start(par);
-                        //BeginInvoke(new DelegateObjectFunc (start), par);
-                        //eventRecievedInteractionParameters(par);
-
-                        //TypePanelEnabled = m_arPanels[(int)TypePanel.Client].Enabled == true ? TypePanel.Client :
-                        //    m_arPanels[(int)TypePanel.Server].Enabled == true ? TypePanel.Server :
-                        //        TypePanel.Unknown;
-
-                        m_InteractionParameters = (InteractionParameters)par;
+                    if (!(pars[1] == null)) {
+                        m_InteractionParameters = (InteractionParameters)pars[1];
+                        // разрешить продолжение выполнение инициализации '::Start'
                         m_semInteractionParameters.Release(1);
-                    }
-                    else
+                    } else
                         ;
                     break;
                 case HHandlerQueue.StatesMachine.FORMMAIN_COMMAND_TO_INTERACTION:
+                    switch ((ID_EVENT)pars[1]) {
+                        case ID_EVENT.State:
+                            stateLocalPanelWork = (PanelWork.STATE)pars[2];
+                            break;
+                        default:
+                            break;
+                    }                    
                     break;
                 default:
                     break;
@@ -195,8 +199,10 @@ namespace uLoader
         /// Внутреннее событие - для изменения содержания подписи - состояния внешнй (рабочей) панели
         /// </summary>
         private event DelegateFunc eventStateLocalPanelWorkChanged;
-
-        public PanelWork.STATE StateLocalPanelWork
+        /// <summary>
+        /// Признак состояния внешней панели (Работа)
+        /// </summary>        
+        protected PanelWork.STATE stateLocalPanelWork
         {
             get {
                 return _stateLocalPanelWork;
@@ -211,7 +217,9 @@ namespace uLoader
             }
         }
 
-        private PanelWork.STATE _stateRemotePanelWork;
+        private PanelWork.STATE _stateLocalPanelWork;
+
+        //private PanelWork.STATE _stateRemotePanelWork;
 
         private void onEventStateLocalPanelWorkChanged()
         {
@@ -256,7 +264,8 @@ namespace uLoader
                 DataAskedHost(new object[] {
                     new object[] { 
                         HHandlerQueue.StatesMachine.INTERACTION_EVENT, ID_EVENT.State
-                        , PanelWork.STATE.Unknown // состояние взаимодействующего экземпляра
+                        , PanelWork.STATE.Unknown // предыдущее состояние взаимодействующего экземпляра
+                        , PanelWork.STATE.Unknown // новое состояние взаимодействующего экземпляра
                 } });
             else
             // если клиент, ожидать сообщения о статусе от сервера
@@ -354,7 +363,7 @@ namespace uLoader
                 // ожидать создания клиента
                 if ((!(_client == null))
                     && (_client.IsConnected == true))
-                    argCommand.Enabled = true;
+                    tbxArgCommand.Enabled = true;
                 else
                     ;
             }
@@ -473,21 +482,21 @@ namespace uLoader
                     //                break;
                     //            case Pipes.Pipe.COMMAND.ReConnect:
                     //                _client.SendDisconnect();//отправка сообщения о разрыве соединения
-                    //                Invoke(d_reconn, new object[] { arg, false });
+                    //                Invoke(delegateReconnect, new object[] { arg, false });
                     //                break;
                     //            case Pipes.Pipe.COMMAND.Start:
-                    //                Invoke(d_statLbl, true);
+                    //                Invoke(delegateSetLabelStateText, true);
                     //                DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Start } });
                     //                break;
                     //            case Pipes.Pipe.COMMAND.Stop:
-                    //                Invoke(d_statLbl, false);
+                    //                Invoke(delegateSetLabelStateText, false);
                     //                DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Stop } });
                     //                break;
                     //            case Pipes.Pipe.COMMAND.SetStat:
                     //                if (arg.Equals(TypePanel.Server.ToString()) == true)
                     //                {
                     //                    _client.SendDisconnect();
-                    //                    Invoke(d_reconn, new object[] { string.Empty, true });
+                    //                    Invoke(delegateReconnect, new object[] { string.Empty, true });
                     //                }
                     //                else
                     //                    ;
@@ -538,16 +547,16 @@ namespace uLoader
                                 if (com_mes.Equals(Pipes.Pipe.COMMAND.ReConnect.ToString()) == true)//Обработка запроса на переподключение
                                 {
                                     _client.SendDisconnect();//отправка сообщения о разрыве соединения
-                                    Invoke(d_reconn, new object[] { arg, false });
+                                    Invoke(delegateReconnect, new object[] { arg, false });
                                 } else
                                     if (com_mes.Equals(Pipes.Pipe.COMMAND.Start.ToString()) == true)//обработка запроса запуска
                                     {
-                                        //??? Invoke(d_statLbl);
+                                        //??? Invoke(delegateSetLabelStateText);
                                         DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, Pipes.Pipe.COMMAND.Start } });
                                     } else
                                         if (com_mes.Equals(Pipes.Pipe.COMMAND.Stop.ToString()) == true)//обработка запроса остановки
                                         {
-                                            //??? Invoke(d_statLbl);
+                                            //??? Invoke(delegateSetLabelStateText);
                                             DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, Pipes.Pipe.COMMAND.Stop } });
                                         } else
                                             if (com_mes.Equals(Pipes.Pipe.COMMAND.PipeRole.ToString()) == true)//обработка запроса изменения типа экземпляра
@@ -555,7 +564,7 @@ namespace uLoader
                                                 if (arg.Equals(TypePanel.Server.ToString()) == true)
                                                 {
                                                     _client.SendDisconnect();
-                                                    Invoke(d_reconn, new object[] { string.Empty, true });
+                                                    Invoke(delegateReconnect, new object[] { string.Empty, true });
                                                 }
                                                 else
                                                     ;
@@ -568,7 +577,7 @@ namespace uLoader
                                                     sendMessage(com_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + stateLocalPanelWork/*Pipes.Pipe.MESSAGE_RECIEVED_OK*/);                                                    
                                                 } else
                                                     if (com_mes.Equals(Pipes.Pipe.COMMAND.Exit.ToString()) == true) {
-                                                        Invoke(d_exit);
+                                                        Invoke(delegateExit);
                                                     } else
                                                         if (com_mes.Equals(Pipes.Pipe.COMMAND.Disconnect.ToString()) == true)
                                                             ;
@@ -604,7 +613,7 @@ namespace uLoader
 
             private void resClient(object sender, EventArgs e)
             {//Pipes.Client.ResServeventArgs
-                Invoke(d_reconn, string.Empty);
+                Invoke(delegateReconnect, string.Empty);
             }
 
             public override void Stop()
@@ -670,9 +679,9 @@ namespace uLoader
 
                     //Включение компонентов формы для сервера
                     cbClients.Enabled = true;
-                    argCommand.Enabled = true;
-                    rbStatus.Enabled = true;
-                    rbStatus.Checked = true;
+                    tbxArgCommand.Enabled = true;
+                    rbModeState.Enabled = true;
+                    rbModeState.Checked = true;
 
                     timerUpdateStatus = new System.Windows.Forms.Timer();
                     timerUpdateStatus.Interval = MS_TIMER_UPDATE_STATUS;
@@ -704,17 +713,17 @@ namespace uLoader
             /// <summary>
             /// Экземпляр делегата disconnect
             /// </summary>
-            private DelegateFunc d_disconnect;
+            private DelegateStringFunc d_disconnect;
 
-            private void disconnect_client()
+            private void disconnect_client(string name)
             {
-                DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Disconnect } });
+                DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, Pipes.Pipe.COMMAND.Disconnect, name } });
             }
 
             protected override void delFromComList(object sender, EventArgs e)
             {
                 base.delFromComList(sender, e);
-                Invoke(d_disconnect);
+                Invoke(d_disconnect, (e as Pipes.Server.ConnectionClientEventArgs).IdServer);
             }
 
             /// <summary>
@@ -757,25 +766,26 @@ namespace uLoader
                                     // обработка команды на изменение роли
                                         if (arg.Equals(TypePanel.Client.ToString()) == true) {
                                             _server.SendDisconnect();
-                                            Invoke(d_reconn, new object[] { string.Empty, false });
+                                            Invoke(delegateReconnect, new object[] { string.Empty, false });
                                         }
                                         else
                                             ;
                                     break;
                                 case Pipes.Pipe.COMMAND.Start:
-                                    Invoke(d_statLbl, true);
+                                    Invoke(delegateSetLabelStateText, true);
                                     DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, Pipes.Pipe.COMMAND.Start } });
                                     break;
                                 case Pipes.Pipe.COMMAND.Stop: // прием команды 
-                                    Invoke(d_statLbl, false);
+                                    Invoke(delegateSetLabelStateText, false);
                                     DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, Pipes.Pipe.COMMAND.Stop } });
                                     break;
                                 case Pipes.Pipe.COMMAND.AppState: // прием состояния взаимодействующего приложения
                                     // отображение его на панели
-                                    Invoke(d_updateLV, new object[] { name, arg });
+                                    stateRemotePanelWork = GetPanelWorkState(arg);
+                                    //Invoke(d_updateLV, new object[] { name, arg });
                                     break;
                                 case Pipes.Pipe.COMMAND.Exit: // прием команды на завершение приложения
-                                    Invoke(d_exit);
+                                    Invoke(delegateExit);
                                     break;
                                 case Pipes.Pipe.COMMAND.Connect:
                                 case Pipes.Pipe.COMMAND.Disconnect:
@@ -806,13 +816,13 @@ namespace uLoader
                     //        else
                     //            if (com_mes.Equals(Pipes.Pipe.COMMAND.Start.ToString()) == true)//запрос запуска
                     //            {
-                    //                Invoke(d_statLbl, true);
+                    //                Invoke(delegateSetLabelStateText, true);
                     //                DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Start } });
                     //            }
                     //            else
                     //                if (com_mes.Equals(Pipes.Pipe.COMMAND.Stop.ToString()) == true)//запрос остановки
                     //                {
-                    //                    Invoke(d_statLbl, false);
+                    //                    Invoke(delegateSetLabelStateText, false);
                     //                    DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Stop } });
                     //                }
                     //                else
@@ -826,7 +836,7 @@ namespace uLoader
                     //                            if (arg.Equals(TypePanel.Client.ToString()) == true)
                     //                            {
                     //                                _server.SendDisconnect();
-                    //                                Invoke(d_reconn, new object[] { string.Empty, false });
+                    //                                Invoke(delegateReconnect, new object[] { string.Empty, false });
                     //                            }
                     //                        }
                     //                        else
@@ -871,7 +881,7 @@ namespace uLoader
 
             protected void addToComList(object sender, EventArgs e)
             {
-                Invoke(d_operCB, new object[] { (e as Pipes.Server.ConnectionClientEventArgs).IdServer, true });
+                Invoke(delegateManageComboBoxClient, new object[] { (e as Pipes.Server.ConnectionClientEventArgs).IdServer, true });
             }
 
             public override void Stop()
@@ -890,7 +900,7 @@ namespace uLoader
             {
                 timerUpdateStatus.Stop();
                 cbClients.Items.Clear();
-                lvStatus.Items.Clear();
+                lvStateClients.Items.Clear();
                 _server.SendDisconnect();
                 //m_server.StopServer();//остановка сервера
                 timerUpdateStatus.Start();
@@ -957,12 +967,12 @@ namespace uLoader
             /// <summary>
             /// Экземпляр делегата добавления строки в DGV
             /// </summary>
-            private DelegateFunc d_addRow;
+            private DelegateFunc delegateAddRow;
 
             /// <summary>
             /// Экземпляр делегата добавления/удаления объекта в comboBox
             /// </summary>
-            protected DelegateStrBoolFunc d_operCB;
+            protected DelegateStrBoolFunc delegateManageComboBoxClient;
 
             /// <summary>
             /// Делегат для добавления/удаления объекта в listView
@@ -972,7 +982,7 @@ namespace uLoader
             /// <summary>
             /// Экземпляр делегата добавления/удаления объекта в listView
             /// </summary>
-            protected DelegateStrStrFunc d_updateLV;
+            protected DelegateStrStrFunc delegateUpdateListViewClients;
 
             /// <summary>
             /// Делегат для добавления/удаления объекта в comboBox
@@ -982,17 +992,17 @@ namespace uLoader
             /// <summary>
             /// Экземпляр делегата добавления/удаления объекта в comboBox
             /// </summary>
-            protected DelegateStringFunc d_reconn;
+            protected DelegateStringFunc delegateReconnect;
 
             /// <summary>
-            /// Экземпляр делегата изменения label'a
+            /// Экземпляр делегата изменения label'a состояния внешней панели
             /// </summary>
-            protected DelegateFunc d_statLbl;
+            protected DelegateFunc delegateSetLabelStateText;
 
             /// <summary>
             /// Экземпляр делегата exit
             /// </summary>
-            protected DelegateFunc d_exit;
+            protected DelegateFunc delegateExit;
 
             /// <summary>
             /// Объект синхронизации
@@ -1021,7 +1031,9 @@ namespace uLoader
             {
                 thisLock = new Object();
                 m_type_panel = type;
-                d_exit = exit_program;
+                delegateExit = exit_program;
+
+                _stateRemotePanelWork = PanelWork.STATE.Unknown;
 
                 m_listRowDGVAdding = new ListDGVMessage();
 
@@ -1034,22 +1046,11 @@ namespace uLoader
                     Logging.Logg().Exception(e, @"PanelCS::ctor () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
 
-                rbCommand.CheckedChanged += new EventHandler(rbChecked);
-                rbStatus.CheckedChanged += new EventHandler(rbChecked);
+                rbModeCommand.CheckedChanged += new EventHandler(onModeChecked);
+                rbModeState.CheckedChanged += new EventHandler(onModeChecked);
 
                 m_servers = arServerName;
-            }
-
-            /// <summary>
-            /// Признак состояния внешней панели (Работа)
-            /// </summary>
-            protected PanelWork.STATE stateLocalPanelWork
-            {
-                get
-                {
-                    return (Parent as PanelClientServer).StateLocalPanelWork;
-                }
-            }
+            }            
             /// <summary>
             /// Состояние удаленной рабочей панели экземпляра
             /// </summary>
@@ -1067,29 +1068,33 @@ namespace uLoader
                                 , m_type_panel
                                 , TypeMes.Input
                                 , Pipes.Pipe.COMMAND.AppState //??? ID_EVENT.State
-                                , value // состояние взаимодействующего экземпляра
+                                , _stateRemotePanelWork // предыдущее состояние взаимодействующего экземпляра
+                                , value // новое состояние взаимодействующего экземпляра
                         } });
 
                         _stateRemotePanelWork = value;
 
                         if (InvokeRequired == true)
-                            Invoke(d_statLbl);
+                            Invoke(delegateSetLabelStateText);
                         else
-                            setLbl ();
+                            setLabelStateText ();
                     } else
                         ;
-
-                    _stateRemotePanelWork = value;
                 }
+            }
+
+            protected PanelWork.STATE stateLocalPanelWork
+            {
+                get { return (Parent as PanelClientServer).stateLocalPanelWork; }
             }
 
             public void UpdatePanelWorkState()
             {
                 if (IsHandleCreated == true)
                     if (InvokeRequired == true)
-                        BeginInvoke(d_statLbl);
+                        BeginInvoke(delegateSetLabelStateText);
                     else
-                        d_statLbl();
+                        delegateSetLabelStateText();
                 else
                     ;
             }
@@ -1127,42 +1132,42 @@ namespace uLoader
             {
                 string[] column_name = { "ClientName", "Status", "LastUpdate" };
                 this.dgvMessage = new System.Windows.Forms.DataGridView();
-                this.commandBox = new System.Windows.Forms.ListBox();
+                this.lbxCommand = new System.Windows.Forms.ListBox();
                 this.btnSendMessage = new System.Windows.Forms.Button();
                 this.cbClients = new System.Windows.Forms.ComboBox();
                 this.lblClients = new System.Windows.Forms.Label();
-                this.argCommand = new System.Windows.Forms.TextBox();
-                this.lblArg = new System.Windows.Forms.Label();
-                this.lblStat = new System.Windows.Forms.Label();
-                this.lblType = new System.Windows.Forms.Label();
+                this.tbxArgCommand = new System.Windows.Forms.TextBox();
+                this.lblArgCommand = new System.Windows.Forms.Label();
+                this.lblStateRemotePanelWork = new System.Windows.Forms.Label();
+                this.lblTypePanel = new System.Windows.Forms.Label();
                 this.panelStatus = new System.Windows.Forms.TableLayoutPanel();
                 this.panelCommand = new System.Windows.Forms.TableLayoutPanel();
-                this.rbStatus = new System.Windows.Forms.RadioButton();
-                this.rbCommand = new System.Windows.Forms.RadioButton();
-                this.lvStatus = new System.Windows.Forms.ListView();
+                this.rbModeState = new System.Windows.Forms.RadioButton();
+                this.rbModeCommand = new System.Windows.Forms.RadioButton();
+                this.lvStateClients = new System.Windows.Forms.ListView();
                 ((System.ComponentModel.ISupportInitialize)(this.dgvMessage)).BeginInit();
 
                 this.SuspendLayout();
                 // 
                 // lvStatus
                 // 
-                this.lvStatus.Name = "lvStatus";
-                this.lvStatus.TabIndex = 0;
-                this.lvStatus.Dock = DockStyle.Fill;
-                this.lvStatus.Columns.AddRange(new ColumnHeader[] { new ColumnHeader(), new ColumnHeader(), new ColumnHeader(), });
+                this.lvStateClients.Name = "lvStatus";
+                this.lvStateClients.TabIndex = 0;
+                this.lvStateClients.Dock = DockStyle.Fill;
+                this.lvStateClients.Columns.AddRange(new ColumnHeader[] { new ColumnHeader(), new ColumnHeader(), new ColumnHeader(), });
 
-                this.lvStatus.FullRowSelect = true;
-                this.lvStatus.MultiSelect = false;
-                this.lvStatus.Size = new System.Drawing.Size(277, 245);
-                this.lvStatus.UseCompatibleStateImageBehavior = false;
-                this.lvStatus.View = System.Windows.Forms.View.Details;
-                foreach (ColumnHeader column in this.lvStatus.Columns)
+                this.lvStateClients.FullRowSelect = true;
+                this.lvStateClients.MultiSelect = false;
+                this.lvStateClients.Size = new System.Drawing.Size(277, 245);
+                this.lvStateClients.UseCompatibleStateImageBehavior = false;
+                this.lvStateClients.View = System.Windows.Forms.View.Details;
+                foreach (ColumnHeader column in this.lvStateClients.Columns)
                 {
                     column.Text = column_name[column.Index];
                     column.Name = column_name[column.Index];
                     column.Width = 90;
                 }
-                this.lvStatus.GotFocus += new EventHandler(lvStatus_OnGotFocus);
+                this.lvStateClients.GotFocus += new EventHandler(lvStatus_OnGotFocus);
 
                 // 
                 // dgvMessage
@@ -1177,11 +1182,11 @@ namespace uLoader
                 // 
                 // commandBox
                 // 
-                this.commandBox.FormattingEnabled = true;
-                this.commandBox.Name = "commandBox";
+                this.lbxCommand.FormattingEnabled = true;
+                this.lbxCommand.Name = "commandBox";
                 //this.commandBox.Size = new System.Drawing.Size(221, 277);
-                this.commandBox.TabIndex = 1;
-                this.commandBox.Dock = DockStyle.Fill;
+                this.lbxCommand.TabIndex = 1;
+                this.lbxCommand.Dock = DockStyle.Fill;
                 // 
                 // btnSendMessage
                 // 
@@ -1212,51 +1217,51 @@ namespace uLoader
                 // 
                 // lblType
                 // 
-                this.lblType.AutoSize = true;
-                this.lblType.Name = "lblType";
-                this.lblType.Size = new System.Drawing.Size(92, 13);
-                this.lblType.TabIndex = 8;
-                this.lblType.Text = m_type_panel.ToString();
-                this.lblType.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+                this.lblTypePanel.AutoSize = true;
+                this.lblTypePanel.Name = "lblType";
+                this.lblTypePanel.Size = new System.Drawing.Size(92, 13);
+                this.lblTypePanel.TabIndex = 8;
+                this.lblTypePanel.Text = m_type_panel.ToString();
+                this.lblTypePanel.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
                 // 
                 // argCommand
                 // 
-                this.argCommand.AutoSize = true;
-                this.argCommand.Name = "argCommand";
+                this.tbxArgCommand.AutoSize = true;
+                this.tbxArgCommand.Name = "argCommand";
                 //this.argCommand.Size = new System.Drawing.Size(131, 20);
-                this.argCommand.TabIndex = 5;
-                this.argCommand.Dock = DockStyle.Fill;
+                this.tbxArgCommand.TabIndex = 5;
+                this.tbxArgCommand.Dock = DockStyle.Fill;
                 // 
                 // lblArg
                 // 
-                this.lblArg.AutoSize = true;
-                this.lblArg.Name = "lblArg";
-                this.lblArg.TabIndex = 6;
-                this.lblArg.Text = "Аргумент";
+                this.lblArgCommand.AutoSize = true;
+                this.lblArgCommand.Name = "lblArg";
+                this.lblArgCommand.TabIndex = 6;
+                this.lblArgCommand.Text = "Аргумент";
                 // 
                 // lblStat
                 // 
-                this.lblStat.AutoSize = true;
-                this.lblStat.BackColor = ColorUnknown;
-                this.lblStat.Name = "lblStat";
-                this.lblStat.TabIndex = 7;
-                this.lblStat.Text = PanelWork.STATE.Unknown.ToString();
+                this.lblStateRemotePanelWork.AutoSize = true;
+                this.lblStateRemotePanelWork.BackColor = ColorUnknown;
+                this.lblStateRemotePanelWork.Name = "lblStat";
+                this.lblStateRemotePanelWork.TabIndex = 7;
+                this.lblStateRemotePanelWork.Text = PanelWork.STATE.Unknown.ToString();
                 // 
-                // rbStatus
+                // rbModeState
                 // 
-                this.rbStatus.AutoSize = true;
-                this.rbStatus.Name = "rbStatus";
-                this.rbStatus.TabIndex = 9;
-                this.rbStatus.Text = "Статус";
-                this.rbStatus.Enabled = false;
+                this.rbModeState.AutoSize = true;
+                this.rbModeState.Name = "rbModeState";
+                this.rbModeState.TabIndex = 9;
+                this.rbModeState.Text = "Статус";
+                this.rbModeState.Enabled = false;
                 // 
-                // rbCommand
+                // rbModeCommand
                 // 
-                this.rbCommand.AutoSize = true;
-                this.rbCommand.Name = "rbCommand";
-                this.rbCommand.TabIndex = 10;
-                this.rbCommand.Text = "Команды";
-                this.rbCommand.Checked = true;
+                this.rbModeCommand.AutoSize = true;
+                this.rbModeCommand.Name = "rbModeCommand";
+                this.rbModeCommand.TabIndex = 10;
+                this.rbModeCommand.Text = "Команды";
+                this.rbModeCommand.Checked = true;
                 // 
                 // panelCommand
                 // 
@@ -1278,13 +1283,13 @@ namespace uLoader
                 // 
                 // PanelCS
                 //
-                this.Controls.Add(this.rbStatus, 0, 0);
-                this.SetRowSpan(this.rbStatus, 2);
-                this.SetColumnSpan(this.rbStatus, 1);
+                this.Controls.Add(this.rbModeState, 0, 0);
+                this.SetRowSpan(this.rbModeState, 2);
+                this.SetColumnSpan(this.rbModeState, 1);
 
-                this.Controls.Add(this.rbCommand, 1, 0);
-                this.SetRowSpan(this.rbCommand, 2);
-                this.SetColumnSpan(this.rbCommand, 1);
+                this.Controls.Add(this.rbModeCommand, 1, 0);
+                this.SetRowSpan(this.rbModeCommand, 2);
+                this.SetColumnSpan(this.rbModeCommand, 1);
 
 
                 this.Controls.Add(this.panelCommand, 0, 2);
@@ -1296,29 +1301,29 @@ namespace uLoader
                 this.SetColumnSpan(this.panelStatus, 2);
 
                 #region Command
-                panelCommand.Controls.Add(this.lblStat, 0, 0);
+                panelCommand.Controls.Add(this.lblStateRemotePanelWork, 0, 0);
 
                 panelCommand.Controls.Add(this.lblClients, 0, 1);
                 panelCommand.Controls.Add(this.cbClients, 0, 2);
                 panelCommand.SetRowSpan(this.cbClients, 2);
 
-                panelCommand.Controls.Add(this.lblArg, 0, 4);
-                panelCommand.Controls.Add(this.argCommand, 0, 5);
-                panelCommand.SetRowSpan(this.argCommand, 2);
+                panelCommand.Controls.Add(this.lblArgCommand, 0, 4);
+                panelCommand.Controls.Add(this.tbxArgCommand, 0, 5);
+                panelCommand.SetRowSpan(this.tbxArgCommand, 2);
 
-                panelCommand.Controls.Add(this.commandBox, 0, 7);
-                panelCommand.SetRowSpan(this.commandBox, 10);
+                panelCommand.Controls.Add(this.lbxCommand, 0, 7);
+                panelCommand.SetRowSpan(this.lbxCommand, 10);
 
                 panelCommand.Controls.Add(this.btnSendMessage, 0, 17);
                 panelCommand.SetRowSpan(this.btnSendMessage, 2);
                 #endregion
 
                 #region Status
-                panelStatus.Controls.Add(this.lvStatus, 0, 0);
-                panelStatus.SetRowSpan(this.lvStatus, 19);
+                panelStatus.Controls.Add(this.lvStateClients, 0, 0);
+                panelStatus.SetRowSpan(this.lvStateClients, 19);
                 #endregion
 
-                this.Controls.Add(this.lblType, 2, 0);
+                this.Controls.Add(this.lblTypePanel, 2, 0);
 
                 this.Controls.Add(this.dgvMessage, 2, 1);
                 this.SetRowSpan(dgvMessage, 19);
@@ -1341,19 +1346,19 @@ namespace uLoader
             #endregion
 
             private System.Windows.Forms.DataGridView dgvMessage;
-            private System.Windows.Forms.ListBox commandBox;
+            private System.Windows.Forms.ListBox lbxCommand;
             private System.Windows.Forms.Button btnSendMessage;
             protected System.Windows.Forms.ComboBox cbClients;
             private System.Windows.Forms.Label lblClients;
-            protected System.Windows.Forms.TextBox argCommand;
-            private System.Windows.Forms.Label lblArg;
-            private System.Windows.Forms.Label lblStat;
-            private System.Windows.Forms.Label lblType;
+            protected System.Windows.Forms.TextBox tbxArgCommand;
+            private System.Windows.Forms.Label lblArgCommand;
+            private System.Windows.Forms.Label lblStateRemotePanelWork;
+            private System.Windows.Forms.Label lblTypePanel;
             private System.Windows.Forms.TableLayoutPanel panelStatus;
             private System.Windows.Forms.TableLayoutPanel panelCommand;
-            protected System.Windows.Forms.RadioButton rbStatus;
-            protected System.Windows.Forms.RadioButton rbCommand;
-            protected System.Windows.Forms.ListView lvStatus;
+            protected System.Windows.Forms.RadioButton rbModeState;
+            protected System.Windows.Forms.RadioButton rbModeCommand;
+            protected System.Windows.Forms.ListView lvStateClients;
             #endregion
 
             protected override void initializeLayoutStyle(int cols = -1, int rows = -1)
@@ -1384,11 +1389,11 @@ namespace uLoader
                 base.Start();
 
                 //Инициализация делегатов
-                d_addRow = addRowToDGV;
-                d_operCB = operCBclient;
-                d_reconn = reconnect;
-                d_statLbl = setLbl;
-                d_updateLV = lvStatusUpdate;
+                delegateAddRow = addRowToDGV;
+                delegateManageComboBoxClient = manageComboBoxClient;
+                delegateReconnect = reconnect;
+                delegateSetLabelStateText = setLabelStateText;
+                delegateUpdateListViewClients = lvStatusUpdate;
                 //Размещение комманд в Control
                 getCommandToList();
 
@@ -1405,7 +1410,7 @@ namespace uLoader
             private void initialize(string name_serv)
             {
                 cbClients.Enabled = false;
-                argCommand.Enabled = false;
+                tbxArgCommand.Enabled = false;
 
                 //Тип экземпляра (клиент/сервер/неопределено)
                 //m_type_app = TypePanel.Unknown;
@@ -1438,12 +1443,8 @@ namespace uLoader
 
             protected virtual void delFromComList(object sender, EventArgs e)
             {
-                Invoke(d_operCB, new object[] { (e as Pipes.Server.ConnectionClientEventArgs).IdServer, false });
+                Invoke(delegateManageComboBoxClient, new object[] { (e as Pipes.Server.ConnectionClientEventArgs).IdServer, false });
             }
-
-            #endregion
-
-            #region Обработчики клиента
 
             #endregion
 
@@ -1456,11 +1457,11 @@ namespace uLoader
             protected abstract void sendMessage(string message, string nameClient);
             #endregion
 
-            private void rbChecked(object sender, EventArgs ev)
+            private void onModeChecked(object sender, EventArgs ev)
             {
                 try
                 {
-                    if ((sender as RadioButton).Name == "rbStatus")
+                    if ((sender as RadioButton).Name == "rbModeState")
                     {
                         if ((sender as RadioButton).Checked == true)
                         {
@@ -1471,7 +1472,7 @@ namespace uLoader
                     else
                         ;
 
-                    if ((sender as RadioButton).Name == "rbCommand")
+                    if ((sender as RadioButton).Name == "rbModeCommand")
                     {
                         if ((sender as RadioButton).Checked == true)
                         {
@@ -1498,19 +1499,19 @@ namespace uLoader
                 switch (m_type_panel)
                 {
                     case TypePanel.Server:
-                        if (commandBox.SelectedItem.ToString() == Pipes.Pipe.COMMAND.ReConnect.ToString())//Добавляет аргумент для реконнекта
+                        if (lbxCommand.SelectedItem.ToString() == Pipes.Pipe.COMMAND.ReConnect.ToString())//Добавляет аргумент для реконнекта
                         {
-                            sendMessage(commandBox.SelectedItem.ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + argCommand.Text, cbClients.Text);
+                            sendMessage(lbxCommand.SelectedItem.ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + tbxArgCommand.Text, cbClients.Text);
                         }
                         else
-                            sendMessage(commandBox.SelectedItem.ToString(), cbClients.Text);
+                            sendMessage(lbxCommand.SelectedItem.ToString(), cbClients.Text);
                         break;
 
                     case TypePanel.Client:
-                        sendMessage(commandBox.SelectedItem.ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + argCommand.Text, string.Empty);
+                        sendMessage(lbxCommand.SelectedItem.ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + tbxArgCommand.Text, string.Empty);
                         break;
                 }
-                argCommand.Clear();
+                tbxArgCommand.Clear();
             }
             /// <summary>
             /// Список сообщений (буфер) для отображения в элементе упарвления "Список сообщений"
@@ -1617,7 +1618,7 @@ namespace uLoader
                         m_listRowDGVAdding.New(mes.Value, mes.IdServer, type_mes);
 
                         if (IsHandleCreated == true)
-                            Invoke(d_addRow); // добавление новой строки сообщения в DGV
+                            Invoke(delegateAddRow); // добавление новой строки сообщения в DGV
                         else
                             ;
 
@@ -1640,12 +1641,20 @@ namespace uLoader
                             default:
                                 break;
                         }
-                    }
-                    else
+                    } else {
                         //??? пустая команда
-                        Logging.Logg().Error(string.Format(@"PanelClientServer.PanelCS::addMessage (message={}, name={1}, type_mes={2}) - пустая команда..."
+                        Logging.Logg().Error(string.Format(@"PanelClientServer.PanelCS::addMessage (message={0}, name={1}, type_mes={2}) - пустая команда..."
                                 , mes.Value, mes.IdServer, type_mes)
                             , Logging.INDEX_MESSAGE.NOT_SET);
+
+                        if (m_type_panel == TypePanel.Server)
+                        // возможно имело место аварийное завершение клиента
+                        // по-хорошему следует подождать 1-2 цикла
+                            //??? имитация отключения клиента
+                            addMessage(Pipes.Client.COMMAND.Disconnect.ToString(), mes.IdServer, mes.IdServer);
+                        else
+                            ;
+                    }
                 }
                 catch (Exception e)
                 {
@@ -1690,7 +1699,7 @@ namespace uLoader
             {
                 for (Pipes.Pipe.COMMAND command = Pipes.Pipe.COMMAND.Unknown; command < (Pipes.Pipe.COMMAND.Count - 1); command++)//Перебор списка комманд
                 {
-                    commandBox.Items.Add((command + 1).ToString());
+                    lbxCommand.Items.Add((command + 1).ToString());
                 }
             }
 
@@ -1699,14 +1708,14 @@ namespace uLoader
             /// </summary>
             /// <param name="idClient">ИД клиента</param>
             /// <param name="add">true если добавление</param>
-            private void operCBclient(string idClient, bool add)
+            private void manageComboBoxClient(string idClient, bool add)
             {
                 try {
                     if (add == true)//если добавление то
                     {
                         cbClients.Items.Add(idClient);//добавляем
-                        lvStatus.Items.Add(idClient);
-                        foreach (ListViewItem item in lvStatus.Items)
+                        lvStateClients.Items.Add(idClient);
+                        foreach (ListViewItem item in lvStateClients.Items)
                         {
                             if (item.Text == idClient)
                             {
@@ -1720,8 +1729,8 @@ namespace uLoader
                         cbClients.Items.Remove(idClient);//удаляем клиента из списка и обновляем
                         cbClients.Text = string.Empty;
                         cbClients.Refresh();
-                        lvStatus.Items.Find(idClient, false)[0].Remove();
-                        lvStatus.Refresh();
+                        lvStateClients.Items.Find(idClient, false)[0].Remove();
+                        lvStateClients.Refresh();
                     }
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, @"PanelClientServer.PanelCS::operCBclient", Logging.INDEX_MESSAGE.NOT_SET);
@@ -1746,7 +1755,7 @@ namespace uLoader
             /// <summary>
             /// Метод для изменения label'a состояния внешней панели (Работа)
             /// </summary>
-            private void setLbl()
+            private void setLabelStateText()
             {
                 Color clr = Enabled == false ? ColorUnknown :
                     (stateRemotePanelWork == PanelWork.STATE.Started) ? ColorStarted :
@@ -1754,8 +1763,8 @@ namespace uLoader
                             ColorUnknown;
 
                 try {
-                    lblStat.BackColor = clr;
-                    lblStat.Text = stateRemotePanelWork.ToString();
+                    lblStateRemotePanelWork.BackColor = clr;
+                    lblStateRemotePanelWork.Text = stateRemotePanelWork.ToString();
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, @"PanelClientServer.PanelCS::setLbl () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
@@ -1774,7 +1783,7 @@ namespace uLoader
                 int col = -1;
 
                 try {
-                    item = lvStatus.FindItemWithText(client);
+                    item = lvStateClients.FindItemWithText(client);
                     
                     if (!(item == null)) {
                         if (state.Equals(PanelWork.STATE.Started) == true) {

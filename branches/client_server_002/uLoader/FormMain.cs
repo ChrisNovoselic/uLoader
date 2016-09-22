@@ -222,18 +222,29 @@ namespace uLoader
             object[] pars = obj as object[];
 
             bool bStarted = false;
+            PanelWork.STATE prevRemoteState = PanelWork.STATE.Unknown
+                , curRemoteState = PanelWork.STATE.Unknown
+                , curLocalState = PanelWork.STATE.Unknown;
 
             switch ((PanelClientServer.ID_EVENT)pars[0])
             {
                 case PanelClientServer.ID_EVENT.State:
-                    if (pars.Length > 1) {
-                        if (InvokeRequired == true)
-                            BeginInvoke(new DelegateObjectFunc(interactionInitializeComlpeted), m_panelCS.Ready);
+                    if (pars.Length > 2) {
+                        prevRemoteState = (PanelWork.STATE)pars[1];
+                        curRemoteState = (PanelWork.STATE)pars[2];
+
+                        if ((prevRemoteState == PanelWork.STATE.Unknown)
+                            //&& (curRemoteState == PanelWork.STATE.Unknown)
+                            )
+                            if (InvokeRequired == true)
+                                BeginInvoke(new DelegateObjectFunc(interactionInitializeComlpeted), m_panelCS.Ready);
+                            else
+                                interactionInitializeComlpeted(m_panelCS.Ready);                            
                         else
-                            interactionInitializeComlpeted(m_panelCS.Ready);
+                            ;
                         // в ~ от состояния взаимодействующей панели (старт с условием)
                         bStarted = m_panelCS.Ready == 0 ?
-                            ((PanelWork.STATE)pars[1] == PanelWork.STATE.Paused) || ((PanelWork.STATE)pars[1] == PanelWork.STATE.Unknown) :
+                            ((curRemoteState == PanelWork.STATE.Paused) || (curRemoteState == PanelWork.STATE.Unknown)) :
                                 true;
                     }
                     else
@@ -246,10 +257,14 @@ namespace uLoader
                         else
                             autoStart();
 
-                        m_panelCS.StateLocalPanelWork = PanelWork.STATE.Started;
+                        curLocalState = PanelWork.STATE.Started;
                     }
                     else
-                        m_panelCS.StateLocalPanelWork = PanelWork.STATE.Paused;
+                        curLocalState = PanelWork.STATE.Paused;
+                    // указать панели состояние локального экземпляра (для передачи взаимодействующему)
+                    m_panelCS.OnEvtDataRecievedHost(new object[] { (int)HHandlerQueue.StatesMachine.FORMMAIN_COMMAND_TO_INTERACTION, PanelClientServer.ID_EVENT.State, curLocalState });
+                    break;
+                case PanelClientServer.ID_EVENT.Start:
                     break;
                 case PanelClientServer.ID_EVENT.Stop:
                     break;

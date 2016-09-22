@@ -38,15 +38,21 @@ namespace uLoader
                 , TIMER_UPDATE
                 , SHEDULE_TIMESTART, SHEDULE_TIMESPAN
             , COUNT }
-
+            /// <summary>
+            /// Признак необходимости включения в работу менеджера состояний групп сигналов
+            /// </summary>
             public bool m_bTurn;
             /// <summary>
             /// Признак выполнения операции выгрузки/загрузки по расписанию
             ///  должен быть указан интервал, при этом интервал д.б. == или более 1 ч
             /// </summary>
             private bool sheduleTurn { get { return m_tsShedule == TimeSpan.Zero ? false : (!(m_tsShedule.TotalHours < 1)) ? true : false; } }
+            ///// <summary>
+            ///// Дата/время активации объекта (для определения первого выполнения выгрузки/загрузки !!!по расписанию)
+            ///// </summary>
+            //private DateTime _dtStart;
 
-            private DateTime m_dtStart;
+            int _cntShedule;
             /// <summary>
             /// Метка даты/времени крайнего выполнения выгрузки/загрузки
             /// </summary>
@@ -62,9 +68,13 @@ namespace uLoader
 
             private StateManager()
             {
-                m_dtStart = DateTime.Now;
+                //_dtStart = DateTime.Now;
+                _cntShedule = -1;
 
-                m_dtReload = DateTime.MinValue;
+                m_dtReload =
+                    //DateTime.MinValue
+                    DateTime.Now
+                    ;
 
                 m_bTurn = false;
                 m_dtShedule = DateTime.MinValue;
@@ -90,7 +100,7 @@ namespace uLoader
                                             switch (par) {
                                                 case INDEX_PARAMETER.TIMER_UPDATE:
                                                     MSEC_TIMERFUNC_UPDATE = (int)new HTimeSpan(values[1]).Value.TotalSeconds * 1000;
-                                                    //??? почему такое значение, а не другое
+                                                    //??? почему период ожидания подтверждения РАВЕН интервалу выполнения целевой функции
                                                     MSEC_CONFIRM_WAIT = MSEC_TIMERFUNC_UPDATE;
                                                     m_bTurn = !(MSEC_TIMERFUNC_UPDATE < 6006);
                                                     break;
@@ -125,11 +135,15 @@ namespace uLoader
                     bool bRes = false;
 
                     bRes = (sheduleTurn == true)
-                        && (((DateTime.Now - (m_dtReload == DateTime.MinValue ? m_dtStart : m_dtReload)) - m_tsShedule).TotalMinutes > 0);
+                        && (((DateTime.Now -
+                            //(m_dtReload == DateTime.MinValue ? _dtStart : m_dtReload))
+                            m_dtReload)
+                            - m_tsShedule).TotalMinutes > 0);
 
-                    if (bRes == true)
+                    if (bRes == true) {
                         m_dtReload = DateTime.Now;
-                    else
+                        _cntShedule++;
+                    } else
                         ;
 
                     return bRes;
