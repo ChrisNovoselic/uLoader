@@ -58,6 +58,8 @@ namespace uLoader
 
             m_formWait = FormWait.This;
 
+            _statePanelWork = PanelWork.STATE.Unknown;
+
             //// настраиваемые параметры манагера состояний объектов
             //HHandlerQueue.MSEC_TIMERFUNC_UPDATE = 1006;
             //HHandlerQueue.MSEC_CONFIRM_WAIT = 6666;            
@@ -168,47 +170,62 @@ namespace uLoader
 
         private void autoStart()
         {
-            m_handler.AutoStart();
+            if (!(m_statePanelWork == PanelWork.STATE.Started)) {
+                m_handler.AutoStart();
+
+                m_statePanelWork = PanelWork.STATE.Started;
+            } else
+                ;
+        }
+
+        private void autoStop()
+        {
+            if (m_statePanelWork == PanelWork.STATE.Started) {
+                m_handler.AutoStop();
+
+                m_statePanelWork = PanelWork.STATE.Paused;
+            } else
+                ;
         }
 
         private void interactionInitializeComlpeted(object par)
         {
             try
             {
-                //Проверить признак отображения вкладки "работа"
-                if (работаToolStripMenuItem.Checked == true)
-                {
-                    //Добавить вкладку
-                    m_TabCtrl.AddTabPage(m_panelWork
-                        , работаToolStripMenuItem.Text
-                        , (int)INDEX_TAB.WORK
-                        , HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
-                    //Запомнить "предыдущий" выбор
-                    m_TabCtrl.PrevSelectedIndex = 0;
-                }
-                else
-                    ;
                 // сообщение приходит только в случае готовности панели "Взаимодействие"
                 взаимодействиеToolStripMenuItem.Checked = (int)par == 0;
 
                 //Проверить признак отображения вкладки "взаимодействие"
-                if (взаимодействиеToolStripMenuItem.Checked == true)
-                {
+                if (взаимодействиеToolStripMenuItem.Checked == true) {
                     //Добавить вкладку
                     m_TabCtrl.AddTabPage(m_panelCS
                         , взаимодействиеToolStripMenuItem.Text
                         , (int)INDEX_TAB.INTERACTION
                         , HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
-                }
-                else
+                } else
                     m_panelCS.Stop();
             } catch (Exception e) {
                 //Console.WriteLine(e.Message);
                 Logging.Logg().Exception(e, @"FormMain::interactionInitializeComlpeted () - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
 
-
             m_formWait.StopWaitForm();
+        }
+
+        private PanelWork.STATE _statePanelWork;
+
+        private PanelWork.STATE m_statePanelWork {
+            get { return _statePanelWork; }
+
+            set {
+                if (!(_statePanelWork == value)) {
+                // указать панели состояние локального экземпляра (для передачи взаимодействующему)
+                    m_panelCS.OnEvtDataRecievedHost(new object[] { (int)HHandlerQueue.StatesMachine.FORMMAIN_COMMAND_TO_INTERACTION, PanelClientServer.ID_EVENT.State, value });
+
+                    _statePanelWork = value;
+                } else
+                    ;
+            }
         }
         /// <summary>
         /// Обработчик события StatesMachine.INTERACTION_EVENT
@@ -221,50 +238,62 @@ namespace uLoader
             //2-ой(1) - дополнительная информация
             object[] pars = obj as object[];
 
-            bool bStarted = false;
-            PanelWork.STATE prevRemoteState = PanelWork.STATE.Unknown
-                , curRemoteState = PanelWork.STATE.Unknown
-                , curLocalState = PanelWork.STATE.Unknown;
+            IAsyncResult iaRes = null;
+            PanelWork.STATE curRemoteState = PanelWork.STATE.Unknown;
+            Pipes.Pipe.Role roleActived = Pipes.Pipe.Role.Unknown;
 
             switch ((PanelClientServer.ID_EVENT)pars[0])
             {
                 case PanelClientServer.ID_EVENT.State:
-                    if (pars.Length > 2) {
-                        prevRemoteState = (PanelWork.STATE)pars[1];
+                    //??? проверить размерность массива
+                    roleActived = (Pipes.Pipe.Role)pars[1];
+
+                    if (pars.Length > 2) {// изменение состояния
                         curRemoteState = (PanelWork.STATE)pars[2];
 
-                        if ((prevRemoteState == PanelWork.STATE.Unknown)
-                            //&& (curRemoteState == PanelWork.STATE.Unknown)
-                            )
-                            if (InvokeRequired == true)
-                                BeginInvoke(new DelegateObjectFunc(interactionInitializeComlpeted), m_panelCS.Ready);
-                            else
-                                interactionInitializeComlpeted(m_panelCS.Ready);                            
-                        else
-                            ;
                         // в ~ от состояния взаимодействующей панели (старт с условием)
-                        bStarted = m_panelCS.Ready == 0 ?
-                            ((curRemoteState == PanelWork.STATE.Paused) || (curRemoteState == PanelWork.STATE.Unknown)) :
-                                true;
-                    }
-                    else
-                    // команда старт от взаимодействующего экземпляра
-                        bStarted = true;
-
-                    if (bStarted == true) {
-                        if (InvokeRequired == true)
-                            BeginInvoke(new DelegateFunc(autoStart));
+                        if ((!(m_statePanelWork == PanelWork.STATE.Started))
+                            && ((curRemoteState == PanelWork.STATE.Unknown)
+                                || (curRemoteState == PanelWork.STATE.Paused)))
+                            if (InvokeRequired == true) {
+                                iaRes = BeginInvoke(new DelegateFunc(autoStart));
+                                //EndInvoke(iaRes);
+                            } else
+                                autoStart();
                         else
-                            autoStart();
+                            if ((m_statePanelWork == PanelWork.STATE.Started)
+                                && (curRemoteState == PanelWork.STATE.Started))
+                                if (InvokeRequired == true) {
+                                    iaRes = BeginInvoke(new DelegateFunc(autoStop));
+                                    //EndInvoke(iaRes);
+                                } else
+                                    autoStop();
+                            else
+                                ;
+                    } else
+                        if (pars.Length > 1) {// 1-ая инициализация
+                            if (!(roleActived == Pipes.Pipe.Role.Unknown))
+                                if (InvokeRequired == true) {
+                                    iaRes = BeginInvoke(new DelegateObjectFunc(interactionInitializeComlpeted), m_panelCS.Ready);
+                                    //EndInvoke(iaRes);
+                                } else
+                                    interactionInitializeComlpeted(m_panelCS.Ready);
+                            else
+                                ;
 
-                        curLocalState = PanelWork.STATE.Started;
-                    }
-                    else
-                        curLocalState = PanelWork.STATE.Paused;
-                    // указать панели состояние локального экземпляра (для передачи взаимодействующему)
-                    m_panelCS.OnEvtDataRecievedHost(new object[] { (int)HHandlerQueue.StatesMachine.FORMMAIN_COMMAND_TO_INTERACTION, PanelClientServer.ID_EVENT.State, curLocalState });
+                            if (!(roleActived == Pipes.Pipe.Role.Client))
+                                if (InvokeRequired == true) {
+                                    iaRes = BeginInvoke(new DelegateFunc(autoStart));
+                                    //EndInvoke(iaRes);
+                                } else
+                                    autoStart();
+                            else
+                                m_statePanelWork = PanelWork.STATE.Paused;
+                        } else
+                            ;
                     break;
                 case PanelClientServer.ID_EVENT.Start:
+                // команда старт от взаимодействующего экземпляра
                     break;
                 case PanelClientServer.ID_EVENT.Stop:
                     break;
@@ -285,9 +314,25 @@ namespace uLoader
         /// <param name="e">Аргумент события</param>
         private void FormMain_Load(object sender, EventArgs e)
         {
-            m_formWait.StartWaitForm (Location, Size);            
+            m_formWait.StartWaitForm (Location, Size);
+
+            //Проверить признак отображения вкладки "работа"
+            if (работаToolStripMenuItem.Checked == true)
+            {
+                //Добавить вкладку
+                m_TabCtrl.AddTabPage(m_panelWork
+                    , работаToolStripMenuItem.Text
+                    , (int)INDEX_TAB.WORK
+                    , HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
+                //Запомнить "предыдущий" выбор
+                m_TabCtrl.PrevSelectedIndex = 0;
+            }
+            else
+                ;
 
             this.m_notifyIcon.Icon = this.Icon;
+
+            //_statePanelWork = PanelWork.STATE.Paused;
         }
         /// <summary>
         /// Обработчик события - нажатие на пиктограмму в области системных оповещений ОС

@@ -277,7 +277,13 @@ namespace uLoader
             for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc ++)
                 foreach (GroupSources grpSources in m_listGroupSources[(int)indxSrc])
                     grpSources.AutoStart ();
-                    //grpSources.StateChange();
+        }
+
+        public void AutoStop()
+        {
+            for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
+                foreach (GroupSources grpSources in m_listGroupSources[(int)indxSrc])
+                    grpSources.AutoStop();
         }
 
         protected override int StateRequest(int state)

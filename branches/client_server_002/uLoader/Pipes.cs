@@ -35,6 +35,18 @@ namespace uLoader.Pipes
             , Count
         };
 
+        /// <summary>
+        /// Типы экземпляра дочерней панели
+        /// </summary>
+        public enum Role
+        {
+            Unknown = -1
+                , Client, Server
+            , Count
+        }
+
+        protected Role _role;
+
         public enum ERROR { NEGATIVE_LENGTH = -4, NOTCAN_READ = -3, OVER_ATTEMPT = -2, ANY = -1, NO, DISCONNECT }
 
         protected object _stream;
@@ -137,6 +149,8 @@ namespace uLoader.Pipes
         /// </summary>
         public Server()
         {
+            _role = Role.Server;
+
             m_Name = Environment.MachineName;
             //Новый экземпляр потока для сервера
             _thread = new Thread(fThread);
@@ -565,7 +579,7 @@ namespace uLoader.Pipes
                     try
                     {
                         if ((ioStream.CanRead == true)
-                            //&& (ioStream.CanSeek == true)
+                            && (ioStream.IsConnected == true)
                             )
                         {
                             len = ioStream.ReadByte() * 256;
@@ -878,6 +892,8 @@ namespace uLoader.Pipes
         /// <param name="timeOut">Таймаут попытки подключения</param>
         public Client(string pcName, int timeOut)
         {
+            _role = Role.Client;
+
             //Инициализация переменных
             m_timeOut = timeOut;
             m_serverName = pcName;
@@ -1119,7 +1135,7 @@ namespace uLoader.Pipes
                 try
                 {
                     if ((ioStream.CanRead == true)
-                        //&& (ioStream.CanSeek == true)
+                        //&& (ioStream. == true)
                         )
                     {
                         len = ioStream.ReadByte() * 256; //??? зачем '* 256'                        
@@ -1161,15 +1177,28 @@ namespace uLoader.Pipes
             public int WriteString(string outString)
             {
                 byte[] outBuffer = streamEncoding.GetBytes(outString);
-                int len = outBuffer.Length;
+                int len = -1;
+
+                len = outBuffer.Length;
                 if (len > UInt16.MaxValue)
-                {
                     len = (int)UInt16.MaxValue;
+                else
+                    ;
+
+                try {
+                    if ((ioStream.CanWrite == true)
+                        //&& (ioStream.IsConnected == true)
+                        ) {
+                        ioStream.WriteByte((byte)(len / 256));
+                        ioStream.WriteByte((byte)(len & 255));
+                        ioStream.Write(outBuffer, 0, len);
+                        ioStream.Flush();
+                    } else
+                        ;
+                } catch (Exception e) {
+                    Logging.Logg().Exception(e, string.Format(@"Pipes.Client::WriteString (uot={0})", outString), Logging.INDEX_MESSAGE.NOT_SET);
+
                 }
-                ioStream.WriteByte((byte)(len / 256));
-                ioStream.WriteByte((byte)(len & 255));
-                ioStream.Write(outBuffer, 0, len);
-                ioStream.Flush();
 
                 return outBuffer.Length + 2;
             }

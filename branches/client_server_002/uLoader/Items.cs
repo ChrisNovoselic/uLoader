@@ -951,6 +951,24 @@ namespace uLoader
             autoStart ();
         }
 
+        public void AutoStop()
+        {
+            int idGrpSgnls = -1;
+            GROUP_SIGNALS_PARS grpSgnlsPars;
+
+            if (_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
+                foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
+                    if (itemGroupSignals.State == STATE.STARTED) {
+                        idGrpSgnls = FormMain.FileINI.GetIDIndex(itemGroupSignals.m_strID);
+
+                        stateChange(idGrpSgnls, STATE.STOPPED);
+                    }
+                    else
+                        ;
+            else
+                ;
+        }
+
         private object [] Pack ()
         {
             object[] arObjRes = new object[1 + m_dictAdding.Count];
