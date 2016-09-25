@@ -378,13 +378,13 @@ namespace uLoader
                             _client.ReadMessage += new EventHandler(recievedMessage);
                             _client.ResServ += new EventHandler(resClient);
                             //несколько попыток подключения при неудаче
-                            while (iAttempt < MAX_ATTEMPT_CONNECT) {
+                            while (iAttempt < Pipes.Pipe.MAX_ATTEMPT_CONNECT) {
                                 //!!!! необходимо будет вставить условие на исключение собственного имени из перебора
                                 _client.Start();//Выполняем старт клиента и пытаемся подключиться к серверу
                                 if (_client.IsConnected == true)//Если соединение установлено то
                                 {
                                     //m_type_app = Pipes.Pipe.Role.Client;//Тип экземпляра устанавливаем Клиент
-                                    m_myName = _client.m_Name;//Устанавливаем собственное имя равное имени клиента
+                                    //m_myName = _client.m_Name;//Устанавливаем собственное имя равное имени клиента
                                     _client.WriteMessage(Pipes.Pipe.COMMAND.Name.ToString());//Запрашиваем имя сервера
                                     //Прерываем попытки подключения
                                     break;
@@ -407,6 +407,8 @@ namespace uLoader
                     }
                 }
             }
+
+            protected override string mashineName { get { return _client.m_Name; } }
             /// <summary>
             /// Отправка сообщения из клиента
             /// </summary>
@@ -428,8 +430,7 @@ namespace uLoader
             {
                 int iRes = base.addMessage(com_mes, arg, name);
 
-                if (iRes == 0)
-                {
+                if (iRes == 0) {
                     Logging.Logg().Debug(string.Format(@"PanelClientServer.PanelClient::addMessage (COMMAND={0}, ARG={1}, name={2}) - ...", com_mes, arg, name), Logging.INDEX_MESSAGE.NOT_SET);
 
                     //Pipes.Pipe.COMMAND com = Pipes.Pipe.COMMAND.Unknown;
@@ -506,11 +507,12 @@ namespace uLoader
                     else
                         if (com_mes.Equals(Pipes.Pipe.COMMAND.Name.ToString()) == true)//Обработка запроса имени
                         //??? требуется проверка наличия аргумента. М.б. это пришел ответ с запрашенным именем
-                            sendMessage(com_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + m_myName);
+                            //sendMessage(com_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + mashineName)
+                            m_servName = arg;
                         else
                             if (com_mes.Equals(Pipes.Pipe.COMMAND.PipeRole.ToString()) == true)//Обработка запроса типа экземпляра
                             //??? требуется проверка наличия аргумента. М.б. это пришел ответ с запрошенной ролью
-                                sendMessage(Pipes.Pipe.Role.Client.ToString());
+                                sendMessage(com_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + Pipes.Pipe.Role.Client.ToString());
                             else
                                 if (com_mes.Equals(Pipes.Pipe.COMMAND.ReConnect.ToString()) == true)//Обработка запроса на переподключение
                                 {
@@ -712,7 +714,7 @@ namespace uLoader
                 _server.DisConnectClient += new EventHandler(removeClient);
                 _server.Start();//запуск экземпляра сервера
                 //m_type_app = Pipes.Pipe.Role.Server;//устанавливаем тип экземпляра приложения Сервер
-                m_myName = _server.m_Name;//Устанавливаем собственное имя равное имени сервера
+                //m_myName = _server.m_Name;//Устанавливаем собственное имя равное имени сервера
             }
             /// <summary>
             /// Экземпляр делегата disconnect
@@ -739,6 +741,8 @@ namespace uLoader
                 Invoke(delegateManageItemClient, new object[] { (e as Pipes.Server.ConnectionClientEventArgs).IdServer, false });
                 Invoke(d_disconnect, (e as Pipes.Server.ConnectionClientEventArgs).IdServer);
             }
+
+            protected override string mashineName { get { return _server.m_Name; } }
 
             /// <summary>
             /// Отправка сообщения из сервера
@@ -767,15 +771,15 @@ namespace uLoader
                             switch (com + 1)
                             {
                                 case Pipes.Pipe.COMMAND.DateTime:
-                                    sendMessage(com.ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + DateTime.Now.ToString(), name);
+                                    sendMessage((com + 1).ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + DateTime.Now.ToString(), name);
                                     break;
                                 case Pipes.Pipe.COMMAND.Name:
-                                    sendMessage(m_myName, name);
+                                    sendMessage((com + 1).ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + mashineName, name);
                                     break;
                                 case Pipes.Pipe.COMMAND.PipeRole:
                                     if (arg.Equals(string.Empty) == true)
                                     // ответ на запрос роли
-                                        sendMessage(Pipes.Pipe.Role.Server.ToString(), name);
+                                        sendMessage((com + 1).ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + Pipes.Pipe.Role.Server.ToString(), name);
                                     else
                                     // обработка команды на изменение роли
                                         if (arg.Equals(Pipes.Pipe.Role.Client.ToString()) == true) {
@@ -1025,10 +1029,6 @@ namespace uLoader
             private string[] m_arTextColumnMessages = new string[(int)INDEX_COLUMN_MESSAGES.COUNT] { "Дата/время", "Сообщение", "Источник", "Вход/исход" };
 
             /// <summary>
-            /// Количество попыток подключения
-            /// </summary>
-            protected static int MAX_ATTEMPT_CONNECT = 2;
-            /// <summary>
             /// Таймаут подключения
             /// </summary>
             protected static int MS_TIMEOUT_CONNECT_TO_SERVER = 500;
@@ -1110,7 +1110,7 @@ namespace uLoader
             /// <summary>
             /// Имя ПК
             /// </summary>
-            protected string m_myName;
+            protected abstract string mashineName { get; }
 
             protected Thread thread;
             #endregion
@@ -1728,7 +1728,7 @@ namespace uLoader
                                 if (command_mes.Equals(Pipes.Pipe.COMMAND.Name.ToString()) == true) {
                                     switch (m_role) {
                                         case Pipes.Pipe.Role.Client:
-                                            m_servName = argument;//разбор клиентом ответного сообщения с именем сервера
+                                            //m_servName = argument;//разбор клиентом ответного сообщения с именем сервера
                                             break;
                                         default:
                                             break;
