@@ -413,159 +413,92 @@ namespace uLoader
             /// Отправка сообщения из клиента
             /// </summary>
             /// <param name="message">Сообщение для отправки</param>
-            protected override void sendMessage(string message, string notUses)
+            protected override void sendMessage(Pipes.Pipe.ReadMessageEventArgs arg)
             {
-                sendMessage(message);
+                base.sendMessage(arg);
+
+                _client.WriteMessage(arg.Value);//Отправка сообщения
             }
 
-            private void sendMessage(string message)
+            protected override int handlerMessage(Pipes.Pipe.ReadMessageEventArgs mes, out Pipes.Pipe.ReadMessageEventArgs toSend)
             {
-                Logging.Logg().Debug(string.Format(@"PanelClientServer.PanelClient::sendMessage (text={0}) - ...", message), Logging.INDEX_MESSAGE.NOT_SET);
-
-                _client.WriteMessage(message);//Отправка сообщения
-                addMessage(new Pipes.Pipe.ReadMessageEventArgs(message, m_servName), TypeMes.Output);//Добавление сообщения и обработка
-            }
-
-            protected override int addMessage(string com_mes, string arg, string name)
-            {
-                int iRes = base.addMessage(com_mes, arg, name);
+                int iRes =
+                    //base.addMessage(com_mes, arg, name)
+                    0
+                    ;
+                base.handlerMessage(mes, out toSend);
 
                 if (iRes == 0) {
-                    Logging.Logg().Debug(string.Format(@"PanelClientServer.PanelClient::addMessage (COMMAND={0}, ARG={1}, name={2}) - ...", com_mes, arg, name), Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Debug(string.Format(@"PanelClientServer.PanelClient::addMessage (COMMAND={0}, ARG={1}, name={2}) - ..."
+                        , mes.Command.ToString(), mes.Argument, mes.IdServer), Logging.INDEX_MESSAGE.NOT_SET);
 
-                    //Pipes.Pipe.COMMAND com = Pipes.Pipe.COMMAND.Unknown;
-
-                    //for (com = Pipes.Pipe.COMMAND.Unknown; com < (Pipes.Pipe.COMMAND.Count - 1); com++)
-                    //    if (com_mes.Equals((com + 1).ToString()) == true)
-                    //    {
-                    //        switch (com)
-                    //        {
-                    //            case Pipes.Pipe.COMMAND.DateTime:
-                    //                sendMessage(com_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + DateTime.Now.ToString());
-                    //                break;
-                    //            case Pipes.Pipe.COMMAND.GetName:
-                    //                sendMessage(KEY_MYNAME + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + m_myName);
-                    //                break;
-                    //            case Pipes.Pipe.COMMAND.GetStat:
-                    //                sendMessage(Pipes.Pipe.Role.Client.ToString());
-                    //                break;
-                    //            case Pipes.Pipe.COMMAND.ReConnect:
-                    //                _client.SendDisconnect();//отправка сообщения о разрыве соединения
-                    //                Invoke(delegateReconnect, new object[] { arg, false });
-                    //                break;
-                    //            case Pipes.Pipe.COMMAND.Start:
-                    //                Invoke(delegateSetLabelStateText, true);
-                    //                DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Start } });
-                    //                break;
-                    //            case Pipes.Pipe.COMMAND.Stop:
-                    //                Invoke(delegateSetLabelStateText, false);
-                    //                DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Stop } });
-                    //                break;
-                    //            case Pipes.Pipe.COMMAND.SetStat:
-                    //                if (arg.Equals(Pipes.Pipe.Role.Server.ToString()) == true)
-                    //                {
-                    //                    _client.SendDisconnect();
-                    //                    Invoke(delegateReconnect, new object[] { string.Empty, true });
-                    //                }
-                    //                else
-                    //                    ;
-                    //                break;
-                    //            case Pipes.Pipe.COMMAND.Status:
-                    //                sendMessage(com_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + Pipes.Pipe.MESSAGE_RECIEVED_OK);
-                    //                break;
-                    //            case Pipes.Pipe.COMMAND.Exit:
-                    //                Invoke(d_exit);
-                    //                break;
-                    //            case Pipes.Pipe.COMMAND.Disconnect:
-                    //            // обработка не требуется
-                    //            default:
-                    //                break;
-                    //        }
-
-                    //        break; // прервать сравнение следующих команд
-                    //    }
-                    //    else
-                    //        ;
-                    //// проверить найдена ли команда
-                    //if (com > (Pipes.Pipe.COMMAND.Count - 1))
-                    //    // команда не найдена
-                    //    //??? в команде присутствует некоманда
-                    //    if ((com_mes.Equals(Pipes.Client.MESSAGE_CONNECT_TO_SERVER_OK) == true)
-                    //        || (com_mes.Equals(Pipes.Client.MESSAGE_DISCONNECT) == true)
-                    //        || (com_mes.Equals(Pipes.Pipe.COMMAND.Disconnect.ToString()) == true)
-                    //        || (com_mes.Equals(m_servName) == true)
-                    //        )
-                    //        // обработка не требуется
-                    //        ;
-                    //    else
-                    //        throw new Exception(string.Format(@"PanelClient::addMessage (COMMAND={0}) - неизвестная команда...", com_mes));
-                    //else
-                    //    ; // команда найдена И/ИЛИ обработана
-
-                    if (com_mes.Equals(Pipes.Pipe.COMMAND.DateTime.ToString()) == true)//Обработка запроса даты
-                        sendMessage(com_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + DateTime.Now.ToString());
-                    else
-                        if (com_mes.Equals(Pipes.Pipe.COMMAND.Name.ToString()) == true)//Обработка запроса имени
+                    switch (mes.Command) {
+                        case Pipes.Pipe.COMMAND.DateTime://Обработка запроса даты
+                            //sendMessage(mes.Command.ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + DateTime.Now.ToString());
+                            toSend = new Pipes.Pipe.ReadMessageEventArgs(mes.Command, DateTime.Now.ToString(), mes.IdServer);
+                            break;
+                        case Pipes.Pipe.COMMAND.Name://Обработка запроса имени
                         //??? требуется проверка наличия аргумента. М.б. это пришел ответ с запрашенным именем
-                            //sendMessage(com_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + mashineName)
-                            m_servName = arg;
-                        else
-                            if (com_mes.Equals(Pipes.Pipe.COMMAND.PipeRole.ToString()) == true)//Обработка запроса типа экземпляра
-                            //??? требуется проверка наличия аргумента. М.б. это пришел ответ с запрошенной ролью
-                                sendMessage(com_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + Pipes.Pipe.Role.Client.ToString());
+                            if (mes.Argument.Equals(string.Empty) == true)
+                                //sendMessage(com_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + mashineName)
+                                toSend = new Pipes.Pipe.ReadMessageEventArgs(mes.Command, mashineName, mes.IdServer);
                             else
-                                if (com_mes.Equals(Pipes.Pipe.COMMAND.ReConnect.ToString()) == true)//Обработка запроса на переподключение
-                                {
-                                    _client.SendDisconnect();//отправка сообщения о разрыве соединения
-                                    Invoke(delegateReconnect, new object[] { arg, false });
-                                } else
-                                    if (com_mes.Equals(Pipes.Pipe.COMMAND.Start.ToString()) == true)//обработка запроса запуска
-                                    {
-                                        //??? Invoke(delegateSetLabelStateText);
-                                        DataAskedHost(new object[] { new object[] { this, m_role, TypeMes.Input, Pipes.Pipe.COMMAND.Start } });
-                                    } else
-                                        if (com_mes.Equals(Pipes.Pipe.COMMAND.Stop.ToString()) == true)//обработка запроса остановки
-                                        {
-                                            //??? Invoke(delegateSetLabelStateText);
-                                            DataAskedHost(new object[] { new object[] { this, m_role, TypeMes.Input, Pipes.Pipe.COMMAND.Stop } });
-                                        } else
-                                            if (com_mes.Equals(Pipes.Pipe.COMMAND.PipeRole.ToString()) == true)//обработка запроса изменения типа экземпляра
-                                            {
-                                                if (arg.Equals(Pipes.Pipe.Role.Server.ToString()) == true)
-                                                {
-                                                    _client.SendDisconnect();
-                                                    Invoke(delegateReconnect, new object[] { string.Empty, true });
-                                                }
-                                                else
-                                                    ;
-                                            } else
-                                                if (com_mes.Equals(Pipes.Pipe.COMMAND.AppState.ToString()) == true)//обработка запроса извещения о состоянии экземпляра
-                                                {
-                                                    // запомнить текущее состояние взаимодействующего экземпляра
-                                                    setStateRemotePanelWork(m_servName, GetPanelWorkState(arg));
-                                                    // отправить информацию о своем состоянии
-                                                    sendMessage(com_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + stateLocalPanelWork/*Pipes.Pipe.MESSAGE_RECIEVED_OK*/);                                                    
-                                                } else
-                                                    if (com_mes.Equals(Pipes.Pipe.COMMAND.Exit.ToString()) == true) {
-                                                        Invoke(delegateExit);
-                                                    } else
-                                                        if (com_mes.Equals(Pipes.Pipe.COMMAND.Disconnect.ToString()) == true)
-                                                            ;
-                                                        else
-                                                        //??? в команде присутствует некоманда
-                                                            if ((com_mes.Equals(Pipes.Client.MESSAGE_CONNECT_TO_SERVER_OK) == true)
-                                                                || (com_mes.Equals(Pipes.Client.MESSAGE_DISCONNECT) == true)
-                                                                || (com_mes.Equals(m_servName) == true))
-                                                                if (com_mes.Equals(Pipes.Client.MESSAGE_DISCONNECT) == true)
-                                                                    // обработка дисконнекта сервера
-                                                                    setStateRemotePanelWork(m_servName, PanelWork.STATE.Unknown);
-                                                                else
-                                                                // обработка не требуется
-                                                                    ;
-                                                            else {
-                                                                iRes = -2;
-                                                                throw new Exception(string.Format(@"PanelClient::addMessage (COMMAND={0}) - неизвестная команда...", com_mes));
-                                                            }
+                                m_servName = mes.Argument;
+                            break;
+                        case Pipes.Pipe.COMMAND.ReConnect://Обработка запроса на переподключение
+                            _client.SendDisconnect();//отправка сообщения о разрыве соединения
+                            Invoke(delegateReconnect, new object[] { mes.Argument, false });
+                            break;
+                        case Pipes.Pipe.COMMAND.Start://обработка запроса запуска
+                            //??? Invoke(delegateSetLabelStateText);
+                            DataAskedHost(new object[] { new object[] { this, m_role, TypeMes.Input, Pipes.Pipe.COMMAND.Start } });
+                            break;
+                        case Pipes.Pipe.COMMAND.Stop://обработка запроса остановки
+                            //??? Invoke(delegateSetLabelStateText);
+                            DataAskedHost(new object[] { new object[] { this, m_role, TypeMes.Input, Pipes.Pipe.COMMAND.Stop } });
+                            break;
+                        case Pipes.Pipe.COMMAND.PipeRole://обработка запроса изменения типа экземпляра
+                            if (mes.Argument.Equals(string.Empty) == true)
+                                //??? требуется проверка наличия аргумента. М.б. это пришел ответ с запрошенной ролью
+                                //sendMessage(mes.Command.ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + Pipes.Pipe.Role.Client.ToString());
+                                toSend = new Pipes.Pipe.ReadMessageEventArgs(mes.Command, Pipes.Pipe.Role.Client.ToString(), mes.IdServer);
+                            else
+                                if (mes.Argument.Equals(Pipes.Pipe.Role.Server.ToString()) == true) {
+                                _client.SendDisconnect();
+                                Invoke(delegateReconnect, new object[] { string.Empty, true });
+                            } else
+                                ;
+                            break;
+                        case Pipes.Pipe.COMMAND.AppState://обработка запроса извещения о состоянии экземпляра
+                            // запомнить текущее состояние взаимодействующего экземпляра
+                            setStateRemotePanelWork(m_servName, GetPanelWorkState(mes.Argument));
+                            // отправить информацию о своем состоянии
+                            //sendMessage(com_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + stateLocalPanelWork);
+                            toSend = new Pipes.Pipe.ReadMessageEventArgs(mes.Command, stateLocalPanelWork.ToString(), mes.IdServer);
+                            break;
+                        case Pipes.Pipe.COMMAND.Exit:
+                            Invoke(delegateExit);
+                            break;
+                        case Pipes.Pipe.COMMAND.Disconnect:
+                            ;
+                            break;
+                        default:
+                            //??? в команде присутствует некоманда
+                            if ((mes.Argument.Equals(Pipes.Client.MESSAGE_CONNECT_TO_SERVER_OK) == true)
+                                || (mes.Argument.Equals(Pipes.Client.MESSAGE_DISCONNECT) == true)
+                                || (mes.Argument.Equals(m_servName) == true))
+                                if (mes.Argument.Equals(Pipes.Client.MESSAGE_DISCONNECT) == true)
+                                    // обработка дисконнекта сервера
+                                    setStateRemotePanelWork(m_servName, PanelWork.STATE.Unknown);
+                                else
+                                    // обработка не требуется
+                                    ;
+                            else {
+                                iRes = -2;
+                                throw new Exception(string.Format(@"PanelClient::addMessage (COMMAND={0}) - неизвестная команда...", mes.Command.ToString()));
+                            }
+                            break;
+                    }
                 }
                 else
                     //??? двойная ошибка - пустая команда, проверка производилась выше
@@ -749,128 +682,75 @@ namespace uLoader
             /// </summary>
             /// <param name="message">Сообщение</param>
             /// <param name="nameClient">Имя клиента</param>
-            protected override void sendMessage(string message, string nameClient)
+            protected override void sendMessage(Pipes.Pipe.ReadMessageEventArgs arg)
             {
-                _server.WriteMessage(nameClient, message);//Отправка
-                addMessage(new Pipes.Pipe.ReadMessageEventArgs(message, nameClient), TypeMes.Output);//Добавление сообщения и обработка 
+                base.sendMessage(arg);
+
+                _server.WriteMessage(arg.IdServer, arg.Value);//Отправка
             }
 
-            protected override int addMessage(string com_mes, string arg, string name)
+            protected override int handlerMessage(Pipes.Pipe.ReadMessageEventArgs arg, out Pipes.Pipe.ReadMessageEventArgs toSend)
             {
-                int iRes = base.addMessage(com_mes, arg, name);
-
-                Pipes.Pipe.COMMAND com = Pipes.Pipe.COMMAND.Unknown;
+                int iRes =
+                    //base.addMessage(com_mes, arg, name)
+                    0
+                    ;
+                base.handlerMessage(arg, out toSend);
 
                 if (iRes == 0)
                 {
-                    Logging.Logg().Debug(string.Format(@"PanelClientServer.PanelServer::addMessage (COMMAND={0}, ARG={1}, name={2}) - ...", com_mes, arg, name), Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Debug(string.Format(@"PanelClientServer.PanelServer::addMessage (COMMAND={0}, ARG={1}, name={2}) - ..."
+                        , arg.Command.ToString(), arg.Argument, arg.IdServer), Logging.INDEX_MESSAGE.NOT_SET);
 
-                    for (com = Pipes.Pipe.COMMAND.Unknown; com < (Pipes.Pipe.COMMAND.Count - 1); com++)
-                        if (com_mes.Equals((com + 1).ToString()) == true)
-                        {
-                            switch (com + 1)
-                            {
-                                case Pipes.Pipe.COMMAND.DateTime:
-                                    sendMessage((com + 1).ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + DateTime.Now.ToString(), name);
-                                    break;
-                                case Pipes.Pipe.COMMAND.Name:
-                                    sendMessage((com + 1).ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + mashineName, name);
-                                    break;
-                                case Pipes.Pipe.COMMAND.PipeRole:
-                                    if (arg.Equals(string.Empty) == true)
-                                    // ответ на запрос роли
-                                        sendMessage((com + 1).ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + Pipes.Pipe.Role.Server.ToString(), name);
-                                    else
-                                    // обработка команды на изменение роли
-                                        if (arg.Equals(Pipes.Pipe.Role.Client.ToString()) == true) {
-                                            _server.SendDisconnect();
-                                            Invoke(delegateReconnect, new object[] { string.Empty, false });
-                                        }
-                                        else
-                                            ;
-                                    break;
-                                case Pipes.Pipe.COMMAND.Start:
-                                    Invoke(delegateUpdateRemotePanelWorkState, true);
-                                    DataAskedHost(new object[] { new object[] { this, m_role, TypeMes.Input, Pipes.Pipe.COMMAND.Start } });
-                                    break;
-                                case Pipes.Pipe.COMMAND.Stop: // прием команды 
-                                    Invoke(delegateUpdateRemotePanelWorkState, false);
-                                    DataAskedHost(new object[] { new object[] { this, m_role, TypeMes.Input, Pipes.Pipe.COMMAND.Stop } });
-                                    break;
-                                case Pipes.Pipe.COMMAND.AppState: // прием состояния взаимодействующего приложения
-                                    // отображение его на панели
-                                    setStateRemotePanelWork(name, GetPanelWorkState(arg));
-                                    //Invoke(d_updateLV, new object[] { name, arg });
-                                    break;
-                                case Pipes.Pipe.COMMAND.Exit: // прием команды на завершение приложения
-                                    Invoke(delegateExit);
-                                    break;
-                                case Pipes.Pipe.COMMAND.Connect:
-                                case Pipes.Pipe.COMMAND.Disconnect:
-                                // обработка не требуется
-                                default:
-                                    break;
-                            }
-
+                    switch (arg.Command) {
+                        case Pipes.Pipe.COMMAND.DateTime:
+                            toSend = new Pipes.Pipe.ReadMessageEventArgs (arg.Command, DateTime.Now.ToString(), arg.IdServer);
                             break;
-                        }
-                        else
-                            ;
-                    // проверить найдена ли команда
-                    if (com > (Pipes.Pipe.COMMAND.Count - 1))
-                        // команда не найдена                        
-                        throw new Exception(string.Format(@"PanelServer::addMessage (COMMAND={0}) - неизвестная команда...", com_mes));
-                    else
-                        ; // команда найдена И/ИЛИ обработана
-
-                    //if (com_mes.Equals(Pipes.Pipe.COMMAND.DateTime.ToString()) == true)//запрос даты
-                    //    sendMessage(com_mes + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + DateTime.Now.ToString(), name);
-                    //else
-                    //    if (com_mes.Equals(Pipes.Pipe.COMMAND.GetName.ToString()) == true)//запрос имени
-                    //        sendMessage(m_myName, name);
-                    //    else
-                    //        if (com_mes.Equals(Pipes.Pipe.COMMAND.GetStat.ToString()) == true)//запрос типа текущего экземпляра
-                    //            sendMessage(Pipes.Pipe.Role.Server.ToString(), name);
-                    //        else
-                    //            if (com_mes.Equals(Pipes.Pipe.COMMAND.Start.ToString()) == true)//запрос запуска
-                    //            {
-                    //                Invoke(delegateSetLabelStateText, true);
-                    //                DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Start } });
-                    //            }
-                    //            else
-                    //                if (com_mes.Equals(Pipes.Pipe.COMMAND.Stop.ToString()) == true)//запрос остановки
-                    //                {
-                    //                    Invoke(delegateSetLabelStateText, false);
-                    //                    DataAskedHost(new object[] { new object[] { this, m_type_panel, TypeMes.Input, ID_EVENT.Stop } });
-                    //                }
-                    //                else
-                    //                    if (com_mes.Equals(Pipes.Pipe.COMMAND.Status.ToString()) == true)//обработка запроса изменения типа экземпляра
-                    //                    {
-                    //                        Invoke(d_updateLV, new object[] { name, arg });
-                    //                    }
-                    //                    else
-                    //                        if (com_mes.Equals(Pipes.Pipe.COMMAND.SetStat.ToString()) == true)//обработка запроса изменения типа экземпляра
-                    //                        {
-                    //                            if (arg.Equals(Pipes.Pipe.Role.Client.ToString()) == true)
-                    //                            {
-                    //                                _server.SendDisconnect();
-                    //                                Invoke(delegateReconnect, new object[] { string.Empty, false });
-                    //                            }
-                    //                        }
-                    //                        else
-                    //                            if (com_mes.Equals(Pipes.Pipe.COMMAND.Exit.ToString()) == true)
-                    //                                Invoke(d_exit);
-                    //                            else
-                    //                                if ((com_mes.Equals(Pipes.Pipe.COMMAND.Connect.ToString()) == true)
-                    //                                    || (com_mes.Equals(Pipes.Pipe.COMMAND.Disconnect.ToString()) == true))
-                    //                                    // ничего не делать
-                    //                                    ;
-                    //                                else
-                    //                                {
-                    //                                    // неизвестная команда
-                    //                                    iRes = -2;
-                    //                                    throw new Exception(string.Format(@"PanelServer::addMessage (COMMAND={0}) - неизвестная команда...", com_mes));
-                    //                                }
+                        case Pipes.Pipe.COMMAND.Name:
+                            toSend = new Pipes.Pipe.ReadMessageEventArgs (arg.Command, mashineName, arg.IdServer);
+                            break;
+                        case Pipes.Pipe.COMMAND.PipeRole:
+                            if (arg.Equals(string.Empty) == true)
+                            // ответ на запрос роли
+                                toSend = new Pipes.Pipe.ReadMessageEventArgs(arg.Command, Pipes.Pipe.Role.Server.ToString(), arg.IdServer);
+                            else
+                            // обработка команды на изменение роли
+                                if (arg.Equals(Pipes.Pipe.Role.Client.ToString()) == true) {
+                                    _server.SendDisconnect();
+                                    Invoke(delegateReconnect, new object[] { string.Empty, false });
+                                }
+                                else
+                                    ;
+                            break;
+                        case Pipes.Pipe.COMMAND.Start:
+                            Invoke(delegateUpdateRemotePanelWorkState, true);
+                            DataAskedHost(new object[] { new object[] { this, m_role, TypeMes.Input, Pipes.Pipe.COMMAND.Start } });
+                            break;
+                        case Pipes.Pipe.COMMAND.Stop: // прием команды 
+                            Invoke(delegateUpdateRemotePanelWorkState, false);
+                            DataAskedHost(new object[] { new object[] { this, m_role, TypeMes.Input, Pipes.Pipe.COMMAND.Stop } });
+                            break;
+                        case Pipes.Pipe.COMMAND.AppState: // прием состояния взаимодействующего приложения
+                            // отображение его на панели
+                            setStateRemotePanelWork(arg.IdServer, GetPanelWorkState(arg.Argument));
+                            //Invoke(d_updateLV, new object[] { name, arg });
+                            break;
+                        case Pipes.Pipe.COMMAND.Exit: // прием команды на завершение приложения
+                            Invoke(delegateExit);
+                            break;
+                        case Pipes.Pipe.COMMAND.Connect:
+                        case Pipes.Pipe.COMMAND.Disconnect:
+                            // обработка не требуется
+                            break;
+                        default:
+                        // команда не найдена
+                            if (arg.Argument.Equals(Pipes.Client.MESSAGE_CLIENT_OFFLINE) == true)
+                                ;
+                            else
+                                throw new Exception(string.Format(@"PanelServer::addMessage (COMMAND={0}, Argument={1}) - неизвестная команда..."
+                                    , arg.Command.ToString(), arg.Argument));
+                            break;
+                    }                    
                 }
                 else
                     // пустая команда
@@ -946,7 +826,7 @@ namespace uLoader
                 try
                 {
                     foreach (string client in cbClients.Items)
-                        sendMessage(Pipes.Pipe.COMMAND.AppState.ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + stateLocalPanelWork, client);
+                        sendMessage(new Pipes.Pipe.ReadMessageEventArgs (Pipes.Pipe.COMMAND.AppState, stateLocalPanelWork.ToString(), client));
                 }
                 catch (Exception e)
                 {
@@ -1550,7 +1430,15 @@ namespace uLoader
 
             protected virtual void recievedMessage(object sender, EventArgs e)
             {
-                addMessage(e as Pipes.Pipe.ReadMessageEventArgs, TypeMes.Input);//Добавление сообщения и обработка
+                int iRes = 0;
+                Pipes.Pipe.ReadMessageEventArgs toSend;
+
+                iRes = handlerMessage(e as Pipes.Pipe.ReadMessageEventArgs, out toSend);//Добавление сообщения и обработка
+
+                if (!(toSend == null))
+                    sendMessage(toSend);
+                else
+                    ;
             }
 
             #endregion
@@ -1561,7 +1449,10 @@ namespace uLoader
             /// </summary>
             /// <param name="message">Сообщение</param>
             /// <param name="nameClient">Имя клиента</param>
-            protected abstract void sendMessage(string message, string nameClient);
+            protected virtual void sendMessage(Pipes.Pipe.ReadMessageEventArgs toSend)
+            {
+                addMessage(toSend.Value,toSend.IdServer, TypeMes.Output);
+            }
             #endregion
 
             private void onModeChecked(object sender, EventArgs ev)
@@ -1596,19 +1487,27 @@ namespace uLoader
             /// <param name="e">Аргумент события (пустое,  не используется)</param>
             private void btnSendMessage_Click(object sender, EventArgs e)
             {
+                string dest = string.Empty
+                    , com = lbxCommand.SelectedItem.ToString()
+                    , arg = string.Empty;
+
                 switch (m_role) {
                     case Pipes.Pipe.Role.Server:
-                        if (lbxCommand.SelectedItem.ToString() == Pipes.Pipe.COMMAND.ReConnect.ToString())//Добавляет аргумент для реконнекта
-                        {
-                            sendMessage(lbxCommand.SelectedItem.ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + tbxArgCommand.Text, cbClients.Text);
-                        } else
-                            sendMessage(lbxCommand.SelectedItem.ToString(), cbClients.Text);
-                        break;
+                        dest = cbClients.Text;
 
-                    case Pipes.Pipe.Role.Client:
-                        sendMessage(lbxCommand.SelectedItem.ToString() + Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR + tbxArgCommand.Text, string.Empty);
+                        if (com.Equals(Pipes.Pipe.COMMAND.ReConnect.ToString()) == true)//Добавляет аргумент для реконнекта
+                            arg = tbxArgCommand.Text;                            
+                        else
+                            ;
+                        break;
+                    case Pipes.Pipe.Role.Client:                        
+                        break;
+                    default:
                         break;
                 }
+
+                sendMessage(new Pipes.Pipe.ReadMessageEventArgs(new Pipes.Pipe.ReadMessageEventArgs.MESSAGE(com, arg), dest));
+
                 tbxArgCommand.Clear();
             }
             /// <summary>
@@ -1616,21 +1515,21 @@ namespace uLoader
             /// </summary>
             private ListDGVMessage m_listRowDGVAdding;
 
-            protected virtual int addMessage(string com_mes, string arg, string name)
-            {
-                int iRes = 0;
+            //protected virtual int addMessage(string com_mes, string arg, string name)
+            //{
+            //    int iRes = 0;
 
-                if (com_mes.Trim().Equals(string.Empty) == true) {
-                    iRes = -1;
+            //    if (com_mes.Trim().Equals(string.Empty) == true) {
+            //        iRes = -1;
 
-                    Logging.Logg().Error(string.Format(@"PanelClientServer.PanelCS::addMessage (com_mes={0}, arg={1}, name={2}) - пустая команда..."
-                            , com_mes, arg, name)
-                        , Logging.INDEX_MESSAGE.NOT_SET);
-                } else
-                    ;
+            //        Logging.Logg().Error(string.Format(@"PanelClientServer.PanelCS::addMessage (com_mes={0}, arg={1}, name={2}) - пустая команда..."
+            //                , com_mes, arg, name)
+            //            , Logging.INDEX_MESSAGE.NOT_SET);
+            //    } else
+            //        ;
 
-                return iRes;
-            }
+            //    return iRes;
+            //}
             /// <summary>
             /// Класс для хранения списка сообщений
             /// </summary>
@@ -1693,70 +1592,53 @@ namespace uLoader
                 }
             }
 
+            private void addMessage(string value, string src, TypeMes typeMes)
+            {
+                // добавление строки в ОЗУ (вкладка может не отображаться, а сообщения сохраняются)
+                m_listRowDGVAdding.New(value, src, typeMes);
+
+                if (IsHandleCreated == true)
+                    Invoke(delegateAddRow); // добавление новой строки сообщения в DGV
+                else
+                    ;
+            }
+
             /// <summary>
             /// Обработка нового сообщения
             /// </summary>
             /// <param name="message">Сообщение</param>
             /// <param name="name">Имя отправителя</param>
             /// <param name="in_mes">true если входящее</param>
-            protected void addMessage(Pipes.Pipe.ReadMessageEventArgs mes, TypeMes type_mes)
+            protected virtual int handlerMessage(Pipes.Pipe.ReadMessageEventArgs mes, out Pipes.Pipe.ReadMessageEventArgs toSend)
             {
-                string[] arrMessages = mes.Value.Split(Pipes.Pipe.DELIMETER_MESSAGE_KEYVALUEPAIR); // разбор сообщения
-                string command_mes = arrMessages[0] // комманда
-                    , argument = string.Empty; // аргумент
-
-                if (arrMessages.Length > 1)
-                    argument = arrMessages[1];
-                else
-                    ;
+                int iRes = 0;
+                toSend = null;
 
                 try {
-                    if (command_mes.Trim().Equals(string.Empty) == false) {
-                        // добавление строки в ОЗУ (вкладка может не отображаться, а сообщения сохраняются)
-                        m_listRowDGVAdding.New(mes.Value, mes.IdServer, type_mes);
-
-                        if (IsHandleCreated == true)
-                            Invoke(delegateAddRow); // добавление новой строки сообщения в DGV
-                        else
-                            ;
-
-                        switch (type_mes) {
-                            case TypeMes.Input://входящие
-                                addMessage(command_mes, argument, mes.IdServer);
-                                break;
-                            case TypeMes.Output://исходящие
-                                if (command_mes.Equals(Pipes.Pipe.COMMAND.Name.ToString()) == true) {
-                                    switch (m_role) {
-                                        case Pipes.Pipe.Role.Client:
-                                            //m_servName = argument;//разбор клиентом ответного сообщения с именем сервера
-                                            break;
-                                        default:
-                                            break;
-                                    }
-                                }
-                                break;
-                            default:
-                                break;
-                        }
+                    if (mes.Ready == true) {
+                        addMessage(mes.Value, mes.IdServer, TypeMes.Input);                                
                     } else {
                         //??? пустая команда
-                        Logging.Logg().Error(string.Format(@"PanelClientServer.PanelCS::addMessage (message={0}, name={1}, type_mes={2}) - пустая команда..."
-                                , mes.Value, mes.IdServer, type_mes)
+                        Logging.Logg().Error(string.Format(@"PanelClientServer.PanelCS::handlerMessageMessage (message={0}, name={1}, type_mes={2}) - пустая команда..."
+                                , mes.Value, mes.IdServer, TypeMes.Input)
                             , Logging.INDEX_MESSAGE.NOT_SET);
 
                         if (m_role == Pipes.Pipe.Role.Server)
                         // возможно имело место аварийное завершение клиента
                         // по-хорошему следует подождать 1-2 цикла
                             //??? имитация отключения клиента
-                            addMessage(Pipes.Client.COMMAND.Disconnect.ToString(), mes.IdServer, mes.IdServer);
+                            handlerMessage(new Pipes.Pipe.ReadMessageEventArgs (Pipes.Client.COMMAND.Disconnect, mes.IdServer, mes.IdServer), out toSend);
                         else
                             ;
                     }
                 } catch (Exception e) {
                     Logging.Logg().Exception(e
-                        , string.Format(@"PanelClientServer.PanelCS::addMessage (mes={0}, name={1}, typeMes={2}) - ...", mes.Value, mes.IdServer, type_mes)
+                        , string.Format(@"PanelClientServer.PanelCS::handlerMessageMessage (mes={0}, name={1}, typeMes={2}) - ..."
+                            , mes.Value, mes.IdServer, TypeMes.Input)
                         , Logging.INDEX_MESSAGE.NOT_SET);
                 }
+
+                return iRes;
             }
 
             /// <summary>

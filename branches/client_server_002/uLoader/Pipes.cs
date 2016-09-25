@@ -82,14 +82,91 @@ namespace uLoader.Pipes
         /// </summary>
         public class ReadMessageEventArgs : ConnectionClientEventArgs
         {
+            private static Char
+                //DELIMETER_MESSAGE_COMMAND = ';',
+                DELIMETER_MESSAGE_KEYVALUEPAIR = '='
+            ;
+
+            public struct MESSAGE
+            {
+                public string Value;
+
+                public MESSAGE(string com, string arg)
+                {
+                    Value = com + DELIMETER_MESSAGE_KEYVALUEPAIR + arg;
+                }
+
+                public MESSAGE(COMMAND com, string arg)
+                {
+                    Value = com.ToString() + DELIMETER_MESSAGE_KEYVALUEPAIR + arg;
+                }
+
+                public MESSAGE(COMMAND com)
+                {
+                    Value = com.ToString();
+                }
+
+                public MESSAGE(string arg)
+                {
+                    Value = arg;
+                }
+            }
             /// <summary>
             /// Значение изменяемого параметра
             /// </summary>
             public string Value;
 
+            private string _argument;
+
+            public string Argument { get { return _argument; } }
+
+            private COMMAND _command;
+
+            public COMMAND Command { get { return _command; } }
+
+            public bool Ready { get { return (!(_command.Equals(COMMAND.Unknown) == true)) || (_argument.Equals(string.Empty) == false); } }
+
+            bool IsCommand { get { return _command.Equals(COMMAND.Unknown) == false; } }
+
             public ReadMessageEventArgs(string value, string id_serv)
-                : base(id_serv) {
+                : base(id_serv)
+            {
+                string[] arMesPart = null;
+
                 Value = value;
+                _command = COMMAND.Unknown;
+                _argument = string.Empty;
+
+                arMesPart = Value.Split(DELIMETER_MESSAGE_KEYVALUEPAIR);
+
+                switch (arMesPart.Length) {
+                    case 1:
+                        if (Enum.IsDefined(typeof(COMMAND), arMesPart[0]) == true)
+                            _command = (COMMAND)Enum.Parse(typeof(COMMAND), arMesPart[0]);
+                        else
+                            _argument = arMesPart[0];
+                        break;
+                    case 2:
+                        if (Enum.IsDefined(typeof(COMMAND), arMesPart[0]) == true) {
+                            _command = (COMMAND)Enum.Parse(typeof(COMMAND), arMesPart[0]);
+                            _argument = arMesPart[1];
+                        }
+                        else
+                            // ошибка: 2 части, но 1-ю не удалось идентифицировать
+                            ;
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            public ReadMessageEventArgs(COMMAND com, string arg, string id_serv)
+                : this(new MESSAGE(com, arg), id_serv)
+            {
+            }
+
+            public ReadMessageEventArgs(MESSAGE message, string id_serv)
+                : this(message.Value, id_serv) {                
             }
         }
 
@@ -118,11 +195,6 @@ namespace uLoader.Pipes
         public static string /*MESSAGE_RECIEVED_OK = @"OK",*/
             MESSAGE_CLIENT_OFFLINE = "Клиент отключен..."
             , MESSAGE_UNRECOGNIZED_COMMAND = @"Non command";
-
-        public static Char
-            //DELIMETER_MESSAGE_COMMAND = ';',
-            DELIMETER_MESSAGE_KEYVALUEPAIR = '='
-            ;
 
         protected static int MAX_ATTEMPT_READ_PIPE = 50;
         /// <summary>
@@ -437,7 +509,7 @@ namespace uLoader.Pipes
             /// </summary>
             public virtual void Restart()
             {
-                if (!(ReadMessage == null)) ReadMessage(this, new ReadMessageEventArgs(MESSAGE_CLIENT_OFFLINE, m_Name)); else ;
+                if (!(ReadMessage == null)) ReadMessage(this, new ReadMessageEventArgs(new ReadMessageEventArgs.MESSAGE (MESSAGE_CLIENT_OFFLINE), m_Name)); else ;
                 m_pipeStream.Close();//Закрываем канал
                 m_pipeStream = null;
                 Start();//Запускаем канал
@@ -451,9 +523,7 @@ namespace uLoader.Pipes
             {
                 int cntError = 0;
 
-                string[] main_com = null
-                    //???, message = null
-                    ;
+                ReadMessageEventArgs arg = null;
                 ERROR errRead = 0;
                 string strRecieved = string.Empty;
 
@@ -480,16 +550,15 @@ namespace uLoader.Pipes
 
                             if (m_pipeStream != null) {
                                 if (m_pipeStream.IsConnected == true) {
-                                    //main_com = stat.Split(DELIMETER_MESSAGE_COMMAND);//разбор сложного сообщения
-                                    main_com = strRecieved.Split(DELIMETER_MESSAGE_KEYVALUEPAIR);//разбор сложного сообщения
-                                                                                           
-                                    if (main_com[0].Equals(COMMAND.Disconnect.ToString()) == true)//переход по служебным сообщениям
+                                    arg = new ReadMessageEventArgs(strRecieved, m_Name);
+
+                                    if (arg.Command.Equals(COMMAND.Disconnect.ToString()) == true)//переход по служебным сообщениям
                                     {
                                         m_Error = ERROR.DISCONNECT;
                                     } else
                                         ;
 
-                                    if (!(ReadMessage == null)) ReadMessage(this, new ReadMessageEventArgs(strRecieved, m_Name)); else;//Вызов события передачи сообщения
+                                    if (!(ReadMessage == null)) ReadMessage(this, arg); else;//Вызов события передачи сообщения
                                 } else
                                 //} else {
                                 //    //// нет связи с клиентом
@@ -520,13 +589,13 @@ namespace uLoader.Pipes
                         if (!(cntError < MAX_ATTEMPT_READ_PIPE)) {
                             m_Error = ERROR.OVER_ATTEMPT;
 
-                            if (!(ReadMessage == null)) ReadMessage(this, new ReadMessageEventArgs(MESSAGE_CLIENT_OFFLINE, m_Name)); else;//Вызов события передачи сообщения
+                            if (!(ReadMessage == null)) ReadMessage(this, new ReadMessageEventArgs(new ReadMessageEventArgs.MESSAGE (MESSAGE_CLIENT_OFFLINE), m_Name)); else;//Вызов события передачи сообщения
                         } else
                                 ;
                 } // while
 
-                if (!(m_Error == ERROR.NO))//Если есть ошибка то перезапускаем канал
-                {
+                if (!(m_Error == ERROR.NO)) {
+                //Если есть ошибка то перезапускаем канал                
                     if (!(ResServ == null)) ResServ(this, new ResServEventArgs(m_Name, m_Error)); else;//Вызов события о уничтожении канала
                 } else
                     ;
@@ -578,34 +647,28 @@ namespace uLoader.Pipes
                     int len = -1;//длина сообщения
                     byte[] inBuffer = null;
 
-                    try
-                    {
+                    try {
                         if ((ioStream.CanRead == true)
                             && (ioStream.IsConnected == true)
-                            )
-                        {
+                            ) {
                             len = ioStream.ReadByte() * 256;
 
-                            if (!(len < 0))
-                            {
+                            if (!(len < 0)) {
                                 len += ioStream.ReadByte();
                                 inBuffer = new byte[len];
                                 ioStream.Read(inBuffer, 0, len);//Чтение массива байт из потока
 
                                 strRes = streamEncoding.GetString(inBuffer);//Возвращаем кодированный в юникод массив байт
-                            }
-                            else
-                            {// неизвестная длина
+                            } else {
+                            // неизвестная длина
                                 err = ERROR.NEGATIVE_LENGTH;
                             }
                         }
-                        else
-                        {// не может быть прочитан
+                        else {
+                        // не может быть прочитан
                             err = ERROR.NOTCAN_READ;
                         }
-                    }
-                    catch (Exception e)
-                    {
+                    } catch (Exception e) {
                         err = ERROR.ANY;
 
                         Logging.Logg().Exception(e, @"Pipes.Server.StreamPipe.StreamString::ReadString () - ...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -623,19 +686,17 @@ namespace uLoader.Pipes
                 {
                     byte[] outBuffer = streamEncoding.GetBytes(outString);
                     int len = outBuffer.Length;
-                    if (len > UInt16.MaxValue)
-                    {
+                    if (len > UInt16.MaxValue) {
                         len = (int)UInt16.MaxValue;
-                    }
-                    try
-                    {
+                    } else
+                        ;
+
+                    try {
                         ioStream.WriteByte((byte)(len / 256));
                         ioStream.WriteByte((byte)(len & 255));
                         ioStream.Write(outBuffer, 0, len);
                         ioStream.Flush();
-                    }
-                    catch (Exception e)
-                    {
+                    } catch (Exception e) {
                         Logging.Logg().Exception(e, @"Pipes.Server.StreamPipe.StreamString::WriteString () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
 
@@ -689,9 +750,7 @@ namespace uLoader.Pipes
                 ERROR errRead = ERROR.ANY;
                 string strRecieved = string.Empty
                     , new_pipe = string.Empty;
-                string[] main_com = null//Разбор сообщения
-                    //, message = null
-                    ;
+                ReadMessageEventArgs mes;
 
                 while (cntError < MAX_ATTEMPT_READ_PIPE) {
                     errRead = ERROR.NO;
@@ -701,19 +760,19 @@ namespace uLoader.Pipes
                         cntError++;
                     } else {
                         //main_com = stat.Split(DELIMETER_MESSAGE_COMMAND);//Разбор сообщения
-                        main_com = strRecieved.Split(DELIMETER_MESSAGE_KEYVALUEPAIR);//Разбор сообщения
+                        mes = new ReadMessageEventArgs (strRecieved, string.Empty);//Разбор сообщения
                         //message = new string[0];
-                        if (main_com[0].Equals(COMMAND.Disconnect.ToString()) == true)//Переход по основной команде
+                        if (mes.Command.Equals(COMMAND.Disconnect) == true)//Переход по основной команде
                         {
                             //message = main_com[1].Split(DELIMETER_MESSAGE_KEYVALUEPAIR);//Получаем имя канала от клиента
                             //dictServ[message[1]].StartPipe();//Запускаем канал по имени клиента
-                            m_dictPipeStreamClient[main_com[1]].Start();//Запускаем канал по имени клиента
-                            if (!(ConnectClient == null)) ConnectClient(this, new ConnectionClientEventArgs(main_com[1])); else ;
+                            m_dictPipeStreamClient[mes.Argument].Start();//Запускаем канал по имени клиента
+                            if (!(ConnectClient == null)) ConnectClient(this, new ConnectionClientEventArgs(mes.Argument)); else ;
                             m_Error = ERROR.DISCONNECT;//Завершаем цикл и перезапускаем основной канал
                         } else
-                            if (main_com[0].Equals(COMMAND.Connect.ToString()) == true) {
+                            if (mes.Command.Equals(COMMAND.Connect) == true) {
                                 //message = main_com[1].Split(DELIMETER_MESSAGE_KEYVALUEPAIR);//Получаем имя клиента
-                                new_pipe = main_com[1] + "_" + (m_dictPipeStreamClient.Count + 1);//добавляем номер п\п
+                                new_pipe = mes.Argument + "_" + (m_dictPipeStreamClient.Count + 1);//добавляем номер п\п
                                 m_ss.WriteString(new_pipe);//отправляем клиенту имя канала для работы
                                 stream = new PipeStream(new_pipe);//Создаём новый канал для клиента
                                 m_dictPipeStreamClient.Add(new_pipe, stream);//Добавляем в словарь клиента и поток
@@ -853,7 +912,7 @@ namespace uLoader.Pipes
         /// <summary>
         /// Экземпляр канала клиента
         /// </summary>
-        NamedPipeClientStream m_stream { get { return _stream as NamedPipeClientStream; } }
+        private NamedPipeClientStream m_stream { get { return _stream as NamedPipeClientStream; } }
 
         /// <summary>
         /// Состояние потока для соединения
@@ -893,8 +952,7 @@ namespace uLoader.Pipes
 
         private void connectToServer()
         {
-            try
-            {
+            try {
                 m_stream.Connect(m_timeOut);//Попытка подключения к серверу
             }
             catch { }
@@ -964,11 +1022,11 @@ namespace uLoader.Pipes
         /// <param name="data"></param>
         protected override void fThread(object data)
         {
-            if (!(ReadMessage == null)) ReadMessage(this, new ReadMessageEventArgs(MESSAGE_CONNECT_TO_SERVER_OK, m_serverName)); else ;
+            if (!(ReadMessage == null)) ReadMessage(this, new ReadMessageEventArgs(new ReadMessageEventArgs.MESSAGE (MESSAGE_CONNECT_TO_SERVER_OK), m_serverName)); else ;
 
             int cntError = 0;
             bool bAbort = false;
-            string[] main_com = null;
+            ReadMessageEventArgs arg = null;
             string strRecieved = string.Empty;
             ERROR errRead = 0;
 
@@ -979,25 +1037,26 @@ namespace uLoader.Pipes
 
                 if (m_stream.IsConnected == true)//Если подключение есть
                 {
-                    try
-                    {
+                    try {
                         strRecieved = m_ss.ReadString(out errRead);//Читаем из канала
                     } catch (Exception e) {
                         Logging.Logg().Exception(e, @"Pipes.Client::fThread () - ....", Logging.INDEX_MESSAGE.NOT_SET);
                         bAbort = true;//Выходим из цикла
                     }
-                }
+                } else
+                    ;
+
                 if (bAbort == false)//Если ошибок нет
                 {
                     if (errRead < 0)//Если при чтении была ошибка
                     {
                         cntError++;//Увеличиваем счетчик ошибок
                     } else {
-                        main_com = strRecieved.Split(DELIMETER_MESSAGE_KEYVALUEPAIR);
-                        
-                        if (!(ReadMessage == null)) ReadMessage(this, new ReadMessageEventArgs(strRecieved, m_serverName)); else ;
+                        arg = new ReadMessageEventArgs (strRecieved, m_serverName);
 
-                        bAbort = main_com[0].Equals(COMMAND.Disconnect.ToString());
+                        if (!(ReadMessage == null)) ReadMessage(this, arg); else;
+
+                        bAbort = arg.Command.Equals(COMMAND.Disconnect.ToString());
                     }
 
                     if (m_bStopThread == true)//Есла флаг изменился то прервать цикл
@@ -1013,7 +1072,9 @@ namespace uLoader.Pipes
                     } else
                         ;
                 }
-            }
+                else
+                    ;
+            } // while
 
             if (bAbort == true)//Если есть ошибка то
             {
@@ -1030,7 +1091,7 @@ namespace uLoader.Pipes
         /// </summary>
         public void Stop()
         {
-            if (!(ReadMessage == null)) ReadMessage(this, new ReadMessageEventArgs(MESSAGE_DISCONNECT, m_serverName)); else ;
+            if (!(ReadMessage == null)) ReadMessage(this, new ReadMessageEventArgs(new ReadMessageEventArgs.MESSAGE (MESSAGE_DISCONNECT), m_serverName)); else ;
 
             m_stream.Close();//Закрытие канала
             m_stream.Dispose();//Освобождение ресурсов
@@ -1065,7 +1126,7 @@ namespace uLoader.Pipes
         public void SendConnect()
         {
             //m_ss.WriteString(COMMAND.Connect.ToString() + DELIMETER_MESSAGE_COMMAND + "ClientName=" + m_Name);
-            m_ss.WriteString(COMMAND.Connect.ToString() + DELIMETER_MESSAGE_KEYVALUEPAIR + m_Name);
+            m_ss.WriteString(new ReadMessageEventArgs.MESSAGE (COMMAND.Connect, m_Name).Value);
         }
 
         /// <summary>
@@ -1075,7 +1136,7 @@ namespace uLoader.Pipes
         {
             if (m_stream.IsConnected == true)
                 //m_ss.WriteString(COMMAND.Disconnect.ToString() + DELIMETER_MESSAGE_COMMAND + "ClientName=" + m_Name)
-                m_ss.WriteString(COMMAND.Disconnect.ToString() + DELIMETER_MESSAGE_KEYVALUEPAIR + m_Name)
+                m_ss.WriteString(new ReadMessageEventArgs.MESSAGE(COMMAND.Disconnect, m_Name).Value)
                 ;
             else
                 ;
