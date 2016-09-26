@@ -272,14 +272,14 @@ namespace uLoader
                                 ;
                     } else
                         if (pars.Length > 1) {// 1-ая инициализация
-                            if (!(roleActived == Pipes.Pipe.Role.Unknown))
+                            //if (!(roleActived == Pipes.Pipe.Role.Unknown))
                                 if (InvokeRequired == true) {
                                     iaRes = BeginInvoke(new DelegateObjectFunc(interactionInitializeComlpeted), m_panelCS.Ready);
                                     //EndInvoke(iaRes);
                                 } else
                                     interactionInitializeComlpeted(m_panelCS.Ready);
-                            else
-                                ;
+                            //else
+                            //    ;
 
                             if (!(roleActived == Pipes.Pipe.Role.Client))
                                 if (InvokeRequired == true) {
