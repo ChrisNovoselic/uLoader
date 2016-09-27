@@ -68,18 +68,18 @@ namespace uLoader
             m_handler.Start(); m_handler.Activate(true);
             //m_handler.EventCrashed += new HHandlerQueue.EventHandlerCrashed(onCrashed);
 
-            m_panelWork = new PanelWork(); m_panelWork.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelWork); m_panelWork.Start();
-            m_panelConfig = new PanelConfig(); m_panelConfig.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelConfig); m_panelConfig.Start ();
+            m_panelWork = new PanelWork(); m_panelWork.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelWork);
+            m_panelConfig = new PanelConfig(); m_panelConfig.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelConfig);
             //m_handler.Push();
             m_panelCS = new PanelClientServer(new PanelClientServer.InteractionParameters (
                 //@"NE2844, NE3336"
                 //, @"MainPipe"
-            )); m_panelCS.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelCS); m_panelCS.Start();
+            )); m_panelCS.EvtDataAskedHost += new DelegateObjectFunc(OnEvtDataAskedFormMain_PanelCS);
             // автоматическое изменение состояния п.меню
             работаToolStripMenuItem.CheckOnClick =
             конфигурацияToolStripMenuItem.CheckOnClick =
             взаимодействиеToolStripMenuItem.CheckOnClick=
-                 true;
+                 true;            
             // п.п.меню заблокированы - изменение состояния только программно
             //взаимодействиеToolStripMenuItem.CheckStateChanged += new EventHandler(взаимодействиеToolStripMenuItem_CheckStateChanged);
             //работаToolStripMenuItem.CheckStateChanged += new EventHandler(работаToolStripMenuItem_CheckStateChanged);
@@ -314,6 +314,10 @@ namespace uLoader
         /// <param name="e">Аргумент события</param>
         private void FormMain_Load(object sender, EventArgs e)
         {
+            m_panelWork.Start();
+            m_panelConfig.Start();
+            m_panelCS.Start();
+
             m_formWait.StartWaitForm (Location, Size);
 
             //Проверить признак отображения вкладки "работа"
@@ -553,10 +557,10 @@ namespace uLoader
         public override void OnEvtDataRecievedHost(object obj)
         {
             if (InvokeRequired == true)
-                if (IsHandleCreated == true)
-                    this.BeginInvoke(new DelegateObjectFunc(onEvtDataRecievedHost), obj);
-                else
-                    throw new Exception(@"::OnEvtDataRecievedHost () - IsHandleCreated==False");
+                //if (IsHandleCreated == true)
+                    Invoke(new DelegateObjectFunc(onEvtDataRecievedHost), obj);
+                //else
+                //    throw new Exception(@"::OnEvtDataRecievedHost () - IsHandleCreated==False");
             else
                 onEvtDataRecievedHost(obj);
 
