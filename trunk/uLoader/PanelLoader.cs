@@ -1194,7 +1194,7 @@ namespace uLoader
                 ctrl.Name = KEY_CONTROLS.CALENDAR_START_DATE.ToString();
                 ctrl.Dock = DockStyle.Fill;
                 panelGroupBox.Controls.Add(ctrl, 0, 2);
-                panelGroupBox.SetColumnSpan(ctrl, 8); panelGroupBox.SetRowSpan(ctrl, 1);
+                panelGroupBox.SetColumnSpan(ctrl, 9); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Начало периода
                 //Начало периода - описание
                 ctrl = new Label();
@@ -1207,9 +1207,10 @@ namespace uLoader
                 ctrl = new MaskedTextBox();
                 ctrl.Name = KEY_CONTROLS.MTBX_START_TIME.ToString();
                 ctrl.Dock = DockStyle.Fill;
+                (ctrl as MaskedTextBox).TextAlign = HorizontalAlignment.Right;
                 (ctrl as MaskedTextBox).Mask = @"00:00";
-                panelGroupBox.Controls.Add(ctrl, 7, 3);
-                panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
+                panelGroupBox.Controls.Add(ctrl, 6, 3);
+                panelGroupBox.SetColumnSpan(ctrl, 3); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Период
                 //Описание для главного периода
                 ctrl = new Label();
@@ -1222,6 +1223,7 @@ namespace uLoader
                 ctrl = new MaskedTextBox();
                 ctrl.Name = KEY_CONTROLS.MTBX_PERIOD_MAIN.ToString();
                 ctrl.Dock = DockStyle.Bottom;
+                (ctrl as MaskedTextBox).TextAlign = HorizontalAlignment.Right;
                 (ctrl as MaskedTextBox).Mask = @"00.00:00";
                 panelGroupBox.Controls.Add(ctrl, 6, 4);
                 panelGroupBox.SetColumnSpan(ctrl, 3); panelGroupBox.SetRowSpan(ctrl, 1);
@@ -1237,12 +1239,13 @@ namespace uLoader
                 ctrl = new MaskedTextBox();
                 ctrl.Name = KEY_CONTROLS.MTBX_PERIOD_LOCAL.ToString();
                 ctrl.Dock = DockStyle.Bottom;
+                (ctrl as MaskedTextBox).TextAlign = HorizontalAlignment.Right;
                 (ctrl as MaskedTextBox).Mask = @"00.00:00";
                 panelGroupBox.Controls.Add(ctrl, 6, 5);
                 panelGroupBox.SetColumnSpan(ctrl, 3); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Интервал
                 ctrl = new Label();
-                (ctrl as Label).Text = @"Интервал (мсек)";
+                (ctrl as Label).Text = @"Интервал (код)";
                 ctrl.Dock = DockStyle.Bottom;
                 //ctrl.Anchor = ((AnchorStyles)(AnchorStyles.Bottom | AnchorStyles.Left));
                 panelGroupBox.Controls.Add(ctrl, 0, 6);
@@ -1251,6 +1254,7 @@ namespace uLoader
                 ctrl = new /*Masked*/TextBox();
                 ctrl.Name = KEY_CONTROLS.TBX_INTERVAL.ToString();
                 ctrl.Dock = DockStyle.Bottom;
+                (ctrl as TextBox).TextAlign = HorizontalAlignment.Right;
                 //(ctrl as MaskedTextBox).Mask = @"00:00";
                 panelGroupBox.Controls.Add(ctrl, 6, 6);
                 panelGroupBox.SetColumnSpan(ctrl, 3); panelGroupBox.SetRowSpan(ctrl, 1);

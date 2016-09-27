@@ -184,10 +184,10 @@ namespace SrcMST
                         foreach (DataRow r in m_TablePrevValue.Rows)//Перебор таблицы с последними значениями сигналов
                         {
                             if (Convert.ToDateTime(r[2]) <= DateTime.UtcNow.AddSeconds(-s_repeatPrevValue_interval))
-                                if (RepeatSignal != null)
-                                    RepeatSignal(this, new RepeatSignalEventArgs("zero_count"
-                                                        , new object()
-                                                        ));
+                                if (!(RepeatSignal == null)) RepeatSignal(this, new RepeatSignalEventArgs("zero_count"
+                                        , new object()
+                                    ));
+                                else ;
                         }
 
                     return base.TableRecieved;
@@ -231,12 +231,10 @@ namespace SrcMST
                         {
                             if ((DateTime)r[2] <= DateTime.UtcNow.AddSeconds(-(s_repeatPrevValue_interval + s_repeatPrevValue_interval_offset)) & (DateTime)r[2] != DateTime.MinValue)//если метка времени последнего значения меньше текущего времени со смещением в период обновления
                             {
-                                if (RepeatSignal != null)
-                                {
-                                    RepeatSignal(this, new RepeatSignalEventArgs(r[0].ToString()
-                                                        , r[1]
-                                                        ));
-                                }
+                                if (!(RepeatSignal == null)) RepeatSignal(this, new RepeatSignalEventArgs(r[0].ToString()
+                                        , r[1]
+                                    ));
+                                else ;
                             }
                         }
                     }
@@ -263,10 +261,11 @@ namespace SrcMST
                                 }
                                 if ((DateTime)r[2] <= DateTime.UtcNow.AddSeconds(-(s_repeatPrevValue_interval + s_repeatPrevValue_interval_offset)) & (DateTime)r[2] != DateTime.MinValue)//если метка времени последнего значения меньше текущего времени со смещением в период обновления
                                 {
-                                    if (RepeatSignal != null)
-                                        RepeatSignal(this, new RepeatSignalEventArgs(r[0].ToString()
-                                                            , r[1]
-                                                            ));
+                                    if (!(RepeatSignal == null)) RepeatSignal(this, new RepeatSignalEventArgs(r[0].ToString()
+                                            , r[1]
+                                        ));
+                                    else
+                                        ;
                                 }
                             }
                         }
@@ -386,11 +385,9 @@ namespace SrcMST
             public delegate void RepeatSignalEventHandler(object obj, RepeatSignalEventArgs e);
 
             /// <summary>
-            /// Событие - повторная запись значения
+            /// Делегат - повторная запись значения
             /// </summary>
             public RepeatSignalEventHandler RepeatSignal;
-
-
         }
 
         protected override HHandlerDbULoaderDatetimeSrc.GroupSignals createGroupSignals(int id, object[] objs)

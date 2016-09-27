@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 using HClassLibrary; //HHandler
 using uLoaderCommon;
@@ -48,6 +49,9 @@ namespace uLoader
             , SET_TEXT_ADDING //Установить текст "дополнительных" параметров
             , SET_GROUP_SIGNALS_PARS //Установить параметры группы сигналов в группе источников при утрате фокуса ввода элементом управления (GroupBox) с их значениями
             , GET_GROUP_SIGNALS_DATETIME_PARS //Запросить параметры группы сигналов в группе источников при изменении типа параметров (CUR_DATETIME, COSTUMIZE)
+            , GET_INTERACTION_PARAMETERS //Запросить параметры для вкладки "Взаимодействие"
+            , INTERACTION_EVENT //Событие от вкладки "Взаимодействие"
+            , FORMMAIN_COMMAND_TO_INTERACTION //Команда для вкладки "Взаимодействие"
 #if _STATE_MANAGER
             , OMANAGEMENT_ADD
             , OMANAGEMENT_REMOVE
@@ -91,9 +95,14 @@ namespace uLoader
             else
                 ;
 #if _STATE_MANAGER
+            //_lIdCurrentTargetFunc = -1L;
+            _listOTargetFunc = new List<OTargetFunc>();
+
             m_timerFunc = new System.Threading.Timer(timerFunc);
+            m_dictInfoCrashed = new DictInfoCrashed();
             m_listObjects = new ListOManagement();
-            eventCrashed += new /*HHandlerQueue.EventHandlerCrashed*/ DelegateObjectFunc(onCrashed);
+
+            eventCrashed += new EventHandlerCrashed(onEventCrashed);
 #endif
             //Прочитать и "разобрать" файл конфигурации
             m_fileINI = new FormMain.FileINI(strNameFileINI);
@@ -104,6 +113,8 @@ namespace uLoader
             setListGroupSources(INDEX_SRC.SOURCE, m_fileINI.AllObjectsSrcGroupSources, m_fileINI.AllObjectsSrcGroupSignals);
             // панель - назначение
             setListGroupSources(INDEX_SRC.DEST, m_fileINI.AllObjectsDestGroupSources, m_fileINI.AllObjectsDestGroupSignals);
+
+            m_stateManager = new StateManager(m_fileINI.GetMainValueOfKey(@"STATE_MANAGER"));
         }
         /// <summary>
         /// Обработчик события 'EvtDataAskedHostQueue'
@@ -114,58 +125,63 @@ namespace uLoader
             EventArgsDataHost ev = par as EventArgsDataHost;
             object []pars = ev.par as object [];
 
-            // массив параметров различается в ~ от типа объекта в 'pars[0]'
-            // для 'GroupSourcesSrc, GroupSourcesDest' - длина=2 (набор исходный): [0] - индекс группы сигналов, [1 | при необходимости] - 'ID_HEAD_ASKED_HOST'
-            // для 'GroupSourcesDest' - длина=2 (набор изменен): [0] - объект 'GroupSourcesDest', [1] - индекс группы источников
+            // массив параметров
+            // id_main - индекс типа группы источников (INDEX_SRC)
+            // id_detail - индекс группы источников (идентификатор)
+            //  'par' различается в ~ от типа объекта в 'pars[0]'
+            // для 'GroupSourcesSrc, GroupSourcesDest' - длина=3 (набор исходный): [0] - индекс группы сигналов, [1] - команда, [2 | при необходимости] - 'ID_HEAD_ASKED_HOST'
+            // для 'GroupSourcesDest' - длина=2 (набор изменен): [0] - объект 'GroupSourcesDest', [1] - команда
             GroupSourcesDest grpSrcDest = null; // только для 2-го набора
             int indx = -1; // для разных наборов - различное значение
-            ID_HEAD_ASKED_HOST idHeadAskedHost = ID_HEAD_ASKED_HOST.UNKNOWN; // только для исходного набора (для START, STOP всегда = 'CONFIRM')
+            ID_HEAD_ASKED_HOST idHeadAskedHost = ID_HEAD_ASKED_HOST.UNKNOWN; // только для исходного набора (для [START | STOP] всегда = 'CONFIRM')
+            ID_DATA_ASKED_HOST id_cmd = (ID_DATA_ASKED_HOST)pars[1];
 
             if (pars[0].GetType().IsPrimitive == true)
-            {// действия поо набору-1
+            {// действия по набору-1
                 indx = (int)pars[0]; // индекс группы сигналов
-                if (pars.Length == 1)
+                if (pars.Length == 2)
                 // единственный параметр
-                    switch ((ID_DATA_ASKED_HOST)ev.id_detail)
+                    switch (id_cmd)
                     {
                         //case ID_DATA_ASKED_HOST.START:
                         //    add(new object [] { ev.id_main, indx }, TimeSpan.FromMilliseconds (16667));
                         //    break;
                         case ID_DATA_ASKED_HOST.STOP:
 #if _STATE_MANAGER
-                            remove(ev.id_main, indx);
+                            remove(ev.id_main, ev.id_detail, indx);
 #endif
                             break;
                         case ID_DATA_ASKED_HOST.TABLE_RES:
 #if _STATE_MANAGER
-                            update(ev.id_main, indx);
+                            update(ev.id_main, ev.id_detail, indx);
 #endif
                             break;
                         default:
                             break;
                     }
                 else
-                // 2 параметра
-                    if (pars.Length == 2)
+                // 3 параметра
+                    if (pars.Length == 3)
                     {
-                        if (pars[1].GetType().IsEnum == true)
+                        if (pars[2].GetType().IsEnum == true)
                         {//ID_DATA_ASKED_HOST.START, ID_DATA_ASKED_HOST.STOP; ID_HEAD_ASKED_HOST.CONFIRM
-                            idHeadAskedHost = (ID_HEAD_ASKED_HOST)pars[1];
+                            idHeadAskedHost = (ID_HEAD_ASKED_HOST)pars[2];
 
                             if (idHeadAskedHost == ID_HEAD_ASKED_HOST.CONFIRM)
 #if _STATE_MANAGER
-                                confirm(ev.id_main, indx)
+                                confirm(ev.id_main, ev.id_detail, indx)
 #else
 #endif
                                     ;
                             else
-                                throw new MissingMemberException(); // ошибка - переменная имеет непредвиденное значение                            
+                            // ошибка - переменная имеет непредвиденное значение
+                                throw new MissingMemberException(@"HHandleQueue::onEvtDataAskedHostQueue_GroupSources () - ...");
                         }
                         else
                         {//ID_DATA_ASKED_HOST.START
 #if _STATE_MANAGER
                             // добавить группу сигналов в список контролируемых
-                            add(new object[] { ev.id_main, indx }, TimeSpan.FromMilliseconds(((TimeSpan)pars[1]).TotalMilliseconds));
+                            add(new object[] { ev.id_main, ev.id_detail, indx }, TimeSpan.FromMilliseconds(((TimeSpan)pars[2]).TotalMilliseconds));
 #else
 #endif
                         }
@@ -174,19 +190,19 @@ namespace uLoader
                         ; // других вариантов по количеству параметров - нет
             }
             else
-            {// действия поо набору-2 (для установления взаимосвязи между "связанными" (по конф./файлу) по "цепочке" сигналов - групп сигналов - групп источников)
+            {// действия по набору-2 (для установления взаимосвязи между "связанными" (по конф./файлу) по "цепочке" сигналов - групп сигналов - групп источников)
                 if (pars[0] is GroupSourcesDest)
                 {
                     grpSrcDest = pars[0] as GroupSourcesDest;
-                    indx = (int)pars[1]; // индекс группы источников
+                    indx = ev.id_detail; // индекс "чужой-связанной" группы источников
 
-                    foreach (GroupSources grpSrcSource in m_listGroupSources[(int)INDEX_SRC.SOURCE])
+                    foreach (GroupSources grpSrcSource in m_listGroupSources[(int)INDEX_SRC.SOURCE]) // можно использовать 'ev.id_main'
                         if (FormMain.FileINI.GetIDIndex(grpSrcSource.m_strID) == indx) //indxNeededGroupSources
                         {
-                            if ((ID_DATA_ASKED_HOST)ev.id_detail == ID_DATA_ASKED_HOST.START)
+                            if (id_cmd == ID_DATA_ASKED_HOST.START)
                                 grpSrcSource.AddDelegatePlugInOnEvtDataAskedHost(FormMain.FileINI.GetIDIndex(grpSrcDest.m_strID), grpSrcDest.Clone_OnEvtDataAskedHost);
                             else
-                                if ((ID_DATA_ASKED_HOST)ev.id_detail == ID_DATA_ASKED_HOST.STOP)
+                                if (id_cmd == ID_DATA_ASKED_HOST.STOP)
                                     grpSrcSource.RemoveDelegatePlugInOnEvtDataAskedHost(FormMain.FileINI.GetIDIndex(grpSrcDest.m_strID), grpSrcDest.Clone_OnEvtDataAskedHost);
                                 else
                                     ;
@@ -197,7 +213,8 @@ namespace uLoader
                             ;
                 }
                 else
-                    throw new InvalidCastException(); // ошибка - объект имеет неизвестный тип
+                // ошибка - объект имеет неизвестный тип
+                    throw new InvalidCastException(@"HHandleQueue::onEvtDataAskedHostQueue_GroupSources () - ...");
             }
         }
 
@@ -260,7 +277,13 @@ namespace uLoader
             for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc ++)
                 foreach (GroupSources grpSources in m_listGroupSources[(int)indxSrc])
                     grpSources.AutoStart ();
-                    //grpSources.StateChange();
+        }
+
+        public void AutoStop()
+        {
+            for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
+                foreach (GroupSources grpSources in m_listGroupSources[(int)indxSrc])
+                    grpSources.AutoStop();
         }
 
         protected override int StateRequest(int state)
@@ -303,7 +326,9 @@ namespace uLoader
                 case StatesMachine.SET_TEXT_ADDING:
                 case StatesMachine.SET_GROUP_SIGNALS_PARS:
                 case StatesMachine.GET_GROUP_SIGNALS_DATETIME_PARS:
-                // группа событий диагностики/контроля
+                case StatesMachine.GET_INTERACTION_PARAMETERS:
+                case StatesMachine.INTERACTION_EVENT:
+                    // группа событий диагностики/контроля
 #if _STATE_MANAGER
                 case StatesMachine.OMANAGEMENT_ADD:
                 case StatesMachine.OMANAGEMENT_REMOVE:
@@ -356,6 +381,7 @@ namespace uLoader
                 case StatesMachine.DATA_SRC_GROUP_SIGNALS:
                 case StatesMachine.DATA_DEST_GROUP_SIGNALS:
                 case StatesMachine.GET_GROUP_SIGNALS_DATETIME_PARS:
+                case StatesMachine.GET_INTERACTION_PARAMETERS:
                     if ((!(itemQueue == null))
                         && (!(itemQueue.m_dataHostRecieved == null)))
                         itemQueue.m_dataHostRecieved.OnEvtDataRecievedHost(new object[] { state, obj });
@@ -367,6 +393,7 @@ namespace uLoader
                 case StatesMachine.SET_TEXT_ADDING:
                 case StatesMachine.SET_GROUP_SIGNALS_PARS:
                 case StatesMachine.CLEARVALUES_DEST_GROUP_SIGNALS:
+                case StatesMachine.INTERACTION_EVENT:
                 // группа событий диагностики/контроля
 #if _STATE_MANAGER
                 case StatesMachine.OMANAGEMENT_ADD:
@@ -383,6 +410,8 @@ namespace uLoader
 
             return iRes;
         }
+
+        public event DelegateObjectFunc EventInteraction;
 
         protected override int StateCheckResponse(int s, out bool error, out object outobj)
         {
@@ -627,7 +656,7 @@ namespace uLoader
                         error = false;
                         itemQueue = Peek;
 
-                        iRes = m_listGroupSources[(int)((INDEX_SRC)itemQueue.Pars[0])][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].Reload();
+                        iRes = m_listGroupSources[(int)((INDEX_SRC)itemQueue.Pars[0])][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].Reload(itemQueue.Pars.Length > 2 ? (bool)itemQueue.Pars[2] : false);
                         break;
                     #endregion
 
@@ -712,6 +741,32 @@ namespace uLoader
                         iRes = 0;
                         break;
                     #endregion
+
+                    #region GET_INTERACTION_PARAMETERS
+                    case StatesMachine.GET_INTERACTION_PARAMETERS:
+                        error = false;
+                        itemQueue = Peek;
+
+                        outobj = new PanelClientServer.InteractionParameters (m_fileINI.GetMainValueOfKey(@"INTERACTION"));
+
+                        iRes = 0;
+                        break;
+                    #endregion
+
+                    #region INTERACTION_EVENT
+                    case StatesMachine.INTERACTION_EVENT:
+                        error = false;
+                        itemQueue = Peek;
+
+                        if (itemQueue.Pars.Length > 2)
+                            EventInteraction(new object [] { itemQueue.Pars[0], itemQueue.Pars[1], itemQueue.Pars[2] });
+                        else
+                            EventInteraction(new object[] { itemQueue.Pars[0], itemQueue.Pars[1] });
+
+                        iRes = 0;
+                        break;
+                    #endregion
+
 #if _STATE_MANAGER
                     #region OMANAGEMENT_ADD, OMANAGEMENT_REMOVE, OMANAGEMENT_CONFIRM, OMANAGEMENT_UPDATE, OMANAGEMENT_CONTROL
                     case StatesMachine.OMANAGEMENT_ADD:
@@ -750,7 +805,7 @@ namespace uLoader
                         iRes = 0;
                         error = false;
 
-                        targetFunc();
+                        new Thread(new ThreadStart(targetFunc)).Start();
                         break;
                     #endregion
 #endif
