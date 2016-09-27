@@ -110,6 +110,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SrcMSTASUTPIdT5tg1Dsql.cs" />
     <Compile Include="SrcMSTASUTPIdT5tg1sql.cs" />
     <Compile Include="SrcMSTASUTPIdT5tg6sql.cs" />
     <Compile Include="SrcMSTKKSNAMEsql.cs" />

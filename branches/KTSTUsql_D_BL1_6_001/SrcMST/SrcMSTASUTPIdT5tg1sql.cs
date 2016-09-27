@@ -22,6 +22,7 @@ namespace SrcMST
             , IN_EX_0_0, IN_EX_1_0, IN_EX_0_1 // принудительное указание ВКЛючения значений для левой, ИСКЛючения значений для правой границам
                 , COUNT
         }
+
         private MODE_WHERE_DATETIME _modeWhereDatetime;
 
         public SrcMSTASUTPIDT5tg1sql(PlugInULoader plugIn)

@@ -83,7 +83,7 @@ namespace SrcKTS
                     + @";";
             }
 
-            protected override GroupSignals.SIGNAL createSignal(object[] objs)
+            protected override SIGNAL createSignal(object[] objs)
             {
                 //ID_MAIN, ID_LOCAL, AVG
                 return new SIGNALIdsql(this, (int)objs[0], /*(int)*/objs[2], bool.Parse((string)objs[3]));
@@ -95,7 +95,7 @@ namespace SrcKTS
             }
         }
 
-        protected override HHandlerDbULoader.GroupSignals createGroupSignals(int id, object[] objs)
+        protected override GroupSignals createGroupSignals(int id, object[] objs)
         {
             return new GroupSignalsKTSTUDsql(this, id, objs);
         }
