@@ -1880,8 +1880,7 @@ namespace uLoader
             List<int> listRes = new List<int>()
                 , listGrpSrcs = new List<int>();
 
-            foreach (GroupSignalsDest grpSgnls in m_listGroupSignals)
-            {
+            foreach (GroupSignalsDest grpSgnls in m_listGroupSignals) {
                 ////Вариант №1
                 //listRes.Union(grpSgnls.GetListNeededIndexGroupSignals());
                 //Вариант №2
@@ -1892,6 +1891,32 @@ namespace uLoader
                     else
                         ;
             }
+
+            return listRes;
+        }
+        /// <summary>
+        /// Возвратить список идентификаторов групп сигналов (в составе групп источников), являющихся получателями (подписчиками) информации
+        ///  от группы сигналов в составе группы источников, указанной в аргументах
+        /// </summary>
+        /// <param name="idGrpSourceSrc">Идентификатор (индекс) группы источников</param>
+        /// <param name="idGrpSgnls">Идентификатор группы сигналов</param>
+        /// <returns>Список с идентификаторами групп сигналов</returns>
+        public List<int> GetListLinkedIndexGroupSignals(int idGrpSourceSrc, int idGrpSgnls)
+        {
+            List<int> listRes = new List<int>()
+                , listNeededIndexGroupSignals = null;
+
+            if (m_dictLinkedIndexGroupSources[idGrpSourceSrc].Contains(idGrpSgnls) == true)
+                foreach (GroupSourcesDest.GroupSignalsDest grpSgnls in m_listGroupSignals) {
+                    listNeededIndexGroupSignals = grpSgnls.GetListNeededIndexGroupSignals();
+
+                    if (listNeededIndexGroupSignals.Contains(idGrpSgnls) == true)
+                        listRes.Add(idGrpSgnls);
+                    else
+                        ;
+                }
+            else
+                ; // ни одна из групп сигналов не подписана на целевую группу сигналов 'idGrpSgnls', указанной группы источников 'idGrpSgnls'
 
             return listRes;
         }
@@ -1913,8 +1938,7 @@ namespace uLoader
             //Logging.Logg().Debug(string.Format(@"GroupSourcesDest::Clone_OnEvtDataAskedHost (ev.par.Length={0}) - NAME={1}...", pars.Length, m_strShrName), Logging.INDEX_MESSAGE.NOT_SET);
 
             //pars[0] - идентификатор события
-            switch ((ID_DATA_ASKED_HOST)pars[0])
-            {
+            switch ((ID_DATA_ASKED_HOST)pars[0]) {
                 case ID_DATA_ASKED_HOST.INIT_SOURCE: //Получен запрос на парметры инициализации
                     break;
                 case ID_DATA_ASKED_HOST.INIT_SIGNALS: //Получен запрос на обрабатываемую группу сигналов

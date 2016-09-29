@@ -261,7 +261,6 @@ namespace uLoader
                 else
                     ;
             }            
-            
             /// <summary>
             /// Найти целочисленный идентфикатор элемента управления
             /// </summary>
@@ -1138,8 +1137,49 @@ namespace uLoader
                     dgvRow.Cells[3].Value =
                         string.Empty;
             }
-            
-            public abstract int UpdateData(DataTable table);
+
+            //public abstract int UpdateData(DataTable table);
+            /// <summary>
+            /// Отобразить полученные данные в представлении
+            /// </summary>
+            /// <param name="table">Таблица - результат запроса для отображения</param>
+            /// <returns>результат выполнения функции (не используется)</returns>
+            public virtual int UpdateData(DataTable table)
+            {
+                int iRes = 0;
+                DataGridView dgv = null;
+                DataRow[] arSel = null;
+
+                Logging.Logg().Debug(@"PanelLoaderSources::UpdateData () - строк для отображения=" + table.Rows.Count + @"...", Logging.INDEX_MESSAGE.NOT_SET);
+
+                if (table.Rows.Count > 0) {
+                    dgv = GetWorkingItem(KEY_CONTROLS.DGV_SIGNALS_OF_GROUP) as DataGridView;
+
+                    foreach (DataGridViewRow dgvRow in dgv.Rows) {
+                        arSel = table.Select(@"NAME_SHR='" + dgvRow.Cells[0].Value + @"'");
+                        if (arSel.Length == 1) {
+                            try {
+                                dgvRow.Cells[1].Value = arSel[0][@"VALUE"];
+                                dgvRow.Cells[2].Value = arSel[0][@"DATETIME"];
+                                dgvRow.Cells[3].Value = arSel[0][@"COUNT"];
+                            } catch (Exception e) {
+                                Logging.Logg().Exception(e, @"PanelLoaderSources::UpdateData () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                            }
+                        } else {
+                            //throw new Exception(@"PanelWork.PanelLoaderSource::UpdateData () - невозможно определить строку для отображения [NAME_SHR=" + dgvRow.Cells[0].Value + @"]...");
+                            Logging.Logg().Error(@"PanelLoaderSources::UpdateData () - не найдена строка для NAME_SHR=" + dgvRow.Cells[0].Value + @"...", Logging.INDEX_MESSAGE.NOT_SET);
+
+                            dgvRow.Cells[1].Value =
+                            dgvRow.Cells[2].Value =
+                            dgvRow.Cells[3].Value =
+                                string.Empty;
+                        }
+                    }
+                } else
+                    ;
+
+                return iRes;
+            }
         }
 
         private class PanelLoaderSource : PanelLoader
@@ -1324,59 +1364,16 @@ namespace uLoader
                 }
                 else
                     ; //Не "отмеченные" - игнорировать
-            }
-            /// <summary>
-            /// Отобразить полученные данные в представлении
-            /// </summary>
-            /// <param name="table"></param>
-            /// <returns></returns>
-            public override int UpdateData(DataTable table)
-            {
-                int iRes = 0;
-
-                Logging.Logg().Debug(@"PanelLoaderSources::UpdateData () - строк для отображения=" + table.Rows.Count + @"...", Logging.INDEX_MESSAGE.NOT_SET);
-
-                if (table.Rows.Count > 0)
-                {
-                    DataGridView dgv = GetWorkingItem (KEY_CONTROLS.DGV_SIGNALS_OF_GROUP) as DataGridView;
-                    DataRow []arSel = null;
-                    foreach (DataGridViewRow dgvRow in dgv.Rows)
-                    {
-                        arSel = table.Select (@"NAME_SHR='" + dgvRow.Cells[0].Value + @"'");
-                        if (arSel.Length == 1)
-                        {
-                            try
-                            {
-                                dgvRow.Cells[1].Value = arSel[0][@"VALUE"];
-                                dgvRow.Cells[2].Value = arSel[0][@"DATETIME"];
-                                dgvRow.Cells[3].Value = arSel[0][@"COUNT"];
-                            }
-                            catch (Exception e)
-                            {
-                                Logging.Logg().Exception(e, @"PanelLoaderSources::UpdateData () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                            }
-                        }
-                        else
-                            //throw new Exception(@"PanelWork.PanelLoaderSource::UpdateData () - невозможно определить строку для отображения [NAME_SHR=" + dgvRow.Cells[0].Value + @"]...");
-                        {
-                            Logging.Logg().Error(@"PanelLoaderSources::UpdateData () - не найдена строка для NAME_SHR=" + dgvRow.Cells[0].Value + @"...", Logging.INDEX_MESSAGE.NOT_SET);
-
-                            dgvRow.Cells[1].Value =
-                            dgvRow.Cells[2].Value =
-                            dgvRow.Cells[3].Value =
-                                string.Empty;
-                        }
-                    }
-                }
-                else
-                    ;
-
-                return iRes;
-            }
+            }            
         }
-
+        /// <summary>
+        /// Класс для описания элемента управления - панель с группами источников (назначения), группами сигналов (назначения)
+        /// </summary>
         private class PanelLoaderDest : PanelLoader
         {
+            /// <summary>
+            /// Конструктор - основной (без параметров)
+            /// </summary>
             public PanelLoaderDest()
             {
                 InitializeComponent();
@@ -1470,39 +1467,43 @@ namespace uLoader
                 this.ResumeLayout(false);
                 this.PerformLayout();
             }
+            ///// <summary>
+            ///// Отобразить (обновить) значения на панели для выбранной группы источников, группы сигналов
+            ///// </summary>
+            ///// <param name="table">Таблица - рез=т запроса</param>
+            ///// <returns>Рез-т выполнения функции (всегда=0, не используется)</returns>
+            //public override int UpdateData(DataTable table)
+            //{
+            //    int iRes = 0;
 
-            public override int UpdateData(DataTable table)
-            {
-                int iRes = 0;
+            //    if (table.Rows.Count > 0)
+            //    {
+            //        DataGridView dgv = GetWorkingItem (KEY_CONTROLS.DGV_SIGNALS_OF_GROUP) as DataGridView;
+            //        DataRow []arSel = null;
+            //        foreach (DataGridViewRow dgvRow in dgv.Rows)
+            //        {
+            //            arSel = table.Select (@"NAME_SHR='" + dgvRow.Cells[0].Value + @"'");
+            //            if (arSel.Length == 1)
+            //            {
+            //                dgvRow.Cells[1].Value = arSel[0][@"VALUE"];
+            //                dgvRow.Cells[2].Value = arSel[0][@"DATETIME"];
+            //                dgvRow.Cells[3].Value = arSel[0][@"COUNT"];
+            //            }
+            //            else
+            //                //throw new Exception(@"PanelWork.PanelLoaderSource::UpdateData () - невозможно определить строку для отображения [NAME_SHR=" + dgvRow.Cells[0].Value + @"]...");
+            //            {
+            //                dgvRow.Cells[1].Value =
+            //                dgvRow.Cells[2].Value =
+            //                dgvRow.Cells[3].Value =
+            //                    string.Empty;
+            //            }
+            //        }
+            //    }
+            //    else
+            //        ;
 
-                if (table.Rows.Count > 0)
-                {
-                    DataGridView dgv = GetWorkingItem (KEY_CONTROLS.DGV_SIGNALS_OF_GROUP) as DataGridView;
-                    DataRow []arSel = null;
-                    foreach (DataGridViewRow dgvRow in dgv.Rows)
-                    {
-                        arSel = table.Select (@"NAME_SHR='" + dgvRow.Cells[0].Value + @"'");
-                        if (arSel.Length == 1)
-                        {
-                            dgvRow.Cells[1].Value = arSel[0][@"VALUE"];
-                            dgvRow.Cells[2].Value = arSel[0][@"DATETIME"];
-                            dgvRow.Cells[3].Value = arSel[0][@"COUNT"];
-                        }
-                        else
-                            //throw new Exception(@"PanelWork.PanelLoaderSource::UpdateData () - невозможно определить строку для отображения [NAME_SHR=" + dgvRow.Cells[0].Value + @"]...");
-                        {
-                            dgvRow.Cells[1].Value =
-                            dgvRow.Cells[2].Value =
-                            dgvRow.Cells[3].Value =
-                                string.Empty;
-                        }
-                    }
-                }
-                else
-                    ;
-
-                return iRes;
-            }
+            //    return iRes;
+            //}
 
             private void panelLoaderDest_btnClearCLick (object obj, EventArgs ev)
             {
