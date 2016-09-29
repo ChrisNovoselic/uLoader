@@ -25,6 +25,7 @@ namespace SrcMST
             registerType(10307, typeof(SrcMSTKKSNAMEtoris));
             registerType(10308, typeof(SrcMSTASUTPIDT5tg6sql));
             registerType(10309, typeof(SrcMSTASUTPIdT5tg1Dsql));
+            registerType(10310, typeof(SrcMSTASUTPIdT5tg6Dsql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

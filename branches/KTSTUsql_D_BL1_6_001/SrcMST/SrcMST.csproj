@@ -113,6 +113,7 @@
     <Compile Include="SrcMSTASUTPIdT5tg1Dsql.cs" />
     <Compile Include="SrcMSTASUTPIdT5tg1sql.cs" />
     <Compile Include="SrcMSTASUTPIdT5tg6sql.cs" />
+    <Compile Include="SrcMSTASUTPIdT5tg6Dsql.cs" />
     <Compile Include="SrcMSTKKSNAMEsql.cs" />
     <Compile Include="SrcMSTKKSNAMEtoris.cs" />
     <Compile Include="PluginItems.cs" />

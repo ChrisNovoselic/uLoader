@@ -54,8 +54,8 @@ namespace SrcKTS
                             cmd = @"List";
                         else
                             if (i == 1)
-                                cmd = @"ListAdd";
-                            else ;
+                            cmd = @"ListAdd";
+                        else;
 
                         m_strQuery += @"exec e6work.dbo.ep_AskVTIdata @cmd='" + cmd + @"',"
                             + @"@idVTI=" + s.m_iIdLocal + @","
@@ -69,7 +69,7 @@ namespace SrcKTS
                     else
                         // формула
                         ;
-                    
+
                 }
 
                 m_strQuery += @"SELECT idVTI as [ID],idReq,TimeIdx,TimeRTC, DATEADD(Second," + secUTCOffsetToData + ",TimeSQL) as [DATETIME],idState,ValueFl as [VALUE],ValueInt,IsInteger,idUnit"
@@ -122,13 +122,14 @@ namespace SrcKTS
 
             int cntHour = 0;
 
-            for (int i = 0; i < countDay; i++)
+            foreach (GroupSignalsSrc.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
             {
-                foreach (GroupSignalsKTSTUDsql.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
+                if (sgnl.IsFormula == false)
                 {
-                    if (sgnl.IsFormula == false)
+                    rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal, @"DATETIME");
+                    countDay = rowsSgnl.Count() / 48;
+                    for (int i = 0; i < countDay; i++)
                     {
-                        rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal, @"DATETIME");
                         //вывод данных только при полных сутках
                         if ((rowsSgnl.Length > 0)
                             && (rowsSgnl.Length % 48 == 0))
@@ -160,16 +161,16 @@ namespace SrcKTS
                         else
                             // неполные данные
                             continue
-                            ;                        
+                            ;
                     }
-                    else
-                        // формула
-                        continue
-                        ;
                 }
-                //cntHour = cntHour + 48;//за месяц
-                base.parseValues(tblRes);
+                else
+                    // формула
+                    continue
+                    ;
             }
+            //cntHour = cntHour + 48;//за месяц
+            base.parseValues(tblRes);
         }
     }
 }
