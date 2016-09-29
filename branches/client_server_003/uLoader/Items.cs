@@ -1174,7 +1174,8 @@ namespace uLoader
             EventArgsDataHost ev = obj as EventArgsDataHost;
             GroupSignals grpSgnls = null;
             ID_DATA_ASKED_HOST id_cmd = ID_DATA_ASKED_HOST.UNKNOWN;
-            int iIDGroupSignals = -1; //??? д.б. указана в "запросе"
+            int iIDGroupSignals = -1 //??? д.б. указана в "запросе"
+                , cntRecievedRows = -1; // кол-во строк в полученной таблице рез-та
             // [0] - идентификатор команды
             // [1] - идентификатор группы сигналов
             // [2] - идентификатор признака подтверждения/запроса ИЛИ таблица с результатом
@@ -1244,26 +1245,25 @@ namespace uLoader
                         if ((!(grpSgnls == null))
                             && ((!(pars[2] == null))
                                 && (pars[2] is DataTable))
-                            )
-                        {
-                            msgDebugLog = @"получено строк=";
+                            ) {
+                            cntRecievedRows = (pars[2] as DataTable).Rows.Count;
+                            msgDebugLog = @"получено строк=" + cntRecievedRows;
 
-                            if ((pars[2] as DataTable).Rows.Count > 0) {
+                            if (cntRecievedRows > 0)
                             // при наличии в ответе строк
                                 grpSgnls.m_tableData = (pars[2] as DataTable).Copy();
-                                msgDebugLog += grpSgnls.m_tableData.Rows.Count;
-                                // обновить состояние контролируемой группы сигналов
-                                this.PerformDataAskedHostQueue(new EventArgsDataHost(
-                                    (int)Index // тип группы источников (источник/назначение)
-                                    , FormMain.FileINI.GetIDIndex(m_strID) // индекс/идентификатор группы источников
-                                    , new object[] { iIDGroupSignals // индекс/идентификатор группы сигналов
-                                        , id_cmd } // команда для группы сигналов
-                                    ));
-                            }
                             else
-                                msgDebugLog += 0.ToString();
-                        }
-                        else
+                                ;
+
+                            // обновить состояние контролируемой группы сигналов
+                            this.PerformDataAskedHostQueue(new EventArgsDataHost(
+                                (int)Index // тип группы источников (источник/назначение)
+                                , FormMain.FileINI.GetIDIndex(m_strID) // индекс/идентификатор группы источников
+                                , new object[] { iIDGroupSignals // индекс/идентификатор группы сигналов
+                                    , id_cmd // команда для группы сигналов
+                                    , cntRecievedRows } 
+                                ));
+                        } else
                             ;
                         break;
                     case ID_DATA_ASKED_HOST.START:
@@ -1830,7 +1830,6 @@ namespace uLoader
         {
             return createGroupSignals(typeof(GroupSignalsDest), grpSgnls) as GroupSignals;
         }
-
         /// <summary>
         /// Получить список индексов групп сигналов
         /// </summary>
@@ -1896,7 +1895,6 @@ namespace uLoader
 
             return listRes;
         }
-
         /// <summary>
         /// Получает сообщения от библиотеки из "другого" (источника) объекта
         /// </summary>

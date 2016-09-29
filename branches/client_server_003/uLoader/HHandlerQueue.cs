@@ -135,14 +135,13 @@ namespace uLoader
             int indx = -1; // для разных наборов - различное значение
             ID_HEAD_ASKED_HOST idHeadAskedHost = ID_HEAD_ASKED_HOST.UNKNOWN; // только для исходного набора (для [START | STOP] всегда = 'CONFIRM')
             ID_DATA_ASKED_HOST id_cmd = (ID_DATA_ASKED_HOST)pars[1];
+            List<int> listLinkedIndexGroupSignals;
 
             if (pars[0].GetType().IsPrimitive == true)
             {// действия по набору-1
                 indx = (int)pars[0]; // индекс группы сигналов
                 if (pars.Length == 2)
-                // единственный параметр
-                    switch (id_cmd)
-                    {
+                    switch (id_cmd) {
                         //case ID_DATA_ASKED_HOST.START:
                         //    add(new object [] { ev.id_main, indx }, TimeSpan.FromMilliseconds (16667));
                         //    break;
@@ -150,44 +149,65 @@ namespace uLoader
 #if _STATE_MANAGER
                             remove(ev.id_main, ev.id_detail, indx);
 #endif
-                            break;
-                        case ID_DATA_ASKED_HOST.TABLE_RES:
-#if _STATE_MANAGER
-                            update(ev.id_main, ev.id_detail, indx);
-#endif
-                            break;
+                            break;                        
                         default:
                             break;
                     }
                 else
                 // 3 параметра
-                    if (pars.Length == 3)
-                    {
-                        if (pars[2].GetType().IsEnum == true)
-                        {//ID_DATA_ASKED_HOST.START, ID_DATA_ASKED_HOST.STOP; ID_HEAD_ASKED_HOST.CONFIRM
-                            idHeadAskedHost = (ID_HEAD_ASKED_HOST)pars[2];
-
-                            if (idHeadAskedHost == ID_HEAD_ASKED_HOST.CONFIRM)
+                    if (pars.Length == 3) {
+                        if (pars[2].GetType().IsPrimitive == true) {
+                        // примитивное значение - кол-во строк в таблице результата
+                            switch (id_cmd) {
+                                case ID_DATA_ASKED_HOST.TABLE_RES:
 #if _STATE_MANAGER
-                                confirm(ev.id_main, ev.id_detail, indx)
+                                    update(ev.id_main, ev.id_detail, indx);
+                                    // если группа сигналов группы источников принадлежит к источникам информации
+                                    if ((INDEX_SRC)ev.id_main == INDEX_SRC.SOURCE)
+                                        // проверить кол-во строк в таблице результата
+                                        // в случае отсутствия строк, требуется обновить связанные с ней группы сигналов в группах источников назначения
+                                        // т.к. самостоятельно такие группы сигналов не обновляются, что м. привести к периодической выгрузке/загрузке библиотеки
+                                        if ((int)pars[2] == 0)
+                                            // искать группы сигналов в группах источников назначения, связанные с указанной в аргументе
+                                            foreach (GroupSourcesDest grp in m_listGroupSources[(int)INDEX_SRC.DEST]) {
+                                                // найти в группе источников назначения такие группы сигналов, которые связаны с указанной в аргументе группой сигналов
+                                                listLinkedIndexGroupSignals = grp.GetListLinkedIndexGroupSignals(ev.id_detail, indx);
+
+                                                listLinkedIndexGroupSignals.ForEach(indxGrpSgnls => { update(INDEX_SRC.DEST, FormMain.FileINI.GetIDIndex(grp.m_strID), indxGrpSgnls); });
+                                            }
+                                        else
+                                            ;
+                                    else
+                                        ;
+#endif
+                                    break;
+                                default:
+                                        break;
+                            }
+                        } else
+                            if (pars[2].GetType().IsEnum == true) {
+                            //ID_DATA_ASKED_HOST.START, ID_DATA_ASKED_HOST.STOP; ID_HEAD_ASKED_HOST.CONFIRM
+                                idHeadAskedHost = (ID_HEAD_ASKED_HOST)pars[2];
+
+                                if (idHeadAskedHost == ID_HEAD_ASKED_HOST.CONFIRM)
+#if _STATE_MANAGER
+                                    confirm(ev.id_main, ev.id_detail, indx)
 #else
 #endif
-                                    ;
-                            else
-                            // ошибка - переменная имеет непредвиденное значение
-                                throw new MissingMemberException(@"HHandleQueue::onEvtDataAskedHostQueue_GroupSources () - ...");
+                                        ;
+                                else
+                                // ошибка - переменная имеет непредвиденное значение
+                                    throw new MissingMemberException(@"HHandleQueue::onEvtDataAskedHostQueue_GroupSources () - ...");
+                            } else {//ID_DATA_ASKED_HOST.START - объект 'TimeSpan'
+#if _STATE_MANAGER
+                                // добавить группу сигналов в список контролируемых
+                                add(new object[] { ev.id_main, ev.id_detail, indx }, (TimeSpan)pars[2]);
+#else
+#endif
+                            }
                         }
                         else
-                        {//ID_DATA_ASKED_HOST.START
-#if _STATE_MANAGER
-                            // добавить группу сигналов в список контролируемых
-                            add(new object[] { ev.id_main, ev.id_detail, indx }, TimeSpan.FromMilliseconds(((TimeSpan)pars[2]).TotalMilliseconds));
-#else
-#endif
-                        }
-                    }
-                    else
-                        ; // других вариантов по количеству параметров - нет
+                            ; // других вариантов по количеству параметров - нет
             }
             else
             {// действия по набору-2 (для установления взаимосвязи между "связанными" (по конф./файлу) по "цепочке" сигналов - групп сигналов - групп источников)
@@ -824,9 +844,17 @@ namespace uLoader
             return iRes;
         }
 
-        protected override HHandler.INDEX_WAITHANDLE_REASON StateErrors(int state, int req, int res)
+        protected override INDEX_WAITHANDLE_REASON StateErrors(int state, int req, int res)
         {
-            Logging.Logg().Error(@"HHandlerQueue::StateErrors () - не обработана ошибка [" + ((StatesMachine)state).ToString () + @", REQ=" + req + @", RES=" + res + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
+            switch ((StatesMachine)state) {
+                case StatesMachine.GET_INTERACTION_PARAMETERS:
+                    (Peek as ItemQueue).m_dataHostRecieved.OnEvtDataRecievedHost(new object[] { state, null });
+                    break;
+                default:
+                    break;
+            }
+
+            Logging.Logg().Error(@"HHandlerQueue::StateErrors () - не обработана ошибка [" + ((StatesMachine)state).ToString() + @", REQ=" + req + @", RES=" + res + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
 
             return HHandler.INDEX_WAITHANDLE_REASON.SUCCESS;
         }

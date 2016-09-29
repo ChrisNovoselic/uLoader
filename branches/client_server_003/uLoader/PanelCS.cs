@@ -55,10 +55,15 @@ namespace uLoader
             _roleActived = Pipes.Pipe.Role.Unknown;
         }
 
-        public int Ready {
+        public enum ERROR { CRITICAL = -2, ANY = -1, NO = 0, GRANTE = 1 }
+
+        public ERROR Ready {
             get {
-                return (m_InteractionParameters.Ready == true) ? (!(m_arPanels == null)) && ((m_arPanels[(int)Pipes.Pipe.Role.Client].Ready == true)
-                    && (m_arPanels[(int)Pipes.Pipe.Role.Server].Ready == true)) ? 0 : 1 : -1;
+                return (!(m_InteractionParameters.m_arNameServers == null)) ?
+                    (m_InteractionParameters.Ready == true) ?
+                        (!(m_arPanels == null)) && ((m_arPanels[(int)Pipes.Pipe.Role.Client].Ready == true)
+                            && (m_arPanels[(int)Pipes.Pipe.Role.Server].Ready == true)) ? ERROR.NO : ERROR.GRANTE :ERROR.ANY :
+                                ERROR.CRITICAL;
             }
         }
 
@@ -147,11 +152,11 @@ namespace uLoader
             {
                 case HHandlerQueue.StatesMachine.GET_INTERACTION_PARAMETERS:
                     if (!(pars[1] == null)) {
-                        m_InteractionParameters = (InteractionParameters)pars[1];
-                        // разрешить продолжение выполнение инициализации '::Start'
-                        m_semInteractionParameters.Release(1);
+                        m_InteractionParameters = (InteractionParameters)pars[1];                        
                     } else
                         ;
+                    // разрешить продолжение выполнение инициализации '::Start'
+                    m_semInteractionParameters.Release(1);
                     break;
                 case HHandlerQueue.StatesMachine.FORMMAIN_COMMAND_TO_INTERACTION:
                     switch ((ID_EVENT)pars[1]) {
@@ -169,14 +174,12 @@ namespace uLoader
 
         private void start(/*object obj*/)
         {
-            InteractionParameters pars = m_InteractionParameters;
-
             m_arPanels = new PanelCS[(int)Pipes.Pipe.Role.Count];
-            m_arPanels[(int)Pipes.Pipe.Role.Client] = new PanelClient(pars.m_arNameServers);
+            m_arPanels[(int)Pipes.Pipe.Role.Client] = new PanelClient(m_InteractionParameters.m_arNameServers);
             m_arPanels[(int)Pipes.Pipe.Role.Client].EvtDataAskedHost += new DelegateObjectFunc(panelOnCommandEvent);
             m_arPanels[(int)Pipes.Pipe.Role.Client].Start();
             //m_panelClient.Dock = DockStyle.Fill; уже Fill
-            m_arPanels[(int)Pipes.Pipe.Role.Server] = new PanelServer(pars.m_arNameServers);
+            m_arPanels[(int)Pipes.Pipe.Role.Server] = new PanelServer(m_InteractionParameters.m_arNameServers);
             m_arPanels[(int)Pipes.Pipe.Role.Server].EvtDataAskedHost += new DelegateObjectFunc(panelOnCommandEvent);
             m_arPanels[(int)Pipes.Pipe.Role.Server].Start();
             //m_panelServer.Dock = DockStyle.Fill; уже Fill
@@ -329,7 +332,7 @@ namespace uLoader
             /// </summary>
             private Pipes.Client _client { get { return _pipe == null ? null : _pipe as Pipes.Client; } }
 
-            public PanelClient(string[] arServerName)
+            public PanelClient(PanelClientServer.InteractionParameters.NameServer[] arServerName)
                 : base(arServerName, Pipes.Pipe.Role.Client)
             {
             }
@@ -362,17 +365,23 @@ namespace uLoader
             /// <param name="data">Массив имен серверов</param>
             private void connectToServer(object data)
             {
-                string[] servers = (data as string[]);
+                PanelClientServer.InteractionParameters.NameServer [] servers = (data as PanelClientServer.InteractionParameters.NameServer[]);
                 int iAttempt = -1;
+                int MSEC_WAIT_START_SERVER0 = 6666;
 
                 lock (thisLock) {
                     //Перебор серверов для подключения
-                    foreach (string server in servers) {
+                    foreach (PanelClientServer.InteractionParameters.NameServer server in servers) {
                         //!!! в списке не содержится собственный хост
                         //if (isEqualeHost(server) == false) {
                             iAttempt = 0;
+                            // дать возможность 1-му серверу загрузиться
+                            if (server.m_wsIndex == 0)
+                                Thread.Sleep(MSEC_WAIT_START_SERVER0);
+                            else
+                                ;
 
-                            _pipe = new Pipes.Client(server, MS_TIMEOUT_CONNECT_TO_SERVER);//инициализация клиента
+                            _pipe = new Pipes.Client(server.m_host, MS_TIMEOUT_CONNECT_TO_SERVER);//инициализация клиента
 
                             //Подписка на события клиента
                             _client.ReadMessage += new EventHandler(recievedMessage);
@@ -583,7 +592,7 @@ namespace uLoader
             /// </summary>
             private Pipes.Server _server { get { return _pipe == null ? null : _pipe as Pipes.Server; } }
 
-            public PanelServer(string[] arServerName)
+            public PanelServer(PanelClientServer.InteractionParameters.NameServer[] arServerName)
                 : base(arServerName, Pipes.Pipe.Role.Server)
             {
                 d_disconnect = disconnect_client;
@@ -935,7 +944,7 @@ namespace uLoader
             /// <summary>
             /// Массив имён серверов
             /// </summary>
-            protected string[] m_servers;
+            protected PanelClientServer.InteractionParameters.NameServer[] m_servers;
 
             /// <summary>
             /// Тип экземпляра приложения
@@ -999,7 +1008,7 @@ namespace uLoader
             /// Конструктор
             /// </summary>
             /// <param name="arServerName">Список серверов</param>
-            public PanelCS(string[] arServerName, Pipes.Pipe.Role role)
+            public PanelCS(PanelClientServer.InteractionParameters.NameServer[] arServerName, Pipes.Pipe.Role role)
                 : base(5, 20)
             {
                 thisLock = new Object();
@@ -1725,9 +1734,54 @@ namespace uLoader
                 , WS, MAIN_PIPE
             , COUNT }
             /// <summary>
+            /// Структура для хранения параметров для соединения с взаимодействующими экземплярами
+            /// </summary>
+            public struct NameServer
+            {
+                /// <summary>
+                /// Индекс по порядку при перечислении наименований в файле кофигурации
+                ///  1-ый по умолчанию становится сервером
+                ///  (ws - аббревиатура 'work station')
+                /// </summary>
+                public int m_wsIndex;
+                /// <summary>
+                /// Наименование (IP) взаимодействующего экземпляра
+                /// </summary>
+                public string m_host;
+
+                public override bool Equals(object obj)
+                {
+                    return this.m_host.Equals(((NameServer)obj).m_host) == true
+                        && this.m_wsIndex.Equals(((NameServer)obj).m_wsIndex) == true;
+                }
+
+                public override int GetHashCode()
+                {
+                    return base.GetHashCode();
+                }
+
+                public static bool operator ==(NameServer instance, NameServer src)
+                {
+                    return instance.m_wsIndex == src.m_wsIndex && instance.m_host == src.m_host;
+
+                }
+
+                public static bool operator !=(NameServer instance, NameServer src)
+                {
+                    return !(instance.m_wsIndex == src.m_wsIndex) || !(instance.m_host == src.m_host);
+
+                }
+            }
+            /// <summary>
             /// Список взаимодействущих серверов на которых выполняются взаимодействующие экземпляры
             /// </summary>
-            public string[] m_arNameServers;
+            public NameServer[] m_arNameServers;
+            /// <summary>
+            /// Индекс собственного имени, указанного в файле конфигурации
+            ///  , м.б. использован как признак упоминания собственного имени в файле конфигурации
+            ///  , а также для определения приоритета при назначении роли канала связи (сервер, клиент)
+            /// </summary>
+            public int m_wsHostIndex;
             /// <summary>
             /// Наименование главного канала для реализации взаимодействия
             /// </summary>
@@ -1738,10 +1792,11 @@ namespace uLoader
             /// <param name="ini">Строка из конфигурационного файла с параметрами</param>
             public InteractionParameters(string ini)
             {
-                m_arNameServers = new string[] { };
+                m_arNameServers = new NameServer[] { };
+                m_wsHostIndex = -1;
                 m_NameMainPipe = string.Empty;
 
-                List<string> listNameServers = new List<string> ();
+                List<NameServer> listNameServers = new List<NameServer> ();
                 string[] arPars = null
                     , values = null;
 
@@ -1768,9 +1823,9 @@ namespace uLoader
                                                 case INDEX_PARAMETER.WS:
                                                     // добавить только не совпадающие с собственным
                                                     if (isEqualeHost(values[1]) == false)
-                                                        listNameServers.Add(values[1]);
+                                                        listNameServers.Add(new NameServer() { m_wsIndex = FormMain.FileINI.GetIDIndex(values[0]), m_host = values[1] });
                                                     else
-                                                        ;
+                                                        m_wsHostIndex = FormMain.FileINI.GetIDIndex(values[0]);
                                                     break;
                                                 case INDEX_PARAMETER.MAIN_PIPE:
                                                     m_NameMainPipe = values[1];
@@ -1791,10 +1846,24 @@ namespace uLoader
                         m_arNameServers = listNameServers.ToArray();
                     }
                     else
-                        ;
+                        ;                    
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, @"PanelClientServer.InteractionParameters::ctor () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
+                // проверить возможность взаимодействия с другими экземплярами, указанными в файле конфигурации
+                if (listNameServers.Count > 0)
+                // проверить индекс в списке взаимодействующих экзепляров
+                    if (m_wsHostIndex < 0) {
+                    // только, если собственный экземляр присутствует в перечне
+                        listNameServers.Clear();
+                        m_NameMainPipe = string.Empty;
+
+                        throw new Exception(@"PanelClientServer.InteractionParameters::ctor () - текущий экземпляр не указан как взамодействующий...");
+                    }
+                    else
+                        ;
+                else
+                    ;
             }
 
             public bool Ready { get { return ((!(m_arNameServers == null)) && (m_arNameServers.Length > 0)) && m_NameMainPipe.Equals(string.Empty) == false; } }
