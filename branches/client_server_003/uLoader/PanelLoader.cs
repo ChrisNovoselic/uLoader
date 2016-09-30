@@ -549,8 +549,10 @@ namespace uLoader
             {
                 HTimeSpan tsRes = HTimeSpan.NotValue;
                 string []vals;
+                //(ctrl as MaskedTextBox).Culture.NumberFormat.NumberDecimalSeparator
+                MaskedTextBox ctrl = GetWorkingItem(key) as MaskedTextBox;
 
-                vals = (GetWorkingItem(key) as MaskedTextBox).Text.Split(new char[] { ',', ':' });
+                vals = ctrl.Text.Split(new char[] { ctrl.Culture.NumberFormat.NumberDecimalSeparator[0], ':' });
 
                 switch (vals.Length)
                 {
@@ -796,15 +798,15 @@ namespace uLoader
                 key = PanelLoader.KEY_CONTROLS.MTBX_START_TIME;
                 workItem = GetWorkingItem(key);
                 (workItem as MaskedTextBox).Text = pars.m_dtStart.Hour.ToString(@"00")
-                    + @":" + pars.m_dtStart.Minute.ToString(@"00")
+                    + pars.m_dtStart.Minute.ToString(@"00")
                     ;
 
                 //??? Отобразить период опроса (основной)
                 key = PanelLoader.KEY_CONTROLS.MTBX_PERIOD_MAIN;
                 workItem = GetWorkingItem(key);
                 (workItem as MaskedTextBox).Text = pars.m_tsPeriodMain.Value.Days.ToString(@"00")
-                    + @"." + pars.m_tsPeriodMain.Value.Hours.ToString(@"00")
-                    + @":" + pars.m_tsPeriodMain.Value.Minutes.ToString(@"00")
+                    + pars.m_tsPeriodMain.Value.Hours.ToString(@"00")
+                    + pars.m_tsPeriodMain.Value.Minutes.ToString(@"00")
                     //+ @":" + grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.Seconds
                     ;
 
@@ -814,8 +816,8 @@ namespace uLoader
                     key = PanelLoader.KEY_CONTROLS.MTBX_PERIOD_LOCAL;
                     workItem = GetWorkingItem(key);
                     (workItem as MaskedTextBox).Text = pars.m_tsPeriodMain.Value.Days.ToString(@"00")
-                    + @"." + pars.m_tsPeriodLocal.Value.Hours.ToString(@"00")
-                        + @":" + pars.m_tsPeriodLocal.Value.Minutes.ToString(@"00")
+                        + pars.m_tsPeriodLocal.Value.Hours.ToString(@"00")
+                        + pars.m_tsPeriodLocal.Value.Minutes.ToString(@"00")
                         ;
 
                     //Отобразить шаг опроса для режима 'COSTUMIZE'
@@ -1264,7 +1266,10 @@ namespace uLoader
                 ctrl.Name = KEY_CONTROLS.MTBX_PERIOD_MAIN.ToString();
                 ctrl.Dock = DockStyle.Bottom;
                 (ctrl as MaskedTextBox).TextAlign = HorizontalAlignment.Right;
-                (ctrl as MaskedTextBox).Mask = @"00.00:00";
+                (ctrl as MaskedTextBox).Mask =
+                    //string.Format(@"00{0}00:00", (ctrl as MaskedTextBox).Culture.NumberFormat.NumberDecimalSeparator[0])
+                    @"00.00:00"
+                    ;
                 panelGroupBox.Controls.Add(ctrl, 6, 4);
                 panelGroupBox.SetColumnSpan(ctrl, 3); panelGroupBox.SetRowSpan(ctrl, 1);
 
@@ -1280,7 +1285,10 @@ namespace uLoader
                 ctrl.Name = KEY_CONTROLS.MTBX_PERIOD_LOCAL.ToString();
                 ctrl.Dock = DockStyle.Bottom;
                 (ctrl as MaskedTextBox).TextAlign = HorizontalAlignment.Right;
-                (ctrl as MaskedTextBox).Mask = @"00.00:00";
+                (ctrl as MaskedTextBox).Mask =
+                    //string.Format(@"00{0}00:00", (ctrl as MaskedTextBox).Culture.NumberFormat.NumberDecimalSeparator[0])
+                    @"00.00:00"
+                    ;
                 panelGroupBox.Controls.Add(ctrl, 6, 5);
                 panelGroupBox.SetColumnSpan(ctrl, 3); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Интервал
@@ -1441,7 +1449,7 @@ namespace uLoader
                 panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Кнопка - выполнить
                 ctrl = new Button();
-                ctrl.Name = @"BTN_CLEAR";
+                ctrl.Name = KEY_CONTROLS.BTN_CLEAR.ToString();
                 (ctrl as Button).Click += new EventHandler(panelLoaderDest_btnClearCLick);
                 (ctrl as Button).Text = @"Выполнить";
                 ctrl.Dock = DockStyle.Fill;

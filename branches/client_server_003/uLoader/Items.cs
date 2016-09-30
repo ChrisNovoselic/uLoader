@@ -1906,7 +1906,8 @@ namespace uLoader
             List<int> listRes = new List<int>()
                 , listNeededIndexGroupSignals = null;
 
-            if (m_dictLinkedIndexGroupSources[idGrpSourceSrc].Contains(idGrpSgnls) == true)
+            if ((m_dictLinkedIndexGroupSources.ContainsKey(idGrpSourceSrc) == true)
+                && (m_dictLinkedIndexGroupSources[idGrpSourceSrc].Contains(idGrpSgnls) == true))
                 foreach (GroupSourcesDest.GroupSignalsDest grpSgnls in m_listGroupSignals) {
                     listNeededIndexGroupSignals = grpSgnls.GetListNeededIndexGroupSignals();
 
