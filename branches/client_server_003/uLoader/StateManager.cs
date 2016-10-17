@@ -367,14 +367,13 @@ namespace uLoader
                             this.RemoveAt(indx);
                         else
                             // ошибка - объект не может получить подтверждение
-                            msgErr = @"объект [сост.=" + this[indx].m_state + @"] не может получить подтверждение";
+                            msgErr = string.Format(@"объект [сост.={0}] не может получить подтверждение", this[indx].m_state);
                 else
                     // ошибка - объект для подтверждения состояния не найден
                     msgErr = @"объект для подтверждения состояния не найден";
 
                 if (msgErr.Equals (string.Empty) == false)
-                    Logging.Logg().Error(@"HHandlerQueue.ListOManagement::Confirm (IdGrpSgnls=" + id.m_idGroupSgnls
-                            + @", IdOwner=" + id.m_idOwner + @") - " + msgErr + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Error(string.Format(@"HHandlerQueue.ListOManagement::Confirm (IdGrpSgnls={0}, IdOwner={1}) - {2} ...", id.m_idGroupSgnls, id.m_idOwner, msgErr), Logging.INDEX_MESSAGE.NOT_SET);
                 else
                     ;
             }

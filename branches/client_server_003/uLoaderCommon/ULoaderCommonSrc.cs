@@ -613,6 +613,7 @@ namespace uLoaderCommon
             {
                 if (sgnl.IsFormula == true)
                 {
+                    // подготовить переменные для расчета
                     variables = new List<VariableValue>();
 
                     for (int i = 0; i < sgnl.m_listIdArgs.Count; i ++)
@@ -635,18 +636,25 @@ namespace uLoaderCommon
                         else
                             ;
                     }
-
+                    // проверить качество подготовленных для расчета переменных
                     if ((variables.Count == sgnl.m_listIdArgs.Count)
                         && (dtValue.Equals(DateTime.MinValue) == false))
                     {
-                        dblRes = ToolsHelper.Calculator.Calculate(m_dictCompiledExpression[sgnl.m_fKey], variables);
+                        try
+                        {
+                            dblRes = ToolsHelper.Calculator.Calculate(m_dictCompiledExpression[sgnl.m_fKey], variables);
 
-                        // вставить строку
-                        tblRes.Rows.Add(new object[] {
-                            sgnl.m_idMain
-                            , dtValue
-                            , dblRes
-                        });
+                            // вставить строку
+                            tblRes.Rows.Add(new object[] {
+                                sgnl.m_idMain
+                                , dtValue
+                                , dblRes
+                            });
+                        }
+                        catch (Exception e)
+                        {
+                            Logging.Logg().Exception(e, @"HHandlerDbULoaderSrc::calculateValues () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                        }
                     }
                     else
                         ; // не получено ни одного значения ни для одного bp аргументов формулы

@@ -55,23 +55,25 @@ namespace DestStat
 
                 foreach (DataRow row in m_DupTables.TableDistinct.Rows)
                 {
-                    if (((int)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim()))) > 0)
-                    {
-                        strRow = @"(";
+                    (getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) as List<int>).ForEach(iIdInsert => {
+                        if (iIdInsert > 0)
+                        {
+                            strRow = @"(";
 
-                        strRow += row[@"ID_MST"] + @",";
-                        strRow += m_IdSourceTEC + @",";
-                        strRow += ((double)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
-                        strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(0).ToString(s_strFormatDbDateTime) + @"',";
-                        strRow += row[@"tmdelta"] + @",";
-                        strRow += @"GETDATE()";
+                            strRow += row[@"ID_MST"] + @",";
+                            strRow += m_IdSourceTEC + @",";
+                            strRow += ((double)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
+                            strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(0).ToString(s_strFormatDbDateTime) + @"',";
+                            strRow += row[@"tmdelta"] + @",";
+                            strRow += @"GETDATE()";
 
-                        strRow += @"),";
+                            strRow += @"),";
 
-                        strRes += strRow;
-                    }
-                    else
-                        ; // не найдено соответствие с Id источника
+                            strRes += strRow;
+                        }
+                        else
+                            ; // не найдено соответствие с Id источника
+                    });
                 }
                 //Лишняя ','
                 strRes = strRes.Substring(0, strRes.Length - 1);

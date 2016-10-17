@@ -288,7 +288,7 @@ namespace uLoader
                     for (int i = 0; i < item.m_listSgnls.Count; i++)
                         for (int j = 0; j < item.m_listSgnls[i].m_arSPars.Length; j++)
                             foreach (string fKey in m_dictFormula.Keys)
-                                if (item.m_listSgnls[i].m_arSPars[j].IndexOf(fKey) == 0)
+                                if (item.m_listSgnls[i].m_arSPars[j].IndexOf(fKey, StringComparison.InvariantCultureIgnoreCase) == 0)
                                 {
                                     // найдена формула - требуется:
                                     // 1) добавить к группе сигналов описание формулы

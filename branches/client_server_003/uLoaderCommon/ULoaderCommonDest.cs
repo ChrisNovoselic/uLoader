@@ -896,24 +896,16 @@ namespace uLoaderCommon
 
             protected override object getIdTarget(int idLink)
             {
-                int iRes = -1;
+                List<int> listRes = new List<int> ();
 
-                foreach (SIGNALIDsql sgnl in m_arSignals)
-                    if (sgnl.m_idLink == idLink)
-                    {
-                        iRes = sgnl.m_idTarget;
+                (m_arSignals as SIGNALIDsql[]).ToList ().ForEach(sgnl => { if (sgnl.m_idLink == idLink) listRes.Add(sgnl.m_idTarget); else; });
 
-                        break;
-                    }
-                    else
-                        ;
-
-                if (iRes < 0)
+                if (listRes.Count == 0)
                     Logging.Logg().Warning(@"GroupSignalsIDDest::getIdTarget (idLink=" + idLink + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 else
                     ;
 
-                return iRes;
+                return listRes;
             }
 
             protected override object getIdLink(object idTarget)
@@ -996,7 +988,7 @@ namespace uLoaderCommon
                     }
                     else
                         ;
-                //// для уменьшения кол-ва записей в журнале приложения
+
                 //if (strRes.Equals (string.Empty) == true)
                 //    Logging.Logg().Warning(@"GroupSignalsStatTMKKSNAMEDest::getIdTarget (id=" + (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).PlugInId
                 //        + @", key=" + m_Id

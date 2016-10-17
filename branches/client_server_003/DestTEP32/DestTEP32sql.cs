@@ -49,9 +49,10 @@ namespace DestTEP32
                 string strRes = string.Empty
                     , strRows = string.Empty
                     , strRow = string.Empty;
-                int iIdToInsert = -1
-                    , iUTCOffsetToDataTotalHours = (int)(_parent as DestTEP32sql).m_tsUTCOffsetToData.Value.TotalHours;
-                DateTime? dtToInsert = null;                
+                int /*iIdToInsert = -1,*/
+                    iUTCOffsetToDataTotalHours = (int)(_parent as DestTEP32sql).m_tsUTCOffsetToData.Value.TotalHours;
+                DateTime? dtToInsert = null;
+                bool bBreak = false; // признак аварийного завершения цикла
 
                 //Logging.Logg().Debug(@"GroupSignalsStatIDsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -71,40 +72,42 @@ namespace DestTEP32
 
                     foreach (DataRow row in m_DupTables.TableDistinct.Rows)
                     {
-                        iIdToInsert = (int)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim()));
-                        if (dtToInsert == null)
-                            dtToInsert = ((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours);
-                        else
-                            if (dtToInsert.Equals(((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours)) == false)
-                            {
-                                Logging.Logg().Error(@"GroupSignalsTEP32sql::getInsertValuesQuery () - в наборе различные дата/время...", Logging.INDEX_MESSAGE.NOT_SET);
-
-                                break;
-                            }
+                        (getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) as List<int>).ForEach(iIdToInsert => {
+                            if (dtToInsert == null)
+                                dtToInsert = ((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours);
                             else
-                                ;
+                                if (dtToInsert.Equals(((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours)) == false) {
+                                    Logging.Logg().Error(@"GroupSignalsTEP32sql::getInsertValuesQuery () - в наборе различные дата/время...", Logging.INDEX_MESSAGE.NOT_SET);
 
-                        if (iIdToInsert > 0)
-                        {
-                            strRow = @"(";
+                                    bBreak = true;
+                                } else
+                                    ;
 
-                            strRow += iIdToInsert + @",";
-                            //strRow += (_parent as HHandlerDbULoaderStatTMDest).m_strIdTEC + @",";
-                            strRow += 0.ToString() + @","; //ID_USER
-                            strRow += m_IdSourceConnSett + @","; //ID_SOURCE
-                            strRow += @"'" + dtToInsert.GetValueOrDefault().ToString(s_strFormatDbDateTime) + @"',";
-                            strRow += 13.ToString() + @","; //ID_TIME = 1 ч
-                            strRow += 0.ToString() + @","; //ID_TIMEZONE = UTC
-                            strRow += 0.ToString() + @","; //QUALITY
-                            strRow += ((float)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
-                            strRow += @"GETDATE()";
+                                if (iIdToInsert > 0) {
+                                    strRow = @"(";
 
-                            strRow += @"),";
+                                    strRow += iIdToInsert + @",";
+                                    //strRow += (_parent as HHandlerDbULoaderStatTMDest).m_strIdTEC + @",";
+                                    strRow += 0.ToString() + @","; //ID_USER
+                                    strRow += m_IdSourceConnSett + @","; //ID_SOURCE
+                                    strRow += @"'" + dtToInsert.GetValueOrDefault().ToString(s_strFormatDbDateTime) + @"',";
+                                    strRow += 13.ToString() + @","; //ID_TIME = 1 ч
+                                    strRow += 0.ToString() + @","; //ID_TIMEZONE = UTC
+                                    strRow += 0.ToString() + @","; //QUALITY
+                                    strRow += ((float)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
+                                    strRow += @"GETDATE()";
 
-                            strRows += strRow;
-                        }
+                                    strRow += @"),";
+
+                                    strRows += strRow;
+                                } else
+                                    ; // не найдено соответствие с Id источника
+                        }); // анонимная функция
+
+                        if (bBreak == true)
+                            break;
                         else
-                            ; // не найдено соответствие с Id источника
+                            ;
                     }
 
                     if (strRows.Equals(string.Empty) == false)

@@ -14,7 +14,7 @@ namespace uLoaderCommon
         {
             get
             {
-                return (_value == TimeSpan.Zero)
+                return (_value == TimeSpan.MinValue)
                     || (! (_prefix.Length == 2));
             }
         }
@@ -37,7 +37,7 @@ namespace uLoaderCommon
                 _value = parse(value, out _prefix);//ошибка парсер(mi0)
 
                 if (isError == true)
-                    throw new Exception(@"HTimeSpan::ctor () - error parsing value ...");
+                    Logging.Logg().Error(@"HTimeSpan::ctor () - error parsing value ...", Logging.INDEX_MESSAGE.NOT_SET);
                 else
                     ;
             }
@@ -96,7 +96,7 @@ namespace uLoaderCommon
         {
             prefix = string.Empty;
 
-            TimeSpan tsRes = TimeSpan.MinValue;
+            TimeSpan tsRes = TimeSpan.Zero;
             Char ch = Char.MinValue;
             int iSign = 0
                 , iValue = 0;
@@ -108,9 +108,9 @@ namespace uLoaderCommon
             }
             else
                 // признак ошибки
-                tsRes = TimeSpan.Zero;
+                tsRes = TimeSpan.MinValue;
 
-            if (tsRes == TimeSpan.MinValue)
+            if (tsRes == TimeSpan.Zero)
                 if (value.Length > (Math.Abs(iSign) + 2))
                 {
                     prefix = value.Substring(Math.Abs(iSign), 2);
@@ -135,7 +135,7 @@ namespace uLoaderCommon
                             break;
                         default:
                             // признак ошибки
-                            tsRes = TimeSpan.Zero;
+                            tsRes = TimeSpan.MinValue;
                             break;
                     }
 
@@ -146,7 +146,7 @@ namespace uLoaderCommon
                 }
                 else
                     // признак ошибки
-                    tsRes = TimeSpan.Zero;
+                    tsRes = TimeSpan.MinValue;
             else
                 ;
 
