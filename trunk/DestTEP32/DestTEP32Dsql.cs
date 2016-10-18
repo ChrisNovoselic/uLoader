@@ -100,10 +100,10 @@ namespace DestTEP32
                 string strRes = string.Empty
                     , strRows = string.Empty
                     , strRow = string.Empty;
-                int iIdToInsert = -1
-                    , grpSignlToDate = 0
+                int grpSignlToDate = 0
                     , nextDate = 0;
                 DateTime? dtToInsert = null;
+                bool bBreak = false; // признак аврийного завершения цикла
 
                 //Logging.Logg().Debug(@"GroupSignalsStatIDsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -130,41 +130,47 @@ namespace DestTEP32
 
                     foreach (DataRow row in m_DupTables.TableDistinct.Rows)
                     {
-                        iIdToInsert = (int)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim()));
-
-                        if (dtToInsert == null)
+                        (getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) as List<int>).ForEach(iIdToInsert => {
+                            if (dtToInsert == null)
                             //grpSignlToDate % m_enumResIDPUT.Count() == 0)
-                        {
-                            dtToInsert = ((DateTime)row[@"DATETIME"]).AddDays(0);//??
-                            //grpSignlToDate++;
-                            //nextDate++;
-                        }
-                        else
-                            if (dtToInsert.Equals(((DateTime)row[@"DATETIME"]).AddDays(0)) == false)
+                            {
+                                dtToInsert = ((DateTime)row[@"DATETIME"]).AddDays(0);//??
+                                //grpSignlToDate++;
+                                //nextDate++;
+                            }
+                            else
+                                if (dtToInsert.Equals(((DateTime)row[@"DATETIME"]).AddDays(0)) == false)
                             {
                                 Logging.Logg().Error(@"GroupSignalsTEP32sql::getInsertValuesQuery () - в наборе различные дата/время...", Logging.INDEX_MESSAGE.NOT_SET);
-                                break;
+
+                                bBreak = true;
                             }
                             //else
                             //    grpSignlToDate++;
 
-                        if (iIdToInsert > 0)
-                        {
-                            strRow = @"(";
-                            strRow += iIdToInsert + @",";
-                            strRow += 0.ToString() + @","; //ID_USER
-                            strRow += m_IdSourceConnSett + @","; //ID_SOURCE
-                            strRow += @"'" + dtToInsert.GetValueOrDefault().ToString(s_strFormatDbDateTime) + @"',";
-                            strRow += 19.ToString() + @","; //ID_TIME = 1 day
-                            strRow += 1.ToString() + @","; //ID_TIMEZONE = MSK??
-                            strRow += 0.ToString() + @","; //QUALITY
-                            strRow += ((float)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
-                            strRow += @"GETDATE()";
-                            strRow += @"),";
-                            strRows += strRow;
-                        }
+                            if (iIdToInsert > 0)
+                            {
+                                strRow = @"(";
+                                strRow += iIdToInsert + @",";
+                                strRow += 0.ToString() + @","; //ID_USER
+                                strRow += m_IdSourceConnSett + @","; //ID_SOURCE
+                                strRow += @"'" + dtToInsert.GetValueOrDefault().ToString(s_strFormatDbDateTime) + @"',";
+                                strRow += 19.ToString() + @","; //ID_TIME = 1 day
+                                strRow += 1.ToString() + @","; //ID_TIMEZONE = MSK??
+                                strRow += 0.ToString() + @","; //QUALITY
+                                strRow += ((float)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
+                                strRow += @"GETDATE()";
+                                strRow += @"),";
+                                strRows += strRow;
+                            }
+                            else
+                                ; // не найдено соответствие с Id источника
+                        });
+
+                        if (bBreak == true)
+                            break;
                         else
-                            ; // не найдено соответствие с Id источника
+                            ;
                     }
 
                     if (strRows.Equals(string.Empty) == false)

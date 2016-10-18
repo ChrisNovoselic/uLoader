@@ -272,23 +272,23 @@ namespace uLoader
                                 ;
                     } else
                         if (pars.Length > 1) {// 1-ая инициализация
-                            //if (!(roleActived == Pipes.Pipe.Role.Unknown))
+                            if (m_panelCS.Ready > PanelClientServer.ERROR.CRITICAL) {
                                 if (InvokeRequired == true) {
                                     iaRes = BeginInvoke(new DelegateObjectFunc(interactionInitializeComlpeted), m_panelCS.Ready);
                                     //EndInvoke(iaRes);
                                 } else
                                     interactionInitializeComlpeted(m_panelCS.Ready);
-                            //else
-                            //    ;
 
-                            if (!(roleActived == Pipes.Pipe.Role.Client))
-                                if (InvokeRequired == true) {
-                                    iaRes = BeginInvoke(new DelegateFunc(autoStart));
-                                    //EndInvoke(iaRes);
-                                } else
-                                    autoStart();
-                            else
-                                m_statePanelWork = PanelWork.STATE.Paused;
+                                if (!(roleActived == Pipes.Pipe.Role.Client))
+                                    if (InvokeRequired == true) {
+                                        iaRes = BeginInvoke(new DelegateFunc(autoStart));
+                                        //EndInvoke(iaRes);
+                                    } else
+                                        autoStart();
+                                else
+                                    m_statePanelWork = PanelWork.STATE.Paused;
+                            } else
+                                BeginInvoke(new DelegateFunc(delegate { Close(); })); ;
                         } else
                             ;
                     break;

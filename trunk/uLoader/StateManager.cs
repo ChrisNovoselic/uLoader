@@ -20,14 +20,17 @@ namespace uLoader
     {
         public class StateManager
         {
+            private static int MIN_MSEC_TIMERFUNC_UPDATE = 6006;
             /// <summary>
             /// Интервал в милисекундах для проверки меток времени обновления
             /// </summary>
             public static int MSEC_TIMERFUNC_UPDATE = -1;
+
+            private static int MIN_MSEC_WAIT_CONFIRMED = 46006;
             /// <summary>
             /// Интервал времени, в течении которого состояние объекта считать актуальным
             /// </summary>
-            public static int MSEC_CONFIRM_WAIT = -1;
+            public static int MSEC_WAIT_CONFIRMED = -1;
 
             public static int MAX_HISTORY_INFOCRASHED = 6
                 , MAX_COUNT_CRASHED_TO_RELOAD_GROUPSOURCES = 1;
@@ -35,9 +38,12 @@ namespace uLoader
             /// Перечисление - параметры менеджера управления состояниями
             /// </summary>
             private enum INDEX_PARAMETER { UNKNOWN = -1
-                , TIMER_UPDATE
+                //, DEBUG
+                , TIMER_UPDATE, WAIT_CONFIRMED
                 , SHEDULE_TIMESTART, SHEDULE_TIMESPAN
             , COUNT }
+
+            //public bool m_bDebug;
             /// <summary>
             /// Признак необходимости включения в работу менеджера состояний групп сигналов
             /// </summary>
@@ -98,11 +104,11 @@ namespace uLoader
                                     if (values.Length == 2)
                                         if (values[1].Equals(string.Empty) == false)
                                             switch (par) {
+                                                case INDEX_PARAMETER.WAIT_CONFIRMED:
+                                                    MSEC_WAIT_CONFIRMED = (int)new HTimeSpan(values[1]).Value.TotalSeconds * 1000; ;
+                                                    break;
                                                 case INDEX_PARAMETER.TIMER_UPDATE:
-                                                    MSEC_TIMERFUNC_UPDATE = (int)new HTimeSpan(values[1]).Value.TotalSeconds * 1000;
-                                                    //??? почему период ожидания подтверждения РАВЕН интервалу выполнения целевой функции
-                                                    MSEC_CONFIRM_WAIT = MSEC_TIMERFUNC_UPDATE;
-                                                    m_bTurn = !(MSEC_TIMERFUNC_UPDATE < 6006);
+                                                    MSEC_TIMERFUNC_UPDATE = (int)new HTimeSpan(values[1]).Value.TotalSeconds * 1000;                                                    
                                                     break;
                                                 //case INDEX_PARAMETER.SHEDULE_TURN:
                                                 //    break;
@@ -123,6 +129,10 @@ namespace uLoader
                                     break;
                                 } else
                                     ;
+
+                        // таймер включается только если интервал обновления > 6 сек И время ожидания подтверждения состояния > 46 сек
+                        // т.к. иначе проверка работоспособности заблокирует выполнение основного потока
+                        m_bTurn = (!(MSEC_TIMERFUNC_UPDATE < MIN_MSEC_TIMERFUNC_UPDATE)) && (!(MSEC_WAIT_CONFIRMED < MIN_MSEC_WAIT_CONFIRMED));
                     } else
                         ;
                 } catch (Exception e) {
@@ -211,10 +221,12 @@ namespace uLoader
         private class OManagement
         {
             public ID m_id;
+
+            private STATE _state;
             /// <summary>
             /// Текущее состояние объекта контроля
             /// </summary>
-            public STATE m_state;
+            public STATE m_state { get { return _state; } set { if (!(_state == value)) _dtUpdateState = DateTime.Now; else; _state = value; } }
             /// <summary>
             /// Предельный интервал отсутствия обновлений состояния
             /// </summary>
@@ -222,7 +234,13 @@ namespace uLoader
             /// <summary>
             /// Крайнее время обновления
             /// </summary>
-            public DateTime m_dtUpdate;
+            private DateTime _dtUpdateState;
+            /// <summary>
+            /// Крайнее время обновления
+            /// </summary>
+            private DateTime _dtUpdateData;
+
+            public DateTime m_dtUpdate { get { return (_dtUpdateState - _dtUpdateData).TotalSeconds > 0 ? _dtUpdateState : _dtUpdateData; } }
             /// <summary>
             /// Указать, что объект подготовлен к удалению
             /// </summary>
@@ -240,7 +258,23 @@ namespace uLoader
             /// <summary>
             /// Обновить метку времени крайнего обновления
             /// </summary>
-            public void Update() { m_dtUpdate = DateTime.Now; }
+            public void Update() { _dtUpdateData = DateTime.Now; }
+
+            private OManagement()
+            {
+                _state = STATE.ADDED;
+
+                _dtUpdateState =
+                _dtUpdateData =
+                    DateTime.MinValue;
+            }
+
+            public OManagement(ID id, TimeSpan tsLimit) : this()
+            {
+                m_id = id;
+
+                m_tsLimit = tsLimit;
+            }
         }
         ///// <summary>
         ///// Перечисление - состояния для организации контроля списка объектов
@@ -269,7 +303,7 @@ namespace uLoader
                 //        + @", IdOwner=" + id.m_idOwner + @") - ДОБАВЛЕН!");
 
                 if (indx < 0)
-                    this.Add(new OManagement() { m_id = id, m_state = STATE.ADDED, m_tsLimit = tsLimit, m_dtUpdate = DateTime.Now });
+                    this.Add(new OManagement(id, tsLimit));
                 else
                     // предупреждение - такой объект уже контролируется
                     Logging.Logg().Warning(@"HHandlerQueue.ListOManagement::AddItem (IdGrpSgnls=" + id.m_idGroupSgnls
@@ -333,14 +367,13 @@ namespace uLoader
                             this.RemoveAt(indx);
                         else
                             // ошибка - объект не может получить подтверждение
-                            msgErr = @"объект [сост.=" + this[indx].m_state + @"] не может получить подтверждение";
+                            msgErr = string.Format(@"объект [сост.={0}] не может получить подтверждение", this[indx].m_state);
                 else
                     // ошибка - объект для подтверждения состояния не найден
                     msgErr = @"объект для подтверждения состояния не найден";
 
                 if (msgErr.Equals (string.Empty) == false)
-                    Logging.Logg().Error(@"HHandlerQueue.ListOManagement::Confirm (IdGrpSgnls=" + id.m_idGroupSgnls
-                            + @", IdOwner=" + id.m_idOwner + @") - " + msgErr + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Error(string.Format(@"HHandlerQueue.ListOManagement::Confirm (IdGrpSgnls={0}, IdOwner={1}) - {2} ...", id.m_idGroupSgnls, id.m_idOwner, msgErr), Logging.INDEX_MESSAGE.NOT_SET);
                 else
                     ;
             }
@@ -719,20 +752,24 @@ namespace uLoader
                 m_listGroupSources[(int)id.m_typeOwner].Find(g => { return FormMain.FileINI.GetIDIndex (g.m_strID) == id.m_idOwner; });
             string msgDebug = string.Empty;
 
-            arToSend = new object[] {
-                (int)StatesMachine.STATE_CHANGED_GROUP_SIGNALS
-                , id.m_typeOwner
-                , grpSrc.m_strID
-                , grpSrc.GetIdGroupSignals (id.m_idGroupSgnls)
-            };
+            //if (m_stateManager.m_bDebug == false) {
             // поставить в очередь 2 состояния: последовательный останов/запуск группы сигналов
-            Push(null, new object[] {
-                new object[] {
-                    arToSend // для 'STOP'
-                    , arToSend // для 'START'
-                    ,
-                },
-            });
+                arToSend = new object[] {
+                    (int)StatesMachine.STATE_CHANGED_GROUP_SIGNALS
+                    , id.m_typeOwner
+                    , grpSrc.m_strID
+                    , grpSrc.GetIdGroupSignals (id.m_idGroupSgnls)
+                };
+
+                Push(null, new object[] {
+                    new object[] {
+                        arToSend // для 'STOP'
+                        , arToSend // для 'START'
+                        ,
+                    },
+                });
+            //} else
+            //    ;
 
             msgDebug = string.Format(@"HHandlerQueue::pushStateChangedGroupSignals ({0}) - ...", id.ToPrint());
             Logging.Logg().Debug(msgDebug, Logging.INDEX_MESSAGE.NOT_SET);
@@ -752,16 +789,19 @@ namespace uLoader
 
             grpSrc = m_listGroupSources[(int)type].Find(g => { return FormMain.FileINI.GetIDIndex(g.m_strID) == idOwner; });
 
-            Push(null, new object[] {
-                new object[] {
-                    new object [] {
-                        StatesMachine.COMMAND_RELAOD_GROUP_SOURCES
-                        , type
-                        , grpSrc.m_strID
-                    }
-                    ,
-                },
-            });
+            //if (m_stateManager.m_bDebug == false)
+                Push(null, new object[] {
+                    new object[] {
+                        new object [] {
+                            StatesMachine.COMMAND_RELAOD_GROUP_SOURCES
+                            , type
+                            , grpSrc.m_strID
+                        }
+                        ,
+                    },
+                });
+            //else
+            //    ;
 
             id = new ID(new object[] { type, idOwner, -1 });
             msgDebug = string.Format(@"HHandlerQueue::pushCommandReloadGroupSources ({0}) - ...", id.ToPrint());
@@ -828,7 +868,7 @@ namespace uLoader
                         case STATE.ADDED:
                         case STATE.REMOVED:
                         case STATE.CRASH:
-                            msecLimit = StateManager.MSEC_CONFIRM_WAIT;
+                            msecLimit = StateManager.MSEC_WAIT_CONFIRMED;
                             break;
                         default:
                             break;
@@ -871,7 +911,7 @@ namespace uLoader
                         pair.Value.IsForceReload = false;
                         //??? самостоятельно выполнить ремове OManagement
                         m_listObjects.DeleteItems(id);
-                        // выгрузка библиотеки БЕЗ корректного останова
+                        // выгрузка библиотеки АВАРИЙНО (БЕЗ корректного останова)
                         eventCrashed(new EventCrashedArgs(id, true));
                     } else {
 #endif
@@ -879,7 +919,7 @@ namespace uLoader
                         if (listIdCrashed.Count > 0)
 #if _SEPARATE_APPDOMAIN
                             if (listIdCrashed.Count > StateManager.MAX_COUNT_CRASHED_TO_RELOAD_GROUPSOURCES)
-                                // выгрузка библиотеки с корректным остановом
+                                // выгрузка библиотеки ШТАТНО (с корректным остановом)
                                 eventCrashed(new EventCrashedArgs(new ID(new object[] { pair.Key.Key, pair.Key.Value, -1 }), false));
                             else
 #endif

@@ -655,10 +655,14 @@ namespace uLoader.Pipes
 
                             if (!(len < 0)) {
                                 len += ioStream.ReadByte();
-                                inBuffer = new byte[len];
-                                ioStream.Read(inBuffer, 0, len);//Чтение массива байт из потока
+                                if (!(len < 0)) {
+                                    inBuffer = new byte[len];
+                                    ioStream.Read(inBuffer, 0, len);//Чтение массива байт из потока
 
-                                strRes = streamEncoding.GetString(inBuffer);//Возвращаем кодированный в юникод массив байт
+                                    strRes = streamEncoding.GetString(inBuffer);//Возвращаем кодированный в юникод массив байт
+                                } else
+                                // неизвестная длина
+                                    err = ERROR.NEGATIVE_LENGTH;
                             } else {
                             // неизвестная длина
                                 err = ERROR.NEGATIVE_LENGTH;
@@ -1182,33 +1186,30 @@ namespace uLoader.Pipes
                 int len = -1;//длина сообщения
                 byte[] inBuffer = null;
 
-                try
-                {
+                try {
                     if ((ioStream.CanRead == true)
                         //&& (ioStream. == true)
-                        )
-                    {
+                        ) {
                         len = ioStream.ReadByte() * 256; //??? зачем '* 256'                        
 
-                        if (!(len < 0))
-                        {
+                        if (!(len < 0)) {
                             len += ioStream.ReadByte();
-                            inBuffer = new byte[len];
-                            ioStream.Read(inBuffer, 0, len);//Чтение массива байт из потока
+                            if (!(len < 0)) {
+                                inBuffer = new byte[len];
+                                ioStream.Read(inBuffer, 0, len);//Чтение массива байт из потока
 
-                            strRes = streamEncoding.GetString(inBuffer);//Возвращаем кодированный в юникод массив байт
-                        }
-                        else
-                        {// неизвестная длина
+                                strRes = streamEncoding.GetString(inBuffer);//Возвращаем кодированный в юникод массив байт
+                            } else
+                            // неизвестная длина
+                                err = ERROR.NEGATIVE_LENGTH;
+                        } else {
+                        // неизвестная длина
                             err = ERROR.NEGATIVE_LENGTH;
                         }
-                    }
-                    else
+                    } else
                         // не может быть прочитан
                         err = ERROR.NOTCAN_READ;
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     err = ERROR.ANY;
 
                     Logging.Logg().Exception(e, @"Pipes.Server.StreamPipe.StreamString::ReadString () - ...", Logging.INDEX_MESSAGE.NOT_SET);
