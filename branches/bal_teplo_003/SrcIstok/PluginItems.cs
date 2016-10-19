@@ -8,7 +8,7 @@ using System.Globalization;
 using HClassLibrary;
 using uLoaderCommon;
 
-namespace DestIstok
+namespace SrcIstok
 {
     public class PlugIn : PlugInULoaderDest
     {
@@ -19,8 +19,8 @@ namespace DestIstok
         {
             _Id = 207;
 
-            registerType(20701, typeof(DestIstokSql));
-            registerType(20702, typeof(DestIstokDSql));
+            registerType(20701, typeof(SrcIstokSql));
+            registerType(20702, typeof(SrcIstokDSql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)
