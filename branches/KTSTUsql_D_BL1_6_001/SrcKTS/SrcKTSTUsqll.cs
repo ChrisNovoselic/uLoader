@@ -123,7 +123,7 @@ namespace SrcKTS
                 , new DataColumn (@"VALUE", typeof (float))
             });
 
-            foreach (GroupSignalsKTSTUsql.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
+            foreach (GroupSignalsSrc.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
             {
                 if (sgnl.IsFormula == false)
                 {

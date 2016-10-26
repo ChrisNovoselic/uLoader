@@ -127,6 +127,7 @@ namespace SrcKTS
                 {
                     rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal, @"DATETIME");
                     countDay = rowsSgnl.Count() / 48;
+
                     for (int i = 0; i < countDay; i++)
                     {
                         //вывод данных только при полных сутках
@@ -142,8 +143,7 @@ namespace SrcKTS
                             //??? обработка всех последующих строк, а если строк > 2
                             //for (int j = cntHour; j < (cntHour + 47); j++)
                             foreach (DataRow r in rowsSgnl)
-                                dblSumValue += Convert.ToSingle(r[@"VALUE"].ToString());
-                            //Convert.ToSingle(rowsSgnl[j][@"VALUE"].ToString());
+                                    dblSumValue += Convert.ToSingle(r[@"VALUE"].ToString());
 
                             // при необходимости найти среднее
                             if (sgnl.m_bAVG == true)
