@@ -130,7 +130,7 @@ namespace DestTEP32
 
                     foreach (DataRow row in m_DupTables.TableDistinct.Rows)
                     {
-                        iIdToInsert = (int)getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim()));
+                        iIdToInsert = (int)getIdTarget(int.Parse(row[@"ID"].ToString().Trim()));
 
                         if (dtToInsert == null)
                             //grpSignlToDate % m_enumResIDPUT.Count() == 0)

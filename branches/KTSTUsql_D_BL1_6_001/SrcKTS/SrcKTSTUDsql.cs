@@ -69,7 +69,6 @@ namespace SrcKTS
                     else
                         // формула
                         ;
-
                 }
 
                 m_strQuery += @"SELECT idVTI as [ID],idReq,TimeIdx,TimeRTC, DATEADD(Second," + secUTCOffsetToData + ",TimeSQL) as [DATETIME],idState,ValueFl as [VALUE],ValueInt,IsInteger,idUnit"
