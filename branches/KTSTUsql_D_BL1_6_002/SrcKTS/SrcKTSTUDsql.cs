@@ -1,10 +1,7 @@
-﻿using System;
-using System.Globalization;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using HClassLibrary;
+using System;
 using System.Data;
-using HClassLibrary;
+using System.Linq;
 using uLoaderCommon;
 
 namespace SrcKTS
@@ -55,7 +52,6 @@ namespace SrcKTS
                         else
                             if (i == 1)
                             cmd = @"ListAdd";
-                        else;
 
                         m_strQuery += @"exec e6work.dbo.ep_AskVTIdata @cmd='" + cmd + @"',"
                             + @"@idVTI=" + s.m_iIdLocal + @","
@@ -88,22 +84,33 @@ namespace SrcKTS
                 return new SIGNALIdsql(this, (int)objs[0], /*(int)*/objs[2], bool.Parse((string)objs[3]));
             }
 
+            /// <summary>
+            /// Возвратить основной идентификатор по косвенному(связанному) идентификатору
+            /// </summary>
+            /// <param name="id_link">Связанный идентификатор</param>
+            /// <returns>Основной идентификатор (строка или целочисленное значение)</returns>
             protected override object getIdMain(object id_link)
             {
                 throw new NotImplementedException();
             }
         }
 
+        /// <summary>
+        /// Возвратить объект группы сигналов
+        /// </summary>
+        /// <param name="id">Идентификатор группы сишналов</param>
+        /// <param name="objs">Параметры группы сигналов</param>
+        /// <returns>Объект (вновь созданный) группы сигналов</returns>
         protected override GroupSignals createGroupSignals(int id, object[] objs)
         {
             return new GroupSignalsKTSTUDsql(this, id, objs);
         }
 
         /// <summary>
-        /// 
+        /// Преобразовать таблицу к известному(с заранее установленной структурой) виду
         /// </summary>
-        /// <param name="table"></param>
-        protected override void parseValues(System.Data.DataTable table)
+        /// <param name="table">Таблица с данными для преобразования</param>
+        protected override void parseValues(DataTable table)
         {
             DataTable tblRes = new DataTable();
             DataRow[] rowsSgnl = null;
@@ -135,21 +142,16 @@ namespace SrcKTS
                             && (rowsSgnl.Length % 48 == 0))
                         {
                             dtValue = ((DateTime)rowsSgnl[cntHour][@"DATETIME"]).AddMinutes(-30);
-                            //Для обработки метки времени по UTC
-                            //dtValue = dtValue.AddHours((int)rowsSgnl[0][@"UTC_OFFSET"]).AddMinutes(-30);
                             //Вычислить суммарное значение для сигнала
                             dblSumValue = 0F;
-                            //cntRec = 0;
-                            //??? обработка всех последующих строк, а если строк > 2
-                            //for (int j = cntHour; j < (cntHour + 47); j++)
+
                             foreach (DataRow r in rowsSgnl)
-                                    dblSumValue += Convert.ToSingle(r[@"VALUE"].ToString());
+                                dblSumValue += Convert.ToSingle(r[@"VALUE"].ToString());
 
                             // при необходимости найти среднее
                             if (sgnl.m_bAVG == true)
                                 dblSumValue /= rowsSgnl.Length;
-                            else
-                                ;
+
                             // вставить строку
                             tblRes.Rows.Add(new object[] {
                                 sgnl.m_idMain
