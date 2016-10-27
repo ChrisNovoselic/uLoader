@@ -78,6 +78,10 @@ namespace uLoader
         /// </summary>
         public DATETIME_WORK[] m_arWorkIntervals;
         /// <summary>
+        /// Наименование таблицы источника
+        /// </summary>
+        public string m_TableName;
+        /// <summary>
         /// Конструктор - основной (без параметров)
         /// </summary>
         public GROUP_SIGNALS_PARS ()
@@ -362,6 +366,9 @@ namespace uLoader
 
             item.m_iAutoStart = Int32.Parse(vals[pars.IndexOf(@"AUTO_START")]); //AUTO_START
             item.m_bToolsEnabled = bool.Parse(vals[pars.IndexOf(@"TOOLS_ENABLED")]); //TOOLS_ENABLED
+            if(pars.IndexOf(@"TABLE")>0)
+                item.m_TableName = vals[pars.IndexOf(@"TABLE")]; //AUTO_START
+
             if (item is GROUP_SIGNALS_SRC_PARS)
             {
                 item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodMain =
@@ -1101,7 +1108,7 @@ namespace uLoader
                                 , TimeSpan.FromSeconds(grpSgnlsPars.m_arWorkIntervals [(int)mode].m_tsPeriodLocal.Value.TotalSeconds)
                                 , (int)grpSgnlsPars.m_arWorkIntervals [(int)mode].m_tsIntervalLocal.Value.TotalMilliseconds
                                 , srlzFormula
-                                ,
+                                , grpSgnlsPars.m_TableName
                             }
                         };
                 }

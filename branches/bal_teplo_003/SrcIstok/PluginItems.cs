@@ -17,10 +17,10 @@ namespace SrcIstok
         public PlugIn()
             : base()
         {
-            _Id = 207;
+            _Id = 107;
 
-            registerType(20701, typeof(SrcIstokSql));
-            registerType(20702, typeof(SrcIstokDSql));
+            registerType(10710, typeof(SrcIstokSql));
+            registerType(10711, typeof(SrcIstokDSql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

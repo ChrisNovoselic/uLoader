@@ -367,7 +367,7 @@ namespace uLoaderCommon
                 }
             }
 
-            protected class SIGNALMSTKKSNAMEsql : SIGNAL
+            public class SIGNALMSTKKSNAMEsql : SIGNAL
             {
                 public string m_kks_name;
 
@@ -1247,7 +1247,7 @@ namespace uLoaderCommon
                     }
                     else
                         //Повторный опрос
-                        DateTimeBegin = DateTimeBegin.AddMilliseconds(PeriodLocal.TotalMilliseconds);
+                        DateTimeBegin = DateTimeBegin.AddMilliseconds(PeriodMain.TotalMilliseconds);
 
                     iRes = 1;
                 }

@@ -10,184 +10,124 @@ using uLoaderCommon;
 
 namespace SrcIstok
 {
-    public class SrcIstokSql : HHandlerDbULoaderIDDest //HHandlerDbULoaderStatTMMSTDest
+    public class SrcIstokSql : HHandlerDbULoaderDatetimeSrc //HHandlerDbULoaderStatTMMSTDest
     {
-        /// <summary>
-        /// Конструктор - вспомогательный (статическая сборка)
-        /// </summary>
         public SrcIstokSql()
-            : base()
+            : base(@"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.FULL_PERIOD)
         {
+
         }
-        /// <summary>
-        /// Конструктор - основной (динамическая загрузка)
-        /// </summary>
-        /// <param name="iPlugIn">Объект для связи с "родительским" приложением</param>
+
         public SrcIstokSql(PlugInULoader iPlugIn)
-            : base(iPlugIn)
+            : base(iPlugIn, @"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.FULL_PERIOD)
         {
         }
 
-        private class GroupSignalsTEP32sql : GroupSignalsIDDest //GroupSignalsStatTMMSTDest
+        private class GroupSignalsIstokSql : GroupSignalsDatetimeSrc
         {
-            public GroupSignalsTEP32sql(HHandlerDbULoader parent, int id, object[] pars)
+            public GroupSignalsIstokSql(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
+
+            }
+
+            /// <summary>
+            /// Установить содержание для запроса
+            /// </summary>
+            protected override void setQuery()
+            {
+                m_strQuery = string.Empty;
+                long secUTCOffsetToData = m_msecUTCOffsetToServer / 1000;
+
+                if (DateTimeBegin != DateTimeStart)
+                {
+                    DateTimeBegin = DateTimeBegin.AddSeconds(-1 * secUTCOffsetToData);
+                    DateTimeBegin = new DateTime(DateTimeBegin.Year, DateTimeBegin.Month, DateTimeBegin.Day).AddHours(DateTimeBegin.Hour);
+                }
+                else
+                {
+                    DateTimeBegin = DateTimeStart;
+                    DateTimeBegin = new DateTime(DateTimeBegin.Year, DateTimeBegin.Month, DateTimeBegin.Day).AddHours(DateTimeBegin.Hour);
+                }
+
+                string strIds = "SELECT ДатаВремя, ";
+
+                foreach (SIGNALMSTKKSNAMEsql sgnl in m_arSignals)
+                    if (sgnl.IsFormula == false)
+                        strIds += @"" + sgnl.m_kks_name + @",";
+                    else
+                        ; // формула
+                // удалить "лишнюю" запятую
+                strIds = strIds.Substring(0, strIds.Length - 1);
+
+                m_strQuery = strIds
+                        + @" FROM " + NameTable + " WHERE [ДатаВремя] >='" + DateTimeBegin.AddHours(-1) + @"'"
+                        + @" AND [ДатаВремя] <'" + DateTimeBegin + @"'"
+                    ;
             }
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
-                return new SIGNALIDsql(this, (int)objs[0], (int)objs[1], (int)objs[3]);
+                //ID_MAIN, ID_LOCAL, AVG
+                return new SIGNALMSTKKSNAMEsql(this, (int)objs[0], /*(int)*/objs[2]);
             }
 
-            /// <summary>
-            /// Формирование запроса на вставку данных
-            /// </summary>
-            /// <returns></returns>
-            protected override string getTargetValuesQuery()
+            protected override object getIdMain(object id_link)
             {
-                string strRes = string.Empty
-                    , strRows = string.Empty
-                    , strRow = string.Empty;
-                int /*iIdToInsert = -1,*/
-                    iUTCOffsetToDataTotalHours = (int)(_parent as SrcIstokSql).m_tsUTCOffsetToData.Value.TotalHours;
-                DateTime? dtToInsert = null;
-                bool bBreak = false; // признак аварийного завершения цикла
+                throw new NotImplementedException();
+            }
+        }
 
-                //Logging.Logg().Debug(@"GroupSignalsStatIDsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+        protected override HHandlerDbULoader.GroupSignals createGroupSignals(int id, object[] objs)
+        {
+            return new GroupSignalsIstokSql(this, id, objs);
+        }
 
-                if (m_DupTables.TableDistinct.Rows.Count > 0)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="table"></param>
+        protected override void parseValues(System.Data.DataTable table)
+        {
+            DataTable tblRes = new DataTable();
+            DataRow[] rowsSgnl = null;
+            DateTime dtValue;
+            double dblValue = -1F;
+            int countDay = 0;
+
+            tblRes.Columns.AddRange(new DataColumn[] {
+                new DataColumn (@"ID", typeof (int))
+                , new DataColumn (@"DATETIME", typeof (DateTime))
+                , new DataColumn (@"VALUE", typeof (float))
+            });
+
+            if (table.Rows.Count > 0)
+            {
+                foreach (GroupSignalsIstokSql.SIGNALMSTKKSNAMEsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
                 {
-                    strRes = @"INSERT INTO [dbo].[NAMETABLE_INSERT_INTO] ("
-                        + @"[ID_PUT]"
-                        + @",[ID_USER]"
-                        + @",[ID_SOURCE]"
-                        + @",[DATE_TIME]"
-                        + @",[ID_TIME]"
-                        + @",[ID_TIMEZONE]"
-                        + @",[QUALITY]"
-                        + @",[VALUE]"
-                        + @",[WR_DATETIME]"
-                            + @") VALUES";
-
-                    foreach (DataRow row in m_DupTables.TableDistinct.Rows)
+                    foreach (DataRow r in table.Rows)
                     {
-                        (getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) as List<int>).ForEach(iIdToInsert => {
-                            if (dtToInsert == null)
-                                dtToInsert = ((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours);
-                            else
-                                if (dtToInsert.Equals(((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours)) == false) {
-                                    Logging.Logg().Error(@"GroupSignalsTEP32sql::getInsertValuesQuery () - в наборе различные дата/время...", Logging.INDEX_MESSAGE.NOT_SET);
+                        dtValue = DateTime.Parse(r["ДатаВремя"].ToString());
 
-                                    bBreak = true;
-                                } else
-                                    ;
-
-                                if (iIdToInsert > 0) {
-                                    strRow = @"(";
-
-                                    strRow += iIdToInsert + @",";
-                                    //strRow += (_parent as HHandlerDbULoaderStatTMDest).m_strIdTEC + @",";
-                                    strRow += 0.ToString() + @","; //ID_USER
-                                    strRow += m_IdSourceConnSett + @","; //ID_SOURCE
-                                    strRow += @"'" + dtToInsert.GetValueOrDefault().ToString(s_strFormatDbDateTime) + @"',";
-                                    strRow += 13.ToString() + @","; //ID_TIME = 1 ч
-                                    strRow += 0.ToString() + @","; //ID_TIMEZONE = UTC
-                                    strRow += 0.ToString() + @","; //QUALITY
-                                    strRow += ((float)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
-                                    strRow += @"GETDATE()";
-
-                                    strRow += @"),";
-
-                                    strRows += strRow;
-                                } else
-                                    ; // не найдено соответствие с Id источника
-                        }); // анонимная функция
-
-                        if (bBreak == true)
-                            break;
+                        if (sgnl.IsFormula == false)
+                        {
+                            // вставить строку
+                            tblRes.Rows.Add(new object[] {
+                            sgnl.m_idMain
+                            , dtValue
+                            , double.Parse(r[sgnl.m_kks_name].ToString())
+                        });
+                        }
                         else
+                            // формула
+                            continue
                             ;
+
+                        //cntHour = cntHour + 48;//за месяц
+                        base.parseValues(tblRes);
                     }
-
-                    if (strRows.Equals(string.Empty) == false)
-                    {
-                        strRes += strRows;
-
-                        strRes = strRes.Replace(@"NAMETABLE_INSERT_INTO", (_parent as SrcIstokSql).GetNameTable(dtToInsert.GetValueOrDefault()));
-                        //Лишняя ','
-                        strRes = strRes.Substring(0, strRes.Length - 1);
-                    }
-                    else
-                        strRes = string.Empty;
                 }
-                else
-                    ; // нет строк для вставки
-
-                return
-                    //string.Empty
-                    strRes
-                    ;
             }
-
-            /// <summary>
-            /// Формирование запроса на выборку данных по сигналам
-            /// </summary>
-            /// <returns></returns>
-            protected override string getExistsValuesQuery()
-            {
-                string strRes = string.Empty
-                    , strIds = string.Empty;
-
-                foreach (SIGNALIDsql sgnl in m_arSignals)
-                    strIds += sgnl.m_idTarget + @",";
-                // удалить "лишнюю" запятую
-                strIds = strIds.Substring(0, strIds.Length - 1);
-
-                DateTime? dtToSelect = null;
-                //    // т.к. записи в таблице отсортированы по [DATE_TIME]
-                //    DateTimeRangeRecieved.Set((DateTime)value.Rows[0][@"DATETIME"]
-                //        , (DateTime)value.Rows[value.Rows.Count - 1][@"DATETIME"]);                
-                if ((!(TableRecieved == null))
-                    && (TableRecieved.Rows.Count > 0)
-                    && (TableRecieved.Columns.Contains(@"DATETIME") == true))
-                {                    
-                    dtToSelect = ((DateTime)TableRecieved.Rows[0][@"DATETIME"]);
-
-                    strRes = @"SELECT [ID] as [ID_REC]"
-                        + @", [ID_PUT] as [ID]"
-                        + @", [DATE_TIME] as [DATETIME]"
-                        + @", [ID_TIMEZONE]"
-                        + @", [QUALITY]"
-                        + @" FROM [" + (_parent as SrcIstokSql).GetNameTable(dtToSelect.GetValueOrDefault()) + @"]"
-                        + @" WHERE [DATE_TIME]='" + dtToSelect.GetValueOrDefault().ToString(s_strFormatDbDateTime) + @"'"
-                            + @" AND [ID_SOURCE]=" + m_IdSourceConnSett
-                            + @" AND [ID_PUT] IN (" + strIds + @")";
-                }
-                else
-                    ;
-
-                return strRes;
-            }
-        }
-
-        protected override GroupSignals createGroupSignals(int id, object[] objs)
-        {
-            return new GroupSignalsTEP32sql(this, id, objs);
-        }
-
-        public string GetNameTable(DateTime dtInsert)
-        {
-            string strRes = string.Empty;
-
-            if (dtInsert == null)
-                throw new Exception(@"DestTEP32sql::GetNameTable () - невозможно определить наименование таблицы...");
-            else
-                ;
-            
-            strRes = m_strNameTable + @"_" + dtInsert.Year.ToString () + dtInsert.Month.ToString (@"00");
-
-            return strRes;
         }
     }
 }
