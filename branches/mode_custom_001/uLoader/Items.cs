@@ -364,9 +364,17 @@ namespace uLoader
             item.m_bToolsEnabled = bool.Parse(vals[pars.IndexOf(@"TOOLS_ENABLED")]); //TOOLS_ENABLED
             if (item is GROUP_SIGNALS_SRC_PARS)
             {
+                //item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_dtStart = DateTime.Now;
+                //item.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart = DateTime.Now;
+
                 item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodMain =
-                item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodLocal = new HTimeSpan(vals[pars.IndexOf(@"CURINTERVAL_PERIODMAIN")]); //CURINTERVAL_PERIODMAIN
-                item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsIntervalLocal = new HTimeSpan(vals[pars.IndexOf(@"CURINTERVAL_PERIODLOCAL")]); //CURINTERVAL_PERIODLOCAL
+                //item.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriodMain =
+                item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodLocal =
+                //item.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriodLocal =
+                    new HTimeSpan(vals[pars.IndexOf(@"CURINTERVAL_PERIODMAIN")]); //CURINTERVAL_PERIODMAIN
+                item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsIntervalLocal =
+                //item.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsIntervalLocal =
+                    new HTimeSpan(vals[pars.IndexOf(@"CURINTERVAL_PERIODLOCAL")]); //CURINTERVAL_PERIODLOCAL
             }
             else
                 if (item is GROUP_SIGNALS_DEST_PARS)
