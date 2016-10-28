@@ -47,15 +47,14 @@ namespace SrcIstok
                 //перевод даты для суточного набора
                 if (DateTimeStart != DateTimeBegin)
                 {
-                    DateTimeBegin = DateTimeBegin.AddSeconds(-1*secUTCOffsetToData);
                     DateTimeBegin = (DateTimeBegin - DateTimeBegin.TimeOfDay).AddHours(23);
                 }
                 else
                 {
-                    DateTimeBegin = (DateTimeStart - DateTimeStart.TimeOfDay);
+                    DateTimeBegin = (DateTimeStart - DateTimeStart.TimeOfDay).AddHours(-1);
                 }
-
                 
+
                 //Формировать запрос
                 i = 0;
 
@@ -69,7 +68,7 @@ namespace SrcIstok
 
                 m_strQuery += " FROM " + NameTable + " ";
 
-                m_strQuery += @"WHERE ДатаВремя > '"+ DateTimeBeginFormat + "' and ДатаВремя< '"+ DateTimeEndFormat + "'";
+                m_strQuery += @"WHERE ДатаВремя > '"+ DateTimeBegin + "' and ДатаВремя <= '"+ DateTimeBegin.AddDays(PeriodMain.Days) + "'";
 
                 //DateTimeBegin = DateTimeBegin.AddSeconds(secUTCOffsetToData);
                 

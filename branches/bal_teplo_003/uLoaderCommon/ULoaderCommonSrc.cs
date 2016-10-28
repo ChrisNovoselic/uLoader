@@ -1269,7 +1269,7 @@ namespace uLoaderCommon
         private void completeGroupSignalsCurrent()
         {
             if (State == GroupSignals.STATE.SLEEP)
-                if (!((DateTimeBegin + TimeSpan.FromMilliseconds(PeriodLocal.TotalMilliseconds)) > (DateTimeStart + PeriodMain)))
+                if (!((DateTimeBegin + TimeSpan.FromMilliseconds(PeriodMain.TotalMilliseconds)) > (DateTimeStart + PeriodLocal)))
                     ////Поставить в очередь для обработки идентификатор группы сигналов
                     //push(IdGroupSignalsCurrent)
                     ;
