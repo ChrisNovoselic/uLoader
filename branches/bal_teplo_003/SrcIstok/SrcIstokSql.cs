@@ -38,17 +38,8 @@ namespace SrcIstok
             {
                 m_strQuery = string.Empty;
                 long secUTCOffsetToData = m_msecUTCOffsetToServer / 1000;
-
-                if (DateTimeBegin != DateTimeStart)
-                {
-                    DateTimeBegin = DateTimeBegin.AddSeconds(-1 * secUTCOffsetToData);
-                    DateTimeBegin = new DateTime(DateTimeBegin.Year, DateTimeBegin.Month, DateTimeBegin.Day).AddHours(DateTimeBegin.Hour);
-                }
-                else
-                {
-                    DateTimeBegin = DateTimeStart;
-                    DateTimeBegin = new DateTime(DateTimeBegin.Year, DateTimeBegin.Month, DateTimeBegin.Day).AddHours(DateTimeBegin.Hour);
-                }
+                
+                //DateTimeBegin = DateTimeBegin.AddSeconds(-1 * secUTCOffsetToData);
 
                 string strIds = "SELECT ДатаВремя, ";
 
@@ -61,8 +52,8 @@ namespace SrcIstok
                 strIds = strIds.Substring(0, strIds.Length - 1);
 
                 m_strQuery = strIds
-                        + @" FROM " + NameTable + " WHERE [ДатаВремя] >='" + DateTimeBegin.AddHours(-1) + @"'"
-                        + @" AND [ДатаВремя] <'" + DateTimeBegin + @"'"
+                        + @" FROM " + NameTable + " WHERE [ДатаВремя] >='" + DateTimeBegin + @"'"
+                        + @" AND [ДатаВремя] <'" + DateTimeBegin.AddSeconds(PeriodMain.TotalSeconds) + @"'"
                     ;
             }
 
@@ -87,7 +78,7 @@ namespace SrcIstok
         /// 
         /// </summary>
         /// <param name="table"></param>
-        protected override void parseValues(System.Data.DataTable table)
+        protected override void parseValues(DataTable table)
         {
             DataTable tblRes = new DataTable();
             DataRow[] rowsSgnl = null;
@@ -122,11 +113,9 @@ namespace SrcIstok
                             // формула
                             continue
                             ;
-
-                        //cntHour = cntHour + 48;//за месяц
-                        base.parseValues(tblRes);
                     }
                 }
+                base.parseValues(tblRes);
             }
         }
     }

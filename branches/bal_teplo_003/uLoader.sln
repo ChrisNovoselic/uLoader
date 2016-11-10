@@ -31,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DestCurrentValues", "DestCu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SrcIstok", "SrcIstok\SrcIstok.csproj", "{E62D2AB7-6030-43A2-84FE-2201C3F92F5C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SrcVzlet", "SrcVzlet\SrcVzlet.csproj", "{86982D0C-40AC-4253-935F-612FD1DECEDF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -203,6 +205,22 @@ Global
 		{E62D2AB7-6030-43A2-84FE-2201C3F92F5C}.Release|x64.Build.0 = Release|x64
 		{E62D2AB7-6030-43A2-84FE-2201C3F92F5C}.Release|x86.ActiveCfg = Release|x86
 		{E62D2AB7-6030-43A2-84FE-2201C3F92F5C}.Release|x86.Build.0 = Release|x86
+		{86982D0C-40AC-4253-935F-612FD1DECEDF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86982D0C-40AC-4253-935F-612FD1DECEDF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86982D0C-40AC-4253-935F-612FD1DECEDF}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{86982D0C-40AC-4253-935F-612FD1DECEDF}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{86982D0C-40AC-4253-935F-612FD1DECEDF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{86982D0C-40AC-4253-935F-612FD1DECEDF}.Debug|x64.Build.0 = Debug|Any CPU
+		{86982D0C-40AC-4253-935F-612FD1DECEDF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{86982D0C-40AC-4253-935F-612FD1DECEDF}.Debug|x86.Build.0 = Debug|Any CPU
+		{86982D0C-40AC-4253-935F-612FD1DECEDF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86982D0C-40AC-4253-935F-612FD1DECEDF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86982D0C-40AC-4253-935F-612FD1DECEDF}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{86982D0C-40AC-4253-935F-612FD1DECEDF}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{86982D0C-40AC-4253-935F-612FD1DECEDF}.Release|x64.ActiveCfg = Release|Any CPU
+		{86982D0C-40AC-4253-935F-612FD1DECEDF}.Release|x64.Build.0 = Release|Any CPU
+		{86982D0C-40AC-4253-935F-612FD1DECEDF}.Release|x86.ActiveCfg = Release|Any CPU
+		{86982D0C-40AC-4253-935F-612FD1DECEDF}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

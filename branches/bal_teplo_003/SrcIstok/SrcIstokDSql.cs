@@ -68,7 +68,7 @@ namespace SrcIstok
 
                 m_strQuery += " FROM " + NameTable + " ";
 
-                m_strQuery += @"WHERE ДатаВремя > '"+ DateTimeBegin + "' and ДатаВремя <= '"+ DateTimeBegin.AddDays(PeriodMain.Days) + "'";
+                m_strQuery += @"WHERE ДатаВремя > '"+ DateTimeBegin + "' and ДатаВремя <= '"+ DateTimeBegin.AddSeconds(PeriodMain.TotalSeconds) + "'";
 
                 //DateTimeBegin = DateTimeBegin.AddSeconds(secUTCOffsetToData);
                 
