@@ -367,7 +367,7 @@ namespace uLoaderCommon
                 }
             }
 
-            protected class SIGNALMSTKKSNAMEsql : SIGNAL
+            public class SIGNALMSTKKSNAMEsql : SIGNAL
             {
                 public string m_kks_name;
 
@@ -1247,7 +1247,7 @@ namespace uLoaderCommon
                     }
                     else
                         //Повторный опрос
-                        DateTimeBegin = DateTimeBegin.AddMilliseconds(PeriodLocal.TotalMilliseconds);
+                        DateTimeBegin = DateTimeBegin.AddMilliseconds(PeriodMain.TotalMilliseconds);
 
                     iRes = 1;
                 }
@@ -1269,7 +1269,7 @@ namespace uLoaderCommon
         private void completeGroupSignalsCurrent()
         {
             if (State == GroupSignals.STATE.SLEEP)
-                if (!((DateTimeBegin + TimeSpan.FromMilliseconds(PeriodLocal.TotalMilliseconds)) > (DateTimeStart + PeriodMain)))
+                if (!((DateTimeBegin + TimeSpan.FromMilliseconds(PeriodMain.TotalMilliseconds)) > (DateTimeStart + PeriodLocal)))
                     ////Поставить в очередь для обработки идентификатор группы сигналов
                     //push(IdGroupSignalsCurrent)
                     ;

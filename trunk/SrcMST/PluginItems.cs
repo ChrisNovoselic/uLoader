@@ -1,15 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using System.IO; //Path
-using System.Data; //DataTable
-using System.Data.Common; //DbConnection
-using System.Threading;
-
-using HClassLibrary;
-using uLoaderCommon;
+﻿using uLoaderCommon;
 
 namespace SrcMST
 {
@@ -24,6 +13,8 @@ namespace SrcMST
             registerType(10304, typeof(SrcMSTKKSNAMEsql));
             registerType(10307, typeof(SrcMSTKKSNAMEtoris));
             registerType(10308, typeof(SrcMSTASUTPIDT5tg6sql));
+            registerType(10314, typeof(SrcMSTASUTPIdT5tg1Dsql));
+            registerType(10313, typeof(SrcMSTASUTPIdT5tg6Dsql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

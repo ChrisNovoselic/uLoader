@@ -315,7 +315,10 @@ namespace uLoaderCommon
             /// </summary>
             public TimeSpan PeriodLocal { get { return m_tsPeriodLocal; } 
                 set { m_tsPeriodLocal = value; } }
-
+            /// <summary>
+            /// Таблица источника/назначения
+            /// </summary>
+            public string NameTable { get; set; }
             private long m_msecIntervalLocal;
             /// <summary>
             /// Интервал (милисекунды) между опросами значений
@@ -1161,12 +1164,14 @@ namespace uLoaderCommon
                                     m_dictGroupSignals[id].PeriodMain = (TimeSpan)pars[2];
                                     m_dictGroupSignals[id].PeriodLocal = (TimeSpan)pars[3];
                                     m_dictGroupSignals[id].MSecIntervalLocal = (int)pars[4];
+                                    if(pars.Length>=7)
+                                        m_dictGroupSignals[id].NameTable = (string)pars[6];
                                     // инициализация расчетных формул
                                     // только для Source
-                                //}
+                                    //}
 
-                                //Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
-                            }
+                        //Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+                    }
 
                     // = Convert.ToInt32(m_dictAdding[@"UTC_OFFSET"]);
                     m_tsUTCOffset = HTimeSpan.NotValue;

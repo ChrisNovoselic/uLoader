@@ -28,7 +28,7 @@ namespace SrcKTS
             {
             }
 
-            protected override GroupSignals.SIGNAL createSignal(object[] objs)
+            protected override SIGNAL createSignal(object[] objs)
             {
                 //ID_MAIN, ID_LOCAL, AVG
                 return new SIGNALIdsql(this, (int)objs[0], /*(int)*/objs[2], bool.Parse((string)objs[3]));
@@ -99,7 +99,7 @@ namespace SrcKTS
         /// <param name="id">Идентификатор группы сишналов</param>
         /// <param name="objs">Параметры группы сигналов</param>
         /// <returns>Объект (вновь созданный) группы сигналов</returns>
-        protected override HHandlerDbULoader.GroupSignals createGroupSignals(int id, object[] objs)
+        protected override GroupSignals createGroupSignals(int id, object[] objs)
         {
             return new GroupSignalsKTSTUsql(this, id, objs);
         }
@@ -108,7 +108,7 @@ namespace SrcKTS
         /// Преобразовать таблицу к известному(с заранее установленной структурой) виду
         /// </summary>
         /// <param name="table">Таблица с данными для преобразования</param>
-        protected override void parseValues(System.Data.DataTable table)
+        protected override void parseValues(DataTable table)
         {
             //base.parseValues (table);
 
@@ -123,7 +123,7 @@ namespace SrcKTS
                 , new DataColumn (@"VALUE", typeof (float))
             });
 
-            foreach (GroupSignalsKTSTUsql.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
+            foreach (GroupSignalsSrc.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
             {
                 if (sgnl.IsFormula == false)
                 {

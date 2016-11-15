@@ -1,11 +1,4 @@
-﻿using System;
-using System.Globalization;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Data;
-using HClassLibrary;
-using uLoaderCommon;
+﻿using uLoaderCommon;
 
 namespace SrcKTS
 {
@@ -18,6 +11,7 @@ namespace SrcKTS
 
             registerType(10202, typeof(SrcKTSTUsql));
             registerType(10209, typeof(SrcKTSTUDsql));
+            registerType(10212, typeof(SrcKTSTUDsql_BL_2_5));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

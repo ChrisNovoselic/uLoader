@@ -898,7 +898,7 @@ namespace uLoaderCommon
             {
                 List<int> listRes = new List<int> ();
 
-                (m_arSignals as SIGNALIDsql[]).ToList ().ForEach(sgnl => { if (sgnl.m_idLink == idLink) listRes.Add(sgnl.m_idTarget); else; });
+                (m_arSignals).ToList ().ForEach(sgnl => { if ((sgnl as SIGNALIDsql).m_idLink == idLink) listRes.Add((sgnl as SIGNALIDsql).m_idTarget); else; });
 
                 if (listRes.Count == 0)
                     Logging.Logg().Warning(@"GroupSignalsIDDest::getIdTarget (idLink=" + idLink + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);

@@ -13,31 +13,32 @@ using uLoaderCommon;
 
 namespace SrcMST
 {
-    public class SrcMSTASUTPIDT5tg1sql : HHandlerDbULoaderMSTIDsql
+   public class SrcMSTASUTPIdT5tg1Dsql : HHandlerDbULoaderMSTIDsql
     {
-        private enum MODE_WHERE_DATETIME : short { UNKNOWN = -1
-            , BETWEEN_0_0, BETWEEN_1_0, BETWEEN_0_1 // использовать 'BETWEEN' - ВКЛючить значения для левой, правой границам
-            , IN_IN_0_0, IN_IN_1_0, IN_IN_0_1 // принудительное указание ВКЛючения значений для левой, правой границам
-            , EX_EX_0_0, EX_EX_1_0, EX_EX_0_1 // принудительное указание ИСКЛючения значений для левой, правой границам
-            , IN_EX_0_0, IN_EX_1_0, IN_EX_0_1 // принудительное указание ВКЛючения значений для левой, ИСКЛючения значений для правой границам
-                , COUNT
+        private enum MODE_WHERE_DATETIME : short
+        {
+            UNKNOWN = -1,
+            BETWEEN_0_0, BETWEEN_1_0, BETWEEN_0_1, // использовать 'BETWEEN' - ВКЛючить значения для левой, правой границам, IN_IN_0_0, IN_IN_1_0, IN_IN_0_1 // принудительное указание ВКЛючения значений для левой, правой границам
+            EX_EX_0_0, EX_EX_1_0, EX_EX_0_1, // принудительное указание ИСКЛючения значений для левой, правой границам
+            IN_EX_0_0, IN_EX_1_0, IN_EX_0_1, // принудительное указание ВКЛючения значений для левой, ИСКЛючения значений для правой границам
+            COUNT
         }
 
         private MODE_WHERE_DATETIME _modeWhereDatetime;
 
-        public SrcMSTASUTPIDT5tg1sql(PlugInULoader plugIn)
+        public SrcMSTASUTPIdT5tg1Dsql(PlugInULoader plugIn)
             : base(plugIn, MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
         {
         }
 
-        public SrcMSTASUTPIDT5tg1sql()
+        public SrcMSTASUTPIdT5tg1Dsql()
             : base(MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
         {
         }
-        
-        protected override HHandlerDbULoader.GroupSignals createGroupSignals(int id, object[] objs)
+
+        protected override GroupSignals createGroupSignals(int id, object[] objs)
         {
-            return new GroupSignalsMSTASUTPT5tg1IDsql(this, id, objs);
+            return new GroupSignalsMSTASUTPT5tg1IDsqlD(this, id, objs);
         }
 
         protected override void Initialize()
@@ -53,13 +54,11 @@ namespace SrcMST
 
             if (m_dictAdding.ContainsKey(@"WHERE_DATETIME") == true)
                 _modeWhereDatetime = (MODE_WHERE_DATETIME)Convert.ToInt16(m_dictAdding[@"WHERE_DATETIME"]);
-            else
-                ;
 
             return iRes;
         }
 
-        protected override void parseValues(System.Data.DataTable table)
+        protected override void parseValues(DataTable table)
         {
             //base.parseValues (table);
 
@@ -68,7 +67,7 @@ namespace SrcMST
             DateTime dtValue;
             double dblSumValue = -1F;
             int iHour = -1
-                ,iHourAdding = -1;
+                , iHourAdding = -1;
 
             tblRes.Columns.AddRange(new DataColumn[] {
                 new DataColumn (@"ID", typeof (int))
@@ -76,7 +75,7 @@ namespace SrcMST
                 , new DataColumn (@"VALUE", typeof (float))
             });
 
-            foreach (GroupSignalsMSTIDsql.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
+            foreach (GroupSignalsSrc.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
             {
                 try
                 {
@@ -86,8 +85,8 @@ namespace SrcMST
 
                         if ((rowsSgnl.Length > 0)
                             //??? если строк > 1
-                            && (((int)rowsSgnl[0][@"CNT"] % 60) == 0))
-                        {// только при кол-ве записей = 60 (все минуты часа)
+                            && (((int)rowsSgnl[0][@"CNT"] % 24) == 0))
+                        {// только при кол-ве записей = 24 (все часы)
                             iHourAdding = 0;
                             iHour = (int)rowsSgnl[0][@"HOUR"];
                             if (iHour > 23)
@@ -107,7 +106,7 @@ namespace SrcMST
 
                             // при необходимости найти среднее
                             if (sgnl.m_bAVG == true)
-                                dblSumValue /= 60; //cntRec
+                                dblSumValue /= 24; //cntRec
                             else
                                 ;
                             // вставить строку
@@ -126,18 +125,19 @@ namespace SrcMST
                 }
                 catch (Exception e)
                 {
-                    Logging.Logg().Exception(e, @"SrcMSTASUTPIDT5tg1sql:: parseValues (sgnl.Id=" + sgnl.m_idMain + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Exception(e, @"SrcMSTASUTPIDT5tg1sqlD:: parseValues (sgnl.Id=" + sgnl.m_idMain + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
 
             base.parseValues(tblRes);
         }
 
-        private class GroupSignalsMSTASUTPT5tg1IDsql : GroupSignalsMSTIDsql
+        private class GroupSignalsMSTASUTPT5tg1IDsqlD : GroupSignalsMSTIDsql
         {
-            public GroupSignalsMSTASUTPT5tg1IDsql(HHandlerDbULoader parent, int id, object[] pars)
+            public GroupSignalsMSTASUTPT5tg1IDsqlD(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
+
             }
 
             protected override void setQuery()
@@ -147,11 +147,19 @@ namespace SrcMST
                     , strWhereDatetime = string.Empty;
                 int offsetHour = 0;
                 bool bOffsetOutInclude = true;
+                long secUTCOffsetToData = m_msecUTCOffsetToServer / 1000;
+
+                //перевод даты для суточного набора
+                if (DateTimeStart != DateTimeBegin)
+                    DateTimeBegin = (DateTimeBegin - DateTimeBegin.TimeOfDay).AddDays(PeriodMain.Days);
+                else
+                    DateTimeBegin = (DateTimeStart - DateTimeStart.TimeOfDay);
 
                 if ((_parent as HHandlerDbULoaderSrc).Mode == MODE_WORK.CUR_INTERVAL)
                     offsetHour = -1;
                 else
                     ;
+                //offsetHour = (int)secUTCOffsetToData / 120;
 
                 foreach (SIGNALIdsql sgnl in m_arSignals)
                     if (sgnl.IsFormula == false)
@@ -161,7 +169,7 @@ namespace SrcMST
                 // удалить "лишнюю" запятую
                 strIds = strIds.Substring(0, strIds.Length - 1);
 
-                switch ((_parent as SrcMSTASUTPIDT5tg1sql)._modeWhereDatetime)
+                switch ((_parent as SrcMSTASUTPIdT5tg1Dsql)._modeWhereDatetime)
                 {
                     case MODE_WHERE_DATETIME.IN_EX_0_0:
                     case MODE_WHERE_DATETIME.IN_EX_1_0:
@@ -178,7 +186,7 @@ namespace SrcMST
                         break;
                 }
                 // определить содержание 'where'
-                switch ((_parent as SrcMSTASUTPIDT5tg1sql)._modeWhereDatetime)
+                switch ((_parent as SrcMSTASUTPIdT5tg1Dsql)._modeWhereDatetime)
                 {
                     case MODE_WHERE_DATETIME.IN_EX_0_0:
                         strWhereDatetime = @" [last_changed_at] >= DATEADD(HOUR, " + offsetHour + @", CAST('" + DateTimeBeginFormat + @"' as datetime))"
@@ -202,15 +210,15 @@ namespace SrcMST
                         + @", DATEPART(DAY, MAX([last_changed_at])) as [DAY]"
                         //+ @", (DATEPART(HOUR, MAX([last_changed_at])) + 1) as [HOUR]"
                         + @", (DATEPART(HOUR, MAX([last_changed_at])) + " + (bOffsetOutInclude == false ? 1 : 0) + @") as [HOUR]"
-                    + @" FROM [dbo].[states_real_his_0]"
-                    + @" WHERE"                            
+                    + @" FROM [dbo].[states_real_his_2]"
+                    + @" WHERE"
                         + strWhereDatetime
                         + @" AND [ID] IN (" + strIds + @")"
                     + @" GROUP BY [ID]"
-                        //+ @", DATEPART(YYYY, [last_changed_at])"
-                        //+ @", DATEPART(MM, [last_changed_at])"
-                        //+ @", DATEPART(dd, [last_changed_at])"
-                        //+ @", DATEPART(HH, [last_changed_at])"
+                    //+ @", DATEPART(YYYY, [last_changed_at])"
+                    //+ @", DATEPART(MM, [last_changed_at])"
+                    //+ @", DATEPART(dd, [last_changed_at])"
+                    //+ @", DATEPART(HH, [last_changed_at])"
                     ;
             }
         }
