@@ -100,7 +100,7 @@ namespace SrcMST
                                 , (int)rowsSgnl[0][@"DAY"]
                                 , iHour
                                 , 0
-                                , 0).AddHours(iHourAdding);
+                                , 0).AddHours(iHourAdding) + m_tsUTCOffsetToServer.Value;
 
                             dblSumValue = (double)rowsSgnl[0][@"VALUE"];
 
@@ -151,7 +151,7 @@ namespace SrcMST
 
                 //перевод даты для суточного набора
                 if (DateTimeStart != DateTimeBegin)
-                    DateTimeBegin = (DateTimeBegin - DateTimeBegin.TimeOfDay).AddDays(PeriodMain.Days);
+                    DateTimeBegin = (DateTimeBegin - DateTimeBegin.TimeOfDay)/*.AddDays(PeriodMain.Days)*/;
                 else
                     DateTimeBegin = (DateTimeStart - DateTimeStart.TimeOfDay);
 

@@ -963,7 +963,7 @@ namespace uLoaderCommon
                             msecDiff += (long)(PeriodMain.TotalMilliseconds); //'PeriodLocal' тоже валиден, т.к. они равны                         
                             break;
                         case MODE_WORK.COSTUMIZE:
-                            msecDiff += (long)(PeriodLocal.TotalMilliseconds);
+                            msecDiff += (long)(PeriodMain.TotalMilliseconds);
                             break;
                         default:
                             break;

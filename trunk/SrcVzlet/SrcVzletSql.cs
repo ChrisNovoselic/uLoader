@@ -50,7 +50,7 @@ namespace SrcVzlet
                     dt_begin = dt_begin.AddSeconds(-dt_begin.Second);
                     dt_begin = dt_begin.AddMilliseconds(-dt_begin.Millisecond);
                     dt_begin = dt_begin.AddSeconds(- secUTCOffsetToData + secUTCOffsetToServer);
-                    //dt_begin = dt_begin.AddDays(PeriodMain.Days);
+                    dt_begin = dt_begin.AddDays(PeriodMain.Days);
 
                     dt_end = DateTime.Parse(DateTimeEndFormat);
                     dt_end = dt_end.AddHours(-dt_end.Hour);
@@ -58,7 +58,7 @@ namespace SrcVzlet
                     dt_end = dt_end.AddSeconds(-dt_end.Second);
                     dt_end = dt_end.AddMilliseconds(-dt_end.Millisecond);
                     dt_end = dt_end.AddSeconds(- secUTCOffsetToData + secUTCOffsetToServer);
-                    //dt_end = dt_begin.AddDays(PeriodMain.Days);
+                    dt_end = dt_begin.AddDays(PeriodMain.Days);
                 }
                 else
                 {
@@ -78,9 +78,9 @@ namespace SrcVzlet
 
 
                 string strIds =
-  "select * from (SELECT[KKS_NAME], SUM(VALUE) as VALUE, '" + dt_end.ToString("yyyy.MM.dd H:mm:ss") + @"' as [DATETIME] "
+  "select * from (SELECT[KKS_NAME], SUM(VALUE) as VALUE, '" + dt_end.ToString("yyyy.MM.dd H:mm:ss") + @"' as [DATETIME], COUNT(VALUE) as [COUNT] "
   + "FROM " + NameTable
-  + " where[DATETIME] >= '" + dt_begin.ToString("yyyy.MM.dd H:mm:ss") + @"' and [DATETIME] < '" + dt_end/*.AddSeconds(PeriodMain.TotalSeconds)*/.ToString("yyyy.MM.dd H:mm:ss") + @"'"
+  + " where[DATETIME] >= '" + dt_begin.ToString("yyyyMMdd H:mm:ss") + @"' and [DATETIME] < '" + dt_end.ToString("yyyyMMdd H:mm:ss") + @"'"
   + " and KKS_NAME in ('T5#ASKUTE_G_COLDWATER', 'T5#ASKUTE_G_DVL', 'T5#ASKUTE_G_DVP', 'T5#ASKUTE_G_OBR_1B', 'T5#ASKUTE_G_OBR_2B'"
   + ", 'T5#ASKUTE_G_OBR_3B', 'T5#ASKUTE_G_OBR_4B', 'T5#ASKUTE_G_OBR_5B', 'T5#ASKUTE_G_OBR_IBK', 'T5#ASKUTE_G_OBR_OMTC', 'T5#ASKUTE_G_OBR_OVK'"
   + ", 'T5#ASKUTE_G_OBR_PERVOM', 'T5#ASKUTE_G_OBR_PVK', 'T5#ASKUTE_G_OBR_STOL', 'T5#ASKUTE_G_OBR_STROY', 'T5#ASKUTE_G_OBR_STROY2'"
@@ -88,9 +88,9 @@ namespace SrcVzlet
   + ", 'T5#ASKUTE_G_POD_IBK', 'T5#ASKUTE_G_POD_OMTC', 'T5#ASKUTE_G_POD_OVK', 'T5#ASKUTE_G_POD_PERVOM', 'T5#ASKUTE_G_POD_PVK', 'T5#ASKUTE_G_POD_STOL'"
   + ", 'T5#ASKUTE_G_POD_STROY', 'T5#ASKUTE_G_POD_STROY2', 'T5#ASKUTE_G_PODPIT') group by KKS_NAME union"
   
-  + " SELECT [KKS_NAME], AVG(VALUE) as VALUE, '" + dt_end.ToString("yyyy.MM.dd H:mm:ss") + @"' as [DATETIME] "
+  + " SELECT [KKS_NAME], AVG(VALUE) as VALUE, '" + dt_end.ToString("yyyy.MM.dd H:mm:ss") + @"' as [DATETIME], COUNT(VALUE) as [COUNT] "
   + " FROM " + NameTable
-  + " where[DATETIME] >= '" + dt_begin.ToString("yyyy.MM.dd H:mm:ss") + @"' and [DATETIME] < '" + dt_end/*.AddSeconds(PeriodMain.TotalSeconds)*/.ToString("yyyy.MM.dd H:mm:ss") + @"'"
+  + " where[DATETIME] >= '" + dt_begin.ToString("yyyyMMdd H:mm:ss") + @"' and [DATETIME] < '" + dt_end.ToString("yyyyMMdd H:mm:ss") + @"'"
   + " and KKS_NAME in ('T5#ASKUTE_H_LEVEL_PODPIT2','T5#ASKUTE_H_LEVEL_PODPIT1','T5#ASKUTE_P_COLDWATER','T5#ASKUTE_P_EXT_AIR_KTS','T5#ASKUTE_P_OBR_1B','T5#ASKUTE_P_OBR_2B','T5#ASKUTE_P_OBR_3B','T5#ASKUTE_P_OBR_4B'"
   + ",'T5#ASKUTE_P_OBR_5B','T5#ASKUTE_P_OBR_IBK','T5#ASKUTE_P_OBR_OMTC','T5#ASKUTE_P_OBR_OVK','T5#ASKUTE_P_OBR_PERVOM','T5#ASKUTE_P_OBR_PVK'"
   + ",'T5#ASKUTE_P_OBR_STOL','T5#ASKUTE_P_OBR_STROY','T5#ASKUTE_P_OBR_STROY2','T5#ASKUTE_P_POD_1B','T5#ASKUTE_P_POD_2B','T5#ASKUTE_P_POD_3B'"
@@ -141,9 +141,19 @@ namespace SrcVzlet
             DataRow[] rowsSgnl = null;
             DateTime dtValue;
             double dblValue = -1F;
-            int countDay = 0;
+            int countRow = 0;
 
-            tblRes.Columns.AddRange(new DataColumn[] {
+            if (PeriodMain.Days >= 1)
+            {
+                countRow = 1440;
+            }
+            else
+            {
+                countRow = 60;
+            }
+
+
+                tblRes.Columns.AddRange(new DataColumn[] {
                 new DataColumn (@"ID", typeof (int))
                 , new DataColumn (@"DATETIME", typeof (DateTime))
                 , new DataColumn (@"VALUE", typeof (float))
@@ -158,23 +168,25 @@ namespace SrcVzlet
                     {
                         foreach (DataRow r in rows)
                         {
-                            dtValue = DateTime.Parse(r["DATETIME"].ToString());
-                            dtValue = dtValue + m_tsUTCOffsetToData.Value;
-
-
-                            if (sgnl.IsFormula == false)
-                            {
-                                // вставить строку
-                                tblRes.Rows.Add(new object[] {
-                            sgnl.m_idMain
-                            , dtValue
-                            , double.Parse(r["VALUE"].ToString())
-                        });
-                            }
-                            else
-                                // формула
-                                continue
-                                ;
+                            //if (int.Parse(r["COUNT"].ToString()) > countRow)//???проверка кол-ва строк
+                            //{
+                                dtValue = DateTime.Parse(r["DATETIME"].ToString());
+                                dtValue = dtValue + m_tsUTCOffsetToData.Value;
+                                
+                                if (sgnl.IsFormula == false)
+                                {
+                                    // вставить строку
+                                    tblRes.Rows.Add(new object[] {
+                                    sgnl.m_idMain
+                                    , dtValue
+                                    , double.Parse(r["VALUE"].ToString())
+                                    });
+                                }
+                                else
+                                    // формула
+                                    continue
+                                    ;
+                            //}
                         }
                     }
                 }
