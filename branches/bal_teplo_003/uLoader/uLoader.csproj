@@ -203,6 +203,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="FileINI\setup_bal_teplo_tec5.ini" />
     <None Include="FileINI\setup_biysktmora.ini" />
     <None Include="FileINI\setup_istok_tec5.ini" />
     <None Include="FileINI\setup_ktstudsql.ini" />
