@@ -141,7 +141,7 @@ namespace SrcKTS
                         if ((rowsSgnl.Length > 0)
                             && (rowsSgnl.Length % 48 == 0))
                         {
-                            dtValue = ((DateTime)rowsSgnl[cntHour*2-1][@"DATETIME"]).AddMinutes(-30);
+                            dtValue = ((DateTime)rowsSgnl[cntHour*2-1][@"DATETIME"]);
                             //Вычислить суммарное значение для сигнала
                             dblSumValue = 0F;
 
