@@ -50,7 +50,7 @@ namespace SrcVzlet
                     dt_begin = dt_begin.AddSeconds(-dt_begin.Second);
                     dt_begin = dt_begin.AddMilliseconds(-dt_begin.Millisecond);
                     dt_begin = dt_begin.AddSeconds(- secUTCOffsetToData + secUTCOffsetToServer);
-                    dt_begin = dt_begin.AddDays(PeriodMain.Days);
+                    //dt_begin = dt_begin.AddDays(PeriodMain.Days);
 
                     dt_end = DateTime.Parse(DateTimeEndFormat);
                     dt_end = dt_end.AddHours(-dt_end.Hour);
@@ -58,7 +58,7 @@ namespace SrcVzlet
                     dt_end = dt_end.AddSeconds(-dt_end.Second);
                     dt_end = dt_end.AddMilliseconds(-dt_end.Millisecond);
                     dt_end = dt_end.AddSeconds(- secUTCOffsetToData + secUTCOffsetToServer);
-                    dt_end = dt_begin.AddDays(PeriodMain.Days);
+                    //dt_end = dt_begin.AddDays(PeriodMain.Days);
                 }
                 else
                 {
