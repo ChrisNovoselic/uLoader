@@ -126,13 +126,13 @@ namespace SrcKTS
                 , new DataColumn (@"VALUE", typeof (float))
             });
 
-            int cntHour = 0;
+            int cntHour = 24;
 
             foreach (GroupSignalsSrc.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
             {
                 if (sgnl.IsFormula == false)
                 {
-                    rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal, @"DATETIME");
+                    rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal, @"DATETIME");//???добавить сутки для архивной метки времени?
                     countDay = rowsSgnl.Count() / 48;
 
                     for (int i = 0; i < countDay; i++)
@@ -141,7 +141,7 @@ namespace SrcKTS
                         if ((rowsSgnl.Length > 0)
                             && (rowsSgnl.Length % 48 == 0))
                         {
-                            dtValue = ((DateTime)rowsSgnl[cntHour][@"DATETIME"]).AddMinutes(-30);
+                            dtValue = ((DateTime)rowsSgnl[cntHour*2-1][@"DATETIME"]).AddMinutes(-30);
                             //Вычислить суммарное значение для сигнала
                             dblSumValue = 0F;
 
