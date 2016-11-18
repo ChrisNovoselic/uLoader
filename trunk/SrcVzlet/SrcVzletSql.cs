@@ -78,16 +78,21 @@ namespace SrcVzlet
 
 
                 string strIds =
-  "select * from (SELECT[KKS_NAME], SUM(VALUE) as VALUE, '" + dt_end.ToString("yyyy.MM.dd H:mm:ss") + @"' as [DATETIME], COUNT(VALUE) as [COUNT] "
-  + "FROM " + NameTable
-  + " where[DATETIME] >= '" + dt_begin.ToString("yyyyMMdd H:mm:ss") + @"' and [DATETIME] < '" + dt_end.ToString("yyyyMMdd H:mm:ss") + @"'"
-  + " and KKS_NAME in ('T5#ASKUTE_G_COLDWATER', 'T5#ASKUTE_G_DVL', 'T5#ASKUTE_G_DVP', 'T5#ASKUTE_G_OBR_1B', 'T5#ASKUTE_G_OBR_2B'"
-  + ", 'T5#ASKUTE_G_OBR_3B', 'T5#ASKUTE_G_OBR_4B', 'T5#ASKUTE_G_OBR_5B', 'T5#ASKUTE_G_OBR_IBK', 'T5#ASKUTE_G_OBR_OMTC', 'T5#ASKUTE_G_OBR_OVK'"
-  + ", 'T5#ASKUTE_G_OBR_PERVOM', 'T5#ASKUTE_G_OBR_PVK', 'T5#ASKUTE_G_OBR_STOL', 'T5#ASKUTE_G_OBR_STROY', 'T5#ASKUTE_G_OBR_STROY2'"
-  + ", 'T5#ASKUTE_G_PITVODA', 'T5#ASKUTE_G_POD_1B', 'T5#ASKUTE_G_POD_2B', 'T5#ASKUTE_G_POD_3B', 'T5#ASKUTE_G_POD_4B', 'T5#ASKUTE_G_POD_5B'"
-  + ", 'T5#ASKUTE_G_POD_IBK', 'T5#ASKUTE_G_POD_OMTC', 'T5#ASKUTE_G_POD_OVK', 'T5#ASKUTE_G_POD_PERVOM', 'T5#ASKUTE_G_POD_PVK', 'T5#ASKUTE_G_POD_STOL'"
-  + ", 'T5#ASKUTE_G_POD_STROY', 'T5#ASKUTE_G_POD_STROY2', 'T5#ASKUTE_G_PODPIT') group by KKS_NAME union"
-  
+  "DECLARE @dtReq DateTime SELECT @dtReq = CAST('" + dt_end.ToString("yyyyMMdd H:mm:ss") + @"' as dateTime)"
++ " select * from (SELECT [KKS_NAME], SUM(VALUE) as VALUE, @dtReq as [DATETIME], COUNT(VALUE)*60 as [COUNT] "
++ " from( SELECT[KKS_NAME], AVG(VALUE) as VALUE, DATEADD(MINUTE, (DATEDIFF(MINUTE, DATEADD(DAY, -1, @dtReq), [DATETIME]) / 60) * 60, DATEADD(DAY, -1, @dtReq)) as [DATETIME], COUNT(VALUE) as [COUNT] FROM "
++ NameTable 
++ " where [DATETIME] >= DATEADD(DAY, -1, @dtReq) and [DATETIME] < @dtReq"
++ " and KKS_NAME in" 
++ " ('T5#ASKUTE_G_COLDWATER', 'T5#ASKUTE_G_DVL', 'T5#ASKUTE_G_DVP', 'T5#ASKUTE_G_OBR_1B', 'T5#ASKUTE_G_OBR_2B'"
++ " , 'T5#ASKUTE_G_OBR_3B', 'T5#ASKUTE_G_OBR_4B', 'T5#ASKUTE_G_OBR_5B', 'T5#ASKUTE_G_OBR_IBK', 'T5#ASKUTE_G_OBR_OMTC', 'T5#ASKUTE_G_OBR_OVK'"
++ " , 'T5#ASKUTE_G_OBR_PERVOM', 'T5#ASKUTE_G_OBR_PVK', 'T5#ASKUTE_G_OBR_STOL', 'T5#ASKUTE_G_OBR_STROY', 'T5#ASKUTE_G_OBR_STROY2'"
++ " , 'T5#ASKUTE_G_PITVODA', 'T5#ASKUTE_G_POD_1B', 'T5#ASKUTE_G_POD_2B', 'T5#ASKUTE_G_POD_3B', 'T5#ASKUTE_G_POD_4B', 'T5#ASKUTE_G_POD_5B'"
++ " , 'T5#ASKUTE_G_POD_IBK', 'T5#ASKUTE_G_POD_OMTC', 'T5#ASKUTE_G_POD_OVK', 'T5#ASKUTE_G_POD_PERVOM', 'T5#ASKUTE_G_POD_PVK', 'T5#ASKUTE_G_POD_STOL'"
++ " , 'T5#ASKUTE_G_POD_STROY', 'T5#ASKUTE_G_POD_STROY2', 'T5#ASKUTE_G_PODPIT')"
++ " group by KKS_NAME, DATEADD(MINUTE, (DATEDIFF(MINUTE, DATEADD(DAY, -1, @dtReq), [DATETIME]) / 60) * 60, DATEADD(DAY, -1, @dtReq))) as VZLET"
++ " group by KKS_NAME union"
+
   + " SELECT [KKS_NAME], AVG(VALUE) as VALUE, '" + dt_end.ToString("yyyy.MM.dd H:mm:ss") + @"' as [DATETIME], COUNT(VALUE) as [COUNT] "
   + " FROM " + NameTable
   + " where[DATETIME] >= '" + dt_begin.ToString("yyyyMMdd H:mm:ss") + @"' and [DATETIME] < '" + dt_end.ToString("yyyyMMdd H:mm:ss") + @"'"
