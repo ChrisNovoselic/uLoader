@@ -89,7 +89,7 @@ namespace SrcKTS
                         ;
                 }
 
-                m_strQuery += @"SELECT idVTI as [ID],idReq,TimeIdx,TimeRTC, DATEADD(Second," + secUTCOffsetToData + ",TimeSQL) as [DATETIME],idState,ValueFl as [VALUE],ValueInt,IsInteger,idUnit"
+                m_strQuery += @"SELECT idVTI as [ID], idReq, TimeIdx, TimeRTC, DATEADD(Second," + secUTCOffsetToData + ",TimeSQL) as [DATETIME], idState, ValueFl as [VALUE], ValueInt,IsInteger, idUnit"
                         + @", DATEDIFF(HH, GETDATE(), GETUTCDATE()) as [UTC_OFFSET]"
                     + @" FROM e6work.dbo.VTIdataList"
                     + @" WHERE idReq=" + idReq

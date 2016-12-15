@@ -30,13 +30,15 @@ namespace SrcVzlet
             {
 
             }
-
             /// <summary>
             /// Установить содержание для запроса
             /// </summary>
             protected override void setQuery()
             {
                 m_strQuery = string.Empty;
+                string strSumIds = string.Empty
+                    , strAVGIds = string.Empty;
+
                 long secUTCOffsetToData = m_msecUTCOffsetToData / 1000;
                 long secUTCOffsetToServer = m_msecUTCOffsetToServer / 1000;
 
@@ -44,85 +46,75 @@ namespace SrcVzlet
 
                 if (PeriodMain.Days >= 1)
                 {
-                    dt_begin = DateTime.Parse(DateTimeBeginFormat);
-                    dt_begin = dt_begin.AddHours(-dt_begin.Hour);
-                    dt_begin = dt_begin.AddMinutes(-dt_begin.Minute);
-                    dt_begin = dt_begin.AddSeconds(-dt_begin.Second);
-                    dt_begin = dt_begin.AddMilliseconds(-dt_begin.Millisecond);
+                    dt_begin = DateTime.Parse(DateTimeBeginFormat).Date;
+                    //dt_begin = dt_begin.AddHours(-dt_begin.Hour);
+                    //dt_begin = dt_begin.AddMinutes(-dt_begin.Minute);
+                    //dt_begin = dt_begin.AddSeconds(-dt_begin.Second);
+                    //dt_begin = dt_begin.AddMilliseconds(-dt_begin.Millisecond);
                     dt_begin = dt_begin.AddSeconds(- secUTCOffsetToData + secUTCOffsetToServer);
                     //dt_begin = dt_begin.AddDays(PeriodMain.Days);
 
-                    dt_end = DateTime.Parse(DateTimeEndFormat);
-                    dt_end = dt_end.AddHours(-dt_end.Hour);
-                    dt_end = dt_end.AddMinutes(-dt_end.Minute);
-                    dt_end = dt_end.AddSeconds(-dt_end.Second);
-                    dt_end = dt_end.AddMilliseconds(-dt_end.Millisecond);
+                    dt_end = DateTime.Parse(DateTimeEndFormat).Date;
+                    //dt_end = dt_end.AddHours(-dt_end.Hour);
+                    //dt_end = dt_end.AddMinutes(-dt_end.Minute);
+                    //dt_end = dt_end.AddSeconds(-dt_end.Second);
+                    //dt_end = dt_end.AddMilliseconds(-dt_end.Millisecond);
                     dt_end = dt_end.AddSeconds(- secUTCOffsetToData + secUTCOffsetToServer);
                     //dt_end = dt_begin.AddDays(PeriodMain.Days);
-                }
-                else
-                {
+                } else {
                     dt_begin = DateTime.Parse(DateTimeBeginFormat);
-                    dt_begin = dt_begin.AddMinutes(-dt_begin.Minute);
-                    dt_begin = dt_begin.AddSeconds(-dt_begin.Second);
-                    dt_begin = dt_begin.AddMilliseconds(-dt_begin.Millisecond);
+                    //dt_begin = dt_begin.AddMinutes(-dt_begin.Minute);
+                    //dt_begin = dt_begin.AddSeconds(-dt_begin.Second);
+                    //dt_begin = dt_begin.AddMilliseconds(-dt_begin.Millisecond);
+                    dt_begin = new DateTime((long)(Math.Floor((dt_begin.Ticks / 10000000) / (decimal)(60 * 60)) * (60 * 60)) * 10000000);
                     //dt_begin = dt_begin.AddSeconds(-secUTCOffsetToData + secUTCOffsetToServer);
 
                     dt_end = DateTime.Parse(DateTimeEndFormat);
-                    dt_end = dt_end.AddMinutes(-dt_end.Minute);
-                    dt_end = dt_end.AddSeconds(-dt_end.Second);
-                    dt_end = dt_end.AddMilliseconds(-dt_end.Millisecond);
+                    //dt_end = dt_end.AddMinutes(-dt_end.Minute);
+                    //dt_end = dt_end.AddSeconds(-dt_end.Second);
+                    //dt_end = dt_end.AddMilliseconds(-dt_end.Millisecond);
+                    dt_end = new DateTime((long)(Math.Floor((dt_end.Ticks / 10000000) / (decimal)(60 * 60)) * (60 * 60)) * 10000000);
                     //dt_end = dt_end.AddSeconds(-secUTCOffsetToData + secUTCOffsetToServer);
                 }
 
-
-
-                string strIds =
-  "DECLARE @dtReq DateTime SELECT @dtReq = CAST('" + dt_end.ToString("yyyyMMdd H:mm:ss") + @"' as dateTime)"
-+ " select * from (SELECT [KKS_NAME], SUM(VALUE) as VALUE, @dtReq as [DATETIME], COUNT(VALUE)*60 as [COUNT] "
-+ " from( SELECT[KKS_NAME], AVG(VALUE) as VALUE, DATEADD(MINUTE, (DATEDIFF(MINUTE, DATEADD(DAY, -1, @dtReq), [DATETIME]) / 60) * 60, DATEADD(DAY, -1, @dtReq)) as [DATETIME], COUNT(VALUE) as [COUNT] FROM "
-+ NameTable 
-+ " where [DATETIME] >= DATEADD(DAY, -1, @dtReq) and [DATETIME] < @dtReq"
-+ " and KKS_NAME in" 
-+ " ('T5#ASKUTE_G_COLDWATER', 'T5#ASKUTE_G_DVL', 'T5#ASKUTE_G_DVP', 'T5#ASKUTE_G_OBR_1B', 'T5#ASKUTE_G_OBR_2B'"
-+ " , 'T5#ASKUTE_G_OBR_3B', 'T5#ASKUTE_G_OBR_4B', 'T5#ASKUTE_G_OBR_5B', 'T5#ASKUTE_G_OBR_IBK', 'T5#ASKUTE_G_OBR_OMTC', 'T5#ASKUTE_G_OBR_OVK'"
-+ " , 'T5#ASKUTE_G_OBR_PERVOM', 'T5#ASKUTE_G_OBR_PVK', 'T5#ASKUTE_G_OBR_STOL', 'T5#ASKUTE_G_OBR_STROY', 'T5#ASKUTE_G_OBR_STROY2'"
-+ " , 'T5#ASKUTE_G_PITVODA', 'T5#ASKUTE_G_POD_1B', 'T5#ASKUTE_G_POD_2B', 'T5#ASKUTE_G_POD_3B', 'T5#ASKUTE_G_POD_4B', 'T5#ASKUTE_G_POD_5B'"
-+ " , 'T5#ASKUTE_G_POD_IBK', 'T5#ASKUTE_G_POD_OMTC', 'T5#ASKUTE_G_POD_OVK', 'T5#ASKUTE_G_POD_PERVOM', 'T5#ASKUTE_G_POD_PVK', 'T5#ASKUTE_G_POD_STOL'"
-+ " , 'T5#ASKUTE_G_POD_STROY', 'T5#ASKUTE_G_POD_STROY2', 'T5#ASKUTE_G_PODPIT')"
-+ " group by KKS_NAME, DATEADD(MINUTE, (DATEDIFF(MINUTE, DATEADD(DAY, -1, @dtReq), [DATETIME]) / 60) * 60, DATEADD(DAY, -1, @dtReq))) as VZLET"
-+ " group by KKS_NAME union"
-
-  + " SELECT [KKS_NAME], AVG(VALUE) as VALUE, '" + dt_end.ToString("yyyy.MM.dd H:mm:ss") + @"' as [DATETIME], COUNT(VALUE) as [COUNT] "
-  + " FROM " + NameTable
-  + " where[DATETIME] >= '" + dt_begin.ToString("yyyyMMdd H:mm:ss") + @"' and [DATETIME] < '" + dt_end.ToString("yyyyMMdd H:mm:ss") + @"'"
-  + " and KKS_NAME in ('T5#ASKUTE_H_LEVEL_PODPIT2','T5#ASKUTE_H_LEVEL_PODPIT1','T5#ASKUTE_P_COLDWATER','T5#ASKUTE_P_EXT_AIR_KTS','T5#ASKUTE_P_OBR_1B','T5#ASKUTE_P_OBR_2B','T5#ASKUTE_P_OBR_3B','T5#ASKUTE_P_OBR_4B'"
-  + ",'T5#ASKUTE_P_OBR_5B','T5#ASKUTE_P_OBR_IBK','T5#ASKUTE_P_OBR_OMTC','T5#ASKUTE_P_OBR_OVK','T5#ASKUTE_P_OBR_PERVOM','T5#ASKUTE_P_OBR_PVK'"
-  + ",'T5#ASKUTE_P_OBR_STOL','T5#ASKUTE_P_OBR_STROY','T5#ASKUTE_P_OBR_STROY2','T5#ASKUTE_P_POD_1B','T5#ASKUTE_P_POD_2B','T5#ASKUTE_P_POD_3B'"
-  + ",'T5#ASKUTE_P_POD_4B','T5#ASKUTE_P_POD_5B','T5#ASKUTE_P_POD_IBK','T5#ASKUTE_P_POD_OMTC','T5#ASKUTE_P_POD_OVK','T5#ASKUTE_P_POD_PERVOM'"
-  + ",'T5#ASKUTE_P_POD_PVK','T5#ASKUTE_P_POD_STOL','T5#ASKUTE_P_POD_STROY','T5#ASKUTE_P_POD_STROY2','T5#ASKUTE_P_PODPIT','T5#ASKUTE_T_COLDWATER'"
-  + ",'T5#ASKUTE_T_EXTAIR','T5#ASKUTE_T_OBR_1B','T5#ASKUTE_T_OBR_2B','T5#ASKUTE_T_OBR_3B','T5#ASKUTE_T_OBR_4B','T5#ASKUTE_T_OBR_5B','T5#ASKUTE_T_OBR_IBK'"
-  + ",'T5#ASKUTE_T_OBR_OMTC','T5#ASKUTE_T_OBR_OVK','T5#ASKUTE_T_OBR_PERVOM','T5#ASKUTE_T_OBR_PVK','T5#ASKUTE_T_OBR_STOL','T5#ASKUTE_T_OBR_STROY'"
-  + ",'T5#ASKUTE_T_OBR_STROY2','T5#ASKUTE_T_POD_1B','T5#ASKUTE_T_POD_2B','T5#ASKUTE_T_POD_3B','T5#ASKUTE_T_POD_4B','T5#ASKUTE_T_POD_5B','T5#ASKUTE_T_POD_IBK'"
-  + ",'T5#ASKUTE_T_POD_OMTC','T5#ASKUTE_T_POD_OVK','T5#ASKUTE_T_POD_PERVOM','T5#ASKUTE_T_POD_PVK','T5#ASKUTE_T_POD_STOL','T5#ASKUTE_T_POD_STROY'"
-  + ",'T5#ASKUTE_T_POD_STROY2','T5#ASKUTE_T_PODPIT') group by KKS_NAME ) as a WHERE KKS_NAME in (";
-
-                foreach (SIGNALMSTKKSNAMEsql sgnl in m_arSignals)
+                foreach (SIGNALVzletKKSNAMEsql sgnl in m_arSignals)
                     if (sgnl.IsFormula == false)
-                        strIds += @"'" + sgnl.m_kks_name + @"',";
+                        if (sgnl.m_bAVG == true)
+                            strSumIds += @"'" + sgnl.m_kks_name + @"',";
+                        else
+                            if (sgnl.m_bAVG == false)
+                                strAVGIds += @"'" + sgnl.m_kks_name + @"',";
+                            else
+                                ;
                     else
                         ; // формула
                 // удалить "лишнюю" запятую
-                strIds = strIds.Substring(0, strIds.Length - 1);
+                strSumIds = string.IsNullOrEmpty(strSumIds) == false ? strSumIds.Substring(0, strSumIds.Length - 1) : string.Empty;
+                strAVGIds = string.IsNullOrEmpty(strAVGIds) == false ? strAVGIds.Substring(0, strAVGIds.Length - 1) : string.Empty;
 
-                m_strQuery = strIds + ")"
-                    ;
+                m_strQuery = "DECLARE @dtReq DateTime; SELECT @dtReq = CAST('" + dt_end.ToString("yyyyMMdd H:mm:ss") + @"' as DateTime);"
+                    + @"SELECT [KKS_NAME], SUM(VALUE) as VALUE, @dtReq as [DATETIME], COUNT(VALUE) * 60 as [COUNT]"
+                    + " FROM ("
+                        + @"SELECT[KKS_NAME], AVG(VALUE) as VALUE, DATEADD(MINUTE, (DATEDIFF(MINUTE, DATEADD(DAY, -1, @dtReq), [DATETIME]) / 60) * 60, DATEADD(DAY, -1, @dtReq)) as [DATETIME], COUNT(VALUE) as [COUNT]"
+                        + @" FROM " + NameTable
+                        + " WHERE [DATETIME] >= DATEADD(DAY, -1, @dtReq) and [DATETIME] < @dtReq"
+                            + " AND [KKS_NAME] IN (" + strSumIds + ")"
+                        + " GROUP BY [KKS_NAME], DATEADD(MINUTE, (DATEDIFF(MINUTE, DATEADD(DAY, -1, @dtReq), [DATETIME]) / 60) * 60, DATEADD(DAY, -1, @dtReq))) as VZLET"
+                    + " GROUP BY [KKS_NAME]"
+                    
+                    + @" UNION"
+
+                    + " SELECT [KKS_NAME], AVG(VALUE) as VALUE, '" + dt_end.ToString("yyyy.MM.dd H:mm:ss") + @"' as [DATETIME], COUNT(VALUE) as [COUNT]"
+                    + " FROM " + NameTable
+                    + " WHERE [DATETIME] >= '" + dt_begin.ToString("yyyyMMdd H:mm:ss") + @"' AND [DATETIME] < '" + dt_end.ToString("yyyyMMdd H:mm:ss") + @"'"
+                        + " AND [KKS_NAME] IN (" + strAVGIds + @")"
+                    + @" GROUP BY [KKS_NAME])";
             }
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
             {
                 //ID_MAIN, ID_LOCAL, AVG
-                return new SIGNALMSTKKSNAMEsql(this, (int)objs[0], /*(int)*/objs[2]);
+                return new SIGNALVzletKKSNAMEsql(this, (int)objs[0], /*(int)*/objs[2], bool.Parse((string)objs[3]));
             }
 
             protected override object getIdMain(object id_link)

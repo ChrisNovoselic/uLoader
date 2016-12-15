@@ -8,53 +8,70 @@ using System.Globalization;
 using HClassLibrary;
 using uLoaderCommon;
 
-namespace SrcIstok
+namespace SrcVzlet
 {
-    public class SrcIstokSql : HHandlerDbULoaderDatetimeSrc //HHandlerDbULoaderStatTMMSTDest
+    public class SrcVzletNativeDSql : HHandlerDbULoaderDatetimeSrc
     {
-        public SrcIstokSql()
+        public SrcVzletNativeDSql()
             : base(@"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.FULL_PERIOD)
         {
 
         }
 
-        public SrcIstokSql(PlugInULoader iPlugIn)
+        public SrcVzletNativeDSql(PlugInULoader iPlugIn)
             : base(iPlugIn, @"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.FULL_PERIOD)
         {
-        }
 
-        private class GroupSignalsIstokSql : GroupSignalsDatetimeSrc
+        }
+        
+        private class GroupSignalsVzletNativeDSql : GroupSignalsDatetimeSrc
         {
-            public GroupSignalsIstokSql(HHandlerDbULoader parent, int id, object[] pars)
+            //protected string m_nameTable;
+
+            public GroupSignalsVzletNativeDSql(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
-
+                
             }
-
+            
             /// <summary>
             /// Установить содержание для запроса
             /// </summary>
             protected override void setQuery()
             {
-                m_strQuery = string.Empty;
-                long secUTCOffsetToData = m_msecUTCOffsetToServer / 1000;
+                int idReq = HMath.GetRandomNumber()
+                    , i = -1;
+                string cmd = string.Empty;
                 
-                //DateTimeBegin = DateTimeBegin.AddSeconds(-1 * secUTCOffsetToData);
+                long secUTCOffsetToData = m_msecUTCOffsetToServer / 1000;
+                //перевод даты для суточного набора
+                if (DateTimeStart != DateTimeBegin)
+                {
+                    DateTimeBegin = (DateTimeBegin - DateTimeBegin.TimeOfDay).AddHours(23);
+                }
+                else
+                {
+                    DateTimeBegin = (DateTimeStart - DateTimeStart.TimeOfDay).AddHours(-1);
+                }
+                
 
-                string strIds = "SELECT ДатаВремя, ";
+                //Формировать запрос
+                i = 0;
 
-                foreach (SIGNALMSTKKSNAMEsql sgnl in m_arSignals)
-                    if (sgnl.IsFormula == false)
-                        strIds += @"" + sgnl.m_kks_name + @",";
-                    else
-                        ; // формула
-                // удалить "лишнюю" запятую
-                strIds = strIds.Substring(0, strIds.Length - 1);
+                m_strQuery = "SELECT ДатаВремя, ";
+                foreach (GroupSignalsVzletNativeDSql.SIGNALMSTKKSNAMEsql s in m_arSignals)
+                {
+                    m_strQuery += s.m_kks_name + ", ";
+                }
 
-                m_strQuery = strIds
-                        + @" FROM " + NameTable + " WHERE [ДатаВремя] >='" + DateTimeBegin + @"'"
-                        + @" AND [ДатаВремя] <'" + DateTimeBegin.AddSeconds(PeriodMain.TotalSeconds) + @"'"
-                    ;
+                m_strQuery = m_strQuery.Remove(m_strQuery.Length - 2, 1);
+
+                m_strQuery += " FROM " + NameTable + " ";
+
+                m_strQuery += @"WHERE ДатаВремя > '"+ DateTimeBegin + "' and ДатаВремя <= '"+ DateTimeBegin.AddSeconds(PeriodMain.TotalSeconds) + "'";
+
+                //DateTimeBegin = DateTimeBegin.AddSeconds(secUTCOffsetToData);
+                
             }
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
@@ -62,7 +79,7 @@ namespace SrcIstok
                 //ID_MAIN, ID_LOCAL, AVG
                 return new SIGNALMSTKKSNAMEsql(this, (int)objs[0], /*(int)*/objs[2]);
             }
-
+            
             protected override object getIdMain(object id_link)
             {
                 throw new NotImplementedException();
@@ -71,14 +88,14 @@ namespace SrcIstok
 
         protected override HHandlerDbULoader.GroupSignals createGroupSignals(int id, object[] objs)
         {
-            return new GroupSignalsIstokSql(this, id, objs);
+            return new GroupSignalsVzletNativeDSql(this, id, objs);
         }
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="table"></param>
-        protected override void parseValues(DataTable table)
+        protected override void parseValues(System.Data.DataTable table)
         {
             DataTable tblRes = new DataTable();
             DataRow[] rowsSgnl = null;
@@ -94,10 +111,12 @@ namespace SrcIstok
 
             if (table.Rows.Count > 0)
             {
-                foreach (GroupSignalsIstokSql.SIGNALMSTKKSNAMEsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
+                foreach (DataRow r in table.Rows)
                 {
-                    foreach (DataRow r in table.Rows)
+
+                    foreach (GroupSignalsVzletNativeDSql.SIGNALMSTKKSNAMEsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
                     {
+
                         dtValue = DateTime.Parse(r["ДатаВремя"].ToString());
 
                         if (sgnl.IsFormula == false)
@@ -113,8 +132,11 @@ namespace SrcIstok
                             // формула
                             continue
                             ;
+
+                        //cntHour = cntHour + 48;//за месяц
                     }
                 }
+
                 base.parseValues(tblRes);
             }
         }

@@ -391,6 +391,19 @@ namespace uLoaderCommon
                 }
             }
 
+            public class SIGNALVzletKKSNAMEsql : SIGNAL
+            {
+                public string m_kks_name;
+                public bool m_bAVG;
+
+                public SIGNALVzletKKSNAMEsql(GroupSignals parent, int idMain, object kks_name, bool bAVG)
+                    : base(parent, idMain, kks_name)
+                {
+                    m_kks_name = IsFormula == false ? (string)kks_name : string.Empty;
+                    m_bAVG = bAVG;
+                }
+            }
+
             private long m_msecRemaindToActivate;
             /// <summary>
             /// Интервал (милисекунды) - оставшееся время до очередной активации запроса
