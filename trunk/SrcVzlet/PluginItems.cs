@@ -18,7 +18,9 @@ namespace SrcVzlet
             _Id = 109;
 
             registerType(10914, typeof(SrcVzletSql));
-            registerType(10915, typeof(SrcVzletDSql));
+            registerType(10915, typeof(SrcVzletDsql));
+            registerType(10916, typeof(SrcVzletNativeSql));
+            registerType(10917, typeof(SrcVzletNativeDSql));
         }
 
         public override void OnEvtDataRecievedHost(object obj)

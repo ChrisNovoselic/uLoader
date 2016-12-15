@@ -70,8 +70,7 @@ namespace SrcVzlet
 
                 m_strQuery += @"WHERE ДатаВремя > '"+ DateTimeBegin + "' and ДатаВремя <= '"+ DateTimeBegin.AddSeconds(PeriodMain.TotalSeconds) + "'";
 
-                //DateTimeBegin = DateTimeBegin.AddSeconds(secUTCOffsetToData);
-                
+                //DateTimeBegin = DateTimeBegin.AddSeconds(secUTCOffsetToData);                
             }
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)

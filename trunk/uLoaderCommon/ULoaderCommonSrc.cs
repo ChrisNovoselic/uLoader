@@ -459,7 +459,7 @@ namespace uLoaderCommon
             {
                 get
                 {
-                    if (m_strQuery.Equals(string.Empty) == true)
+                    if (string.IsNullOrEmpty(m_strQuery) == true)
                         setQuery();
                     else
                         ;
@@ -851,11 +851,11 @@ namespace uLoaderCommon
         /// </summary>
         public enum MODE_CURINTERVAL
         {
-            CAUSE_PERIOD_MINUTE,
-            CAUSE_PERIOD_HOUR /*округление до ПЕРИОД, ожидание полного набора записей за ПЕРИОД*/
-                ,
-            CAUSE_NOT /*текущее время сервера*/
-                , HALF_PERIOD, FULL_PERIOD, CAUSE_PERIOD_DAY
+            CAUSE_PERIOD_MINUTE
+            , CAUSE_PERIOD_HOUR
+            , CAUSE_PERIOD_DAY /*округление до ПЕРИОД, ожидание полного набора записей за ПЕРИОД*/
+            , CAUSE_NOT /*текущее время сервера*/
+                , HALF_PERIOD, FULL_PERIOD /*Шаг при изменении даты/времени очередного опроса*/
         };
         public MODE_CURINTERVAL[] m_modeCurIntervals;
 
@@ -909,7 +909,7 @@ namespace uLoaderCommon
                     DateTime.MinValue;
             }
             /// <summary>
-            /// Строка для условия "по дате/времени"
+            /// Строка для условия "по дате/времени", в формате заданном в конструкторе класса
             ///  - начало
             /// </summary>
             protected virtual string DateTimeBeginFormat
@@ -947,7 +947,7 @@ namespace uLoaderCommon
                 }
             }
             /// <summary>
-            /// Строка для условия "по дате/времени"
+            /// Строка для условия "по дате/времени", в формате заданном в конструкторе класса
             ///  - окончание
             /// </summary>
             protected virtual string DateTimeEndFormat
@@ -998,7 +998,8 @@ namespace uLoaderCommon
                 switch (Mode)
                 {
                     case MODE_WORK.CUR_INTERVAL:
-                        if (((_parent as HHandlerDbULoaderDatetimeSrc).m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] == MODE_CURINTERVAL.CAUSE_PERIOD_HOUR)
+                        if (((_parent as HHandlerDbULoaderDatetimeSrc).m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] == MODE_CURINTERVAL.CAUSE_PERIOD_DAY)
+                            || ((_parent as HHandlerDbULoaderDatetimeSrc).m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] == MODE_CURINTERVAL.CAUSE_PERIOD_HOUR)
                             || ((_parent as HHandlerDbULoaderDatetimeSrc).m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] == MODE_CURINTERVAL.CAUSE_PERIOD_MINUTE))
                             bRes = ((RowCountRecieved < 0) || (RowCountRecieved == cntRec)) && ((!(EvtActualizeDateTimeBegin == null)) && (EvtActualizeDateTimeBegin() == 1));
                         else
@@ -1195,24 +1196,33 @@ namespace uLoaderCommon
                 //else
                 //{
                     //Проверить признак 1-го запуска (в режиме CUR_INTERVAL)
-                    if (DateTimeBegin == DateTime.MinValue)
-                    {
+                    if (DateTimeBegin == DateTime.MinValue) {
                         if (m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] == MODE_CURINTERVAL.CAUSE_NOT)
-                            DateTimeBegin = m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds / denum);
-                        else
-                        {
-                            DateTimeBegin = m_dtServer.AddMilliseconds(-1 * (m_dtServer.Second * 1000 + m_dtServer.Millisecond));
+                            DateTimeBegin =
+                                m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds / denum);
+                        else {
+                            DateTimeBegin =
+                                m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds / denum);
 
                             if (m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] == MODE_CURINTERVAL.CAUSE_PERIOD_MINUTE)
-                                //Выравнивание по "минуте"
-                                ; // уже выполнено
+                            //Выравнивание по "минуте"
+                                DateTimeBegin = new DateTime((long)(Math.Floor((DateTimeBegin.Ticks / 10000000) / (decimal)(1 * 60)) * (1 * 60)) * 10000000);
                             else
                                 if (m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] == MODE_CURINTERVAL.CAUSE_PERIOD_HOUR)
-                                    //Выравнивание по "час"
-                                    DateTimeBegin = DateTimeBegin.AddSeconds(-1 * (DateTimeBegin.Minute * 60 + DateTimeBegin.Second));
+                                //Выравнивание по "час"
+                                    DateTimeBegin =
+                                    //DateTimeBegin.AddSeconds(-1 * (DateTimeBegin.Minute * 60 + DateTimeBegin.Second))
+                                        new DateTime((long)(Math.Floor((DateTimeBegin.Ticks / 10000000) / (decimal)(60 * 60)) * (60 * 60)) * 10000000)
+                                            ;
+                                else
+                                        if (m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] == MODE_CURINTERVAL.CAUSE_PERIOD_DAY)
+                                        //Выравнивание по "сутки"
+                                            DateTimeBegin =
+                                                new DateTime((long)(Math.Floor((DateTimeBegin.Ticks / 10000000) / (decimal)(24 * 60 * 60)) * (24 * 60 * 60)) * 10000000)
+                                                    ;
                                 else
                                     ;
-                        }
+                    }
                         //Установить признак перехода
                         iRes = 1;
                     }

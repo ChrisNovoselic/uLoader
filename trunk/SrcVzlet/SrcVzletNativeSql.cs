@@ -30,7 +30,6 @@ namespace SrcVzlet
             {
 
             }
-
             /// <summary>
             /// Установить содержание для запроса
             /// </summary>
@@ -73,11 +72,10 @@ namespace SrcVzlet
         {
             return new GroupSignalsVzletNativeSql(this, id, objs);
         }
-
         /// <summary>
-        /// 
+        /// Обработать результат запроса
         /// </summary>
-        /// <param name="table"></param>
+        /// <param name="table">Таблица с данными - результат запроса</param>
         protected override void parseValues(DataTable table)
         {
             DataTable tblRes = new DataTable();
@@ -85,38 +83,34 @@ namespace SrcVzlet
             DateTime dtValue;
             double dblValue = -1F;
             int countDay = 0;
-
+            // структура таблицы
             tblRes.Columns.AddRange(new DataColumn[] {
                 new DataColumn (@"ID", typeof (int))
                 , new DataColumn (@"DATETIME", typeof (DateTime))
                 , new DataColumn (@"VALUE", typeof (float))
+                , //??? QUALITY
             });
 
-            if (table.Rows.Count > 0)
-            {
+            if (table.Rows.Count > 0) {
                 foreach (GroupSignalsVzletNativeSql.SIGNALMSTKKSNAMEsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
-                {
-                    foreach (DataRow r in table.Rows)
-                    {
+                    foreach (DataRow r in table.Rows) {
                         dtValue = DateTime.Parse(r["ДатаВремя"].ToString());
 
                         if (sgnl.IsFormula == false)
-                        {
                             // вставить строку
                             tblRes.Rows.Add(new object[] {
-                            sgnl.m_idMain
-                            , dtValue
-                            , double.Parse(r[sgnl.m_kks_name].ToString())
-                        });
-                        }
+                                sgnl.m_idMain
+                                , dtValue
+                                , double.Parse(r[sgnl.m_kks_name].ToString())
+                                });
                         else
-                            // формула
-                            continue
-                            ;
+                        // формула
+                            continue ;
                     }
-                }
+                // вызвать базовый метод
                 base.parseValues(tblRes);
-            }
+            } else
+                ;
         }
     }
 }

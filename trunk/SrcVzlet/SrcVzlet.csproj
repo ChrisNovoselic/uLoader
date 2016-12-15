@@ -45,6 +45,8 @@
     <Compile Include="PluginItems.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SrcVzletDSql.cs" />
+    <Compile Include="SrcVzletNativeDSql.cs" />
+    <Compile Include="SrcVzletNativeSql.cs" />
     <Compile Include="SrcVzletSql.cs" />
   </ItemGroup>
   <ItemGroup>
