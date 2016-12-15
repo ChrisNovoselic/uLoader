@@ -27,12 +27,12 @@ namespace SrcMST
         private MODE_WHERE_DATETIME _modeWhereDatetime;
 
         public SrcMSTASUTPIdT5tg1Dsql(PlugInULoader plugIn)
-            : base(plugIn, MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(plugIn, MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.FULL_PERIOD)
         {
         }
 
         public SrcMSTASUTPIdT5tg1Dsql()
-            : base(MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.FULL_PERIOD)
         {
         }
 

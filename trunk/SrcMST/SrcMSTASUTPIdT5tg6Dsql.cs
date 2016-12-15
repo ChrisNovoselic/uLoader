@@ -27,12 +27,12 @@ namespace SrcMST
         private MODE_WHERE_DATETIME _modeWhereDatetime;
 
         public SrcMSTASUTPIdT5tg6Dsql(PlugInULoader plugIn)
-            : base(plugIn, MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(plugIn, MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.FULL_PERIOD)
         {
         }
 
         public SrcMSTASUTPIdT5tg6Dsql()
-            : base(MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.FULL_PERIOD)
         {
         }
 
@@ -76,11 +76,8 @@ namespace SrcMST
             });
 
             foreach (GroupSignalsSrc.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
-            {
-                try
-                {
-                    if (sgnl.IsFormula == false)
-                    {
+                try {
+                    if (sgnl.IsFormula == false) {
                         rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal);
 
                         if ((rowsSgnl.Length > 0)
@@ -122,13 +119,11 @@ namespace SrcMST
                     else
                         // формула
                         ;
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     Logging.Logg().Exception(e, @"SrcMSTASUTPIDT5tg1sqlD:: parseValues (sgnl.Id=" + sgnl.m_idMain + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
-            }
 
+            // вызов базового метода
             base.parseValues(tblRes);
         }
 
@@ -147,7 +142,7 @@ namespace SrcMST
                     , strWhereDatetime = string.Empty;
                 int offsetHour = 0;
                 bool bOffsetOutInclude = true;
-                long secUTCOffsetToData = m_msecUTCOffsetToServer / 1000;
+                long secOffsetUTCToData = m_msecUTCOffsetToServer / 1000;
 
                 if ((_parent as HHandlerDbULoaderSrc).Mode == MODE_WORK.CUR_INTERVAL)
                     offsetHour = -1;

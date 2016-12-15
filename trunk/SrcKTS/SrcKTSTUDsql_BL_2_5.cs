@@ -9,23 +9,21 @@ namespace SrcKTS
     class SrcKTSTUDsql_BL_2_5 : HHandlerDbULoaderDatetimeSrc
     {
         /// <summary>
-        /// 
+        /// Конструктор - основной (без параметров)
         /// </summary>
         public SrcKTSTUDsql_BL_2_5()
             : base(@"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.FULL_PERIOD)
         {
 
         }
-
         /// <summary>
-        /// 
+        /// Конструктор - основной (для создания из динамически подгружаемой библиотеки)
         /// </summary>
-        /// <param name="iPlugIn"></param>
+        /// <param name="iPlugIn">Объект для обмена сообщенями с основной программой</param>
         public SrcKTSTUDsql_BL_2_5(PlugInULoader iPlugIn)
             : base(iPlugIn, @"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.FULL_PERIOD)
         {
         }
-
         /// <summary>
         /// Возвратить объект группы сигналов
         /// </summary>
@@ -36,17 +34,21 @@ namespace SrcKTS
         {
             return new GroupSignalsKTSTUDsql(this, id, objs);
         }
-
         /// <summary>
-        /// 
+        /// Класс для описания группы сигналов
         /// </summary>
         private class GroupSignalsKTSTUDsql : GroupSignalsDatetimeSrc
         {
+            /// <summary>
+            /// Конструктор основной (с параметрами)
+            /// </summary>
+            /// <param name="parent">Ссылка на объект-владелец</param>
+            /// <param name="id">Идентификатор группы сигналов</param>
+            /// <param name="pars">Свойства группы сигналов</param>
             public GroupSignalsKTSTUDsql(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
             }
-
             /// <summary>
             /// Установить содержание для запроса
             /// </summary>
@@ -55,17 +57,16 @@ namespace SrcKTS
                 int idReq = HMath.GetRandomNumber()
                     , i = -1;
                 string cmd = string.Empty;
-                long secUTCOffsetToData = m_msecUTCOffsetToServer / 1000;
-                //перевод даты для суточного набора
-                if (DateTimeStart != DateTimeBegin)
-                    DateTimeBegin = (DateTimeBegin - DateTimeBegin.TimeOfDay).AddDays(PeriodMain.Days);
-                else
-                    DateTimeBegin = (DateTimeStart - DateTimeStart.TimeOfDay);
+                long secOffsetUTCToData = m_secOffsetUTCToData;
+                ////перевод даты для суточного набора
+                //if (DateTimeStart != DateTimeBegin)
+                //    DateTimeBegin = (DateTimeBegin - DateTimeBegin.TimeOfDay).AddDays(PeriodMain.Days);
+                //else
+                //    DateTimeBegin = (DateTimeStart - DateTimeStart.TimeOfDay);
 
                 //Формировать запрос
                 i = 0;
                 foreach (SIGNALIdsql s in m_arSignals)
-                {
                     if (s.IsFormula == false)
                     {
                         if (i == 0)
@@ -87,9 +88,8 @@ namespace SrcKTS
                     else
                         // формула
                         ;
-                }
 
-                m_strQuery += @"SELECT idVTI as [ID], idReq, TimeIdx, TimeRTC, DATEADD(Second," + secUTCOffsetToData + ",TimeSQL) as [DATETIME], idState, ValueFl as [VALUE], ValueInt,IsInteger, idUnit"
+                m_strQuery += @"SELECT idVTI as [ID], idReq, TimeIdx, TimeRTC, DATEADD(Second," + secOffsetUTCToData + ",TimeSQL) as [DATETIME], idState, ValueFl as [VALUE], ValueInt,IsInteger, idUnit"
                         + @", DATEDIFF(HH, GETDATE(), GETUTCDATE()) as [UTC_OFFSET]"
                     + @" FROM e6work.dbo.VTIdataList"
                     + @" WHERE idReq=" + idReq
@@ -99,18 +99,16 @@ namespace SrcKTS
                     + @"@idReq=" + idReq
                     + @";";
             }
-
             /// <summary>
-            /// 
+            /// Создать объект для сигнала с параметрами
             /// </summary>
-            /// <param name="objs"></param>
-            /// <returns></returns>
+            /// <param name="objs">Параметры/характеристики сигнала</param>
+            /// <returns>Объект созданного сигнала</returns>
             protected override SIGNAL createSignal(object[] objs)
             {
                 //ID_MAIN, ID_LOCAL, AVG
                 return new SIGNALIdsql(this, (int)objs[0], /*(int)*/objs[2], bool.Parse((string)objs[3]));
             }
-
             /// <summary>
             /// Возвратить основной идентификатор по косвенному(связанному) идентификатору
             /// </summary>
@@ -121,7 +119,6 @@ namespace SrcKTS
                 throw new NotImplementedException();
             }
         }
-
         /// <summary>
         /// Преобразовать таблицу к известному(с заранее установленной структурой) виду
         /// </summary>
@@ -131,11 +128,11 @@ namespace SrcKTS
             DataTable tblRes = new DataTable();
             DataRow[] rowsSgnl = null;
             DateTime dtValue;
-            double dblSumValue = -1F,
-                dblSumValueHH = 0F;
-            int countDay = 0,
-                cntHH = 48,
-                div = 1;
+            double dblSumValue = -1F
+                , dblSumValueHH = 0F;
+            int countDay = 0
+                , cntHH = 48, cntHour = -1
+                , div = 1;
 
             countDay = table.Rows.Count / (cntHH * m_dictGroupSignals[IdGroupSignalsCurrent].Signals.Count());
 
@@ -144,67 +141,59 @@ namespace SrcKTS
                 new DataColumn (@"ID", typeof (int))
                 , new DataColumn (@"DATETIME", typeof (DateTime))
                 , new DataColumn (@"VALUE", typeof (float))
+                //??? QUALITY
             });
 
-            int cntHour = 0;
+            cntHour = 0;
 
             foreach (GroupSignalsSrc.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
-            {
-                if (sgnl.IsFormula == false)
-                {
+                if (sgnl.IsFormula == false) {
                     rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal, @"DATETIME");
                     //countDay = rowsSgnl.Count() / cntHH;
 
                     for (int i = 0; i < countDay; i++)
-                    {
                         //вывод данных только при полных сутках
-                        if ((rowsSgnl.Length > 0) && (rowsSgnl.Length % cntHH == 0))
-                        {
+                        if ((rowsSgnl.Length > 0) && (rowsSgnl.Length % cntHH == 0)) {
                             //Вычислить суммарное значение для сигнала
                             dblSumValue = 0F;
 
-                            foreach (DataRow r in rowsSgnl)
-                            {
-                                if (sgnl.m_bAVG == false)
-                                {
+                            foreach (DataRow r in rowsSgnl) {
+                                if (sgnl.m_bAVG == false) {
                                     dblSumValueHH += Convert.ToSingle(r[@"VALUE"].ToString());
                                     dtValue = ((DateTime)r[@"DATETIME"]);
 
-                                    if (dtValue.Minute == 00)
-                                    {
+                                    if (dtValue.Minute == 00) {
                                         dblSumValueHH /= div;
                                         div = 1;
                                         dblSumValue += dblSumValueHH;
                                         dblSumValueHH = 0;
-                                    }
-                                    else
+                                    } else
                                         div++;                                 
-                                }
-                                else
+                                } else
                                     dblSumValue += Convert.ToSingle(r[@"VALUE"].ToString());
                             }
+
                             div = 1;
 
                             dtValue = ((DateTime)rowsSgnl[cntHour][@"DATETIME"]).AddMinutes(-30);
                             // при необходимости найти среднее
                             if (sgnl.m_bAVG == true)
                                 dblSumValue /= rowsSgnl.Length;
+                            else
+                                ;
                             // вставить строку
                             tblRes.Rows.Add(new object[] {
                                 sgnl.m_idMain
                                 , dtValue
                                 , dblSumValue
                             });
-                        }
-                        else
+                        } else
                             // неполные данные
                             continue;
-                    }
-                }
-                else
+                } else
                     // формула
                     continue;
-            }
+            // вызов базового метода
             base.parseValues(tblRes);
         }
     }

@@ -253,8 +253,9 @@ namespace uLoaderCommon
         /// <summary>
         /// Разность между часовыми поясами даты/времени сервера и метками даты/времени значений в БД
         /// </summary>
-        public HTimeSpan m_tsUTCOffsetToServer
-            , m_tsUTCOffsetToData;
+        public HTimeSpan m_tsOffsetUTCToServer
+            , m_tsOffsetUTCToData
+            , m_tsOffsetUTCToQuery;
         /// <summary>
         /// Класс - базовый для описания группы сигналов
         /// </summary>
@@ -1091,15 +1092,21 @@ namespace uLoaderCommon
                         ; //Для инициализации передан только 'ConnectionSettings' (pars[0])
 
                     //
-                    m_tsUTCOffsetToServer = HTimeSpan.NotValue;
-                    if (m_dictAdding.ContainsKey(@"UTC_OFFSET_TO_SERVER") == true)
-                        m_tsUTCOffsetToServer = new HTimeSpan(m_dictAdding[@"UTC_OFFSET_TO_SERVER"]);
+                    m_tsOffsetUTCToServer = HTimeSpan.NotValue;
+                    if (m_dictAdding.ContainsKey(@"OFFSET_UTC_TO_SERVER") == true)
+                        m_tsOffsetUTCToServer = new HTimeSpan(m_dictAdding[@"OFFSET_UTC_TO_SERVER"]);
                     else
                         ;
 
-                    m_tsUTCOffsetToData = HTimeSpan.NotValue;
-                    if (m_dictAdding.ContainsKey(@"UTC_OFFSET_TO_DATA") == true)
-                        m_tsUTCOffsetToData = new HTimeSpan(m_dictAdding[@"UTC_OFFSET_TO_DATA"]);
+                    m_tsOffsetUTCToData = HTimeSpan.NotValue;
+                    if (m_dictAdding.ContainsKey(@"OFFSET_UTC_TO_DATA") == true)
+                        m_tsOffsetUTCToData = new HTimeSpan(m_dictAdding[@"OFFSET_UTC_TO_DATA"]);
+                    else
+                        ;
+
+                    m_tsOffsetUTCToQuery = HTimeSpan.NotValue;
+                    if (m_dictAdding.ContainsKey(@"UTC_OFFSET_TO_QUERY") == true)
+                        m_tsOffsetUTCToQuery = new HTimeSpan(m_dictAdding[@"UTC_OFFSET_TO_QUERY"]);
                     else
                         ;
 

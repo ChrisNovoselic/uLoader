@@ -316,21 +316,41 @@ namespace uLoaderCommon
         /// </summary>
         protected abstract class GroupSignalsSrc : GroupSignals
         {
-            protected long m_msecUTCOffsetToServer {
+            /// <summary>
+            /// Смещение даты/времени сервера (операционная система)
+            /// </summary>
+            protected long m_secOffsetUTCToServer
+            {
                 get {
-                    return (_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer == HTimeSpan.NotValue ?
-                        0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer.Value.TotalMilliseconds;
+                    return (_parent as HHandlerDbULoaderSrc).m_tsOffsetUTCToServer == HTimeSpan.NotValue ?
+                        0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsOffsetUTCToServer.Value.TotalSeconds;
                 }
             }
-
-            protected long m_msecUTCOffsetToData {
+            /// <summary>
+            /// Смещение меток даты/времени хранимых в источнике значений
+            /// </summary>
+            protected long m_secOffsetUTCToData
+            {
                 get {
-                    return (_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData == HTimeSpan.NotValue ?
-                        0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData.Value.TotalMilliseconds;
+                    return (_parent as HHandlerDbULoaderSrc).m_tsOffsetUTCToData == HTimeSpan.NotValue ?
+                        0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsOffsetUTCToData.Value.TotalSeconds;
                 }
             }
-
-            protected long m_msecServerOffsetToData
+            /// <summary>
+            /// Часовой пояс запрашиваемых данных
+            /// </summary>
+            protected long m_secOffsetUTCToQuery
+            {
+                get
+                {
+                    return (_parent as HHandlerDbULoaderSrc).m_tsOffsetUTCToQuery == HTimeSpan.NotValue ?
+                        0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsOffsetUTCToQuery.Value.TotalSeconds;
+                }
+            }
+            /// <summary>
+            /// Смещение даты/времени запрашиваемых данных от даты/времени сервера(операцтонная система)
+            /// </summary>
+            protected long m_secOffsetServerToQuery
             {
                 get
                 {
@@ -351,8 +371,9 @@ namespace uLoaderCommon
 
                     return
                         //iRes
-                        m_msecUTCOffsetToServer - m_msecUTCOffsetToData
-                        ;
+                        //-7 - (-7 + (-7 - (-3)))
+                        m_secOffsetUTCToServer - (m_secOffsetUTCToData + (m_secOffsetUTCToData - m_secOffsetUTCToQuery))
+                            ;
                 }
             }
 
@@ -920,7 +941,7 @@ namespace uLoaderCommon
                     long msec = -1L
                         , msecDiff = -1L;
 
-                    msec = m_msecServerOffsetToData;
+                    msec = m_secOffsetServerToQuery * 1000;
                     if (Math.Abs(msec) > 1)
                         msecDiff = msec;
                     else
@@ -959,7 +980,7 @@ namespace uLoaderCommon
                         , msecDiff = -1L;
                     //int pday = 1;
 
-                    msec = (long)m_msecServerOffsetToData;
+                    msec = (long)m_secOffsetServerToQuery * 1000;
                     if (Math.Abs(msec) > 1)
                         msecDiff = msec;
                     else

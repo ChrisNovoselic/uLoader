@@ -13,13 +13,13 @@ namespace SrcVzlet
     class SrcVzletSql : HHandlerDbULoaderDatetimeSrc
     {
         public SrcVzletSql()
-            : base(@"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(@"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
         {
 
         }
 
         public SrcVzletSql(PlugInULoader iPlugIn)
-            : base(iPlugIn, @"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(iPlugIn, @"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
         {
         }
 
@@ -38,17 +38,6 @@ namespace SrcVzlet
                 m_strQuery = string.Empty;
                 string strSumIds = string.Empty
                     , strAVGIds = string.Empty;
-
-                //long secUTCOffsetToData = m_msecUTCOffsetToData / 1000;
-                //long secUTCOffsetToServer = m_msecUTCOffsetToServer / 1000;
-
-                //DateTime dt_begin, dt_end;
-
-                //dt_begin = DateTime.Parse(DateTimeBeginFormat);
-                //dt_begin = new DateTime((long)(Math.Floor((dt_begin.Ticks / 10000000) / (decimal)(60 * 60)) * (60 * 60)) * 10000000);
-
-                //dt_end = DateTime.Parse(DateTimeEndFormat);
-                //dt_end = new DateTime((long)(Math.Floor((dt_end.Ticks / 10000000) / (decimal)(60 * 60)) * (60 * 60)) * 10000000);
 
                 foreach (SIGNALVzletKKSNAMEsql sgnl in m_arSignals)
                     if (sgnl.IsFormula == false)

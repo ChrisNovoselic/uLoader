@@ -8,24 +8,37 @@ namespace SrcKTS
 {
     public class SrcKTSTUDsql : HHandlerDbULoaderDatetimeSrc
     {
+        /// <summary>
+        /// Конструктор - основной (без параметров)
+        /// </summary>
         public SrcKTSTUDsql()
-            : base(@"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(@"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
         {
 
         }
-
+        /// <summary>
+        /// Конструктор - основной (для создания из динамически подгружаемой библиотеки)
+        /// </summary>
+        /// <param name="iPlugIn">Объект для обмена сообщенями с основной программой</param>
         public SrcKTSTUDsql(PlugInULoader iPlugIn)
-            : base(iPlugIn, @"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(iPlugIn, @"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
         {
         }
-
+        /// <summary>
+        /// Класс для описания группы сигналов
+        /// </summary>
         private class GroupSignalsKTSTUDsql : GroupSignalsDatetimeSrc
         {
+            /// <summary>
+            /// Конструктор основной (с параметрами)
+            /// </summary>
+            /// <param name="parent">Ссылка на объект-владелец</param>
+            /// <param name="id">Идентификатор группы сигналов</param>
+            /// <param name="pars">Свойства группы сигналов</param>
             public GroupSignalsKTSTUDsql(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
             {
             }
-
             /// <summary>
             /// Установить содержание для запроса
             /// </summary>
@@ -34,24 +47,24 @@ namespace SrcKTS
                 int idReq = HMath.GetRandomNumber()
                     , i = -1;
                 string cmd = string.Empty;
-                long secUTCOffsetToData = m_msecUTCOffsetToServer / 1000;
-                //перевод даты для суточного набора
-                if (DateTimeStart != DateTimeBegin)
-                    DateTimeBegin = (DateTimeBegin - DateTimeBegin.TimeOfDay).AddDays(PeriodMain.Days);
-                else
-                    DateTimeBegin = (DateTimeStart - DateTimeStart.TimeOfDay);
+                long secOffsetUTCToData = m_secOffsetUTCToData;
+                ////перевод даты для суточного набора
+                //if (DateTimeStart != DateTimeBegin)
+                //    DateTimeBegin = (DateTimeBegin - DateTimeBegin.TimeOfDay).AddDays(PeriodMain.Days);
+                //else
+                //    DateTimeBegin = (DateTimeStart - DateTimeStart.TimeOfDay);
 
                 //Формировать запрос
                 i = 0;
                 foreach (GroupSignalsKTSTUDsql.SIGNALIdsql s in m_arSignals)
-                {
-                    if (s.IsFormula == false)
-                    {
+                    if (s.IsFormula == false) {
                         if (i == 0)
                             cmd = @"List";
                         else
                             if (i == 1)
-                            cmd = @"ListAdd";
+                                cmd = @"ListAdd";
+                            else
+                                ;
 
                         m_strQuery += @"exec e6work.dbo.ep_AskVTIdata @cmd='" + cmd + @"',"
                             + @"@idVTI=" + s.m_iIdLocal + @","
@@ -61,13 +74,11 @@ namespace SrcKTS
                             + @";";
 
                         i++;
-                    }
-                    else
+                    } else
                         // формула
                         ;
-                }
 
-                m_strQuery += @"SELECT idVTI as [ID],idReq,TimeIdx,TimeRTC, DATEADD(Second," + secUTCOffsetToData + ",TimeSQL) as [DATETIME],idState,ValueFl as [VALUE],ValueInt,IsInteger,idUnit"
+                m_strQuery += @"SELECT idVTI as [ID],idReq,TimeIdx,TimeRTC, DATEADD(Second," + secOffsetUTCToData + ",TimeSQL) as [DATETIME],idState,ValueFl as [VALUE],ValueInt,IsInteger,idUnit"
                         + @", DATEDIFF(HH, GETDATE(), GETUTCDATE()) as [UTC_OFFSET]"
                     + @" FROM e6work.dbo.VTIdataList"
                     + @" WHERE idReq=" + idReq
@@ -77,13 +88,16 @@ namespace SrcKTS
                     + @"@idReq=" + idReq
                     + @";";
             }
-
+            /// <summary>
+            /// Создать объект для сигнала с параметрами
+            /// </summary>
+            /// <param name="objs">Параметры/характеристики сигнала</param>
+            /// <returns>Объект созданного сигнала</returns>
             protected override SIGNAL createSignal(object[] objs)
             {
                 //ID_MAIN, ID_LOCAL, AVG
                 return new SIGNALIdsql(this, (int)objs[0], /*(int)*/objs[2], bool.Parse((string)objs[3]));
             }
-
             /// <summary>
             /// Возвратить основной идентификатор по косвенному(связанному) идентификатору
             /// </summary>
@@ -94,7 +108,6 @@ namespace SrcKTS
                 throw new NotImplementedException();
             }
         }
-
         /// <summary>
         /// Возвратить объект группы сигналов
         /// </summary>
@@ -105,7 +118,6 @@ namespace SrcKTS
         {
             return new GroupSignalsKTSTUDsql(this, id, objs);
         }
-
         /// <summary>
         /// Преобразовать таблицу к известному(с заранее установленной структурой) виду
         /// </summary>
@@ -124,20 +136,18 @@ namespace SrcKTS
                 new DataColumn (@"ID", typeof (int))
                 , new DataColumn (@"DATETIME", typeof (DateTime))
                 , new DataColumn (@"VALUE", typeof (float))
+                //??? QUALITY
             });
 
             int cntHour = 24;
 
             foreach (GroupSignalsSrc.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
-            {
-                if (sgnl.IsFormula == false)
-                {
+                if (sgnl.IsFormula == false) {
                     rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal, @"DATETIME");//???добавить сутки для архивной метки времени?
                     countDay = rowsSgnl.Count() / 48;
 
                     for (int i = 0; i < countDay; i++)
-                    {
-                        //вывод данных только при полных сутках
+                    //вывод данных только при полных сутках
                         if ((rowsSgnl.Length > 0)
                             && (rowsSgnl.Length % 48 == 0))
                         {
@@ -151,26 +161,25 @@ namespace SrcKTS
                             // при необходимости найти среднее
                             if (sgnl.m_bAVG == true)
                                 dblSumValue /= rowsSgnl.Length;
-
+                            else
+                                ;
                             // вставить строку
                             tblRes.Rows.Add(new object[] {
                                 sgnl.m_idMain
                                 , dtValue
                                 , dblSumValue
                             });
-                        }
-                        else
+                        } else
                             // неполные данные
                             continue
                             ;
-                    }
                 }
                 else
                     // формула
                     continue
                     ;
-            }
-            //cntHour = cntHour + 48;//за месяц
+
+            // вызов базового метода
             base.parseValues(tblRes);
         }
     }
