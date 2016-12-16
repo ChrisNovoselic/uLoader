@@ -372,7 +372,7 @@ namespace uLoaderCommon
                     return
                         //iRes
                         //-7 - (-7 + (-7 - (-3)))
-                        m_secOffsetUTCToServer - (m_secOffsetUTCToData + (m_secOffsetUTCToData - m_secOffsetUTCToQuery))
+                        m_secOffsetUTCToServer - (m_secOffsetUTCToData + (m_secOffsetUTCToQuery - m_secOffsetUTCToData))
                             ;
                 }
             }
@@ -862,7 +862,7 @@ namespace uLoaderCommon
 
     public abstract class HHandlerDbULoaderDatetimeSrc : HHandlerDbULoaderSrc
     {
-        public HTimeSpan m_tsCurIntervalOffset;
+        public HTimeSpan m_tsCurIntervalOffset;        
 
         protected virtual string m_strDateTimeDBFormat { get; set; }
 

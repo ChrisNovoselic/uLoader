@@ -50,7 +50,7 @@ namespace DestTEP32
                     , strRows = string.Empty
                     , strRow = string.Empty;
                 int /*iIdToInsert = -1,*/
-                    iUTCOffsetToDataTotalHours = (int)(_parent as DestTEP32sql).m_tsUTCOffsetToData.Value.TotalHours;
+                    iOffsetUTCToDataTotalHours = (int)(_parent as DestTEP32sql).m_tsOffsetUTCToData.Value.TotalHours;
                 DateTime? dtToInsert = null;
                 bool bBreak = false; // признак аварийного завершения цикла
 
@@ -74,9 +74,9 @@ namespace DestTEP32
                     {
                         (getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) as List<int>).ForEach(iIdToInsert => {
                             if (dtToInsert == null)
-                                dtToInsert = ((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours);
+                                dtToInsert = ((DateTime)row[@"DATETIME"]).AddHours(iOffsetUTCToDataTotalHours);
                             else
-                                if (dtToInsert.Equals(((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours)) == false) {
+                                if (dtToInsert.Equals(((DateTime)row[@"DATETIME"]).AddHours(iOffsetUTCToDataTotalHours)) == false) {
                                     Logging.Logg().Error(@"GroupSignalsTEP32sql::getInsertValuesQuery () - в наборе различные дата/время...", Logging.INDEX_MESSAGE.NOT_SET);
 
                                     bBreak = true;

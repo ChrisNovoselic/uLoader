@@ -46,7 +46,7 @@ namespace DestStat
                 string strRes = string.Empty
                     , strRow = string.Empty;
                 int idSrvTM = (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).GetIdSrvTM(m_IdSourceConnSett)
-                    , iUTCOffsetToDataTotalHours = (int)(_parent as DestBiTECStatKKSNAMEsql).m_tsUTCOffsetToData.Value.TotalHours;
+                    , iOffsetUTCToDataTotalHours = (int)(_parent as DestBiTECStatKKSNAMEsql).m_tsOffsetUTCToData.Value.TotalHours;
 
                 strRes = @"INSERT INTO [dbo].[" + (_parent as HHandlerDbULoaderDest).m_strNameTable + @"] ("
                     + @"[KKS_NAME]"
@@ -66,7 +66,7 @@ namespace DestStat
                     strRow += @"'" + getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) + @"'" + @",";
                     strRow += m_IdSourceTEC + @",";
                     strRow += ((decimal)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
-                    strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours).ToString(s_strFormatDbDateTime) + @"',";
+                    strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(iOffsetUTCToDataTotalHours).ToString(s_strFormatDbDateTime) + @"',";
                     strRow += row[@"tmdelta"] + @",";
                     strRow += @"GETDATE()" + @",";
                     strRow += m_IdSourceConnSett + @",";

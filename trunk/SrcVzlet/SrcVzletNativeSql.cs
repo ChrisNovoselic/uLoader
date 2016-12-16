@@ -36,7 +36,7 @@ namespace SrcVzlet
             protected override void setQuery()
             {
                 m_strQuery = string.Empty;
-                long secUTCOffsetToData = m_msecUTCOffsetToServer / 1000;
+                //long secOffsetUTCToData = m_secOffsetUTCToData; //OFFSET
                 
                 //DateTimeBegin = DateTimeBegin.AddSeconds(-1 * secUTCOffsetToData);
 

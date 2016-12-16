@@ -137,10 +137,9 @@ namespace SrcVzlet
                             //if (int.Parse(r["COUNT"].ToString()) > countRow) {//???проверка кол-ва строк
                                 try {
                                     dtValue = DateTime.Parse(r["DATETIME"].ToString());
-                                    dtValue = dtValue + m_tsUTCOffsetToData.Value;
+                                    dtValue += m_tsOffsetUTCToData.Value; //OFFSET
 
-                                    if (sgnl.IsFormula == false)
-                                    {
+                                    if (sgnl.IsFormula == false) {
                                         dblValue = double.Parse(r["VALUE"].ToString());
 
                                         // вставить строку

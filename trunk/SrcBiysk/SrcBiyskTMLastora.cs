@@ -37,16 +37,16 @@ namespace SrcBiysk
                 m_strQuery = string.Empty;
 
                 string strUnion = @" UNION ALL ";
-                long secUTCOffsetToData = m_msecUTCOffsetToData / 1000;
+                long secOffsetUTCToData = m_secOffsetUTCToData;
 
                 //Формировать зпрос
                 foreach (GroupSignalsSrc.SIGNALBiyskTMoraSrc s in m_arSignals)
                     if (s.IsFormula == false)
                         m_strQuery += @"SELECT " + s.m_idMain + @" as ID, VALUE, QUALITY"
-                                + @", DATETIME + numtodsinterval(" + secUTCOffsetToData + @",'second') as DATETIME"
+                                + @", DATETIME + numtodsinterval(" + secOffsetUTCToData + @",'second') as DATETIME"
                             + @" FROM ARCH_SIGNALS." + s.m_NameTable
                             + @" WHERE"
-                            + @" DATETIME > " + @"to_timestamp('" + (_parent as SrcBiyskTMLastora).m_dtServer.AddMilliseconds(m_msecServerOffsetToData).AddMinutes(-1).ToString(@"yyyyMMdd HHmmss") + @"', 'yyyymmdd hh24missFF9')" //@" SYSTIMESTAMP - interval '1' minute"
+                            + @" DATETIME > " + @"to_timestamp('" + (_parent as SrcBiyskTMLastora).m_dtServer.AddSeconds(m_secOffsetServerToQuery).AddMinutes(-1).ToString(@"yyyyMMdd HHmmss") + @"', 'yyyymmdd hh24missFF9')" //@" SYSTIMESTAMP - interval '1' minute"
                             //+ @" ORDER BY DATETIME DESC"
                             + strUnion
                         ;

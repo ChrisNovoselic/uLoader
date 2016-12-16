@@ -115,12 +115,11 @@ namespace SrcVzlet
                 new DataColumn (@"ID", typeof (int))
                 , new DataColumn (@"DATETIME", typeof (DateTime))
                 , new DataColumn (@"VALUE", typeof (float))
-                , //??? QUAKITY
+                , //??? QUALITY
             });
 
             if (table.Rows.Count > 0) {
-                foreach (GroupSignalsVzletSql.SIGNALVzletKKSNAMEsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
-                {
+                foreach (GroupSignalsVzletSql.SIGNALVzletKKSNAMEsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals) {
                     rowsSgnl = table.Select("KKS_NAME ='" + sgnl.m_kks_name + "'");
 
                     if (rowsSgnl.Length > 0)
@@ -128,7 +127,7 @@ namespace SrcVzlet
                             //if (int.Parse(r["COUNT"].ToString()) > countRow) {//???проверка кол-ва строк
                                 try {
                                     dtValue = DateTime.Parse(r["DATETIME"].ToString());
-                                    dtValue = dtValue + m_tsUTCOffsetToData.Value;
+                                    dtValue += m_tsOffsetUTCToData.Value; //OFFSET
 
                                     if (sgnl.IsFormula == false) {
                                         dblValue = double.Parse(r["VALUE"].ToString());

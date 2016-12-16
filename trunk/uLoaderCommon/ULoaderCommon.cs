@@ -179,6 +179,21 @@ namespace uLoaderCommon
         {
             return new HTimeSpan(@"dd", day);
         }
+
+        public override bool Equals(object obj)
+        {
+            return (obj is HTimeSpan) == true ? this == obj as HTimeSpan : false;
+        }
+
+        public static bool operator ==(HTimeSpan equ1, HTimeSpan equ2)
+        {
+            return equ1.Value == equ2.Value;
+        }
+
+        public static bool operator !=(HTimeSpan equ1, HTimeSpan equ2)
+        {
+            return equ1.Value != equ2.Value;
+        }
     }
     
     public interface ILoader
@@ -245,7 +260,7 @@ namespace uLoaderCommon
     /// </summary>
     public abstract class HHandlerDbULoader : HHandlerDb
     {
-        public HTimeSpan m_tsUTCOffset;
+        //public HTimeSpan m_tsUTCOffset;
         /// <summary>
         /// Ссылка на объект "связи" с клиентом
         /// </summary>
@@ -1105,8 +1120,8 @@ namespace uLoaderCommon
                         ;
 
                     m_tsOffsetUTCToQuery = HTimeSpan.NotValue;
-                    if (m_dictAdding.ContainsKey(@"UTC_OFFSET_TO_QUERY") == true)
-                        m_tsOffsetUTCToQuery = new HTimeSpan(m_dictAdding[@"UTC_OFFSET_TO_QUERY"]);
+                    if (m_dictAdding.ContainsKey(@"OFFSET_UTC_TO_QUERY") == true)
+                        m_tsOffsetUTCToQuery = new HTimeSpan(m_dictAdding[@"OFFSET_UTC_TO_QUERY"]);
                     else
                         ;
 
@@ -1179,17 +1194,8 @@ namespace uLoaderCommon
 
                         //Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
-
-                    // = Convert.ToInt32(m_dictAdding[@"UTC_OFFSET"]);
-                    m_tsUTCOffset = HTimeSpan.NotValue;
-                    if (m_dictAdding.ContainsKey(@"UTC_OFFSET") == true)
-                        m_tsUTCOffset = new HTimeSpan(m_dictAdding[@"UTC_OFFSET"]);
-                    else
-                        ;
                 }
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 Logging.Logg().Exception(e, @"HHandlerDbULoader::Initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 iRes = -1;

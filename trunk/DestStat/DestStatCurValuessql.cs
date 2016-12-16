@@ -47,8 +47,8 @@ namespace DestStat
                     , strRow = string.Empty;
                 Type typeVal = m_DupTables.TableDistinct.Columns[@"VALUE"].DataType;
                 int idSrvTM = (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).GetIdSrvTM(m_IdSourceConnSett)
-                    , iUTCOffsetToDataTotalHours = (int)(_parent as DestStatCurValuessql).m_tsUTCOffsetToData.Value.TotalHours;
-                HTimeSpan tsUTCOffset = _parent.m_tsUTCOffset == HTimeSpan.NotValue ? new HTimeSpan(@"ss0") : _parent.m_tsUTCOffset;
+                    , iOffsetUTCToDataTotalHours = (int)(_parent as DestStatCurValuessql).m_tsOffsetUTCToData.Value.TotalHours;
+                //HTimeSpan tsUTCOffset = _parent.m_tsUTCOffset == HTimeSpan.NotValue ? new HTimeSpan(@"ss0") : _parent.m_tsUTCOffset; //??? OFFSET
 
                 //Logging.Logg().Debug(@"GroupSignalsStatKKSNAMEsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -74,7 +74,7 @@ namespace DestStat
                                 strRes += row[@"VALUE"];
                         strRes += @",";
 
-                        strRes += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(iUTCOffsetToDataTotalHours).ToString(s_strFormatDbDateTime) + @"'" + @"),";
+                        strRes += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(iOffsetUTCToDataTotalHours).ToString(s_strFormatDbDateTime) + @"'" + @"),";
                     }
 
                     //Лишняя ','

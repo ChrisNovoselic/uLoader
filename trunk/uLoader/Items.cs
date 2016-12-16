@@ -1573,7 +1573,9 @@ namespace uLoader
             DataRow[]arSel;
             object [] arObjToRow = null;
             string strNameFieldID = string.Empty;
-            HTimeSpan tsToData = HTimeSpan.NotValue;
+            TimeSpan tsToPanel = TimeSpan.Zero;
+            HTimeSpan tsToData = HTimeSpan.NotValue
+                , tsToQuery = HTimeSpan.NotValue;
 
             //Проверить длину идентификатора
             if (id.Length > 1)
@@ -1590,10 +1592,18 @@ namespace uLoader
                             if (tblRec.Rows.Count > 0)
                                 if ((!(tblRec.Columns.IndexOf(@"ID") < 0)) && (!(tblRec.Columns.IndexOf(@"DATETIME") < 0)))
                                 {
-                                    if (m_dictAdding.ContainsKey(@"UTC_OFFSET_TO_DATA") == true)
-                                        tsToData = new HTimeSpan(m_dictAdding[@"UTC_OFFSET_TO_DATA"]);
+                                    if (m_dictAdding.ContainsKey(@"OFFSET_UTC_TO_DATA") == true)
+                                        tsToData = new HTimeSpan(m_dictAdding[@"OFFSET_UTC_TO_DATA"]);
                                     else
                                         ;
+                                    if (m_dictAdding.ContainsKey(@"OFFSET_UTC_TO_QUERY") == true)
+                                        tsToQuery = new HTimeSpan(m_dictAdding[@"OFFSET_UTC_TO_QUERY"]);
+                                    else
+                                        ;
+
+                                    tsToPanel = tsToData == HTimeSpan.NotValue ? TimeSpan.Zero : -tsToData.Value;
+                                    //tsToPanel += tsToQuery == HTimeSpan.NotValue ? TimeSpan.Zero : -tsToQuery.Value;
+
                                     //Logging.Logg().Debug(@"GroupSources::GetDataToPanel () - получено строк=" + tblRec.Rows.Count + @"...", Logging.INDEX_MESSAGE.NOT_SET);
 
                                     tblToPanel.Columns.AddRange(new DataColumn[] { new DataColumn (@"NAME_SHR", typeof (string))
@@ -1620,7 +1630,7 @@ namespace uLoader
                                         if (arSel.Length > 0)
                                             arObjToRow = new object[] { sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf (@"NAME_SHR")]
                                                 , arSel[0][@"VALUE"]
-                                                , ((DateTime)arSel[0][@"DATETIME"]).Add(tsToData == HTimeSpan.NotValue ? TimeSpan.Zero : - tsToData.Value).ToString(@"dd.MM.yyyy HH:mm:ss.fff")
+                                                , ((DateTime)arSel[0][@"DATETIME"]).Add(tsToPanel).ToString(@"dd.MM.yyyy HH:mm:ss.fff")
                                                 , arSel.Length };
                                         else
                                             arObjToRow = new object[] { sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf(@"NAME_SHR")], string.Empty, string.Empty, string.Empty };

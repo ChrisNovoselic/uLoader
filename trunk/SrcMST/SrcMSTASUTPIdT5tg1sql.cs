@@ -67,8 +67,8 @@ namespace SrcMST
             DataRow[] rowsSgnl = null;
             DateTime dtValue;
             double dblSumValue = -1F;
-            int iHour = -1
-                ,iHourAdding = -1;
+            //int iHour = -1
+            //    ,iHourAdding = -1;
 
             tblRes.Columns.AddRange(new DataColumn[] {
                 new DataColumn (@"ID", typeof (int))
@@ -88,20 +88,17 @@ namespace SrcMST
                             //??? если строк > 1
                             && (((int)rowsSgnl[0][@"CNT"] % 60) == 0))
                         {// только при кол-ве записей = 60 (все минуты часа)
-                            iHourAdding = 0;
-                            iHour = (int)rowsSgnl[0][@"HOUR"];
-                            if (iHour > 23)
-                                iHourAdding = 24;
-                            else
-                                ;
-                            iHour -= iHourAdding;
+                            //iHourAdding = 0;
+                            //iHour = (int)rowsSgnl[0][@"HOUR"];
+                            //if (iHour > 23)
+                            //    iHourAdding = 24;
+                            //else
+                            //    ;
+                            //iHour -= iHourAdding;
 
-                            dtValue = new DateTime((int)rowsSgnl[0][@"YEAR"]
-                                , (int)rowsSgnl[0][@"MONTH"]
-                                , (int)rowsSgnl[0][@"DAY"]
-                                , iHour
-                                , 0
-                                , 0).AddHours(iHourAdding);
+                            dtValue = (DateTime)rowsSgnl[0][@"DATETIME"]
+                                //+ TimeSpan.FromHours(1) //OFFSET
+                                ;
 
                             dblSumValue = (double)rowsSgnl[0][@"VALUE"];
 
@@ -148,10 +145,10 @@ namespace SrcMST
                 int offsetHour = 0;
                 bool bOffsetOutInclude = true;
 
-                if ((_parent as HHandlerDbULoaderSrc).Mode == MODE_WORK.CUR_INTERVAL)
-                    offsetHour = -1;
-                else
-                    ;
+                //if ((_parent as HHandlerDbULoaderSrc).Mode == MODE_WORK.CUR_INTERVAL)
+                //    offsetHour = -1;
+                //else
+                //    ;
 
                 foreach (SIGNALIdsql sgnl in m_arSignals)
                     if (sgnl.IsFormula == false)
@@ -193,24 +190,13 @@ namespace SrcMST
                 }
 
                 m_strQuery = @"SELECT [ID], SUM([VALUE]) as [VALUE], COUNT(*) as [CNT]"
-                        //+ @", DATEPART(YEAR, [last_changed_at]) as [YEAR]"
-                        //+ @", DATEPART(MONTH, [last_changed_at]) as [MONTH]"
-                        //+ @", DATEPART(DAY, [last_changed_at]) as [DAY]"
-                        //+ @", (DATEPART(HOUR, [last_changed_at]) + 1) as [HOUR]"
-                        + @", DATEPART(YEAR, MAX([last_changed_at])) as [YEAR]"
-                        + @", DATEPART(MONTH, MAX([last_changed_at])) as [MONTH]"
-                        + @", DATEPART(DAY, MAX([last_changed_at])) as [DAY]"
-                        //+ @", (DATEPART(HOUR, MAX([last_changed_at])) + 1) as [HOUR]"
-                        + @", (DATEPART(HOUR, MAX([last_changed_at])) + " + (bOffsetOutInclude == false ? 1 : 0) + @") as [HOUR]"
+                        + @", DATEADD(HOUR, " + (bOffsetOutInclude == false ? 1 : 0) + @", DATEADD(MINUTE, (DATEDIFF(MINUTE, DATEADD(DAY, 0, CAST('" + DateTimeEndFormat + @"' as datetime)), [last_changed_at]) / 60) * 60, DATEADD(DAY, 0, CAST('" + DateTimeEndFormat + @"' as datetime)))) as [DATETIME]"
                     + @" FROM [dbo].[states_real_his_0]"
                     + @" WHERE"                            
                         + strWhereDatetime
                         + @" AND [ID] IN (" + strIds + @")"
                     + @" GROUP BY [ID]"
-                        //+ @", DATEPART(YYYY, [last_changed_at])"
-                        //+ @", DATEPART(MM, [last_changed_at])"
-                        //+ @", DATEPART(dd, [last_changed_at])"
-                        //+ @", DATEPART(HH, [last_changed_at])"
+                        + @", DATEADD(MINUTE, (DATEDIFF(MINUTE, DATEADD(DAY, 0, CAST('" + DateTimeEndFormat + @"' as datetime)), [last_changed_at]) / 60) * 60, DATEADD(DAY, 0, CAST('" + DateTimeEndFormat + @"' as datetime)))"
                     ;
             }
         }

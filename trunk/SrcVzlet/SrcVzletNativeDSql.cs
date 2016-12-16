@@ -42,8 +42,8 @@ namespace SrcVzlet
                 int idReq = HMath.GetRandomNumber()
                     , i = -1;
                 string cmd = string.Empty;
-                
-                long secUTCOffsetToData = m_msecUTCOffsetToServer / 1000;
+                //??? m_secOffsetUTCToServer или m_secOffsetUTCToData
+                long secOffsetUTCToData = m_secOffsetUTCToServer / 1000;
                 //перевод даты для суточного набора
                 if (DateTimeStart != DateTimeBegin)
                 {
@@ -106,6 +106,7 @@ namespace SrcVzlet
                 new DataColumn (@"ID", typeof (int))
                 , new DataColumn (@"DATETIME", typeof (DateTime))
                 , new DataColumn (@"VALUE", typeof (float))
+                //??? QUALITY
             });
 
             if (table.Rows.Count > 0)

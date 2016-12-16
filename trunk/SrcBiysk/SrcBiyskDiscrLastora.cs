@@ -1,14 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using System.IO; //Path
 using System.Data; //DataTable
-using System.Data.Common; //DbConnection
-using System.Threading;
 
-using HClassLibrary;
 using uLoaderCommon;
 
 namespace SrcBiysk
@@ -33,12 +25,12 @@ namespace SrcBiysk
                 m_strQuery = string.Empty;
 
                 string strUnion = @",";
-                long secUTCOffsetToData = m_msecUTCOffsetToData / 1000;
+                long secOffsetUTCToData = m_secOffsetUTCToData;
 
                 if (m_arSignals.Length > 0)
                 {
                     m_strQuery += @"SELECT TAGNAME as ID, VALUE, QUALITY"
-                            + @", DATETIME + numtodsinterval(" + secUTCOffsetToData + @",'second') as DATETIME"
+                            + @", DATETIME + numtodsinterval(" + secOffsetUTCToData + @",'second') as DATETIME"
                         + @" FROM ARCH_SIGNALS.ARCHIVE_TS WHERE TAGNAME IN (";
 
                     //Формировать зпрос
