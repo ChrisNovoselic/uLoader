@@ -57,12 +57,12 @@ namespace SrcKTS
                             else
                                 ; // оставить без изменений
 
-                        m_strQuery += @"exec e6work.dbo.ep_AskVTIdata @cmd='" + cmd + @"',"
-                            + @"@idVTI=" + s.m_iIdLocal + @","
-                            + @"@TimeStart='" + DateTimeBeginFormat + @"',"
-                            + @"@TimeEnd='" + DateTimeEndFormat + @"',"
-                            + @"@idReq=" + idReq
-                            + @";";
+                        m_strQuery += string.Format(@"exec dbo.ep_AskVTIdata @cmd='{0}'"
+                            + @", @idVTI={1}"
+                            + @", @TimeStart='{2}'"
+                            + @", @TimeEnd='{3}'"
+                            + @", @idReq={4};"
+                            , cmd, s.m_iIdLocal, DateTimeBeginFormat, DateTimeEndFormat, idReq);
 
                         i++;
                     }
@@ -71,15 +71,24 @@ namespace SrcKTS
                         ;
                 }
 
-                m_strQuery += @"SELECT idVTI as [ID],idReq,TimeIdx,TimeRTC,TimeSQL as [DATETIME],idState,ValueFl as [VALUE],ValueInt,IsInteger,idUnit"
-                        + @", DATEDIFF(HH, GETDATE(), GETUTCDATE()) as [UTC_OFFSET]"
-                    + @" FROM e6work.dbo.VTIdataList"
-                    + @" WHERE idReq=" + idReq
-                    + @";";
+                // все поля idVTI, idReq, TimeIdx, TimeRTC, TimeSQL, idState, ValueFl, ValueInt, IsInteger, idUnit
+                m_strQuery += string.Format(@"SELECT res.[idVTI], SUM(res.[ValueFl]) sum_ValueFl"
+	                + @", res.[DATETIME]"
+                    + @", COUNT(*) as [COUNT]"
+                        + @" FROM ("
+                            + @"SELECT [idVTI], [ValueFl]"
+                                + @", DATEADD(MINUTE, ceiling(DATEDIFF(MINUTE, DATEADD(DAY, DATEDIFF(DAY, 0, CAST('{0}' as datetime2(7))), 0), [TimeSQL]) / 60.) * 60, DATEADD(DAY, DATEDIFF(DAY, 0, CAST('{0}' as datetime2(7))), 0)) as [DATETIME]"
+                            + @" FROM [VTIdataList]"
+                            + @" WHERE idREQ = {1}"
+                            + @" GROUP BY"
+                                + @" DATEADD(MINUTE, ceiling(DATEDIFF(MINUTE, DATEADD(DAY, DATEDIFF(DAY, 0, CAST('{0}' as datetime2(7))), 0), [TimeSQL]) / 60.) * 60, DATEADD(DAY, DATEDIFF(DAY, 0, CAST('{0}' as datetime2(7))), 0))"
+                                + @", [idVTI], [ValueFl]"
+                    + @") res"
+                    + @" GROUP BY [idVTI], [DATETIME]"
+                    + @" ORDER BY [idVTI], [DATETIME];", DateTimeBeginFormat, idReq);
 
-                m_strQuery += @"exec e6work.dbo.ep_AskVTIdata @cmd='" + @"Clear" + @"',"
-                    + @"@idReq=" + idReq
-                    + @";";
+                m_strQuery += string.Format(@"exec [dbo].ep_AskVTIdata @cmd='{0}'"
+                    + @", @idReq={1};", @"Clear", idReq);
             }
 
             /// <summary>
