@@ -371,8 +371,16 @@ namespace uLoaderCommon
 
                     return
                         //iRes
-                        //-7 - (-7 + (-7 - (-3)))
-                        m_secOffsetUTCToServer - (m_secOffsetUTCToData + (m_secOffsetUTCToQuery - m_secOffsetUTCToData))
+                        //// Server - (Data - (Data - Query)) = -7 - (-7 + (-7 - (-3)))
+                        //m_secOffsetUTCToServer - (m_secOffsetUTCToData + (m_secOffsetUTCToData - m_secOffsetUTCToQuery))
+                        //// Server - (Data - (Data - Query)) = -7 - (-7 - (-7 - (-3)))
+                        //m_secOffsetUTCToData - (m_secOffsetUTCToQuery - m_secOffsetUTCToData) - m_secOffsetUTCToServer
+                        //// Server - Query = (-7 - (-3))
+                        //m_secOffsetUTCToServer - m_secOffsetUTCToQuery
+                        //// (Data - (Data - Query)) - Server = Query - Server = (-3 - (-7))
+                        //m_secOffsetUTCToQuery - m_secOffsetUTCToServer
+                        //Data - (Data - Query) - Server - (Data - Server)
+                        m_secOffsetUTCToData - (m_secOffsetUTCToData - m_secOffsetUTCToQuery) - m_secOffsetUTCToServer - (m_secOffsetUTCToData - m_secOffsetUTCToServer)
                             ;
                 }
             }
@@ -962,7 +970,7 @@ namespace uLoaderCommon
                             break;
                     }
 
-                    strRes = DateTimeBegin.AddMilliseconds(-1 * msecDiff).ToString((_parent as HHandlerDbULoaderDatetimeSrc).m_strDateTimeDBFormat, CultureInfo.InvariantCulture);
+                    strRes = DateTimeBegin.AddMilliseconds(1 * msecDiff).ToString((_parent as HHandlerDbULoaderDatetimeSrc).m_strDateTimeDBFormat, CultureInfo.InvariantCulture);
 
                     return strRes;
                 }
@@ -1002,7 +1010,7 @@ namespace uLoaderCommon
                     //if (PeriodMain.Days == pday)
                     //    strRes = DateTimeStart.ToString((_parent as HHandlerDbULoaderDatetimeSrc).m_strDateTimeDBFormat, CultureInfo.InvariantCulture);
                     //else
-                        strRes = DateTimeBegin.AddMilliseconds(-1 * msecDiff).AddMilliseconds((long)(PeriodMain.TotalMilliseconds)).ToString((_parent as HHandlerDbULoaderDatetimeSrc).m_strDateTimeDBFormat, CultureInfo.InvariantCulture);
+                        strRes = DateTimeBegin.AddMilliseconds(1 * msecDiff).AddMilliseconds((long)(PeriodMain.TotalMilliseconds)).ToString((_parent as HHandlerDbULoaderDatetimeSrc).m_strDateTimeDBFormat, CultureInfo.InvariantCulture);
                     //Console.WriteLine(@"DateTimeBegin=" + DateTimeBeginFormat + @"; DateTimeEndFormat=" + strRes);
 
                     return strRes;

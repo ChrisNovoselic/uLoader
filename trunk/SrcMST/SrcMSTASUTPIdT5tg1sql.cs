@@ -76,18 +76,15 @@ namespace SrcMST
                 , new DataColumn (@"VALUE", typeof (float))
             });
 
-            foreach (GroupSignalsMSTIDsql.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
-            {
-                try
-                {
-                    if (sgnl.IsFormula == false)
-                    {
+            foreach (GroupSignalsMSTIDsql.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals) {
+                try {
+                    if (sgnl.IsFormula == false) {
                         rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal);
 
                         if ((rowsSgnl.Length > 0)
                             //??? если строк > 1
-                            && (((int)rowsSgnl[0][@"CNT"] % 60) == 0))
-                        {// только при кол-ве записей = 60 (все минуты часа)
+                            && (((int)rowsSgnl[0][@"CNT"] % 60) == 0)) {
+                        // только при кол-ве записей = 60 (все минуты часа)
                             //iHourAdding = 0;
                             //iHour = (int)rowsSgnl[0][@"HOUR"];
                             //if (iHour > 23)
@@ -97,7 +94,7 @@ namespace SrcMST
                             //iHour -= iHourAdding;
 
                             dtValue = (DateTime)rowsSgnl[0][@"DATETIME"]
-                                //+ TimeSpan.FromHours(1) //OFFSET
+                                + TimeSpan.FromHours(m_tsOffsetUTCToData.Value.Hours) //OFFSET
                                 ;
 
                             dblSumValue = (double)rowsSgnl[0][@"VALUE"];
@@ -113,16 +110,12 @@ namespace SrcMST
                                 , dtValue
                                 , dblSumValue
                             });
-                        }
-                        else
+                        } else
                             ; // неполные данные
-                    }
-                    else
+                    } else
                         // формула
                         ;
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     Logging.Logg().Exception(e, @"SrcMSTASUTPIDT5tg1sql:: parseValues (sgnl.Id=" + sgnl.m_idMain + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }

@@ -44,6 +44,7 @@ namespace SrcKTS
                 string cmd =
                     string.Empty;
                 //Формировать запрос
+                i = 0;
                 foreach (GroupSignalsKTSTUsql.SIGNALIdsql s in m_arSignals)
                     if (s.IsFormula == false) {
                         m_strQuery += string.Format(@"exec dbo.ep_AskVTIdata @cmd='{0}'"
@@ -60,7 +61,7 @@ namespace SrcKTS
                 // все поля idVTI, idReq, TimeIdx, TimeRTC, TimeSQL, idState, ValueFl, ValueInt, IsInteger, idUnit
                 m_strQuery += string.Format(@"SELECT res.[idVTI] as [ID], SUM(res.[ValueFl]) as [VALUE]"
 	                + @", res.[DATETIME]"
-                    + @", DATEDIFF(HOUR, GETDATE(), GETUTCDATE()) as [UTC_OFFSET]"
+                    //+ @", DATEDIFF(HOUR, GETDATE(), GETUTCDATE()) as [UTC_OFFSET]"
                     + @", COUNT(*) as [COUNT]"
                         + @" FROM ("
                             + @"SELECT [idVTI], [ValueFl]"
@@ -68,7 +69,7 @@ namespace SrcKTS
                             + @" FROM [VTIdataList]"
                             + @" WHERE idREQ = {1}"
                             + @" GROUP BY [IdResult], [idVTI], [ValueFl]"
-                                + @" , DATEADD(MINUTE, ceiling(DATEDIFF(MINUTE, DATEADD(DAY, DATEDIFF(DAY, 0, CAST('{0}' as datetime)), 0), [TimeSQL]) / 60.) * 60, DATEADD(DAY, DATEDIFF(DAY, 0, CAST('{0}' as datetime)), 0))"
+                                + @", DATEADD(MINUTE, ceiling(DATEDIFF(MINUTE, DATEADD(DAY, DATEDIFF(DAY, 0, CAST('{0}' as datetime)), 0), [TimeSQL]) / 60.) * 60, DATEADD(DAY, DATEDIFF(DAY, 0, CAST('{0}' as datetime)), 0))"
                     + @") res"
                     + @" GROUP BY [idVTI], [DATETIME]"
                     + @" ORDER BY [idVTI], [DATETIME];", DateTimeBeginFormat, idReq);
@@ -125,14 +126,14 @@ namespace SrcKTS
                     if (rowsSgnl.Length > 0) {
                         //Для каждого сигнала предполагаем, что все данные в наличии(полные)
                         listNotCompletedDatetimeValues.Clear();
-                        // необходимо присвоить некоторое значение
+                        // необходимо присвоить некоторое начальное значение (по нему определим - есть ли хотя бы одно значение для сигнала)
                         dtValue = DateTime.MinValue;
                         //Для каждого сигнала суммировать начинать с "0"
                         dblSumValue = 0F;
                         //cntRec = 0;
                         //??? обработка всех последующих строк, а если строк > 2
                         foreach (DataRow r in rowsSgnl) {
-                            dtValue = ((DateTime)r[@"DATETIME"]).AddHours((int)rowsSgnl[0][@"UTC_OFFSET"]);
+                            dtValue = ((DateTime)r[@"DATETIME"]).AddHours(m_tsOffsetUTCToData.Value.Hours);
 
                             if ((int)rowsSgnl[0][@"COUNT"] == 2)
                                 dblSumValue += (double)r[@"VALUE"];
