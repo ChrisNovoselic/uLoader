@@ -1,5 +1,6 @@
 ﻿using HClassLibrary;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using uLoaderCommon;
@@ -12,7 +13,7 @@ namespace SrcKTS
         /// Конструктор - основной (без параметров)
         /// </summary>
         public SrcKTSTUDsql()
-            : base(@"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(@"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.FULL_PERIOD)
         {
 
         }
@@ -21,7 +22,7 @@ namespace SrcKTS
         /// </summary>
         /// <param name="iPlugIn">Объект для обмена сообщенями с основной программой</param>
         public SrcKTSTUDsql(PlugInULoader iPlugIn)
-            : base(iPlugIn, @"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(iPlugIn, @"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.FULL_PERIOD)
         {
         }
         /// <summary>
@@ -46,47 +47,40 @@ namespace SrcKTS
             {
                 int idReq = HMath.GetRandomNumber()
                     , i = -1;
-                string cmd = string.Empty;
-                long secOffsetUTCToData = m_secOffsetUTCToData;
-                ////перевод даты для суточного набора
-                //if (DateTimeStart != DateTimeBegin)
-                //    DateTimeBegin = (DateTimeBegin - DateTimeBegin.TimeOfDay).AddDays(PeriodMain.Days);
-                //else
-                //    DateTimeBegin = (DateTimeStart - DateTimeStart.TimeOfDay);
-
+                string cmd =
+                    string.Empty;
                 //Формировать запрос
                 i = 0;
                 foreach (GroupSignalsKTSTUDsql.SIGNALIdsql s in m_arSignals)
                     if (s.IsFormula == false) {
-                        if (i == 0)
-                            cmd = @"List";
-                        else
-                            if (i == 1)
-                                cmd = @"ListAdd";
-                            else
-                                ;
-
-                        m_strQuery += @"exec e6work.dbo.ep_AskVTIdata @cmd='" + cmd + @"',"
-                            + @"@idVTI=" + s.m_iIdLocal + @","
-                            + @"@TimeStart='" + DateTimeBeginFormat + @"',"
-                            + @"@TimeEnd='" + DateTimeEndFormat + @"',"
-                            + @"@idReq=" + idReq
-                            + @";";
-
-                        i++;
+                        m_strQuery += string.Format(@"exec dbo.ep_AskVTIdata @cmd='{0}'"
+                            + @", @idVTI={1}"
+                            + @", @TimeStart='{2}'"
+                            + @", @TimeEnd='{3}'"
+                            + @", @idReq={4};"
+                            , i++ == 0 ? @"List" : @"ListAdd", s.m_iIdLocal, DateTimeBeginFormat, DateTimeEndFormat, idReq);
                     } else
                         // формула
                         ;
 
-                m_strQuery += @"SELECT idVTI as [ID],idReq,TimeIdx,TimeRTC, DATEADD(Second," + secOffsetUTCToData + ",TimeSQL) as [DATETIME],idState,ValueFl as [VALUE],ValueInt,IsInteger,idUnit"
-                        + @", DATEDIFF(HH, GETDATE(), GETUTCDATE()) as [UTC_OFFSET]"
-                    + @" FROM e6work.dbo.VTIdataList"
-                    + @" WHERE idReq=" + idReq
-                    + @";";
+                // все поля idVTI, idReq, TimeIdx, TimeRTC, TimeSQL, idState, ValueFl, ValueInt, IsInteger, idUnit
+                m_strQuery += string.Format(@"SELECT res.[idVTI] as [ID], SUM(res.[ValueFl]) as [VALUE]"
+                    + @", res.[DATETIME]"
+                    + @", DATEDIFF(HOUR, GETDATE(), GETUTCDATE()) as [UTC_OFFSET]"
+                    + @", COUNT(*) as [COUNT]"
+                        + @" FROM ("
+                            + @"SELECT [idVTI], [ValueFl]"
+                                + @", DATEADD(MINUTE, ceiling(DATEDIFF(MINUTE, DATEADD(DAY, DATEDIFF(DAY, 0, CAST('{0}' as datetime)), 0), [TimeSQL]) / 60.) * 60, DATEADD(DAY, DATEDIFF(DAY, 0, CAST('{0}' as datetime)), 0)) as [DATETIME]"
+                            + @" FROM [VTIdataList]"
+                            + @" WHERE idREQ = {1}"
+                            + @" GROUP BY [IdResult], [idVTI], [ValueFl]"
+                                + @" , DATEADD(MINUTE, ceiling(DATEDIFF(MINUTE, DATEADD(DAY, DATEDIFF(DAY, 0, CAST('{0}' as datetime)), 0), [TimeSQL]) / 60.) * 60, DATEADD(DAY, DATEDIFF(DAY, 0, CAST('{0}' as datetime)), 0))"
+                    + @") res"
+                    + @" GROUP BY [idVTI], [DATETIME]"
+                    + @" ORDER BY [idVTI], [DATETIME];", DateTimeBeginFormat, idReq);
 
-                m_strQuery += @"exec e6work.dbo.ep_AskVTIdata @cmd='" + @"Clear" + @"',"
-                    + @"@idReq=" + idReq
-                    + @";";
+                m_strQuery += string.Format(@"exec [dbo].ep_AskVTIdata @cmd='{0}'"
+                    + @", @idReq={1};", @"Clear", idReq);
             }
             /// <summary>
             /// Создать объект для сигнала с параметрами
@@ -128,55 +122,53 @@ namespace SrcKTS
             DataRow[] rowsSgnl = null;
             DateTime dtValue;
             double dblSumValue = -1F;
-            int countDay = 0;
-
-            countDay = table.Rows.Count / (48 * m_dictGroupSignals[IdGroupSignalsCurrent].Signals.Count());
+            List<DateTime> listNotCompletedDatetimeValues = new List<DateTime>();
 
             tblRes.Columns.AddRange(new DataColumn[] {
                 new DataColumn (@"ID", typeof (int))
                 , new DataColumn (@"DATETIME", typeof (DateTime))
                 , new DataColumn (@"VALUE", typeof (float))
-                //??? QUALITY
             });
-
-            int cntHour = 24;
 
             foreach (GroupSignalsSrc.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
                 if (sgnl.IsFormula == false) {
-                    rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal, @"DATETIME");//???добавить сутки для архивной метки времени?
-                    countDay = rowsSgnl.Count() / 48;
+                    // получить все строки для сигнала
+                    rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal, @"DATETIME");
 
-                    for (int i = 0; i < countDay; i++)
-                    //вывод данных только при полных сутках
-                        if ((rowsSgnl.Length > 0)
-                            && (rowsSgnl.Length % 48 == 0))
-                        {
-                            dtValue = ((DateTime)rowsSgnl[cntHour*2-1][@"DATETIME"]);
-                            //Вычислить суммарное значение для сигнала
-                            dblSumValue = 0F;
+                    if (rowsSgnl.Length > 0) {
+                        //Для каждого сигнала предполагаем, что все данные в наличии(полные)
+                        listNotCompletedDatetimeValues.Clear();
+                        // необходимо присвоить некоторое значение
+                        dtValue = DateTime.MinValue;
+                        //Для каждого сигнала суммировать начинать с "0"
+                        dblSumValue = 0F;
+                        //cntRec = 0;
+                        //??? обработка всех последующих строк, а если строк > 2
+                        foreach (DataRow r in rowsSgnl) {
+                            dtValue = ((DateTime)r[@"DATETIME"]).AddHours((int)rowsSgnl[0][@"UTC_OFFSET"]);
 
-                            foreach (DataRow r in rowsSgnl)
-                                dblSumValue += Convert.ToSingle(r[@"VALUE"].ToString());
-
-                            // при необходимости найти среднее
-                            if (sgnl.m_bAVG == true)
-                                dblSumValue /= rowsSgnl.Length;
+                            if ((int)rowsSgnl[0][@"COUNT"] == 2)
+                                dblSumValue += (double)r[@"VALUE"];
                             else
-                                ;
+                                listNotCompletedDatetimeValues.Add(dtValue);
+                        }
+
+                        if ((dtValue > DateTime.MinValue)
+                            && (listNotCompletedDatetimeValues.Count == 0))
                             // вставить строку
                             tblRes.Rows.Add(new object[] {
                                 sgnl.m_idMain
                                 , dtValue
-                                , dblSumValue
+                                , sgnl.m_bAVG == false ?
+                                    dblSumValue : // оставить как есть (сумма)
+                                        dblSumValue / (rowsSgnl.Length * 2) // при необходимости найти среднее
                             });
-                        } else
-                            // неполные данные
-                            continue
-                            ;
-                }
-                else
+                        else
+                            ; // неполные данные
+                    } else
+                        ; // нет данных
+                } else
                     // формула
-                    continue
                     ;
 
             // вызов базового метода

@@ -962,7 +962,7 @@ namespace uLoaderCommon
                             break;
                     }
 
-                    strRes = DateTimeBegin.AddMilliseconds(msecDiff).ToString((_parent as HHandlerDbULoaderDatetimeSrc).m_strDateTimeDBFormat, CultureInfo.InvariantCulture);
+                    strRes = DateTimeBegin.AddMilliseconds(-1 * msecDiff).ToString((_parent as HHandlerDbULoaderDatetimeSrc).m_strDateTimeDBFormat, CultureInfo.InvariantCulture);
 
                     return strRes;
                 }
@@ -994,18 +994,15 @@ namespace uLoaderCommon
                                 msecDiff += msec;
                             else
                                 ;
-                            msecDiff += (long)(PeriodMain.TotalMilliseconds); //'PeriodLocal' тоже валиден, т.к. они равны                         
                             break;
                         case MODE_WORK.COSTUMIZE:
-                            msecDiff += (long)(PeriodMain.TotalMilliseconds);
-                            break;
                         default:
                             break;
                     }
                     //if (PeriodMain.Days == pday)
                     //    strRes = DateTimeStart.ToString((_parent as HHandlerDbULoaderDatetimeSrc).m_strDateTimeDBFormat, CultureInfo.InvariantCulture);
                     //else
-                    strRes = DateTimeBegin.AddMilliseconds(msecDiff).ToString((_parent as HHandlerDbULoaderDatetimeSrc).m_strDateTimeDBFormat, CultureInfo.InvariantCulture);
+                        strRes = DateTimeBegin.AddMilliseconds(-1 * msecDiff).AddMilliseconds((long)(PeriodMain.TotalMilliseconds)).ToString((_parent as HHandlerDbULoaderDatetimeSrc).m_strDateTimeDBFormat, CultureInfo.InvariantCulture);
                     //Console.WriteLine(@"DateTimeBegin=" + DateTimeBeginFormat + @"; DateTimeEndFormat=" + strRes);
 
                     return strRes;
@@ -1186,11 +1183,39 @@ namespace uLoaderCommon
             }
         }
         /// <summary>
+        /// Округлить значение даты времени
+        /// </summary>
+        private void causeToPeriod()
+        {
+            decimal mKoeff = -1;
+
+            switch (m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE]) {
+                case MODE_CURINTERVAL.CAUSE_PERIOD_MINUTE: //Выравнивание по "минуте"
+                    mKoeff = 1;
+                    break;
+                case MODE_CURINTERVAL.CAUSE_PERIOD_HOUR: //Выравнивание по "час"
+                    mKoeff = 1 * 60;
+                    break;
+                case MODE_CURINTERVAL.CAUSE_PERIOD_DAY: //Выравнивание по "сутки"
+                    mKoeff = 24 * 60;
+                    break;
+                case MODE_CURINTERVAL.CAUSE_NOT:
+                default:
+                    break;
+            }
+
+            if (mKoeff > 0)
+                DateTimeBegin =
+                    new DateTime((long)(Math.Floor((DateTimeBegin.Ticks / 10000000) / (decimal)(mKoeff * 60)) * (mKoeff * 60)) * 10000000);
+            else
+                ;
+        }
+        /// <summary>
         /// Актулизировать дату/время начала опроса
         /// </summary>
         /// <returns>Признак изменения даты/времени начала опроса</returns>
         protected virtual int actualizeDateTimeBegin()
-        {
+        {   
             int iRes = 0
                 , denum = 0
                 //, pday = 1
@@ -1218,45 +1243,20 @@ namespace uLoaderCommon
                 //{
                     //Проверить признак 1-го запуска (в режиме CUR_INTERVAL)
                     if (DateTimeBegin == DateTime.MinValue) {
-                        if (m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] == MODE_CURINTERVAL.CAUSE_NOT)
-                            DateTimeBegin =
-                                m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds / denum);
-                        else {
-                            DateTimeBegin =
-                                m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds / denum);
+                        DateTimeBegin =
+                            m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds / denum);
 
-                            if (m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] == MODE_CURINTERVAL.CAUSE_PERIOD_MINUTE)
-                            //Выравнивание по "минуте"
-                                DateTimeBegin = new DateTime((long)(Math.Floor((DateTimeBegin.Ticks / 10000000) / (decimal)(1 * 60)) * (1 * 60)) * 10000000);
-                            else
-                                if (m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] == MODE_CURINTERVAL.CAUSE_PERIOD_HOUR)
-                                //Выравнивание по "час"
-                                    DateTimeBegin =
-                                    //DateTimeBegin.AddSeconds(-1 * (DateTimeBegin.Minute * 60 + DateTimeBegin.Second))
-                                        new DateTime((long)(Math.Floor((DateTimeBegin.Ticks / 10000000) / (decimal)(60 * 60)) * (60 * 60)) * 10000000)
-                                            ;
-                                else
-                                        if (m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] == MODE_CURINTERVAL.CAUSE_PERIOD_DAY)
-                                        //Выравнивание по "сутки"
-                                            DateTimeBegin =
-                                                new DateTime((long)(Math.Floor((DateTimeBegin.Ticks / 10000000) / (decimal)(24 * 60 * 60)) * (24 * 60 * 60)) * 10000000)
-                                                    ;
-                                else
-                                    ;
-                    }
+                        causeToPeriod();
+
                         //Установить признак перехода
                         iRes = 1;
-                    }
-
-                    else
+                    } else
                         //Переход на очередной интервал (повторный опрос)
-                        switch (m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE])
-                        {
+                        switch (m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE]) {
                             case MODE_CURINTERVAL.CAUSE_PERIOD_HOUR:
                             case MODE_CURINTERVAL.CAUSE_PERIOD_MINUTE:
-                                //Проверить необходимость изменения даты/времени
-                                if ((m_dtServer - DateTimeBegin.AddSeconds(PeriodLocal.TotalSeconds)).TotalMilliseconds > MSecIntervalLocal)
-                                {
+                            //Проверить необходимость изменения даты/времени
+                                if ((m_dtServer - DateTimeBegin.AddSeconds(PeriodLocal.TotalSeconds)).TotalMilliseconds > MSecIntervalLocal) {
                                     DateTimeBegin = DateTimeBegin.AddSeconds(PeriodLocal.TotalSeconds);
                                     //CountMSecInterval++;
                                     //Установить признак перехода
@@ -1275,11 +1275,9 @@ namespace uLoaderCommon
                         }
                 //}
             else
-                if (Mode == MODE_WORK.COSTUMIZE)
-                {
+                if (Mode == MODE_WORK.COSTUMIZE) {
                     //Проверить признак 1-го запуска (в режиме COSTUMIZE)
-                    if (DateTimeBegin == DateTime.MinValue)
-                    {
+                    if (DateTimeBegin == DateTime.MinValue) {
                         //Проверить указано ли дата/время начала опроса
                         if (DateTimeStart == DateTime.MinValue)
                             //Не указано - опросить ближайший к текущей дате/времени период
@@ -1288,8 +1286,9 @@ namespace uLoaderCommon
                             ;
 
                         DateTimeBegin = DateTimeStart;
-                    }
-                    else
+
+                        causeToPeriod();
+                    } else
                         //Повторный опрос
                         DateTimeBegin = DateTimeBegin.AddMilliseconds(PeriodMain.TotalMilliseconds);
 
