@@ -13,8 +13,10 @@ namespace xmlLoader
     {
         public class FileINI : HClassLibrary.FileINI
         {
-            public FileINI()
-                : base(@"Config\setup.ini", true, MODE_SECTION_APPLICATION.INSTANCE)
+            public FileINI(string strNameFileINI)
+                : base(strNameFileINI.Equals(string.Empty) == true ? @"Config\setup.ini" : strNameFileINI
+                      , true
+                      , MODE_SECTION_APPLICATION.INSTANCE)
             {
                 Logging.Logg().Debug(MethodBase.GetCurrentMethod(), @"успех", Logging.INDEX_MESSAGE.NOT_SET);
             }

@@ -44,9 +44,6 @@ namespace uLoader
             this.помощьToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.оПрограммеToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 
-            this.m_notifyIcon = new System.Windows.Forms.NotifyIcon ();
-            this.m_notifyIcon.Click += new System.EventHandler(NotifyIcon_Click);
-
             this.MainMenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -167,8 +164,6 @@ namespace uLoader
             this.Name = "FormMain";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Загрузчик данных (универсальный)";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormMain_FormClosing);
-            this.Load += new System.EventHandler(this.FormMain_Load);
             this.MainMenuStrip.ResumeLayout(false);
             this.MainMenuStrip.PerformLayout();
 
@@ -197,8 +192,6 @@ namespace uLoader
         #endregion
 
         private HTabCtrlEx m_TabCtrl;
-
-        private System.Windows.Forms.NotifyIcon m_notifyIcon;
 
         //private System.Windows.Forms.MenuStrip m_menuStripMain;
         private System.Windows.Forms.ToolStripMenuItem файлToolStripMenuItem;

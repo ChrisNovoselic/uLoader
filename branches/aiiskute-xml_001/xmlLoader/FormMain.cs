@@ -12,15 +12,15 @@ using System.Windows.Forms;
 
 namespace xmlLoader
 {
-    public partial class FormMain : Form
+    public partial class FormMain : uLoaderCommon.FormMainBase
     {
         private enum INDEX_CONTROL { CBX_READ_SESSION_START, CBX_READ_SESSION_STOP }
 
-        private HHandlerQueue m_handler;
-
         private UDPListener m_udpListener;
 
-        public FormMain()
+        private HHandlerQueue Handler { get { return m_handler as HHandlerQueue; } }
+
+        public FormMain() : base ()
         {
             int indxRow = -1;
 
@@ -48,10 +48,12 @@ namespace xmlLoader
             indxRow = m_dgvDestSetting.Rows.Add();
             m_dgvDestSetting.Rows[indxRow].HeaderCell.Value = @"Пароль";
 
-            m_handler = new HHandlerQueue();
+            createHandlerQueue (typeof(HHandlerQueue));
 
             m_udpListener = new UDPListener();
             m_udpListener.EvtDataAskedHost += udpListener_OnEvtDataAskedHost;
+
+            initFormMainSizing();
         }
 
         private void udpListener_OnEvtDataAskedHost(object obj)

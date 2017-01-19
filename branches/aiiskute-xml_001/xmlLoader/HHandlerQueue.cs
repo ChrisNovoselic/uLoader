@@ -22,9 +22,9 @@ namespace xmlLoader
         }
         private FormMain.FileINI m_fileINI;
 
-        public HHandlerQueue()
+        public HHandlerQueue(string strNameFileINI)
         {
-            m_fileINI = new FormMain.FileINI();
+            m_fileINI = new FormMain.FileINI(strNameFileINI);
         }
 
         protected override int StateCheckResponse(int s, out bool error, out object outobj)
