@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using HClassLibrary;
+using System.Xml;
+using System.Reflection;
+using System.Diagnostics;
 
 namespace xmlLoader
 {
@@ -14,39 +17,72 @@ namespace xmlLoader
         public enum StatesMachine
         {
             UNKNOWN = -1
+            , UDP_CONNECTED_CHANGE // запрос на изменение состояния
+            , UDP_CONNECTED_CHANGED // событие - факт изменения состояния
             , UDP_LISTENER_PACKAGE_RECIEVED //Получен очередной XML-пакет
             , XML_PACKAGE_VERSION //Версия(строка) шаблон XML-пакета
             , XML_PACKAGE_TEMPLATE //Шаблон XML-пакета
             , NUDP_LISTENER //Номер порта прослушивателя
             , LIST_DEST //Список источников данных (назначение - сохранение полученных значений)
         }
+
         private FormMain.FileINI m_fileINI;
+
+        private Queue<XmlDocument> m_queueXmlDocument;
+
+        public event DelegateObjectFunc EvtToFormMain;
 
         public HHandlerQueue(string strNameFileINI)
         {
             m_fileINI = new FormMain.FileINI(strNameFileINI);
-        }
 
+            m_queueXmlDocument = new Queue<XmlDocument>();
+        }
+        /// <summary>
+        /// Подготовить объект для отправки адресату по его запросу
+        /// </summary>
+        /// <param name="s">Событие - идентификатор запрашиваемой информации/операции,действия</param>
+        /// <param name="error">Признак выполнения операции/действия по запросу</param>
+        /// <param name="outobj">Объект для отправления адресату как результат запроса</param>
+        /// <returns>Признак выполнения метода (дополнительный)</returns>
         protected override int StateCheckResponse(int s, out bool error, out object outobj)
         {
             int iRes = -1;
             StatesMachine state = (StatesMachine)s;
+            string debugMsg = string.Empty;
 
             error = true;
             outobj = null;
 
             ItemQueue itemQueue = null;
 
-            try
-            {
+            try {
                 switch (state) {
+                    case StatesMachine.UDP_CONNECTED_CHANGE: // запрос-команда на изменение состояния (от формы)
+                        iRes = 0;
+                        error = false;
+
+                        itemQueue = Peek;
+                        break;
+                    case StatesMachine.UDP_CONNECTED_CHANGED: // событие - факт изменения состояния (от объекта - прослушивателя UDP)
+                        iRes = 0;
+                        error = false;
+
+                        itemQueue = Peek;
+
+                        EvtToFormMain(new object[] { state, itemQueue.Pars[0] });
+                        break;
                     case StatesMachine.UDP_LISTENER_PACKAGE_RECIEVED: // получен очередной XML-пакет
                         iRes = 0;
                         error = false;
 
                         itemQueue = Peek;
 
-                        //outobj = ???;
+                        m_queueXmlDocument.Enqueue(itemQueue.Pars[0] as XmlDocument);
+
+                        debugMsg = @"получен XML-пакет";
+                        Logging.Logg().Debug(MethodBase.GetCurrentMethod(), debugMsg, Logging.INDEX_MESSAGE.NOT_SET);
+                        Debug.WriteLine(string.Format(@"{0}: {1}", DateTime.Now.ToString(), debugMsg));
                         break;
                     case StatesMachine.XML_PACKAGE_VERSION: // версия(строка) шаблон XML-пакета
                         iRes = 0;
@@ -110,6 +146,8 @@ namespace xmlLoader
             int iRes = 0;
 
             switch ((StatesMachine)state) {
+                case StatesMachine.UDP_CONNECTED_CHANGE: // старт/стоп соединения по UDP
+                case StatesMachine.UDP_CONNECTED_CHANGED: // факт старт/стоп соединения по UDP
                 case StatesMachine.UDP_LISTENER_PACKAGE_RECIEVED: // получен очередной XML-пакет
                 case StatesMachine.XML_PACKAGE_VERSION: // версия(строка) шаблон XML-пакета
                 case StatesMachine.XML_PACKAGE_TEMPLATE: // шаблон XML-пакета
@@ -129,6 +167,8 @@ namespace xmlLoader
             ItemQueue itemQueue = Peek;
 
             switch ((StatesMachine)state) {
+                case StatesMachine.UDP_CONNECTED_CHANGE:
+                case StatesMachine.UDP_CONNECTED_CHANGED:
                 case StatesMachine.UDP_LISTENER_PACKAGE_RECIEVED: // получен очередной XML-пакет
                     //Ответа не требуется/не требуют обработки результата
                     break;

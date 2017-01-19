@@ -35,8 +35,8 @@
             System.Windows.Forms.GroupBox m_groupBoxDestSetting;
             System.Windows.Forms.TabControl m_tabControlDest;
             System.Windows.Forms.GroupBox m_groupBoxDatabase;
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             System.Windows.Forms.Label m_labelDestDisplayCount;
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             this.m_nudnPackageDisplayCount = new System.Windows.Forms.NumericUpDown();
             this.m_cbxPackageIndiciesIssue = new System.Windows.Forms.CheckBox();
             this.m_btnPackageReSend = new System.Windows.Forms.Button();
@@ -65,6 +65,11 @@
             this.m_dgvDestParameter = new System.Windows.Forms.DataGridView();
             this.m_tpageDestValue = new System.Windows.Forms.TabPage();
             this.m_dgvDestValue = new System.Windows.Forms.DataGridView();
+            this.m_nudnDestDisplayCount = new System.Windows.Forms.NumericUpDown();
+            this.m_dgvDestDatabaseListAction = new System.Windows.Forms.DataGridView();
+            this.ColumnDestDatabaseListActionItemCount = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnDestDatabaseListActionInput = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnDestDatabaseListActionCompleted = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.m_btnDestDatabaseDelete = new System.Windows.Forms.Button();
             this.m_dateTimePickerDestDataBaseFilterStart = new System.Windows.Forms.DateTimePicker();
             this.m_dateTimePickerDestDataBaseFilterStop = new System.Windows.Forms.DateTimePicker();
@@ -89,11 +94,6 @@
             this.m_tpageViewPackageTree = new System.Windows.Forms.TabPage();
             this.m_treeViewPackage = new System.Windows.Forms.TreeView();
             this.splitContainerMainWrite = new System.Windows.Forms.SplitContainer();
-            this.m_dgvDestDatabaseListAction = new System.Windows.Forms.DataGridView();
-            this.ColumnDestDatabaseListActionItemCount = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnDestDatabaseListActionInput = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnDestDatabaseListActionCompleted = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.m_nudnDestDisplayCount = new System.Windows.Forms.NumericUpDown();
             m_groupBoxListPackage = new System.Windows.Forms.GroupBox();
             m_labelPackageDisplayCount = new System.Windows.Forms.Label();
             m_groupBoxSession = new System.Windows.Forms.GroupBox();
@@ -118,6 +118,8 @@
             this.m_tpageDestValue.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestValue)).BeginInit();
             m_groupBoxDatabase.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.m_nudnDestDisplayCount)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestDatabaseListAction)).BeginInit();
             this.m_statusStripMain.SuspendLayout();
             this.m_menuStripMain.SuspendLayout();
             this.splitContainerMain.Panel1.SuspendLayout();
@@ -132,8 +134,6 @@
             this.splitContainerMainWrite.Panel1.SuspendLayout();
             this.splitContainerMainWrite.Panel2.SuspendLayout();
             this.splitContainerMainWrite.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestDatabaseListAction)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.m_nudnDestDisplayCount)).BeginInit();
             this.SuspendLayout();
             // 
             // m_groupBoxListPackage
@@ -353,7 +353,7 @@
             this.m_cbxReadSessionStop.Text = "Стоп";
             this.m_cbxReadSessionStop.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.m_cbxReadSessionStop.UseVisualStyleBackColor = true;
-            this.m_cbxReadSessionStop.CheckedChanged += new System.EventHandler(this.cbxSession_CheckedChanged);
+            this.m_cbxReadSessionStop.Click += new System.EventHandler(this.cbxSession_Click);
             // 
             // m_nudnUDPPort
             // 
@@ -402,7 +402,7 @@
             this.m_cbxReadSessionStart.Text = "Старт";
             this.m_cbxReadSessionStart.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.m_cbxReadSessionStart.UseVisualStyleBackColor = true;
-            this.m_cbxReadSessionStart.CheckedChanged += new System.EventHandler(this.cbxSession_CheckedChanged);
+            this.m_cbxReadSessionStart.Click += new System.EventHandler(this.cbxSession_Click);
             // 
             // m_dgvSession
             // 
@@ -586,6 +586,86 @@
             m_groupBoxDatabase.TabStop = false;
             m_groupBoxDatabase.Text = "База данных";
             // 
+            // m_labelDestDisplayCount
+            // 
+            m_labelDestDisplayCount.AutoSize = true;
+            m_labelDestDisplayCount.Location = new System.Drawing.Point(8, 20);
+            m_labelDestDisplayCount.Name = "m_labelDestDisplayCount";
+            m_labelDestDisplayCount.Size = new System.Drawing.Size(67, 13);
+            m_labelDestDisplayCount.TabIndex = 14;
+            m_labelDestDisplayCount.Text = "Отобразить";
+            m_labelDestDisplayCount.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // m_nudnDestDisplayCount
+            // 
+            this.m_nudnDestDisplayCount.Enabled = false;
+            this.m_nudnDestDisplayCount.Increment = new decimal(new int[] {
+            5,
+            0,
+            0,
+            0});
+            this.m_nudnDestDisplayCount.Location = new System.Drawing.Point(93, 18);
+            this.m_nudnDestDisplayCount.Minimum = new decimal(new int[] {
+            6,
+            0,
+            0,
+            0});
+            this.m_nudnDestDisplayCount.Name = "m_nudnDestDisplayCount";
+            this.m_nudnDestDisplayCount.Size = new System.Drawing.Size(56, 20);
+            this.m_nudnDestDisplayCount.TabIndex = 13;
+            this.m_nudnDestDisplayCount.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.m_nudnDestDisplayCount.ThousandsSeparator = true;
+            this.m_nudnDestDisplayCount.Value = new decimal(new int[] {
+            6,
+            0,
+            0,
+            0});
+            // 
+            // m_dgvDestDatabaseListAction
+            // 
+            this.m_dgvDestDatabaseListAction.AllowUserToAddRows = false;
+            this.m_dgvDestDatabaseListAction.AllowUserToDeleteRows = false;
+            this.m_dgvDestDatabaseListAction.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.m_dgvDestDatabaseListAction.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.m_dgvDestDatabaseListAction.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.ColumnDestDatabaseListActionItemCount,
+            this.ColumnDestDatabaseListActionInput,
+            this.ColumnDestDatabaseListActionCompleted});
+            this.m_dgvDestDatabaseListAction.Location = new System.Drawing.Point(153, 18);
+            this.m_dgvDestDatabaseListAction.Name = "m_dgvDestDatabaseListAction";
+            this.m_dgvDestDatabaseListAction.ReadOnly = true;
+            this.m_dgvDestDatabaseListAction.RowHeadersVisible = false;
+            this.m_dgvDestDatabaseListAction.Size = new System.Drawing.Size(257, 204);
+            this.m_dgvDestDatabaseListAction.TabIndex = 11;
+            // 
+            // ColumnDestDatabaseListActionItemCount
+            // 
+            this.ColumnDestDatabaseListActionItemCount.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
+            this.ColumnDestDatabaseListActionItemCount.Frozen = true;
+            this.ColumnDestDatabaseListActionItemCount.HeaderText = "Элем.";
+            this.ColumnDestDatabaseListActionItemCount.Name = "ColumnDestDatabaseListActionItemCount";
+            this.ColumnDestDatabaseListActionItemCount.ReadOnly = true;
+            this.ColumnDestDatabaseListActionItemCount.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.ColumnDestDatabaseListActionItemCount.Width = 62;
+            // 
+            // ColumnDestDatabaseListActionInput
+            // 
+            this.ColumnDestDatabaseListActionInput.Frozen = true;
+            this.ColumnDestDatabaseListActionInput.HeaderText = "Получен";
+            this.ColumnDestDatabaseListActionInput.Name = "ColumnDestDatabaseListActionInput";
+            this.ColumnDestDatabaseListActionInput.ReadOnly = true;
+            this.ColumnDestDatabaseListActionInput.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            // 
+            // ColumnDestDatabaseListActionCompleted
+            // 
+            this.ColumnDestDatabaseListActionCompleted.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.ColumnDestDatabaseListActionCompleted.HeaderText = "Обработан";
+            this.ColumnDestDatabaseListActionCompleted.Name = "ColumnDestDatabaseListActionCompleted";
+            this.ColumnDestDatabaseListActionCompleted.ReadOnly = true;
+            this.ColumnDestDatabaseListActionCompleted.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            // 
             // m_btnDestDatabaseDelete
             // 
             this.m_btnDestDatabaseDelete.Enabled = false;
@@ -716,6 +796,7 @@
             // 
             // имитацияпакетодинToolStripMenuItem
             // 
+            this.имитацияпакетодинToolStripMenuItem.Enabled = false;
             this.имитацияпакетодинToolStripMenuItem.Name = "имитацияпакетодинToolStripMenuItem";
             this.имитацияпакетодинToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
             this.имитацияпакетодинToolStripMenuItem.Text = "Имитация-пакет-один";
@@ -724,6 +805,7 @@
             // имитацияпакетциклToolStripMenuItem
             // 
             this.имитацияпакетциклToolStripMenuItem.CheckOnClick = true;
+            this.имитацияпакетциклToolStripMenuItem.Enabled = false;
             this.имитацияпакетциклToolStripMenuItem.Name = "имитацияпакетциклToolStripMenuItem";
             this.имитацияпакетциклToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
             this.имитацияпакетциклToolStripMenuItem.Text = "Имитация-пакет-цикл";
@@ -842,86 +924,6 @@
             this.splitContainerMainWrite.SplitterDistance = 410;
             this.splitContainerMainWrite.TabIndex = 0;
             // 
-            // m_dgvDestDatabaseListAction
-            // 
-            this.m_dgvDestDatabaseListAction.AllowUserToAddRows = false;
-            this.m_dgvDestDatabaseListAction.AllowUserToDeleteRows = false;
-            this.m_dgvDestDatabaseListAction.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.m_dgvDestDatabaseListAction.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.m_dgvDestDatabaseListAction.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.ColumnDestDatabaseListActionItemCount,
-            this.ColumnDestDatabaseListActionInput,
-            this.ColumnDestDatabaseListActionCompleted});
-            this.m_dgvDestDatabaseListAction.Location = new System.Drawing.Point(153, 18);
-            this.m_dgvDestDatabaseListAction.Name = "m_dgvDestDatabaseListAction";
-            this.m_dgvDestDatabaseListAction.ReadOnly = true;
-            this.m_dgvDestDatabaseListAction.RowHeadersVisible = false;
-            this.m_dgvDestDatabaseListAction.Size = new System.Drawing.Size(257, 204);
-            this.m_dgvDestDatabaseListAction.TabIndex = 11;
-            // 
-            // ColumnDestDatabaseListActionItemCount
-            // 
-            this.ColumnDestDatabaseListActionItemCount.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
-            this.ColumnDestDatabaseListActionItemCount.Frozen = true;
-            this.ColumnDestDatabaseListActionItemCount.HeaderText = "Элем.";
-            this.ColumnDestDatabaseListActionItemCount.Name = "ColumnDestDatabaseListActionItemCount";
-            this.ColumnDestDatabaseListActionItemCount.ReadOnly = true;
-            this.ColumnDestDatabaseListActionItemCount.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.ColumnDestDatabaseListActionItemCount.Width = 62;
-            // 
-            // ColumnDestDatabaseListActionInput
-            // 
-            this.ColumnDestDatabaseListActionInput.Frozen = true;
-            this.ColumnDestDatabaseListActionInput.HeaderText = "Получен";
-            this.ColumnDestDatabaseListActionInput.Name = "ColumnDestDatabaseListActionInput";
-            this.ColumnDestDatabaseListActionInput.ReadOnly = true;
-            this.ColumnDestDatabaseListActionInput.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            // 
-            // ColumnDestDatabaseListActionCompleted
-            // 
-            this.ColumnDestDatabaseListActionCompleted.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.ColumnDestDatabaseListActionCompleted.HeaderText = "Обработан";
-            this.ColumnDestDatabaseListActionCompleted.Name = "ColumnDestDatabaseListActionCompleted";
-            this.ColumnDestDatabaseListActionCompleted.ReadOnly = true;
-            this.ColumnDestDatabaseListActionCompleted.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            // 
-            // m_labelDestDisplayCount
-            // 
-            m_labelDestDisplayCount.AutoSize = true;
-            m_labelDestDisplayCount.Location = new System.Drawing.Point(8, 20);
-            m_labelDestDisplayCount.Name = "m_labelDestDisplayCount";
-            m_labelDestDisplayCount.Size = new System.Drawing.Size(67, 13);
-            m_labelDestDisplayCount.TabIndex = 14;
-            m_labelDestDisplayCount.Text = "Отобразить";
-            m_labelDestDisplayCount.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // m_nudnDestDisplayCount
-            // 
-            this.m_nudnDestDisplayCount.Enabled = false;
-            this.m_nudnDestDisplayCount.Increment = new decimal(new int[] {
-            5,
-            0,
-            0,
-            0});
-            this.m_nudnDestDisplayCount.Location = new System.Drawing.Point(93, 18);
-            this.m_nudnDestDisplayCount.Minimum = new decimal(new int[] {
-            6,
-            0,
-            0,
-            0});
-            this.m_nudnDestDisplayCount.Name = "m_nudnDestDisplayCount";
-            this.m_nudnDestDisplayCount.Size = new System.Drawing.Size(56, 20);
-            this.m_nudnDestDisplayCount.TabIndex = 13;
-            this.m_nudnDestDisplayCount.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.m_nudnDestDisplayCount.ThousandsSeparator = true;
-            this.m_nudnDestDisplayCount.Value = new decimal(new int[] {
-            6,
-            0,
-            0,
-            0});
-            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -954,6 +956,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestValue)).EndInit();
             m_groupBoxDatabase.ResumeLayout(false);
             m_groupBoxDatabase.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.m_nudnDestDisplayCount)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestDatabaseListAction)).EndInit();
             this.m_statusStripMain.ResumeLayout(false);
             this.m_statusStripMain.PerformLayout();
             this.m_menuStripMain.ResumeLayout(false);
@@ -970,16 +974,9 @@
             this.splitContainerMainWrite.Panel1.ResumeLayout(false);
             this.splitContainerMainWrite.Panel2.ResumeLayout(false);
             this.splitContainerMainWrite.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestDatabaseListAction)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.m_nudnDestDisplayCount)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
-        }
-
-        private void ЧтениепакетциклToolStripMenuItem_CheckedChanged(object sender, System.EventArgs e)
-        {
-            throw new System.NotImplementedException();
         }
 
         #endregion

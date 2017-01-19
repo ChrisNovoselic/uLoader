@@ -39,14 +39,22 @@ namespace xmlLoader
 
                 nameXMLTemplate = GetSecValueOfKey(@"Reader", @"XML_TEMPLATE_NAME");
                 nameXMLTemplate = nameXMLTemplate.Replace(@"?VERSION?", ver);
+                nameXMLTemplate = string.Format(@"{0}\{1}"
+                    , Path.GetDirectoryName (m_NameFileINI)
+                    , nameXMLTemplate);
 
-                if (File.Exists(nameXMLTemplate) == true)
-                    ;
-                else
-                    ;
+                try {
+                    if (File.Exists(nameXMLTemplate) == true) {
+                        docRes = new XmlDocument();
+                        docRes.Load(nameXMLTemplate);
+                    } else
+                        ;
+                } catch (Exception e) {
+                    Logging.Logg().Exception(e, string.Format(@"Загрузка шаблона XML-документа, полный_путь={0}", nameXMLTemplate), Logging.INDEX_MESSAGE.NOT_SET);
+                }
 
                 return docRes;
-            }
+                }
         }
     }
 }

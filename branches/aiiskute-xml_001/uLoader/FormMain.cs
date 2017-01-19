@@ -241,6 +241,8 @@ namespace uLoader
         /// <param name="e">Аргумент события</param>
         protected override void FormMain_Load(object sender, EventArgs e)
         {
+            base.FormMain_Load(sender, e);
+
             m_panelWork.Start();
             m_panelConfig.Start();
             m_panelCS.Start();
