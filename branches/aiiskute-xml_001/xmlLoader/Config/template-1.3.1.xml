@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="windows-1251" standalone="yes"?>
+<tec time="?DATETIME?">
+  <tm-1 time="?TIME?">
+    <t1 value="?VALUE_FLOAT?"/>
+    <t2 value="?VALUE_FLOAT?"/>
+    <p1 value="?VALUE_FLOAT?"/>
+    <p2 value="?VALUE_FLOAT?"/>
+    <g1 value="?VALUE_FLOAT?"/>
+    <g2 value="?VALUE_FLOAT?"/>
+    <dg value="?VALUE_FLOAT?"/>
+  </tm-1>
+  <tm-2 time="15:02:14">
+    <t1 value="?VALUE_FLOAT?"/>
+    <t2 value="?VALUE_FLOAT?"/>
+    <p1 value="?VALUE_FLOAT?"/>
+    <p2 value="?VALUE_FLOAT?"/>
+    <g1 value="?VALUE_INT?"/>
+    <g2 value="?VALUE_INT?"/>
+    <dg value="?VALUE_FLOAT?"/>
+  </tm-2>
+  <tm-3 time="15:02:28">
+    <t1 value="?VALUE_FLOAT?"/>
+    <t2 value="?VALUE_FLOAT?"/>
+    <p1 value="?VALUE_FLOAT?"/>
+    <p2 value="?VALUE_FLOAT?"/>
+    <g1 value="?VALUE_FLOAT?"/>
+    <g2 value="?VALUE_FLOAT?"/>
+    <dg value="?VALUE_FLOAT?"/>
+    <t3 value="?VALUE_FLOAT?"/>		/Азимут ветра/
+    <p3 value="?VALUE_FLOAT?"/>		/Скорость ветра/
+  </tm-3>
+  <tm-4 time="?TIME?">
+    <t1 value="?VALUE_FLOAT?"/>
+    <t2 value="?VALUE_FLOAT?"/>
+    <p1 value="?VALUE_FLOAT?"/>
+    <p2 value="?VALUE_FLOAT?"/>
+    <g1 value="?VALUE_FLOAT?"/>
+    <g2 value="?VALUE_FLOAT?"/>
+    <dg value="?VALUE_FLOAT?"/>
+  </tm-4>
+  <tm-5 time="?TIME?">
+    <t1 value="?VALUE_FLOAT?"/>
+    <t2 value="?VALUE_FLOAT?"/>
+    <p1 value="?VALUE_FLOAT?"/>
+    <p2 value="?VALUE_FLOAT?"/>
+    <g1 value="?VALUE_FLOAT?"/>
+    <g2 value="?VALUE_FLOAT?"/>
+    <dg value="?VALUE_FLOAT?"/>
+    <t3 value="?VALUE_FLOAT?"/>
+    <p3 value="?VALUE_FLOAT?"/>
+    <g3 value="?VALUE_FLOAT?"/>
+  </tm-5>
+  <tm-6 time="?TIME?">
+    <t1 value="?VALUE_FLOAT?"/>
+    <t2 value="?VALUE_FLOAT?"/>
+    <p1 value="?VALUE_FLOAT?"/>
+    <p2 value="?VALUE_FLOAT?"/>
+    <g1 value="?VALUE_FLOAT?"/>
+    <g2 value="?VALUE_FLOAT?"/>
+    <dg value="?VALUE_FLOAT?"/>
+  </tm-6>
+  <tm-7 time="?TIME?">
+    <t1 value="?VALUE_FLOAT?"/>
+    <t2 value="?VALUE_FLOAT?"/>
+    <p1 value="?VALUE_FLOAT?"/>
+    <p2 value="?VALUE_FLOAT?"/>
+    <g1 value="?VALUE_FLOAT?"/>
+    <g2 value="?VALUE_FLOAT?"/>
+    <dg value="?VALUE_FLOAT?"/>
+  </tm-7>	
+  <prvd time="?TIME?">
+    <t1 value="?VALUE_FLOAT?"/>
+    <t2 value="?VALUE_FLOAT?"/>
+    <p1 value="?VALUE_FLOAT?"/>
+    <p2 value="?VALUE_FLOAT?"/>
+    <g1 value="?VALUE_FLOAT?"/>
+    <g2 value="?VALUE_FLOAT?"/>
+    <dg value="?VALUE_FLOAT?"/>
+  </prvd>
+  <sbng time="?TIME?">
+    <t1 value="?VALUE_FLOAT?"/>
+    <t2 value="?VALUE_FLOAT?"/>
+    <p1 value="?VALUE_FLOAT?"/>
+    <p2 value="?VALUE_FLOAT?"/>
+    <g1 value="?VALUE_FLOAT?"/>
+    <g2 value="?VALUE_FLOAT?"/>
+    <dg value="?VALUE_FLOAT?"/>
+  </sbng>
+  <vdzb time="?TIME?">
+    <t1 value="?VALUE_FLOAT?"/>
+    <t2 value="?VALUE_FLOAT?"/>
+    <g1 value="?VALUE_FLOAT?"/>
+    <g2 value="?VALUE_FLOAT?"/>
+    <dg value="?VALUE_FLOAT?"/>
+  </vdzb>
+  <bozp time="?TIME?">
+    <t2 value="?VALUE_FLOAT?"/>
+    <t4 value="?VALUE_FLOAT?"/>
+    <p2 value="?VALUE_FLOAT?"/>
+    <p4 value="?VALUE_FLOAT?"/>
+    <g2 value="?VALUE_FLOAT?"/>
+    <g4 value="?VALUE_FLOAT?"/>
+  </bozp>
+  <bro time="?TIME?">
+    <t1 value="?VALUE_FLOAT?"/>
+    <p1 value="?VALUE_FLOAT?"/>
+    <g1 value="?VALUE_FLOAT?"/>
+  </bro>
+  <meh time="?TIME?">
+    <t1 value="?VALUE_FLOAT?"/>
+    <p1 value="?VALUE_FLOAT?"/>
+    <g1 value="?VALUE_FLOAT?"/>
+  </meh>
+  <fav time="?TIME?">
+    <t1 value="?VALUE_FLOAT?"/>	      /*электрическая нагрузка				                    */
+    <t2 value="?VALUE_FLOAT?"/>	      /*Атмосферное давление				                      */
+    <t3 value="?VALUE_FLOAT?"/>		    /*Температура наружного воздуха источник ТМ3:0:Тнв	*/
+    <g3 value="?VALUE_FLOAT?"/>		    /*Расход арт воды левый тр-д				                */
+    <g4 value="?VALUE_FLOAT?"/>		    /*Расход арт воды правый тр-д			                  */
+  </fav>
+  <avo time="?DATETIME?">
+	  <q1 value="?VALUE_FLOAT?"/>		    /*Арт Вода после баков 1				                    */
+	  <q2 value="?VALUE_FLOAT?"/>		    /*Арт Вода после баков 2				                    */
+	  <h1 value="?VALUE_FLOAT?"/>		    /*Арт Вода уровень бака 1				                    */
+	  <h2 value="?VALUE_FLOAT?"/>		    /*Арт Вода уровень бака 2				                    */
+  </avo>
+  <rv time="?DATETIME?">
+    <u1 value="?VALUE_FLOAT?"/>
+    <u2 value="?VALUE_FLOAT?"/>
+  </rv>
+  <rv time="?TIME?">
+    <t1 value="?VALUE_FLOAT?"/>
+    <t2 value="?VALUE_FLOAT?"/>
+    <t3 value="?VALUE_FLOAT?"/>
+    <t4 value="?VALUE_FLOAT?"/>
+    <tr value="?VALUE_INT?"/>
+  </rv>
+  <akkb time="?DATETIME?">
+    <h1 value="?VALUE_FLOAT?"/>
+    <h2 value="?VALUE_FLOAT?"/>
+  </akkb>
+</tec>
+
