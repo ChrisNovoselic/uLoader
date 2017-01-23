@@ -21,6 +21,8 @@ namespace xmlLoader
         /// </summary>
         private enum INDEX_CONTROL { CBX_READ_SESSION_START, CBX_READ_SESSION_STOP }
 
+        private static int COUNT_VIEW_PACKAGE_ITEM = 6;
+
         private class DataGridViewPackageList : DataGridView
         {
             public void Update(IEnumerable<VIEW_PACKAGE_ITEM>items)
@@ -46,10 +48,10 @@ namespace xmlLoader
                         ;
                 }
 
-                if (RowCount + listItemIndxToAdding.Count > 6) {
+                while (RowCount + listItemIndxToAdding.Count > COUNT_VIEW_PACKAGE_ITEM) {
                 // требуется удаление строк
-                } else
-                    ;
+                    Rows.RemoveAt(0);
+                }
 
                 foreach (int indx in listItemIndxToAdding) {
                     indxRow = Rows.Add(items.ElementAt(indx).Values);
