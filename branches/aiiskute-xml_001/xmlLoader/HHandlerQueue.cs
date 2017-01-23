@@ -28,15 +28,11 @@ namespace xmlLoader
 
         private FormMain.FileINI m_fileINI;
 
-        private Queue<XmlDocument> m_queueXmlDocument;
-
         public event DelegateObjectFunc EvtToFormMain;
 
         public HHandlerQueue(string strNameFileINI)
         {
             m_fileINI = new FormMain.FileINI(strNameFileINI);
-
-            m_queueXmlDocument = new Queue<XmlDocument>();
         }
         /// <summary>
         /// Подготовить объект для отправки адресату по его запросу
@@ -63,6 +59,8 @@ namespace xmlLoader
                         error = false;
 
                         itemQueue = Peek;
+
+                        outobj = itemQueue.Pars[0];
                         break;
                     case StatesMachine.UDP_CONNECTED_CHANGED: // событие - факт изменения состояния (от объекта - прослушивателя UDP)
                         iRes = 0;
@@ -70,7 +68,7 @@ namespace xmlLoader
 
                         itemQueue = Peek;
 
-                        EvtToFormMain(new object[] { state, itemQueue.Pars[0] });
+                        EvtToFormMain?.Invoke(new object[] { state, itemQueue.Pars[0] });
                         break;
                     case StatesMachine.UDP_LISTENER_PACKAGE_RECIEVED: // получен очередной XML-пакет
                         iRes = 0;
@@ -78,9 +76,9 @@ namespace xmlLoader
 
                         itemQueue = Peek;
 
-                        m_queueXmlDocument.Enqueue(itemQueue.Pars[0] as XmlDocument);
+                        EvtToFormMain?.Invoke(new object[] { state, itemQueue.Pars[0], itemQueue.Pars[1] });
 
-                        debugMsg = @"получен XML-пакет";
+                        debugMsg = @"получен XML-пакет, добавлен в очередь для обработки";
                         Logging.Logg().Debug(MethodBase.GetCurrentMethod(), debugMsg, Logging.INDEX_MESSAGE.NOT_SET);
                         Debug.WriteLine(string.Format(@"{0}: {1}", DateTime.Now.ToString(), debugMsg));
                         break;
@@ -166,12 +164,12 @@ namespace xmlLoader
             int iRes = 0;
             ItemQueue itemQueue = Peek;
 
-            switch ((StatesMachine)state) {
-                case StatesMachine.UDP_CONNECTED_CHANGE:
+            switch ((StatesMachine)state) {                
                 case StatesMachine.UDP_CONNECTED_CHANGED:
                 case StatesMachine.UDP_LISTENER_PACKAGE_RECIEVED: // получен очередной XML-пакет
                     //Ответа не требуется/не требуют обработки результата
                     break;
+                case StatesMachine.UDP_CONNECTED_CHANGE:
                 case StatesMachine.XML_PACKAGE_VERSION: // версия(строка) шаблон XML-пакета
                 case StatesMachine.XML_PACKAGE_TEMPLATE: // шаблон XML-пакета
                 case StatesMachine.NUDP_LISTENER: // номер порта прослушивателя

@@ -14,7 +14,9 @@ namespace uLoaderCommon
         /// Объект обработки очереди событий
         /// </summary>
         protected HHandlerQueue m_handler;
-
+        /// <summary>
+        /// Конструктор - основной (без параметров)
+        /// </summary>
         public FormMainBase()
         {
             new HCmd_Arg();
@@ -39,7 +41,9 @@ namespace uLoaderCommon
         {
             m_handler = Activator.CreateInstance(typeHandler, HCmd_Arg.NameFileINI) as HHandlerQueue;
         }
-
+        /// <summary>
+        /// Инициализация размеров/размещения главной формы приложения
+        /// </summary>
         protected void initFormMainSizing()
         {
             this.m_notifyIcon.Icon = this.Icon;

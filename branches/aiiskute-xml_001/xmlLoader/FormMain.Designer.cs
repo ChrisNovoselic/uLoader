@@ -45,7 +45,7 @@
             this.m_btnLoadPackageHistory = new System.Windows.Forms.Button();
             this.m_nudnSettingPackageHistoryDepth = new System.Windows.Forms.NumericUpDown();
             this.m_cbxSettingPackageHistoryIssue = new System.Windows.Forms.CheckBox();
-            this.m_dgvPackageList = new System.Windows.Forms.DataGridView();
+            this.m_dgvPackageList = new DataGridViewPackageList();
             this.ColumnPackageListItemCount = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColumnPackageListDatetimeInput = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColumnPackageListDatetimeOutput = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -353,6 +353,7 @@
             this.m_cbxReadSessionStop.Text = "Стоп";
             this.m_cbxReadSessionStop.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.m_cbxReadSessionStop.UseVisualStyleBackColor = true;
+            this.m_cbxReadSessionStop.AutoCheck = false;
             this.m_cbxReadSessionStop.Click += new System.EventHandler(this.cbxSession_Click);
             // 
             // m_nudnUDPPort
@@ -402,6 +403,7 @@
             this.m_cbxReadSessionStart.Text = "Старт";
             this.m_cbxReadSessionStart.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.m_cbxReadSessionStart.UseVisualStyleBackColor = true;
+            this.m_cbxReadSessionStart.AutoCheck = false;
             this.m_cbxReadSessionStart.Click += new System.EventHandler(this.cbxSession_Click);
             // 
             // m_dgvSession
@@ -936,7 +938,7 @@
             this.MinimumSize = new System.Drawing.Size(8, 640);
             this.Name = "FormMain";
             this.Text = "XML-Загрузчик АИИС КУТЭ";
-            this.Load += new System.EventHandler(this.FormMain_Load);
+            //this.Load += new System.EventHandler(this.FormMain_Load); // подписка в базовом классе
             m_groupBoxListPackage.ResumeLayout(false);
             m_groupBoxListPackage.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_nudnPackageDisplayCount)).EndInit();
@@ -1016,7 +1018,7 @@
         private System.Windows.Forms.DataGridView m_dgvDestParameter;
         private System.Windows.Forms.TabPage m_tpageDestValue;
         private System.Windows.Forms.DataGridView m_dgvDestValue;
-        private System.Windows.Forms.DataGridView m_dgvPackageList;
+        private DataGridViewPackageList m_dgvPackageList;
         private System.Windows.Forms.DataGridView m_dgvDestSetting;
         private System.Windows.Forms.Button m_btnDestRemove;
         private System.Windows.Forms.Button m_btnDestAdd;
