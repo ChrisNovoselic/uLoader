@@ -94,7 +94,7 @@ namespace xmlLoader
             this.m_tpageViewPackageXml = new System.Windows.Forms.TabPage();
             this.m_tbxViewPackage = new System.Windows.Forms.TextBox();
             this.m_tpageViewPackageTree = new System.Windows.Forms.TabPage();
-            this.m_treeViewPackage = new System.Windows.Forms.TreeView();
+            this.m_treeViewPackage = new TreeViewPackage();
             this.splitContainerMainWrite = new System.Windows.Forms.SplitContainer();
             m_groupBoxListPackage = new System.Windows.Forms.GroupBox();
             m_labelPackageDisplayCount = new System.Windows.Forms.Label();
@@ -1012,7 +1012,7 @@ namespace xmlLoader
         private System.Windows.Forms.TabPage m_tpageViewPackageXml;
         private System.Windows.Forms.TextBox m_tbxViewPackage;
         private System.Windows.Forms.TabPage m_tpageViewPackageTree;
-        private System.Windows.Forms.TreeView m_treeViewPackage;
+        private TreeViewPackage m_treeViewPackage;
         private System.Windows.Forms.Button m_btnLoadPackageHistory;
         private System.Windows.Forms.NumericUpDown m_nudnSettingPackageHistoryDepth;
         private System.Windows.Forms.CheckBox m_cbxSettingPackageHistoryIssue;

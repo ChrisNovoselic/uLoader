@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace uLoaderCommon
 {
-    public abstract class FormMainBase : Form
+    public class FormMainBase : Form
     {
         private System.Windows.Forms.NotifyIcon m_notifyIcon;
         /// <summary>

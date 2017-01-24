@@ -10,7 +10,7 @@ namespace xmlLoader
 {
     public class PackageHandlerQueue : HClassLibrary.HHandlerQueue
     {
-        private static TimeSpan TS_INTERVAL_OUTDATED = TimeSpan.FromSeconds(20);
+        private static TimeSpan TS_TIMER_TABLERES = TimeSpan.FromSeconds(20);
 
         private static int COUNT_VIEW_PACKAGE_ITEM = 6;
 
@@ -26,7 +26,7 @@ namespace xmlLoader
             , NEW // получен новый пакет
             , LIST_PACKAGE // запрос для получения списка пакетов
             , PACKAGE_CONTENT // запрос для получения пакета
-            , TIMER_OUTDATED // событие устаревания XML-пакета
+            , TIMER_TABLERES = 6 // событие устаревания XML-пакета ??? совпадает с 'WriteHandlerQueue.StatesMachine::STATISTIC'
             , STATISTIC
         }
 
@@ -90,56 +90,85 @@ namespace xmlLoader
             , new STATISTIC.ITEM { desc = @"Пак.разобрано", visibled = true, value = 0 } // COUNT_PACKAGE_PARSED
         });
 
-        private struct RECORD
+        //private struct RECORD
+        //{
+        //    public string m_NameGroup;
+
+        //    public string m_NameParameter;
+
+        //    public float m_value;
+        //}
+        /// <summary>
+        /// Структура для представления XML-пакета
+        /// </summary>
+        public class PACKAGE
         {
-            public string m_NameGroup;
-
-            public string m_NameParameter;
-
-            public float m_value;
-        }
-
-        public struct PACKAGE
-        {
+            /// <summary>
+            /// Перечисление - возможные состояния XML-пакета
+            /// </summary>
             public enum STATE : short { UNKNOWN = -1
                 , NEW, PARSING, PARSED, ERROR
             };
-
+            /// <summary>
+            /// Метка даты/времени получения
+            /// </summary>
             public DateTime m_dtRecieved;
-
+            /// <summary>
+            /// Метка даты/времени отправления для обработки/записи
+            /// </summary>
             public DateTime m_dtSend;
-
+            /// <summary>
+            /// Текущее состояние XML-пакета
+            /// </summary>
             public STATE m_state;
-
+            /// <summary>
+            /// Содержание полученного XML-документа
+            /// </summary>
             public XmlDocument m_xmlSource;
-
+            /// <summary>
+            /// Параметры после распознования XML-документа
+            /// </summary>
             public DataTable m_tableParameters;
-
+            /// <summary>
+            /// Значения параметров после распознования XML-документа
+            /// </summary>
             public DataTable m_tableValues;
-
-            private List<object> _listXmlTree;
-
-            private int parseNode(XmlNode node, List<object>listTree, int []indxRank)
+            /// <summary>
+            /// Список элементов XML-документа
+            /// </summary>
+            public FormMain.ListXmlTree m_listXmlTree;
+            /// <summary>
+            /// Распознать элемент XML-документа
+            /// </summary>
+            /// <param name="node">Элемент XML-документа</param>
+            /// <param name="listXmlTree">Элемент списка</param>
+            /// <returns>Результат обработки элемента XML-документа</returns>
+            private int parseNode(XmlNode node, FormMain.ListXmlTree listXmlTree)
             {
                 int iRes = -1;
 
-                int[] newIndxRank;
+                FormMain.ListXmlTree newItemXmlTree;
                 float value = -1F;
 
-                if (node.HasChildNodes == true)
+                if (node.HasChildNodes == true) {
                     if (node.ChildNodes.Count > 0)
                         for (int i = 0; i < node.ChildNodes.Count; i++) {
-                            listTree.Add (new List<object>());
+                            if (!(node.ChildNodes[i].Attributes == null)) {
+                                newItemXmlTree = new FormMain.ListXmlTree();
+                                listXmlTree.Add(newItemXmlTree);
 
-                            newIndxRank = new int[indxRank.Length + 1];
-                            indxRank.CopyTo(newIndxRank, 0);
-                            newIndxRank[indxRank.Length] = i;
+                                newItemXmlTree.Tag = node.ChildNodes[i].Name;
 
-                            parseNode(node.ChildNodes[i], listTree[i] as List<object>, newIndxRank);
+                                parseNode(node.ChildNodes[i], newItemXmlTree);
+                            } else
+                                //Logging.Logg().Warning(MethodBase.GetCurrentMethod()
+                                //    , string.Format(@"XML-элемент Name={0} не имеет аттрибутов...", node.Name)
+                                //    , Logging.INDEX_MESSAGE.NOT_SET)
+                                    ;
                         }
                     else
                         return 1;
-                else {
+                } else {
                     try {
                         if (!(node.Attributes == null)) {
                             if (string.IsNullOrEmpty(node.Attributes.GetNamedItem("value").Value) == false)
@@ -149,6 +178,15 @@ namespace xmlLoader
                                     ; //значние получено
                             else
                                 value = -1F;
+
+                            listXmlTree.Attributes = new List<KeyValuePair<string, string>>();
+                            if (!(node.Attributes.GetNamedItem("value") == null))
+                                listXmlTree.Attributes.Add(new KeyValuePair<string, string>(node.Attributes.GetNamedItem("value").Name
+                                    , node.Attributes.GetNamedItem("value").Value));
+                            else
+                                Logging.Logg().Warning(MethodBase.GetCurrentMethod()
+                                    , string.Format(@"XML-элемент Name={0} не имеет аттрибута 'value'...", node.Name)
+                                    , Logging.INDEX_MESSAGE.NOT_SET);
 
                             m_tableValues.Rows.Add(new object[] {
                                 node.ParentNode.Name
@@ -162,14 +200,18 @@ namespace xmlLoader
                     } catch (Exception e) {
                         Logging.Logg().Exception(e, @"PackageHandlerQueue.PACKAGE::parseNode () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
-                }                    
+                }
 
                 return iRes;
             }
-
-            public PACKAGE(DateTime dtScore, XmlDocument xmlSource)
+            /// <summary>
+            /// Конструктор основной с параметрами
+            /// </summary>
+            /// <param name="dtRecieved">Мктка даты/времени получения</param>
+            /// <param name="xmlSource">XML-документ</param>
+            public PACKAGE(DateTime dtRecieved, XmlDocument xmlSource)
             {
-                m_dtRecieved = dtScore;
+                m_dtRecieved = dtRecieved;
                 m_dtSend = DateTime.MinValue;
 
                 m_state = STATE.NEW;
@@ -188,15 +230,17 @@ namespace xmlLoader
                     , new DataColumn(@"VALUE", typeof(float))
                 });
 
-                _listXmlTree = new List<object>();
+                m_listXmlTree = new FormMain.ListXmlTree();
 
                 m_state = STATE.PARSING;
 
                 for (int i = 0; i < m_xmlSource.ChildNodes.Count; i ++) {
                     if (m_xmlSource.ChildNodes[i].NodeType == XmlNodeType.Element) {
-                        _listXmlTree.Add(new List<object>());
+                        m_listXmlTree.Add(new FormMain.ListXmlTree());
 
-                        parseNode(m_xmlSource.ChildNodes[i], _listXmlTree[_listXmlTree.Count - 1] as List<object>, new int[] { 0, i });
+                        m_listXmlTree.Tag = m_xmlSource.ChildNodes[i].Name;
+
+                        parseNode(m_xmlSource.ChildNodes[i], m_listXmlTree[m_listXmlTree.Count - 1] as FormMain.ListXmlTree);
                     } else
                         ;
                 }
@@ -204,47 +248,65 @@ namespace xmlLoader
                 m_state = STATE.PARSED; //ERROR
             }
         }
-
+        /// <summary>
+        /// Список принятых XML-пакетов
+        /// </summary>
         private List<PACKAGE> _listPackage;
-
-        private System.Threading.Timer m_timerOutdated;
-
+        /// <summary>
+        /// Таймер, определяющий срок отправления XML-пакета для обработки
+        /// </summary>
+        private System.Threading.Timer m_timerTableRes;
+        /// <summary>
+        /// Событие для отправки сообщения главной экранной форме
+        ///  (в последующем для постановки(ретрансляции) в главную очередь обработки событий)
+        /// </summary>
         public event DelegateObjectFunc EvtToFormMain;
-
+        /// <summary>
+        /// Конструктор основной (с парметрами)
+        /// </summary>
+        /// <param name="secIntervalOutdated">Интервал(сек) между отправлением XML-пакета для обработки</param>
         public PackageHandlerQueue(short secIntervalOutdated = -1)
         {
             if (secIntervalOutdated > 0)
-                TS_INTERVAL_OUTDATED = TimeSpan.FromSeconds(secIntervalOutdated);
+                TS_TIMER_TABLERES = TimeSpan.FromSeconds(secIntervalOutdated);
             else
                 ;
 
             _listPackage = new List<PACKAGE>();
-            m_timerOutdated = new System.Threading.Timer(timerOutdated_onCallback, null, System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+            // создать объект таймера, не запускать
+            m_timerTableRes = new System.Threading.Timer(timerTableRes_onCallback, null, System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
         }
-
+        /// <summary>
+        /// (Де)активировать таймер, определяющий срок отправления XML-пакета для обработки
+        /// </summary>
+        /// <param name="active">Признак (де)активации</param>
+        /// <returns>Результат выполнения метода</returns>
         public override bool Activate(bool active)
         {
             bool bRes = base.Activate(active);
 
             if (bRes == true) {
-                m_timerOutdated.Change(active == true ? (int)TS_INTERVAL_OUTDATED.TotalMilliseconds : System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+                m_timerTableRes.Change(active == true ? (int)TS_TIMER_TABLERES.TotalMilliseconds : System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
             } else
                 ;
 
             return bRes;
         }
-
-        private void timerOutdated_onCallback(object obj)
+        /// <summary>
+        /// Метод обратного вызова таймера, определяющего срок отправления XML-пакета для обработки
+        /// </summary>
+        /// <param name="obj">Аргумент при вызове метода</param>
+        private void timerTableRes_onCallback(object obj)
         {
             Push(null, new object[] {
                 new object[] {
                     new object[] {
-                        StatesMachine.TIMER_OUTDATED
+                        StatesMachine.TIMER_TABLERES
                     }
                 }
             });
 
-            m_timerOutdated.Change((int)TS_INTERVAL_OUTDATED.TotalMilliseconds, System.Threading.Timeout.Infinite);
+            m_timerTableRes.Change((int)TS_TIMER_TABLERES.TotalMilliseconds, System.Threading.Timeout.Infinite);
         }
         /// <summary>
         /// Список паектов для отправки на главную форму для отображения
@@ -266,7 +328,11 @@ namespace xmlLoader
                 return listRes;
             }
         }
-
+        /// <summary>
+        /// Добавить XML-пакет в список
+        /// </summary>
+        /// <param name="dtPackage">Метка даты/времени получения XML-пакета</param>
+        /// <param name="xmlDoc">XML-документ</param>
         private void addPackage(DateTime dtPackage, XmlDocument xmlDoc)
         {
             PACKAGE package;
@@ -297,8 +363,8 @@ namespace xmlLoader
                 else
                     ;
             } catch (Exception e) {
-                Logging.Logg().Exception(e, string.Format(@"Добавление пакета дата/время получения={} и статистики для него", dtPackage), Logging.INDEX_MESSAGE.NOT_SET);
-            }            
+                Logging.Logg().Exception(e, string.Format(@"Добавление пакета дата/время получения={0} и статистики для него", dtPackage), Logging.INDEX_MESSAGE.NOT_SET);
+            }
         }
         /// <summary>
         /// Подготовить объект для отправки адресату по его запросу
@@ -311,6 +377,7 @@ namespace xmlLoader
         {
             int iRes = -1;
             StatesMachine state = (StatesMachine)s;
+            PACKAGE package;
             string debugMsg = string.Empty;
 
             error = true;
@@ -342,10 +409,21 @@ namespace xmlLoader
 
                         itemQueue = Peek;
 
-                        var packages = from package in _listPackage where package.m_dtRecieved == (DateTime)itemQueue.Pars[0] select package;
-                        if (packages.Count() == 1)
-                            outobj = packages.ElementAt(0).m_xmlSource;
-                        else
+                        var selectPackages = from p in _listPackage where p.m_dtRecieved == (DateTime)itemQueue.Pars[0] select p;
+                        if (selectPackages.Count() == 1) {
+                            package = selectPackages.ElementAt(0);
+
+                            switch ((FormMain.INDEX_TABPAGE_VIEW_PACKAGE)itemQueue.Pars[1]) {
+                                case FormMain.INDEX_TABPAGE_VIEW_PACKAGE.XML:
+                                    outobj = package.m_xmlSource;
+                                    break;
+                                case FormMain.INDEX_TABPAGE_VIEW_PACKAGE.TREE:
+                                    outobj = package.m_listXmlTree;
+                                    break;
+                                default: //??? - ошибка неизвестный тип вкладки просмотра XML-документа
+                                    break;
+                            }
+                        } else
                             ; //??? - ошибка пакет не найден либо пакетов много
                         break;
                     case StatesMachine.STATISTIC: // статистика
@@ -356,7 +434,29 @@ namespace xmlLoader
 
                         //outobj = ??? объект статический
                         break;
-                    case StatesMachine.TIMER_OUTDATED: // срок отправлять очередной пакет
+                    case StatesMachine.TIMER_TABLERES: // срок отправлять очередной пакет
+                        iRes = 0;
+                        error = false;
+
+                        itemQueue = Peek;
+
+                        var orderPckages = from p in _listPackage orderby p.m_dtRecieved descending select p;
+                        if (orderPckages.Count() > 0) {
+                            package = orderPckages.ElementAt(0);
+
+                            outobj = new object[] {
+                                package.m_dtRecieved
+                                , package.m_tableValues.Copy()
+                                , package.m_tableParameters.Copy()
+                            };
+
+                            package.m_dtSend = DateTime.UtcNow;
+                        } else {
+                            //??? - ошибка пакет не найден либо пакетов много
+                        //    iRes = -1;
+                        //    error = true;
+                            outobj = false;
+                        }
                         break;
                     default:
                         break;
@@ -392,6 +492,7 @@ namespace xmlLoader
                 case StatesMachine.LIST_PACKAGE: //
                 case StatesMachine.PACKAGE_CONTENT: //
                 case StatesMachine.STATISTIC: //
+                case StatesMachine.TIMER_TABLERES: //
                     // не требуют запроса
                 default:
                     break;
@@ -406,12 +507,13 @@ namespace xmlLoader
             ItemQueue itemQueue = Peek;
 
             switch ((StatesMachine)state) {
-                case StatesMachine.NEW: //                 
+                case StatesMachine.NEW: // 
                     //Ответа не требуется/не требуют обработки результата
                     break;
                 case StatesMachine.LIST_PACKAGE: // 
-                case StatesMachine.PACKAGE_CONTENT: //                 
+                case StatesMachine.PACKAGE_CONTENT: // 
                 case StatesMachine.STATISTIC: // статический объект
+                case StatesMachine.TIMER_TABLERES:
                     if ((!(itemQueue == null))
                         //&& (!(itemQueue.m_dataHostRecieved == null)) FormMain не реализует интерфейс 'IDataHost'
                         )

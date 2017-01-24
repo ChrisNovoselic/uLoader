@@ -21,6 +21,35 @@ namespace xmlLoader
         /// </summary>
         private enum INDEX_CONTROL { CBX_READ_SESSION_START, CBX_READ_SESSION_STOP }
 
+        public class ListXmlTree : List<object>
+        {
+            public string Tag;
+
+            public List<KeyValuePair<string, string>> Attributes;
+        }
+
+        private class TreeViewPackage : TreeView
+        {
+            public void UpdateData(ListXmlTree listXmlTree)
+            {
+                TreeNode topNode = Nodes.Add(listXmlTree.Tag);
+
+                foreach (ListXmlTree itemXmlTree in listXmlTree)
+                    addNodes(itemXmlTree, topNode.Nodes);
+            }
+
+            private void addNodes(ListXmlTree listXmlTree, TreeNodeCollection nodes)
+            {
+                TreeNode newNode;
+
+                for (int i = 0; i < listXmlTree.Count; i++) {
+                    newNode = nodes.Add((listXmlTree[i] as ListXmlTree).Tag);
+
+                    addNodes(listXmlTree[i] as ListXmlTree, newNode.Nodes);
+                }
+            }
+        }
+
         private class DataGridViewStatistic : DataGridView
         {
             private DataGridViewRow getRow(PackageHandlerQueue.STATISTIC.INDEX_ITEM tag)
@@ -75,9 +104,9 @@ namespace xmlLoader
             {
                 int indxRow = -1
                     , cntViewPackageItem = -1;
-                List<int> listItemIndxToAdding = new List<int>();
+                List<int> listItemIndexToAdding = new List<int>();
                 DataGridViewRow rowAdding;
-                // кол-во пакетов указано в 'PackageHandlerQueue.COUNT_VIEW_PACKAGE_ITEM'                
+                // кол-во пакетов указано в 'PackageHandlerQueue.COUNT_VIEW_PACKAGE_ITEM' 
                 cntViewPackageItem = items.Count();
                 // поиск строк для добавления в текущее представление
                 foreach (VIEW_PACKAGE_ITEM item in items) {
@@ -91,14 +120,16 @@ namespace xmlLoader
                         } else
                             ;
                     // проверить найден ли пакет
-                    if (indxRow < 0) {
-                    // пакет не был найден - для добавления
-                        listItemIndxToAdding.Add(items.ToList().IndexOf(item));
-                    } else
-                        ;
+                    if (indxRow < 0)
+                        // пакет не был найден - для добавления
+                        listItemIndexToAdding.Add(items.ToList().IndexOf(item));
+                    else {
+                        Rows[indxRow].Cells[(int)VIEW_PACKAGE_ITEM.INDEX.DATETIME_SENDED].Value =
+                            item.Values[(int)VIEW_PACKAGE_ITEM.INDEX.DATETIME_SENDED];
+                    }
                 }
 
-                while (RowCount + listItemIndxToAdding.Count > cntViewPackageItem) {
+                while (RowCount + listItemIndexToAdding.Count > cntViewPackageItem) {
                     // требуется удаление строк
                     // сортировать строки с меткой меткой даты/времени получения XML-пакета от минимальной к максимальной
                     var rowsOrdering = from row in (Rows.Cast<DataGridViewRow>().ToList()) orderby (DateTime)row.Tag /*descending*/ select row;
@@ -106,7 +137,7 @@ namespace xmlLoader
                     Rows.Remove(rowsOrdering.ElementAt(0));
                 }
                 // добавить строки в представление
-                foreach (int indx in listItemIndxToAdding) {
+                foreach (int indx in listItemIndexToAdding) {
                     // создать строку (если строку добавить сразу, то значение Tag будет присвоено после события 'SelectionChanged' - нельхя определить идентификатор строки)
                     rowAdding = new DataGridViewRow();
                     rowAdding.CreateCells(this);
@@ -207,8 +238,8 @@ namespace xmlLoader
         /// <param name="e">Аргумент события</param>
         private void tabControlViewPackage_Selecting(object sender, TabControlCancelEventArgs e)
         {
-            // отменить активацию вкладки
-            e.Cancel = ((Control)sender).Enabled;
+            //// отменить активацию вкладки
+            //e.Cancel = ((Control)sender).Enabled;
         }
         /// <summary>
         /// Обработчик события - изменение выбранной строки в представленни со списком полученных пакетов
@@ -217,6 +248,8 @@ namespace xmlLoader
         /// <param name="e">Аргумент события</param>
         private void dgvPackageList_SelectionChanged(object sender, EventArgs e)
         {
+            m_treeViewPackage.Nodes.Clear();
+
             // отправить запрос на получение контента выбранного пакета
             pushPackageContent();
         }
@@ -225,13 +258,19 @@ namespace xmlLoader
         /// </summary>
         private void pushPackageContent()
         {
-            m_handlerPackage.Push(null, new object[] {
-                new object[] {
-                    new object [] {
-                        PackageHandlerQueue.StatesMachine.PACKAGE_CONTENT, m_dgvPackageList.SelectedRows[0].Tag, m_tabControlViewPackage.SelectedTab.Tag
+            if (m_dgvPackageList.SelectedRows.Count == 1)
+                m_handlerPackage.Push(null, new object[] {
+                    new object[] {
+                        new object [] {
+                            PackageHandlerQueue.StatesMachine.PACKAGE_CONTENT, m_dgvPackageList.SelectedRows[0].Tag, m_tabControlViewPackage.SelectedTab.Tag
+                        }
                     }
-                }
-            });
+                });
+            else
+                if (m_dgvPackageList.SelectedRows.Count > 1)
+                    throw new Exception(@"Строк выбрано больше, чем указано в свойствах...");
+                else
+                    ;
         }
 
         public struct VIEW_PACKAGE_ITEM
@@ -260,13 +299,32 @@ namespace xmlLoader
                                 m_tbxViewPackage.Text = ((XmlDocument)(arg as object[])[1]).InnerXml;
                                 break;
                             case INDEX_TABPAGE_VIEW_PACKAGE.TREE:
+                                m_treeViewPackage.UpdateData((ListXmlTree)(arg as object[])[1]);
                                 break;
                             default:
-                                throw new Exception(@"НЕизвестный тип панели для представления содержимого пакета");
+                                throw new Exception(@"Неизвестный тип панели для представления содержимого пакета");
                         }
                         break;
                     case PackageHandlerQueue.StatesMachine.STATISTIC:
                         m_dgvStatistic.UpdateData();
+                        break;
+                    case PackageHandlerQueue.StatesMachine.TIMER_TABLERES:
+                        if ((arg as object[]).Length == 4)
+                            //m_handlerWriter.Push(null, new object[] {
+                            //    new object[] {
+                            //        new object[] {
+                            //            WriterHandlerQueue.StatesMachine.DATASET_CONTENT
+                            //            , (DateTime)(arg as object[])[1]
+                            //            , (DataTable)(arg as object[])[2]
+                            //            , (DataTable)(arg as object[])[3]
+                            //        }
+                            //    }
+                            //})
+                            ;
+                        else
+                            Logging.Logg().Warning(MethodBase.GetCurrentMethod()
+                                , string.Format(@"некорректное кол-во аргументов state={0}", state)
+                                , Logging.INDEX_MESSAGE.NOT_SET);
                         break;
                     case PackageHandlerQueue.StatesMachine.NEW: //??? не м.б. получен, иначе фиксировать ошибку
                     default: //??? неизвестный идентикатор, фиксировать ошибку
@@ -381,8 +439,20 @@ namespace xmlLoader
         /// <param name="e">Аргумент события</param>
         private void cbxSession_Click(object sender, EventArgs e)
         {
+            bool bStartChecked = m_cbxReadSessionStart.Checked;
+
+            if (bStartChecked == true)
+                // команда на отключение - проверить включен ли отладочный цикл генерации серии пакетов
+                if (имитацияпакетциклToolStripMenuItem.Checked == true)
+                // серия также в работе - отключить
+                    имитацияпакетциклToolStripMenuItem.PerformClick();
+                else
+                    ;
+            else
+                ;
+
             // запросить(команда) изменение состояния
-            evtUDPListenerDataAskedHost(new object[] { new object[] { HHandlerQueue.StatesMachine.UDP_CONNECTED_CHANGE, !m_cbxReadSessionStart.Checked } });
+            evtUDPListenerDataAskedHost(new object[] { new object[] { HHandlerQueue.StatesMachine.UDP_CONNECTED_CHANGE, !bStartChecked } });
         }
         /// <summary>
         /// Обработчик события - выбор п. меню "Отладака-Чтение-Пакет-Один"
@@ -434,7 +504,7 @@ namespace xmlLoader
                 }
             });
 
-            m_handlerPackage.Push(null, new object[] {
+            m_handlerWriter.Push(null, new object[] {
                 new object[] {
                     new object[] { WriterHandlerQueue.StatesMachine.LIST_DATASET }
                     , new object[] { WriterHandlerQueue.StatesMachine.STATISTIC }
