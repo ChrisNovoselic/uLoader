@@ -12,7 +12,7 @@ namespace xmlLoader
 {
     class UDPListener : IDataHost
     {
-        private const int SEC_INTERVAL_SERIES_EVENT_PACKAGE_RECIEVED = 10;
+        private const int SEC_INTERVAL_SERIES_EVENT_PACKAGE_RECIEVED = 3;
 
         private static int m_iNPort;
 
@@ -53,39 +53,64 @@ namespace xmlLoader
 
         private static XmlDocument s_packageTemplate;
 
-        private Timer m_timerSeries;
+        private Timer m_debugTmerSeries;
 
         private static string _versionXMLPackage;
 
         public UDPListener()
         {
-            m_timerSeries = new Timer(timerSeries_CallBack, null, Timeout.Infinite, Timeout.Infinite);
+            m_debugTmerSeries = new Timer(debugTimerSeries_CallBack, null, Timeout.Infinite, Timeout.Infinite);
+
+            m_iNPort = -1;
+            _versionXMLPackage = string.Empty;
         }
 
         public event DelegateObjectFunc EvtDataAskedHost;
 
-        private event DelegateFunc evtStateChanged;
+        private DelegateFunc evtStateChanged;
 
-        private event DelegateFunc evtConnectedChanged;
+        private DelegateFunc evtConnectedChanged;
 
         public void Start()
         {
+            int iErr = 0;
+
+            if ((!(m_iNPort > 0))
+                && (_versionXMLPackage.Equals(string.Empty) == true))
             // запросить номер порта, шаблон пакета(м номером версии)
-            DataAskedHost(new object[] {
-                new object[] { HHandlerQueue.StatesMachine.NUDP_LISTENER }
-                , new object[] { HHandlerQueue.StatesMachine.XML_PACKAGE_VERSION }
-            });
+                DataAskedHost(new object[] {
+                    new object[] { HHandlerQueue.StatesMachine.NUDP_LISTENER }
+                    , new object[] { HHandlerQueue.StatesMachine.XML_PACKAGE_VERSION }
+                });
+            else
+                iErr --; //??? - ошибка (повторный старт)
 
-            evtStateChanged += onEvtStateChanged;
-            evtConnectedChanged += onEvtConnectedChanged;
+            if (evtStateChanged == null)
+                evtStateChanged += onEvtStateChanged;
+            else
+                iErr--; //??? - ошибка (повторный старт)
+
+            if (evtConnectedChanged == null)
+                evtConnectedChanged += onEvtConnectedChanged;
+            else
+                iErr--; //??? - ошибка (повторный старт)
+
+            if (iErr < 0)
+                throw new Exception(@"Повторный старт объекта-прослушивателя XML-пакетов...");
+            else
+                ;
         }
-
+        /// <summary>
+        /// Обработчик события - изменение состояния объекта
+        /// </summary>
         private void onEvtStateChanged()
         {
             IsConnected = ((state & UDPListener.STATE.CONNECT) == UDPListener.STATE.CONNECT)
                 && ((state & UDPListener.STATE.XML_TEMPLATE) == UDPListener.STATE.XML_TEMPLATE);
         }
-
+        /// <summary>
+        /// Обработчик события - изменение состояния соединения (установлено/разорвано)
+        /// </summary>
         private void onEvtConnectedChanged()
         {
             DataAskedHost(new object[] { new object [] { HHandlerQueue.StatesMachine.UDP_CONNECTED_CHANGED
@@ -95,34 +120,41 @@ namespace xmlLoader
 
         public void Stop()
         {
+            m_debugTmerSeries.Change(System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+            m_debugTmerSeries.Dispose();
         }
-
-        public void GenerateEventPackageRecieved()
+        /// <summary>
+        /// Метод отладки - инициировать очередную итерацию генерации серии пакетов
+        /// </summary>
+        public void DebugGenerateEventPackageRecieved()
         {
-            m_timerSeries.Change(0, Timeout.Infinite);
+            m_debugTmerSeries.Change(0, Timeout.Infinite);
         }
-
-        public void StartSeriesEventPackageRecieved(int secInterval = SEC_INTERVAL_SERIES_EVENT_PACKAGE_RECIEVED)
+        /// <summary>
+        /// Метод отладки - запуск генерации серии пакетов
+        /// </summary>
+        /// <param name="secInterval">Интервал(сек) между очередными итерациями генерации серии пакетов</param>
+        public void DebugStartSeriesEventPackageRecieved(int secInterval = SEC_INTERVAL_SERIES_EVENT_PACKAGE_RECIEVED)
         {
             string debugMsg = @"СТАРТ генерации серии XML-пакетов";
 
             Logging.Logg().Debug(MethodBase.GetCurrentMethod(), debugMsg, Logging.INDEX_MESSAGE.NOT_SET);
             Debug.WriteLine(string.Format(@"{0}: {1}", DateTime.Now.ToString(), debugMsg));
 
-            m_timerSeries.Change(0, secInterval * 1000);
+            m_debugTmerSeries.Change(0, secInterval * 1000);
         }
 
-        public void StopSeriesEventPackageRecieved()
+        public void DebugStopSeriesEventPackageRecieved()
         {
             string debugMsg = @"СТОП генерации серии XML-пакетов";
 
             Logging.Logg().Debug(MethodBase.GetCurrentMethod(), debugMsg, Logging.INDEX_MESSAGE.NOT_SET);
             Debug.WriteLine(string.Format(@"{0}: {1}", DateTime.Now.ToString(), debugMsg));
 
-            m_timerSeries.Change(Timeout.Infinite, Timeout.Infinite);
+            m_debugTmerSeries.Change(Timeout.Infinite, Timeout.Infinite);
         }
 
-        private void timerSeries_CallBack(object obj)
+        private void debugTimerSeries_CallBack(object obj)
         {
             string debugMsg = @"сгенерирован XML-пакет";
             XmlDocument xmlDoc;
@@ -131,7 +163,7 @@ namespace xmlLoader
             Debug.WriteLine(string.Format(@"{0}: {1}", DateTime.Now.ToString(), debugMsg));
 
             // сформировать XML-пакет - заменить метки даты/времени, значения
-            xmlDoc = generatePackageRecieved();
+            xmlDoc = debugGeneratePackageRecieved();
 
             // отправить XML-пакет
             DataAskedHost(new object[] { new object[] {
@@ -141,7 +173,7 @@ namespace xmlLoader
             });
         }
 
-        private XmlDocument generatePackageRecieved()
+        private XmlDocument debugGeneratePackageRecieved()
         {
             return CopyXmlDocument(s_packageTemplate);
         }

@@ -1,4 +1,6 @@
-﻿namespace xmlLoader
+﻿using System.Windows.Forms;
+
+namespace xmlLoader
 {
     partial class FormMain
     {
@@ -52,7 +54,7 @@
             this.m_cbxReadSessionStop = new System.Windows.Forms.CheckBox();
             this.m_nudnUDPPort = new System.Windows.Forms.NumericUpDown();
             this.m_cbxReadSessionStart = new System.Windows.Forms.CheckBox();
-            this.m_dgvSession = new System.Windows.Forms.DataGridView();
+            this.m_dgvStatistic = new DataGridViewStatistic();
             this.ColumnSessionParameterValue = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.m_btnDestRemove = new System.Windows.Forms.Button();
             this.m_btnDestAdd = new System.Windows.Forms.Button();
@@ -90,7 +92,7 @@
             this.splitContainerMainRead = new System.Windows.Forms.SplitContainer();
             this.m_tabControlViewPackage = new System.Windows.Forms.TabControl();
             this.m_tpageViewPackageXml = new System.Windows.Forms.TabPage();
-            this.m_labelViewPackage = new System.Windows.Forms.Label();
+            this.m_tbxViewPackage = new System.Windows.Forms.TextBox();
             this.m_tpageViewPackageTree = new System.Windows.Forms.TabPage();
             this.m_treeViewPackage = new System.Windows.Forms.TreeView();
             this.splitContainerMainWrite = new System.Windows.Forms.SplitContainer();
@@ -108,7 +110,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvPackageList)).BeginInit();
             m_groupBoxSession.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_nudnUDPPort)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.m_dgvSession)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.m_dgvStatistic)).BeginInit();
             m_groupBoxDestSetting.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestSetting)).BeginInit();
@@ -295,6 +297,8 @@
             this.m_dgvPackageList.Name = "m_dgvPackageList";
             this.m_dgvPackageList.ReadOnly = true;
             this.m_dgvPackageList.RowHeadersVisible = false;
+            this.m_dgvPackageList.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            m_dgvPackageList.MultiSelect = false;
             this.m_dgvPackageList.Size = new System.Drawing.Size(257, 204);
             this.m_dgvPackageList.TabIndex = 0;
             // 
@@ -310,7 +314,8 @@
             // 
             // ColumnPackageListDatetimeInput
             // 
-            this.ColumnPackageListDatetimeInput.Frozen = true;
+            //this.ColumnPackageListDatetimeInput.Frozen = true;
+            this.ColumnPackageListDatetimeInput.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
             this.ColumnPackageListDatetimeInput.HeaderText = "Получен";
             this.ColumnPackageListDatetimeInput.Name = "ColumnPackageListDatetimeInput";
             this.ColumnPackageListDatetimeInput.ReadOnly = true;
@@ -330,7 +335,7 @@
             m_groupBoxSession.Controls.Add(this.m_nudnUDPPort);
             m_groupBoxSession.Controls.Add(m_labelUDPPort);
             m_groupBoxSession.Controls.Add(this.m_cbxReadSessionStart);
-            m_groupBoxSession.Controls.Add(this.m_dgvSession);
+            m_groupBoxSession.Controls.Add(this.m_dgvStatistic);
             m_groupBoxSession.Dock = System.Windows.Forms.DockStyle.Top;
             m_groupBoxSession.Location = new System.Drawing.Point(0, 0);
             m_groupBoxSession.Name = "m_groupBoxSession";
@@ -408,20 +413,21 @@
             // 
             // m_dgvSession
             // 
-            this.m_dgvSession.AllowUserToAddRows = false;
-            this.m_dgvSession.AllowUserToDeleteRows = false;
-            this.m_dgvSession.AllowUserToResizeRows = false;
-            this.m_dgvSession.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.m_dgvStatistic.AllowUserToAddRows = false;
+            this.m_dgvStatistic.AllowUserToDeleteRows = false;
+            this.m_dgvStatistic.AllowUserToResizeRows = false;
+            this.m_dgvStatistic.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.m_dgvSession.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.m_dgvSession.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.m_dgvStatistic.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.m_dgvStatistic.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.ColumnSessionParameterValue});
-            this.m_dgvSession.Location = new System.Drawing.Point(150, 13);
-            this.m_dgvSession.MultiSelect = false;
-            this.m_dgvSession.Name = "m_dgvSession";
-            this.m_dgvSession.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
-            this.m_dgvSession.Size = new System.Drawing.Size(257, 69);
-            this.m_dgvSession.TabIndex = 0;
+            this.m_dgvStatistic.Location = new System.Drawing.Point(150, 13);
+            this.m_dgvStatistic.MultiSelect = false;
+            this.m_dgvStatistic.Name = "m_dgvSession";
+            this.m_dgvStatistic.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
+            this.m_dgvStatistic.Size = new System.Drawing.Size(257, 69);
+            this.m_dgvStatistic.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.RowHeaderSelect;
+            this.m_dgvStatistic.TabIndex = 0;
             // 
             // ColumnSessionParameterValue
             // 
@@ -479,6 +485,7 @@
             this.m_dgvDestList.Name = "m_dgvDestList";
             this.m_dgvDestList.RowHeadersVisible = false;
             this.m_dgvDestList.Size = new System.Drawing.Size(140, 71);
+            this.m_dgvDestList.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.RowHeaderSelect;
             this.m_dgvDestList.TabIndex = 1;
             // 
             // ColumnDestListName
@@ -511,6 +518,7 @@
             this.m_dgvDestSetting.ReadOnly = true;
             this.m_dgvDestSetting.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
             this.m_dgvDestSetting.Size = new System.Drawing.Size(257, 101);
+            this.m_dgvDestSetting.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.RowHeaderSelect;
             this.m_dgvDestSetting.TabIndex = 0;
             // 
             // ColumnDestSettingValue
@@ -549,6 +557,7 @@
             this.m_dgvDestParameter.Location = new System.Drawing.Point(3, 3);
             this.m_dgvDestParameter.Name = "m_dgvDestParameter";
             this.m_dgvDestParameter.Size = new System.Drawing.Size(433, 319);
+            this.m_dgvDestParameter.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.RowHeaderSelect;
             this.m_dgvDestParameter.TabIndex = 0;
             // 
             // m_tpageDestValue
@@ -569,6 +578,7 @@
             this.m_dgvDestValue.Location = new System.Drawing.Point(3, 3);
             this.m_dgvDestValue.Name = "m_dgvDestValue";
             this.m_dgvDestValue.Size = new System.Drawing.Size(433, 319);
+            this.m_dgvDestValue.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.RowHeaderSelect;
             this.m_dgvDestValue.TabIndex = 0;
             // 
             // m_groupBoxDatabase
@@ -640,6 +650,7 @@
             this.m_dgvDestDatabaseListAction.ReadOnly = true;
             this.m_dgvDestDatabaseListAction.RowHeadersVisible = false;
             this.m_dgvDestDatabaseListAction.Size = new System.Drawing.Size(257, 204);
+            this.m_dgvDestDatabaseListAction.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.m_dgvDestDatabaseListAction.TabIndex = 11;
             // 
             // ColumnDestDatabaseListActionItemCount
@@ -654,7 +665,8 @@
             // 
             // ColumnDestDatabaseListActionInput
             // 
-            this.ColumnDestDatabaseListActionInput.Frozen = true;
+            //this.ColumnDestDatabaseListActionInput.Frozen = true;
+            this.ColumnDestDatabaseListActionInput.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
             this.ColumnDestDatabaseListActionInput.HeaderText = "Получен";
             this.ColumnDestDatabaseListActionInput.Name = "ColumnDestDatabaseListActionInput";
             this.ColumnDestDatabaseListActionInput.ReadOnly = true;
@@ -871,7 +883,7 @@
             // 
             // m_tpageViewPackageXml
             // 
-            this.m_tpageViewPackageXml.Controls.Add(this.m_labelViewPackage);
+            this.m_tpageViewPackageXml.Controls.Add(this.m_tbxViewPackage);
             this.m_tpageViewPackageXml.Location = new System.Drawing.Point(4, 22);
             this.m_tpageViewPackageXml.Name = "m_tpageViewPackageXml";
             this.m_tpageViewPackageXml.Padding = new System.Windows.Forms.Padding(3);
@@ -882,12 +894,16 @@
             // 
             // m_labelViewPackage
             // 
-            this.m_labelViewPackage.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.m_labelViewPackage.Location = new System.Drawing.Point(3, 3);
-            this.m_labelViewPackage.Name = "m_labelViewPackage";
-            this.m_labelViewPackage.Size = new System.Drawing.Size(433, 283);
-            this.m_labelViewPackage.TabIndex = 0;
-            this.m_labelViewPackage.Text = resources.GetString("m_labelViewPackage.Text");
+            this.m_tbxViewPackage.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.m_tbxViewPackage.Location = new System.Drawing.Point(3, 3);
+            this.m_tbxViewPackage.Name = "m_tbxViewPackage";
+            this.m_tbxViewPackage.Size = new System.Drawing.Size(433, 283);
+            this.m_tbxViewPackage.TabIndex = 0;
+            this.m_tbxViewPackage.ReadOnly = true;
+            this.m_tbxViewPackage.Multiline = true;
+            this.m_tbxViewPackage.WordWrap = true;
+            this.m_tbxViewPackage.ScrollBars = ScrollBars.Both;
+            this.m_tbxViewPackage.Text = string.Empty;
             // 
             // m_tpageViewPackageTree
             // 
@@ -899,6 +915,7 @@
             this.m_tpageViewPackageTree.TabIndex = 1;
             this.m_tpageViewPackageTree.Text = "Структура";
             this.m_tpageViewPackageTree.UseVisualStyleBackColor = true;
+            //((Control)this.m_tpageViewPackageTree).Enabled = false;
             // 
             // m_treeViewPackage
             // 
@@ -947,7 +964,7 @@
             m_groupBoxSession.ResumeLayout(false);
             m_groupBoxSession.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_nudnUDPPort)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.m_dgvSession)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.m_dgvStatistic)).EndInit();
             m_groupBoxDestSetting.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestList)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestSetting)).EndInit();
@@ -993,13 +1010,13 @@
         private System.Windows.Forms.SplitContainer splitContainerMainRead;
         private System.Windows.Forms.TabControl m_tabControlViewPackage;
         private System.Windows.Forms.TabPage m_tpageViewPackageXml;
-        private System.Windows.Forms.Label m_labelViewPackage;
+        private System.Windows.Forms.TextBox m_tbxViewPackage;
         private System.Windows.Forms.TabPage m_tpageViewPackageTree;
         private System.Windows.Forms.TreeView m_treeViewPackage;
         private System.Windows.Forms.Button m_btnLoadPackageHistory;
         private System.Windows.Forms.NumericUpDown m_nudnSettingPackageHistoryDepth;
         private System.Windows.Forms.CheckBox m_cbxSettingPackageHistoryIssue;
-        private System.Windows.Forms.DataGridView m_dgvSession;
+        private DataGridViewStatistic m_dgvStatistic;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelEventName;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelEventDateTime;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelEventDesc;

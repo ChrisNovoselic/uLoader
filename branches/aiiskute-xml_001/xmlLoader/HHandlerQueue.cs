@@ -34,6 +34,8 @@ namespace xmlLoader
         {
             m_fileINI = new FormMain.FileINI(strNameFileINI);
         }
+
+        public bool AutoStart { get { return bool.Parse(m_fileINI.GetSecValueOfKey(@"Reader", @"AUTO_START")); } }
         /// <summary>
         /// Подготовить объект для отправки адресату по его запросу
         /// </summary>
