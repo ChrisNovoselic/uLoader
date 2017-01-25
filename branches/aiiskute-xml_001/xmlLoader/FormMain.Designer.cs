@@ -47,7 +47,7 @@ namespace xmlLoader
             this.m_btnLoadPackageHistory = new System.Windows.Forms.Button();
             this.m_nudnSettingPackageHistoryDepth = new System.Windows.Forms.NumericUpDown();
             this.m_cbxSettingPackageHistoryIssue = new System.Windows.Forms.CheckBox();
-            this.m_dgvPackageList = new DataGridViewPackageList();
+            this.m_dgvPackageList = new DataGridView();
             this.ColumnPackageListItemCount = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColumnPackageListDatetimeInput = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColumnPackageListDatetimeOutput = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -60,13 +60,13 @@ namespace xmlLoader
             this.m_btnDestAdd = new System.Windows.Forms.Button();
             this.m_dgvDestList = new System.Windows.Forms.DataGridView();
             this.ColumnDestListName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnDestListState = new HClassLibrary.DataGridViewDisableButtonColumn();
+            this.ColumnDestListState = new DataGridViewPressedButtonColumn();
             this.m_dgvDestSetting = new System.Windows.Forms.DataGridView();
             this.ColumnDestSettingValue = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.m_tpageDestParameter = new System.Windows.Forms.TabPage();
-            this.m_dgvDestParameter = new System.Windows.Forms.DataGridView();
             this.m_tpageDestValue = new System.Windows.Forms.TabPage();
             this.m_dgvDestValue = new System.Windows.Forms.DataGridView();
+            this.m_tpageDestParameter = new System.Windows.Forms.TabPage();
+            this.m_dgvDestParameter = new System.Windows.Forms.DataGridView();            
             this.m_nudnDestDisplayCount = new System.Windows.Forms.NumericUpDown();
             this.m_dgvDestDatabaseListAction = new System.Windows.Forms.DataGridView();
             this.ColumnDestDatabaseListActionItemCount = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -95,6 +95,8 @@ namespace xmlLoader
             this.m_tbxViewPackage = new System.Windows.Forms.TextBox();
             this.m_tpageViewPackageTree = new System.Windows.Forms.TabPage();
             this.m_treeViewPackage = new TreeViewPackage();
+            this.m_tpageViewPackageTableValue = new TabPage();
+            this.m_dgvViewPackageTableValue = new DataGridView();
             this.splitContainerMainWrite = new System.Windows.Forms.SplitContainer();
             m_groupBoxListPackage = new System.Windows.Forms.GroupBox();
             m_labelPackageDisplayCount = new System.Windows.Forms.Label();
@@ -115,10 +117,10 @@ namespace xmlLoader
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestSetting)).BeginInit();
             m_tabControlDest.SuspendLayout();
-            this.m_tpageDestParameter.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestParameter)).BeginInit();
             this.m_tpageDestValue.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestValue)).BeginInit();
+            this.m_tpageDestParameter.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestParameter)).BeginInit();            
             m_groupBoxDatabase.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_nudnDestDisplayCount)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestDatabaseListAction)).BeginInit();
@@ -133,6 +135,7 @@ namespace xmlLoader
             this.m_tabControlViewPackage.SuspendLayout();
             this.m_tpageViewPackageXml.SuspendLayout();
             this.m_tpageViewPackageTree.SuspendLayout();
+            this.m_tpageViewPackageTableValue.SuspendLayout();
             this.splitContainerMainWrite.Panel1.SuspendLayout();
             this.splitContainerMainWrite.Panel2.SuspendLayout();
             this.splitContainerMainWrite.SuspendLayout();
@@ -384,6 +387,7 @@ namespace xmlLoader
             0,
             0,
             0});
+            this.m_nudnUDPPort.Enabled = false;
             // 
             // m_labelUDPPort
             // 
@@ -393,7 +397,7 @@ namespace xmlLoader
             m_labelUDPPort.Size = new System.Drawing.Size(35, 13);
             m_labelUDPPort.TabIndex = 11;
             m_labelUDPPort.Text = "Порт:";
-            m_labelUDPPort.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            m_labelUDPPort.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;            
             // 
             // m_cbxReadSessionStart
             // 
@@ -423,7 +427,7 @@ namespace xmlLoader
             this.ColumnSessionParameterValue});
             this.m_dgvStatistic.Location = new System.Drawing.Point(150, 13);
             this.m_dgvStatistic.MultiSelect = false;
-            this.m_dgvStatistic.Name = "m_dgvSession";
+            this.m_dgvStatistic.Name = "m_dgvStatistic";
             this.m_dgvStatistic.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
             this.m_dgvStatistic.Size = new System.Drawing.Size(257, 69);
             this.m_dgvStatistic.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.RowHeaderSelect;
@@ -517,6 +521,7 @@ namespace xmlLoader
             this.m_dgvDestSetting.Name = "m_dgvDestSetting";
             this.m_dgvDestSetting.ReadOnly = true;
             this.m_dgvDestSetting.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
+            this.m_dgvDestSetting.AllowUserToResizeRows = false;
             this.m_dgvDestSetting.Size = new System.Drawing.Size(257, 101);
             this.m_dgvDestSetting.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.RowHeaderSelect;
             this.m_dgvDestSetting.TabIndex = 0;
@@ -530,35 +535,15 @@ namespace xmlLoader
             // 
             // m_tabControlDest
             // 
-            m_tabControlDest.Controls.Add(this.m_tpageDestParameter);
             m_tabControlDest.Controls.Add(this.m_tpageDestValue);
+            m_tabControlDest.Controls.Add(this.m_tpageDestParameter);            
             m_tabControlDest.Dock = System.Windows.Forms.DockStyle.Fill;
             m_tabControlDest.Location = new System.Drawing.Point(0, 0);
             m_tabControlDest.Name = "m_tabControlDest";
             m_tabControlDest.SelectedIndex = 0;
             m_tabControlDest.Size = new System.Drawing.Size(447, 351);
             m_tabControlDest.TabIndex = 0;
-            // 
-            // m_tpageDestParameter
-            // 
-            this.m_tpageDestParameter.Controls.Add(this.m_dgvDestParameter);
-            this.m_tpageDestParameter.Location = new System.Drawing.Point(4, 22);
-            this.m_tpageDestParameter.Name = "m_tpageDestParameter";
-            this.m_tpageDestParameter.Padding = new System.Windows.Forms.Padding(3);
-            this.m_tpageDestParameter.Size = new System.Drawing.Size(439, 325);
-            this.m_tpageDestParameter.TabIndex = 0;
-            this.m_tpageDestParameter.Text = "Параметры";
-            this.m_tpageDestParameter.UseVisualStyleBackColor = true;
-            // 
-            // m_dgvDestParameter
-            // 
-            this.m_dgvDestParameter.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.m_dgvDestParameter.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.m_dgvDestParameter.Location = new System.Drawing.Point(3, 3);
-            this.m_dgvDestParameter.Name = "m_dgvDestParameter";
-            this.m_dgvDestParameter.Size = new System.Drawing.Size(433, 319);
-            this.m_dgvDestParameter.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.RowHeaderSelect;
-            this.m_dgvDestParameter.TabIndex = 0;
+            m_tabControlDest.Selecting += tabControl_Selecting;
             // 
             // m_tpageDestValue
             // 
@@ -580,6 +565,28 @@ namespace xmlLoader
             this.m_dgvDestValue.Size = new System.Drawing.Size(433, 319);
             this.m_dgvDestValue.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.RowHeaderSelect;
             this.m_dgvDestValue.TabIndex = 0;
+            // 
+            // m_tpageDestParameter
+            // 
+            this.m_tpageDestParameter.Controls.Add(this.m_dgvDestParameter);
+            this.m_tpageDestParameter.Location = new System.Drawing.Point(4, 22);
+            this.m_tpageDestParameter.Name = "m_tpageDestParameter";
+            this.m_tpageDestParameter.Padding = new System.Windows.Forms.Padding(3);
+            this.m_tpageDestParameter.Size = new System.Drawing.Size(439, 325);
+            this.m_tpageDestParameter.TabIndex = 0;
+            this.m_tpageDestParameter.Text = "Параметры";
+            this.m_tpageDestParameter.UseVisualStyleBackColor = true;
+            ((Control)this.m_tpageDestParameter).Enabled = false;
+            // 
+            // m_dgvDestParameter
+            // 
+            this.m_dgvDestParameter.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.m_dgvDestParameter.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.m_dgvDestParameter.Location = new System.Drawing.Point(3, 3);
+            this.m_dgvDestParameter.Name = "m_dgvDestParameter";
+            this.m_dgvDestParameter.Size = new System.Drawing.Size(433, 319);
+            this.m_dgvDestParameter.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.RowHeaderSelect;
+            this.m_dgvDestParameter.TabIndex = 0;            
             // 
             // m_groupBoxDatabase
             // 
@@ -874,6 +881,7 @@ namespace xmlLoader
             // 
             this.m_tabControlViewPackage.Controls.Add(this.m_tpageViewPackageXml);
             this.m_tabControlViewPackage.Controls.Add(this.m_tpageViewPackageTree);
+            this.m_tabControlViewPackage.Controls.Add(this.m_tpageViewPackageTableValue);
             this.m_tabControlViewPackage.Dock = System.Windows.Forms.DockStyle.Fill;
             this.m_tabControlViewPackage.Location = new System.Drawing.Point(0, 0);
             this.m_tabControlViewPackage.Name = "m_tabControlViewPackage";
@@ -915,7 +923,7 @@ namespace xmlLoader
             this.m_tpageViewPackageTree.TabIndex = 1;
             this.m_tpageViewPackageTree.Text = "Структура";
             this.m_tpageViewPackageTree.UseVisualStyleBackColor = true;
-            //((Control)this.m_tpageViewPackageTree).Enabled = false;
+            ((Control)this.m_tpageViewPackageTree).Enabled = true;
             // 
             // m_treeViewPackage
             // 
@@ -924,6 +932,32 @@ namespace xmlLoader
             this.m_treeViewPackage.Name = "m_treeViewPackage";
             this.m_treeViewPackage.Size = new System.Drawing.Size(433, 283);
             this.m_treeViewPackage.TabIndex = 0;
+            // 
+            // m_tpageViewPackageTableValue
+            // 
+            this.m_tpageViewPackageTableValue.Controls.Add(this.m_dgvViewPackageTableValue);
+            this.m_tpageViewPackageTableValue.Location = new System.Drawing.Point(4, 22);
+            this.m_tpageViewPackageTableValue.Name = "m_tpageViewPackageTableValue";
+            this.m_tpageViewPackageTableValue.Padding = new System.Windows.Forms.Padding(3);
+            this.m_tpageViewPackageTableValue.Size = new System.Drawing.Size(439, 289);
+            this.m_tpageViewPackageTableValue.TabIndex = 2;
+            this.m_tpageViewPackageTableValue.Text = "Табл.-значения";
+            this.m_tpageViewPackageTableValue.UseVisualStyleBackColor = true;
+            ((Control)this.m_tpageViewPackageTableValue).Enabled = false;
+            // 
+            // m_dgvViewPackageTableValue
+            // 
+            this.m_dgvViewPackageTableValue.AllowUserToAddRows = false;
+            this.m_dgvViewPackageTableValue.AllowUserToDeleteRows = false;
+            this.m_dgvViewPackageTableValue.Dock = DockStyle.Fill;
+            this.m_dgvViewPackageTableValue.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.m_dgvViewPackageTableValue.Location = new System.Drawing.Point(153, 18);
+            this.m_dgvViewPackageTableValue.Name = "m_dgvViewPackageTableValue";
+            this.m_dgvViewPackageTableValue.ReadOnly = true;
+            this.m_dgvViewPackageTableValue.RowHeadersVisible = false;
+            this.m_dgvViewPackageTableValue.Size = new System.Drawing.Size(257, 204);
+            this.m_dgvViewPackageTableValue.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.m_dgvViewPackageTableValue.TabIndex = 11;
             // 
             // splitContainerMainWrite
             // 
@@ -954,7 +988,7 @@ namespace xmlLoader
             this.MainMenuStrip = this.m_menuStripMain;
             this.MinimumSize = new System.Drawing.Size(8, 640);
             this.Name = "FormMain";
-            this.Text = "XML-Загрузчик АИИС КУТЭ";
+            this.Text = @"";
             //this.Load += new System.EventHandler(this.FormMain_Load); // подписка в базовом классе
             m_groupBoxListPackage.ResumeLayout(false);
             m_groupBoxListPackage.PerformLayout();
@@ -969,10 +1003,10 @@ namespace xmlLoader
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestList)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestSetting)).EndInit();
             m_tabControlDest.ResumeLayout(false);
-            this.m_tpageDestParameter.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestParameter)).EndInit();
             this.m_tpageDestValue.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestValue)).EndInit();
+            this.m_tpageDestParameter.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestParameter)).EndInit();            
             m_groupBoxDatabase.ResumeLayout(false);
             m_groupBoxDatabase.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_nudnDestDisplayCount)).EndInit();
@@ -990,6 +1024,7 @@ namespace xmlLoader
             this.m_tabControlViewPackage.ResumeLayout(false);
             this.m_tpageViewPackageXml.ResumeLayout(false);
             this.m_tpageViewPackageTree.ResumeLayout(false);
+            this.m_tpageViewPackageTableValue.ResumeLayout(false);
             this.splitContainerMainWrite.Panel1.ResumeLayout(false);
             this.splitContainerMainWrite.Panel2.ResumeLayout(false);
             this.splitContainerMainWrite.ResumeLayout(false);
@@ -1013,6 +1048,8 @@ namespace xmlLoader
         private System.Windows.Forms.TextBox m_tbxViewPackage;
         private System.Windows.Forms.TabPage m_tpageViewPackageTree;
         private TreeViewPackage m_treeViewPackage;
+        private System.Windows.Forms.TabPage m_tpageViewPackageTableValue;
+        private System.Windows.Forms.DataGridView m_dgvViewPackageTableValue;
         private System.Windows.Forms.Button m_btnLoadPackageHistory;
         private System.Windows.Forms.NumericUpDown m_nudnSettingPackageHistoryDepth;
         private System.Windows.Forms.CheckBox m_cbxSettingPackageHistoryIssue;
@@ -1035,7 +1072,7 @@ namespace xmlLoader
         private System.Windows.Forms.DataGridView m_dgvDestParameter;
         private System.Windows.Forms.TabPage m_tpageDestValue;
         private System.Windows.Forms.DataGridView m_dgvDestValue;
-        private DataGridViewPackageList m_dgvPackageList;
+        private DataGridView m_dgvPackageList;
         private System.Windows.Forms.DataGridView m_dgvDestSetting;
         private System.Windows.Forms.Button m_btnDestRemove;
         private System.Windows.Forms.Button m_btnDestAdd;
@@ -1048,7 +1085,7 @@ namespace xmlLoader
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnSessionParameterValue;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnDestSettingValue;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnDestListName;
-        private HClassLibrary.DataGridViewDisableButtonColumn ColumnDestListState;
+        private DataGridViewPressedButtonColumn ColumnDestListState;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnPackageListItemCount;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnPackageListDatetimeInput;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnPackageListDatetimeOutput;

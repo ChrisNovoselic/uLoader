@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
 using System.Xml;
 
 namespace xmlLoader
@@ -91,30 +92,22 @@ namespace xmlLoader
                     ;
             }
         }
-        /// <summary>
-        /// Класс для представления списка полученных пакетов
-        /// </summary>
-        private class DataGridViewPackageList : DataGridView
+
+        private void updateDataGridViewItem(DataGridView dgv, IEnumerable<VIEW_ITEM> items)
         {
-            /// <summary>
-            /// Обновить значения в представлении
-            /// </summary>
-            /// <param name="items">Список объектов с информацией о пакетах</param>
-            public void UpdateData(IEnumerable<VIEW_PACKAGE_ITEM>items)
-            {
-                int indxRow = -1
+            int indxRow = -1
                     , cntViewPackageItem = -1;
                 List<int> listItemIndexToAdding = new List<int>();
                 DataGridViewRow rowAdding;
                 // кол-во пакетов указано в 'PackageHandlerQueue.COUNT_VIEW_PACKAGE_ITEM' 
                 cntViewPackageItem = items.Count();
                 // поиск строк для добавления в текущее представление
-                foreach (VIEW_PACKAGE_ITEM item in items) {
+                foreach (VIEW_ITEM item in items) {
                     indxRow = -1;
                     // по всем строкам поиск пакета
-                    foreach (DataGridViewRow row in Rows)
-                        if (row.Tag.Equals(item.Values[(int)VIEW_PACKAGE_ITEM.INDEX.DATETIME_RECIEVED]) == true) {
-                            indxRow = Rows.IndexOf(row);
+                    foreach (DataGridViewRow row in dgv.Rows)
+                        if (row.Tag.Equals(item.Values[(int)VIEW_ITEM.INDEX.DATETIME_RECIEVED]) == true) {
+                            indxRow = dgv.Rows.IndexOf(row);
                             // найдено соответствие пакет - строка
                             break;
                         } else
@@ -124,32 +117,31 @@ namespace xmlLoader
                         // пакет не был найден - для добавления
                         listItemIndexToAdding.Add(items.ToList().IndexOf(item));
                     else {
-                        Rows[indxRow].Cells[(int)VIEW_PACKAGE_ITEM.INDEX.DATETIME_SENDED].Value =
-                            item.Values[(int)VIEW_PACKAGE_ITEM.INDEX.DATETIME_SENDED];
+                        dgv.Rows[indxRow].Cells[(int)VIEW_ITEM.INDEX.DATETIME_COMPLTETED].Value =
+                            item.Values[(int)VIEW_ITEM.INDEX.DATETIME_COMPLTETED];
                     }
                 }
 
-                while (RowCount + listItemIndexToAdding.Count > cntViewPackageItem) {
+                while (dgv.RowCount + listItemIndexToAdding.Count > cntViewPackageItem) {
                     // требуется удаление строк
                     // сортировать строки с меткой меткой даты/времени получения XML-пакета от минимальной к максимальной
-                    var rowsOrdering = from row in (Rows.Cast<DataGridViewRow>().ToList()) orderby (DateTime)row.Tag /*descending*/ select row;
+                    var rowsOrdering = from row in (dgv.Rows.Cast<DataGridViewRow>().ToList()) orderby (DateTime)row.Tag /*descending*/ select row;
                     //  , затем удалить 1-ый элемент из списка
-                    Rows.Remove(rowsOrdering.ElementAt(0));
+                    dgv.Rows.Remove(rowsOrdering.ElementAt(0));
                 }
                 // добавить строки в представление
                 foreach (int indx in listItemIndexToAdding) {
                     // создать строку (если строку добавить сразу, то значение Tag будет присвоено после события 'SelectionChanged' - нельхя определить идентификатор строки)
                     rowAdding = new DataGridViewRow();
-                    rowAdding.CreateCells(this);
+                    rowAdding.CreateCells(m_dgvDestDatabaseListAction);
                     if (rowAdding.SetValues(items.ElementAt(indx).Values) == true) {
                         // установить идентификатор строки
-                        rowAdding.Tag = items.ElementAt(indx).Values[(int)VIEW_PACKAGE_ITEM.INDEX.DATETIME_RECIEVED];
+                        rowAdding.Tag = items.ElementAt(indx).Values[(int)VIEW_ITEM.INDEX.DATETIME_RECIEVED];
                         // добавить строку
-                        indxRow = Rows.Add(rowAdding);
+                        indxRow = dgv.Rows.Add(rowAdding);
                     } else
                         ;
                 }
-            }
         }
         /// <summary>
         /// Объект для приема пакетов по UDP
@@ -186,15 +178,17 @@ namespace xmlLoader
             //indxRow = m_dgvStatistic.Rows.Add();
             //m_dgvStatistic.Rows[indxRow].HeaderCell.Value = @"Принятых пакетов";
             // инициализировать строками статические представления - Параметры источников для сохранения значений
-            indxRow = m_dgvDestSetting.Rows.Add();
+            indxRow = m_dgvDestSetting.Rows.Add(); m_dgvDestSetting.Rows[indxRow].Tag = FileINI.INDEX_CONNECTION_SETTING.IP;
             m_dgvDestSetting.Rows[indxRow].HeaderCell.Value = @"Сервер";
-            indxRow = m_dgvDestSetting.Rows.Add();
+            indxRow = m_dgvDestSetting.Rows.Add(); m_dgvDestSetting.Rows[indxRow].Tag = FileINI.INDEX_CONNECTION_SETTING.NPORT;
+            m_dgvDestSetting.Rows[indxRow].HeaderCell.Value = @"№ порт";
+            indxRow = m_dgvDestSetting.Rows.Add(); m_dgvDestSetting.Rows[indxRow].Tag = FileINI.INDEX_CONNECTION_SETTING.INSTANCE;
             m_dgvDestSetting.Rows[indxRow].HeaderCell.Value = @"Экземпляр";
-            indxRow = m_dgvDestSetting.Rows.Add();
+            indxRow = m_dgvDestSetting.Rows.Add(); m_dgvDestSetting.Rows[indxRow].Tag = FileINI.INDEX_CONNECTION_SETTING.DB_NAME;
             m_dgvDestSetting.Rows[indxRow].HeaderCell.Value = @"Имя БД";
-            indxRow = m_dgvDestSetting.Rows.Add();
+            indxRow = m_dgvDestSetting.Rows.Add(); m_dgvDestSetting.Rows[indxRow].Tag = FileINI.INDEX_CONNECTION_SETTING.UID;
             m_dgvDestSetting.Rows[indxRow].HeaderCell.Value = @"Пользователь";
-            indxRow = m_dgvDestSetting.Rows.Add();
+            indxRow = m_dgvDestSetting.Rows.Add(); m_dgvDestSetting.Rows[indxRow].Tag = FileINI.INDEX_CONNECTION_SETTING.PSWD;
             m_dgvDestSetting.Rows[indxRow].HeaderCell.Value = @"Пароль";
 
             createHandlerQueue (typeof(HHandlerQueue));
@@ -208,22 +202,54 @@ namespace xmlLoader
             m_handlerPackage.EvtToFormMain += onHandlerPackageQueue;
 
             m_handlerWriter = new WriterHandlerQueue();
-            //m_handlerWriter.EvtToFormMain += onHandlerPackageQueue;
+            m_handlerWriter.EvtToFormMain += onHandlerWriterQueue;
 
             //??? почемы вызов не в базовом классе
             initFormMainSizing();
 
             m_timerUpdate = new System.Threading.Timer(timerUpdate_OnCallback, null, System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
 
-            m_dgvPackageList.SelectionChanged += dgvPackageList_SelectionChanged;
-                        
-            m_tabControlViewPackage.Selecting += tabControlViewPackage_Selecting;
+            m_dgvPackageList.SelectionChanged += dgvPackageList_SelectionChanged;            
+
+            m_tabControlViewPackage.Selecting += tabControl_Selecting;
             m_tabControlViewPackage.Selected += tabControlViewPackage_Selected;
             m_tpageViewPackageXml.Tag = INDEX_TABPAGE_VIEW_PACKAGE.XML;
             m_tpageViewPackageTree.Tag = INDEX_TABPAGE_VIEW_PACKAGE.TREE;
+            m_tpageViewPackageTableValue.Tag = INDEX_TABPAGE_VIEW_PACKAGE.TABLE_VALUE;
         }
 
-        public enum INDEX_TABPAGE_VIEW_PACKAGE { XML, TREE }
+        private void dgvDestList_SelectionChanged(object sender, EventArgs e)
+        {
+            int indxDest = -1;
+
+            if (m_dgvDestList.SelectedRows.Count > 0) {
+                indxDest = m_dgvDestList.SelectedRows[0].Index;
+
+                foreach (DataGridViewRow row in m_dgvDestSetting.Rows)
+                    switch ((FileINI.INDEX_CONNECTION_SETTING)row.Tag) {
+                        case FileINI.INDEX_CONNECTION_SETTING.IP:
+                            row.Cells[0].Value = _listDestConnSett[indxDest].server;
+                            break;
+                        case FileINI.INDEX_CONNECTION_SETTING.NPORT:
+                            row.Cells[0].Value = _listDestConnSett[indxDest].port;
+                            break;
+                        case FileINI.INDEX_CONNECTION_SETTING.DB_NAME:
+                            row.Cells[0].Value = _listDestConnSett[indxDest].dbName;
+                            break;
+                        case FileINI.INDEX_CONNECTION_SETTING.UID:
+                            row.Cells[0].Value = _listDestConnSett[indxDest].userName;
+                            break;
+                        case FileINI.INDEX_CONNECTION_SETTING.PSWD:
+                            row.Cells[0].Value = _listDestConnSett[indxDest].password;
+                            break;
+                        default:
+                            break;
+                    }
+            } else
+                ;            
+        }
+
+        public enum INDEX_TABPAGE_VIEW_PACKAGE { XML, TREE, TABLE_VALUE, TABLE_PARAMETER }
 
         private void tabControlViewPackage_Selected(object sender, TabControlEventArgs e)
         {
@@ -236,10 +262,10 @@ namespace xmlLoader
         /// </summary>
         /// <param name="sender">Объект, инициировавший событие</param>
         /// <param name="e">Аргумент события</param>
-        private void tabControlViewPackage_Selecting(object sender, TabControlCancelEventArgs e)
+        private void tabControl_Selecting(object sender, TabControlCancelEventArgs e)
         {
-            //// отменить активацию вкладки
-            //e.Cancel = ((Control)sender).Enabled;
+            // отменить активацию вкладки
+            e.Cancel = !((Control)e.TabPage).Enabled;
         }
         /// <summary>
         /// Обработчик события - изменение выбранной строки в представленни со списком полученных пакетов
@@ -273,28 +299,78 @@ namespace xmlLoader
                     ;
         }
 
-        public struct VIEW_PACKAGE_ITEM
+        public struct VIEW_ITEM
         {
-            public enum INDEX : int { COUNT_RECORD, DATETIME_RECIEVED, DATETIME_SENDED }
+            public enum INDEX : int { COUNT_RECORD, DATETIME_RECIEVED, DATETIME_COMPLTETED }
 
             private static Type []_types = { typeof(int), typeof(DateTime), typeof(DateTime) };
 
             public object[] Values;
         }
 
+        //private void handlerPackageQueue (object arg) {
+        //    PackageHandlerQueue.StatesMachine state = (PackageHandlerQueue.StatesMachine)(arg as object[])[0];
+
+        //    switch (state) {
+        //        case PackageHandlerQueue.StatesMachine.LIST_PACKAGE:
+        //            m_dgvPackageList.UpdateData((IEnumerable<VIEW_PACKAGE_ITEM>)(arg as object[])[1]);
+        //            break;
+        //        case PackageHandlerQueue.StatesMachine.PACKAGE_CONTENT:
+        //            //m_tabControlViewPackage.Update();
+        //            switch ((INDEX_TABPAGE_VIEW_PACKAGE)m_tabControlViewPackage.SelectedTab.Tag) {
+        //                case INDEX_TABPAGE_VIEW_PACKAGE.XML:
+        //                    m_tbxViewPackage.Text = ((XmlDocument)(arg as object[])[1]).InnerXml;
+        //                    break;
+        //                case INDEX_TABPAGE_VIEW_PACKAGE.TREE:
+        //                    m_treeViewPackage.UpdateData((ListXmlTree)(arg as object[])[1]);
+        //                    break;
+        //                default:
+        //                    throw new Exception(@"Неизвестный тип панели для представления содержимого пакета");
+        //            }
+        //            break;
+        //        case PackageHandlerQueue.StatesMachine.STATISTIC:
+        //            m_dgvStatistic.UpdateData();
+        //            break;
+        //        case PackageHandlerQueue.StatesMachine.TIMER_TABLERES:
+        //            if ((arg as object[]).Length == 4)
+        //                //m_handlerWriter.Push(null, new object[] {
+        //                //    new object[] {
+        //                //        new object[] {
+        //                //            WriterHandlerQueue.StatesMachine.DATASET_CONTENT
+        //                //            , (DateTime)(arg as object[])[1]
+        //                //            , (DataTable)(arg as object[])[2]
+        //                //            , (DataTable)(arg as object[])[3]
+        //                //        }
+        //                //    }
+        //                //})
+        //                ;
+        //            else
+        //                Logging.Logg().Warning(MethodBase.GetCurrentMethod()
+        //                    , string.Format(@"некорректное кол-во аргументов state={0}", state)
+        //                    , Logging.INDEX_MESSAGE.NOT_SET);
+        //            break;
+        //        case PackageHandlerQueue.StatesMachine.NEW: //??? не м.б. получен, иначе фиксировать ошибку
+        //        default: //??? неизвестный идентикатор, фиксировать ошибку
+        //            break;
+        //    }
+        //}
+
         private void onHandlerPackageQueue(object obj)
         {
             // анонимный метод(функция) для выполнения операций с элементами интерфейса
-            DelegateObjectFunc handlerPackageQueue = delegate(object arg) {
+            DelegateObjectFunc handlerPackageQueue = delegate (object arg)
+            {
                 PackageHandlerQueue.StatesMachine state = (PackageHandlerQueue.StatesMachine)(arg as object[])[0];
+                object[] dataSet;
 
                 switch (state) {
                     case PackageHandlerQueue.StatesMachine.LIST_PACKAGE:
-                        m_dgvPackageList.UpdateData((IEnumerable<VIEW_PACKAGE_ITEM>)(arg as object[])[1]);
+                        updateDataGridViewItem (m_dgvPackageList, (IEnumerable<VIEW_ITEM>)(arg as object[])[1]);
                         break;
                     case PackageHandlerQueue.StatesMachine.PACKAGE_CONTENT:
                         //m_tabControlViewPackage.Update();
-                        switch ((INDEX_TABPAGE_VIEW_PACKAGE)m_tabControlViewPackage.SelectedTab.Tag) {
+                        switch ((INDEX_TABPAGE_VIEW_PACKAGE)m_tabControlViewPackage.SelectedTab.Tag)
+                        {
                             case INDEX_TABPAGE_VIEW_PACKAGE.XML:
                                 m_tbxViewPackage.Text = ((XmlDocument)(arg as object[])[1]).InnerXml;
                                 break;
@@ -309,19 +385,23 @@ namespace xmlLoader
                         m_dgvStatistic.UpdateData();
                         break;
                     case PackageHandlerQueue.StatesMachine.TIMER_TABLERES:
-                        if ((arg as object[]).Length == 4)
-                            //m_handlerWriter.Push(null, new object[] {
-                            //    new object[] {
-                            //        new object[] {
-                            //            WriterHandlerQueue.StatesMachine.DATASET_CONTENT
-                            //            , (DateTime)(arg as object[])[1]
-                            //            , (DataTable)(arg as object[])[2]
-                            //            , (DataTable)(arg as object[])[3]
-                            //        }
-                            //    }
-                            //})
-                            ;
-                        else
+                        if (((arg as object[]).Length == 2)
+                            && ((arg as object[])[1] is Array)) {
+                            dataSet = (arg as object[])[1] as object[];
+
+                            if (dataSet.Length == 3)
+                                m_handlerWriter.Push(null, new object[] {
+                                    new object[] {
+                                        new object[] {
+                                            WriterHandlerQueue.StatesMachine.NEW
+                                            , (DateTime)dataSet[0]
+                                            , (DataTable)dataSet[1]
+                                            , (DataTable)dataSet[2]
+                                        }
+                                    }
+                                })
+                                ;
+                        } else
                             Logging.Logg().Warning(MethodBase.GetCurrentMethod()
                                 , string.Format(@"некорректное кол-во аргументов state={0}", state)
                                 , Logging.INDEX_MESSAGE.NOT_SET);
@@ -331,8 +411,41 @@ namespace xmlLoader
                         break;
                 }
             };
-            // выполнить анонимный метод ы контексте формы
-            Invoke(handlerPackageQueue, obj);
+
+            if (InvokeRequired == true)
+                // выполнить анонимный метод ы контексте формы
+                this.BeginInvoke(
+                        //new DelegateObjectFunc (
+                        handlerPackageQueue
+                    //)
+                    , obj)
+                ;
+            else
+                handlerPackageQueue(obj);
+        }
+
+        private void onHandlerWriterQueue(object obj)
+        {
+            // анонимный метод(функция) для выполнения операций с элементами интерфейса
+            DelegateObjectFunc handlerDataSetQueue = delegate (object arg)
+            {
+                WriterHandlerQueue.StatesMachine state = (WriterHandlerQueue.StatesMachine)(arg as object[])[0];
+
+                switch (state) {
+                    case WriterHandlerQueue.StatesMachine.LIST_DATASET:
+                        updateDataGridViewItem (m_dgvDestDatabaseListAction, (IEnumerable<VIEW_ITEM>)(arg as object[])[1]);
+                        break;                    
+                    case WriterHandlerQueue.StatesMachine.NEW: //??? не м.б. получен, иначе фиксировать ошибку
+                    default: //??? неизвестный идентикатор, фиксировать ошибку
+                        break;
+                }
+            };
+
+            if (InvokeRequired == true)
+                // выполнить анонимный метод ы контексте формы
+                this.BeginInvoke(handlerDataSetQueue, obj);
+            else
+                handlerDataSetQueue(obj);
         }
         /// <summary>
         /// Обработчик события - сообщение от обработчика очереди событий
@@ -371,6 +484,17 @@ namespace xmlLoader
                         }
                     });
                     break;
+                case HHandlerQueue.StatesMachine.LIST_DEST:
+                    BeginInvoke(new DelegateObjectFunc(fillDestList), (obj as object[])[1]);
+                    // запуск, активация обработчика очереди событий при записи значений в БД                    
+                    m_handlerWriter.Push(null, new object [] {
+                        new object[] {
+                            new object [] {
+                                WriterHandlerQueue.StatesMachine.LIST_DEST, (obj as object[])[1]
+                            }
+                        }
+                    });
+                    break;
                 default:
                     break;
             }            
@@ -387,6 +511,44 @@ namespace xmlLoader
         {
             // поставить в очередь обработки событий
             m_handler.Push(m_udpListener, new object[] { obj });
+        }
+
+        private List<ConnectionSettings> _listDestConnSett;
+
+        private void fillDestList(object obj)
+        {
+            DataGridViewRow rowAdding;
+
+            _listDestConnSett = obj as List<ConnectionSettings>;
+
+            foreach(ConnectionSettings conSett in _listDestConnSett) {
+                rowAdding = new DataGridViewRow();
+                rowAdding.CreateCells(m_dgvDestList);
+                if (rowAdding.SetValues(new object[] { conSett.name, @"->" }) == true) {
+                    rowAdding.Tag = conSett.id;
+
+                    m_dgvDestList.Rows.Add(rowAdding);
+                } else
+                    ;
+            }
+
+            m_dgvDestList.SelectionChanged += dgvDestList_SelectionChanged;
+            m_dgvDestList.CellContentClick += dgvDestList_CellContentClick;
+
+            if (m_dgvDestList.RowCount > 0)
+                m_dgvDestList.Rows[0].Selected = true;
+            else
+                ;
+        }
+
+        private void dgvDestList_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (((sender as DataGridView).Columns[e.ColumnIndex] is DataGridViewPressedButtonColumn)
+                && (!(e.RowIndex < 0))) {
+                ((sender as DataGridView).Rows[e.RowIndex].Cells[e.ColumnIndex] as DataGridViewPressedButtonCell).Pressed =
+                    !((sender as DataGridView).Rows[e.RowIndex].Cells[e.ColumnIndex] as DataGridViewPressedButtonCell).Pressed;
+            } else
+                ;
         }
         /// <summary>
         /// Обработчик события - выбор п. главного меню Выход
@@ -415,6 +577,8 @@ namespace xmlLoader
         protected override void FormMain_Load(object sender, EventArgs e)
         {
             base.FormMain_Load(sender, e);
+            Text = (m_handler as HHandlerQueue).FormMainText;
+
             // запуск, активация основного обработчика очереди событий
             m_handler.Start(); m_handler.Activate(true);
             // запуск, активация обработчика очереди событий при записи значений в БД
@@ -431,6 +595,13 @@ namespace xmlLoader
                 evtUDPListenerDataAskedHost(new object[] { new object[] { HHandlerQueue.StatesMachine.UDP_CONNECTED_CHANGE, !m_cbxReadSessionStart.Checked } });
             else
                 ;
+
+            // запросить список параметров соединения с БД
+            m_handler.Push(null, new object[] {
+                new object[] {
+                    new object[] { HHandlerQueue.StatesMachine.LIST_DEST }
+                }
+            });
         }
         /// <summary>
         /// Обработчик события - Старт-Стоп для сессии (прием сообщений из UDP-канала)
@@ -507,9 +678,112 @@ namespace xmlLoader
             m_handlerWriter.Push(null, new object[] {
                 new object[] {
                     new object[] { WriterHandlerQueue.StatesMachine.LIST_DATASET }
-                    , new object[] { WriterHandlerQueue.StatesMachine.STATISTIC }
+                    //, new object[] { WriterHandlerQueue.StatesMachine.STATISTIC } //??? Статистика не размещена (недостаток места)
                 }
             });
+        }
+    }
+
+    public class DataGridViewPressedButtonCell : DataGridViewButtonCell
+    {
+        private bool pressedValue;
+
+        public bool Pressed
+        {
+            get { return pressedValue; }
+
+            set { pressedValue = value; Value = value == true ? @"<-" : @"->"; }
+        }
+
+        // Override the Clone method so that the Enabled property is copied.
+        public override object Clone()
+        {
+            DataGridViewPressedButtonCell cell = (DataGridViewPressedButtonCell)base.Clone();
+
+            cell.Pressed = this.Pressed;
+
+            return cell;
+        }
+
+        // By default, enable the button cell.
+        public DataGridViewPressedButtonCell()
+        {
+            this.pressedValue = false;
+        }
+
+        protected override void Paint(Graphics graphics,
+                                    Rectangle clipBounds, Rectangle cellBounds, int rowIndex,
+                                    DataGridViewElementStates elementState, object value,
+                                    object formattedValue, string errorText,
+                                    DataGridViewCellStyle cellStyle,
+                                    DataGridViewAdvancedBorderStyle advancedBorderStyle,
+                                    DataGridViewPaintParts paintParts)
+        {
+            // The button cell is disabled, so paint the border,  
+            // background, and disabled button for the cell.
+            if (this.pressedValue)
+            {
+                // Draw the cell background, if specified.
+                if ((paintParts & DataGridViewPaintParts.Background) == DataGridViewPaintParts.Background)
+                {
+                    SolidBrush cellBackground = new SolidBrush(cellStyle.BackColor);
+
+                    graphics.FillRectangle(cellBackground, cellBounds);
+
+                    cellBackground.Dispose();
+                }
+
+                // Draw the cell borders, if specified.
+                if ((paintParts & DataGridViewPaintParts.Border) == DataGridViewPaintParts.Border)
+                {
+                    PaintBorder(graphics, clipBounds, cellBounds, cellStyle, advancedBorderStyle);
+                }
+                else
+                    ;
+
+                // Calculate the area in which to draw the button.
+                Rectangle buttonArea = cellBounds;
+                Rectangle buttonAdjustment = this.BorderWidths(advancedBorderStyle);
+
+                buttonArea.X += buttonAdjustment.X;
+                buttonArea.Y += buttonAdjustment.Y;
+
+                buttonArea.Height -= buttonAdjustment.Height;
+                buttonArea.Width -= buttonAdjustment.Width;
+
+                // Draw the disabled button.                
+                ButtonRenderer.DrawButton(graphics, buttonArea, PushButtonState.Pressed);
+
+                // Draw the disabled button text. 
+                if (this.FormattedValue is String)
+                {
+                    TextRenderer.DrawText(graphics, (string)this.FormattedValue, this.DataGridView.Font, buttonArea, SystemColors.ControlText);
+                }
+                else
+                    ;
+            }
+            else
+            {
+                // The button cell is enabled, so let the base class 
+                // handle the painting.
+                base.Paint(graphics, clipBounds, cellBounds, rowIndex, elementState, value, formattedValue, errorText, cellStyle, advancedBorderStyle, paintParts);
+            }
+        }
+
+        //protected override void OnClick(DataGridViewCellEventArgs e)
+        //{
+        //    if (Enabled == true)
+        //        base.OnClick(e);
+        //    else
+        //        ;
+        //}
+    }
+
+    public class DataGridViewPressedButtonColumn : DataGridViewButtonColumn
+    {
+        public DataGridViewPressedButtonColumn()
+        {
+            this.CellTemplate = new DataGridViewPressedButtonCell();
         }
     }
 }

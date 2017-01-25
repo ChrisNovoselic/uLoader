@@ -750,8 +750,8 @@ namespace uLoader
             /// <summary>
             /// Получить индекс строкового идентификатора
             /// </summary>
-            /// <param name="id"></param>
-            /// <returns></returns>
+            /// <param name="id">Строковый идентификатор</param>
+            /// <returns>Индекс идентификатора</returns>
             public static int GetIDIndex(string id)
             {
                 int iRes = -1;

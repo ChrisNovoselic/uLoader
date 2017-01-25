@@ -18,6 +18,7 @@ namespace xmlLoader
         {
             UNKNOWN = -1
             , UDP_CONNECTED_CHANGE // запрос на изменение состояния
+            , WRITER_READY_CHANGE // запрос на изменение состояния
             , UDP_CONNECTED_CHANGED // событие - факт изменения состояния
             , UDP_LISTENER_PACKAGE_RECIEVED //Получен очередной XML-пакет
             , XML_PACKAGE_VERSION //Версия(строка) шаблон XML-пакета
@@ -36,6 +37,8 @@ namespace xmlLoader
         }
 
         public bool AutoStart { get { return bool.Parse(m_fileINI.GetSecValueOfKey(@"Reader", @"AUTO_START")); } }
+
+        public string FormMainText { get { return m_fileINI.GetMainValueOfKey(@"Text"); } }
         /// <summary>
         /// Подготовить объект для отправки адресату по его запросу
         /// </summary>
@@ -57,6 +60,7 @@ namespace xmlLoader
             try {
                 switch (state) {
                     case StatesMachine.UDP_CONNECTED_CHANGE: // запрос-команда на изменение состояния (от формы)
+                    case StatesMachine.WRITER_READY_CHANGE:
                         iRes = 0;
                         error = false;
 
@@ -114,7 +118,7 @@ namespace xmlLoader
 
                         itemQueue = Peek;
 
-                        //outobj = ???
+                        EvtToFormMain?.Invoke(new object[] { state, m_fileINI.ListDest });
                         break;
                     default:
                         break;
@@ -147,6 +151,7 @@ namespace xmlLoader
 
             switch ((StatesMachine)state) {
                 case StatesMachine.UDP_CONNECTED_CHANGE: // старт/стоп соединения по UDP
+                case StatesMachine.WRITER_READY_CHANGE:
                 case StatesMachine.UDP_CONNECTED_CHANGED: // факт старт/стоп соединения по UDP
                 case StatesMachine.UDP_LISTENER_PACKAGE_RECIEVED: // получен очередной XML-пакет
                 case StatesMachine.XML_PACKAGE_VERSION: // версия(строка) шаблон XML-пакета
@@ -169,13 +174,14 @@ namespace xmlLoader
             switch ((StatesMachine)state) {                
                 case StatesMachine.UDP_CONNECTED_CHANGED:
                 case StatesMachine.UDP_LISTENER_PACKAGE_RECIEVED: // получен очередной XML-пакет
+                case StatesMachine.LIST_DEST: // cписок источников данных (назначение - сохранение полученных значений)
                     //Ответа не требуется/не требуют обработки результата
                     break;
                 case StatesMachine.UDP_CONNECTED_CHANGE:
+                case StatesMachine.WRITER_READY_CHANGE:
                 case StatesMachine.XML_PACKAGE_VERSION: // версия(строка) шаблон XML-пакета
                 case StatesMachine.XML_PACKAGE_TEMPLATE: // шаблон XML-пакета
-                case StatesMachine.NUDP_LISTENER: // номер порта прослушивателя
-                case StatesMachine.LIST_DEST: // cписок источников данных (назначение - сохранение полученных значений)
+                case StatesMachine.NUDP_LISTENER: // номер порта прослушивателя                
                     if ((!(itemQueue == null))
                         && (!(itemQueue.m_dataHostRecieved == null)))
                         itemQueue.m_dataHostRecieved.OnEvtDataRecievedHost(new object[] { state, obj });

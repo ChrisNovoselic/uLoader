@@ -23,10 +23,10 @@ namespace xmlLoader
         public enum StatesMachine
         {
             UNKNOWN = -1
-            , NEW // получен новый пакет
+            , NEW = 100// получен новый пакет
             , LIST_PACKAGE // запрос для получения списка пакетов
             , PACKAGE_CONTENT // запрос для получения пакета
-            , TIMER_TABLERES = 6 // событие устаревания XML-пакета ??? совпадает с 'WriteHandlerQueue.StatesMachine::STATISTIC'
+            , TIMER_TABLERES = 106 // событие устаревания XML-пакета ??? совпадает с 'WriteHandlerQueue.StatesMachine::STATISTIC'
             , STATISTIC
         }
 
@@ -107,7 +107,7 @@ namespace xmlLoader
             /// Перечисление - возможные состояния XML-пакета
             /// </summary>
             public enum STATE : short { UNKNOWN = -1
-                , NEW, PARSING, PARSED, ERROR
+                , NEW, PARSING, PARSED, SENDED, ERROR
             };
             /// <summary>
             /// Метка даты/времени получения
@@ -116,7 +116,7 @@ namespace xmlLoader
             /// <summary>
             /// Метка даты/времени отправления для обработки/записи
             /// </summary>
-            public DateTime m_dtSend;
+            public DateTime m_dtSended;
             /// <summary>
             /// Текущее состояние XML-пакета
             /// </summary>
@@ -212,7 +212,7 @@ namespace xmlLoader
             public PACKAGE(DateTime dtRecieved, XmlDocument xmlSource)
             {
                 m_dtRecieved = dtRecieved;
-                m_dtSend = DateTime.MinValue;
+                m_dtSended = DateTime.MinValue;
 
                 m_state = STATE.NEW;
 
@@ -311,17 +311,18 @@ namespace xmlLoader
         /// <summary>
         /// Список паектов для отправки на главную форму для отображения
         /// </summary>
-        private List<FormMain.VIEW_PACKAGE_ITEM> listViewPackageItem {
+        private List<FormMain.VIEW_ITEM> listViewPackageItem
+        {
             get {
-                List<FormMain.VIEW_PACKAGE_ITEM> listRes = new List<FormMain.VIEW_PACKAGE_ITEM>();
+                List<FormMain.VIEW_ITEM> listRes = new List<FormMain.VIEW_ITEM>();
 
                 (from package in _listPackage
                  orderby package.m_dtRecieved descending
-                 select new FormMain.VIEW_PACKAGE_ITEM {
+                 select new FormMain.VIEW_ITEM {
                     Values = new object[] {
                         package.m_tableValues.Rows.Count
                         , package.m_dtRecieved
-                        , package.m_dtSend
+                        , package.m_dtSended
                     }
                 }).Take(COUNT_VIEW_PACKAGE_ITEM).ToList().ForEach(item => listRes.Add(item));
 
@@ -444,13 +445,13 @@ namespace xmlLoader
                         if (orderPckages.Count() > 0) {
                             package = orderPckages.ElementAt(0);
 
+                            package.m_dtSended = DateTime.UtcNow;
+
                             outobj = new object[] {
-                                package.m_dtRecieved
+                                package.m_dtSended
                                 , package.m_tableValues.Copy()
                                 , package.m_tableParameters.Copy()
                             };
-
-                            package.m_dtSend = DateTime.UtcNow;
                         } else {
                             //??? - ошибка пакет не найден либо пакетов много
                         //    iRes = -1;
@@ -462,7 +463,7 @@ namespace xmlLoader
                         break;
                 }
             } catch (Exception e) {
-                Logging.Logg().Exception(e, @"HHandlerQueue::StateCheckResponse (state=" + state.ToString() + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Exception(e, @"PackageHandlerQueue::StateCheckResponse (state=" + state.ToString() + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 error = true;
                 iRes = -1 * (int)state;
@@ -478,7 +479,9 @@ namespace xmlLoader
                     break;
             }
 
-            Logging.Logg().Error(@"HHandlerQueue::StateErrors () - не обработана ошибка [" + ((StatesMachine)state).ToString() + @", REQ=" + req + @", RES=" + res + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
+            Logging.Logg().Error(string.Format(@"PackageHandlerQueue::StateErrors () - не обработана ошибка [{0}, REQ={1}, RES={2}] ..."
+                    , ((StatesMachine)state).ToString(), req, res)
+                , Logging.INDEX_MESSAGE.NOT_SET);
 
             return HHandler.INDEX_WAITHANDLE_REASON.SUCCESS;
         }
@@ -519,7 +522,7 @@ namespace xmlLoader
                         )
                         // вариант для объекта с интерфейсом 'IDataHost'
                         //itemQueue.m_dataHostRecieved.OnEvtDataRecievedHost(new object[] { state, obj })
-                        EvtToFormMain(new object [] { state, obj })
+                        EvtToFormMain?.Invoke(new object [] { state, obj })
                         ;
                     else
                         ;
@@ -533,7 +536,9 @@ namespace xmlLoader
 
         protected override void StateWarnings(int state, int req, int res)
         {
-            Logging.Logg().Warning(@"HHandlerQueue::StateWarnings () - не обработано предупреждение [" + ((StatesMachine)state).ToString() + @", REQ=" + req + @", RES=" + res + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
+            Logging.Logg().Warning(string.Format(@"PackageHandlerQueue::StateWarnings () - не обработано предупреждение [{0}, REQ={1}, RES={2}] ..."
+                    , ((StatesMachine)state).ToString(), req, res)
+                , Logging.INDEX_MESSAGE.NOT_SET);
         }
     }
 }
