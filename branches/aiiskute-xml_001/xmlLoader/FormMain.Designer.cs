@@ -54,7 +54,7 @@ namespace xmlLoader
             this.m_cbxReadSessionStop = new System.Windows.Forms.CheckBox();
             this.m_nudnUDPPort = new System.Windows.Forms.NumericUpDown();
             this.m_cbxReadSessionStart = new System.Windows.Forms.CheckBox();
-            this.m_dgvStatistic = new DataGridViewStatistic();
+            this.m_dgvStatistic = new DataGridView();
             this.ColumnSessionParameterValue = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.m_btnDestRemove = new System.Windows.Forms.Button();
             this.m_btnDestAdd = new System.Windows.Forms.Button();
@@ -1053,7 +1053,7 @@ namespace xmlLoader
         private System.Windows.Forms.Button m_btnLoadPackageHistory;
         private System.Windows.Forms.NumericUpDown m_nudnSettingPackageHistoryDepth;
         private System.Windows.Forms.CheckBox m_cbxSettingPackageHistoryIssue;
-        private DataGridViewStatistic m_dgvStatistic;
+        private DataGridView m_dgvStatistic;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelEventName;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelEventDateTime;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelEventDesc;

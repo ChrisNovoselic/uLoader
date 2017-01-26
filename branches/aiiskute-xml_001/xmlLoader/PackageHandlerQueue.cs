@@ -10,7 +10,7 @@ namespace xmlLoader
 {
     public class PackageHandlerQueue : HClassLibrary.HHandlerQueue
     {
-        private static TimeSpan TS_TIMER_TABLERES = TimeSpan.FromSeconds(20);
+        private static TimeSpan TS_TIMER_TABLERES = TimeSpan.FromSeconds(10);
 
         private static int COUNT_VIEW_PACKAGE_ITEM = 6;
 
@@ -334,8 +334,11 @@ namespace xmlLoader
         /// </summary>
         /// <param name="dtPackage">Метка даты/времени получения XML-пакета</param>
         /// <param name="xmlDoc">XML-документ</param>
-        private void addPackage(DateTime dtPackage, XmlDocument xmlDoc)
+        /// <returns>Признак выполнения метода</returns>
+        private int addPackage(DateTime dtPackage, XmlDocument xmlDoc)
         {
+            int iRes = 0;
+
             PACKAGE package;
             // определить лимит даты/времени хранения пакетов времени выполнения
             DateTime dtLimit = dtPackage - TS_HISTORY_RUNTIME;
@@ -364,8 +367,12 @@ namespace xmlLoader
                 else
                     ;
             } catch (Exception e) {
+                iRes = -1;
+
                 Logging.Logg().Exception(e, string.Format(@"Добавление пакета дата/время получения={0} и статистики для него", dtPackage), Logging.INDEX_MESSAGE.NOT_SET);
             }
+
+            return iRes;
         }
         /// <summary>
         /// Подготовить объект для отправки адресату по его запросу
@@ -394,7 +401,7 @@ namespace xmlLoader
 
                         itemQueue = Peek;
 
-                        addPackage((DateTime)itemQueue.Pars[0], (XmlDocument)itemQueue.Pars[1]);
+                        error = (iRes = addPackage((DateTime)itemQueue.Pars[0], (XmlDocument)itemQueue.Pars[1])) < 0 ? true : false;                        
                         break;
                     case StatesMachine.LIST_PACKAGE: // список пакетов
                         iRes = 0;
@@ -441,7 +448,7 @@ namespace xmlLoader
 
                         itemQueue = Peek;
 
-                        var orderPckages = from p in _listPackage orderby p.m_dtRecieved descending select p;
+                        var orderPckages = from p in _listPackage where p.m_dtSended == DateTime.MinValue orderby p.m_dtRecieved descending select p;
                         if (orderPckages.Count() > 0) {
                             package = orderPckages.ElementAt(0);
 

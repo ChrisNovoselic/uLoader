@@ -5,116 +5,12 @@ using System.Text;
 using HClassLibrary;
 using System.Data;
 using System.Reflection;
+using System.Diagnostics;
 
 namespace xmlLoader
 {
-    public class WriterHandlerQueue : HClassLibrary.HHandlerQueue
+    public partial class WriterHandlerQueue : HClassLibrary.HHandlerQueue
     {
-        private class WriterDbHandler : HHandlerDb
-        {
-            private List<ConnectionSettings> m_listConnSett;
-
-            public void Initialize(List<ConnectionSettings>listConnSett)
-            {
-                m_listConnSett = listConnSett;
-            }
-
-            public override void ClearValues()
-            {
-                throw new NotImplementedException();
-            }
-            /// <summary>
-            /// Старт потоков для обмена данными с источниками информации
-            /// </summary>
-            public override void StartDbInterfaces()
-            {
-                foreach (ConnectionSettings connSett in m_listConnSett)
-                    register(connSett.id, 0, connSett, string.Empty);
-            }
-            /// <summary>
-            /// Регистрация источника информации
-            /// </summary>
-            /// <param name="id">Ключ в словаре с идентификаторами соединений</param>
-            /// <param name="indx">Индекс в массиве - элементе словаря с идентификаторами соединений</param>
-            /// <param name="connSett">Параметры соединения с источником информации</param>
-            /// <param name="name">Наименование соединения</param>
-            protected override void register(int id, int indx, ConnectionSettings connSett, string name)
-            {
-                bool bReq = true;
-
-                if (m_dictIdListeners.ContainsKey(id) == false)
-                    m_dictIdListeners.Add(id, new int[] { -1 });
-                else
-                    if (!(m_dictIdListeners[id][indx] < 0))
-                    bReq = false;
-                else
-                    ;
-
-                if (bReq == true) {
-                    base.register(id, indx, connSett, name);
-
-                    Logging.Logg().Debug(
-                        string.Format(@"WriterDbHandler::register ({0}) iListenerId={1}, идентификаторов_источников={2}", id, m_dictIdListeners[id][indx], m_dictIdListeners.Count)
-                        , Logging.INDEX_MESSAGE.NOT_SET
-                    );
-                }
-                else
-                    ;
-            }
-
-            private int IdConnSettCurrent { get; set; }
-
-            private string Query { get; set; }
-
-            /// <summary>
-            /// Проверить наличие ответа на запрос к источнику данных
-            /// </summary>
-            /// <param name="state">Состояние</param>
-            /// <param name="error">Признак ошибки</param>
-            /// <param name="table">Таблица - результат запроса</param>
-            /// <returns>Результат проверки наличия ответа на запрос</returns>
-            protected override int StateCheckResponse(int state, out bool error, out object table)
-            {
-                return response(out error, out table);
-            }
-
-            protected override INDEX_WAITHANDLE_REASON StateErrors(int state, int req, int res)
-            {
-                HHandler.INDEX_WAITHANDLE_REASON resReason = INDEX_WAITHANDLE_REASON.SUCCESS;
-
-                Logging.Logg().Error(
-                    string.Format(@"WriterDbHandler::StateErrors (state={0}, req={1}, res={2}) - ...", ((StatesMachine)state).ToString(), req, res)
-                    , Logging.INDEX_MESSAGE.NOT_SET);
-
-                return resReason;
-            }
-
-            protected override int StateRequest(int state)
-            {
-                int iRes = 0;
-
-                if (Query.Equals(string.Empty) == false)
-                    Request(m_dictIdListeners[IdConnSettCurrent][0], Query);
-                else
-                    ;
-
-                return iRes;
-            }
-
-            protected override int StateResponse(int state, object obj)
-            {
-                // ответ не требуется
-                return 0;
-            }
-
-            protected override void StateWarnings(int state, int req, int res)
-            {
-                Logging.Logg().Warning(
-                    string.Format(@"WriterDbHandler::StateWarnings (state={0}, req={1}, res={2}) - ...", ((StatesMachine)state).ToString(), req, res)
-                    , Logging.INDEX_MESSAGE.NOT_SET);
-            }
-        }
-
         /// <summary>
         /// Перечисление - возможные состояния для обработки
         /// </summary>
@@ -125,7 +21,8 @@ namespace xmlLoader
             , LIST_DEST // параметры соединения с БД
             , LIST_DATASET // запрос для получения списка пакетов
             , DATASET_CONTENT // запрос для получения пакета
-            , STATISTIC
+            //, STATISTIC
+            , CONNSET_USE_CHANGED
         }
         /// <summary>
         /// Событие для отправки сообщения главной экранной форме
@@ -140,6 +37,7 @@ namespace xmlLoader
             _listDataSet = new List<DATASET>();
 
             _writer = new WriterDbHandler();
+            _writer.EvtDatasetQuered += new DelegateIntFunc(writerDbHandler_OnDatasetQuered);
         }
 
         private void initialize(List<ConnectionSettings>listConnSett)
@@ -182,11 +80,13 @@ namespace xmlLoader
                 , NEW, QUERING, QUERED, ERROR
             }
 
-            public DATASET(DateTime dtRecieved, DataTable tableValues, DataTable tableParameters)
+            public DATASET(IEnumerable<int>keys, DateTime dtRecieved, DataTable tableValues, DataTable tableParameters)
             {
                 m_dtRecieved = dtRecieved;
 
-                m_dtQuered = DateTime.MinValue;
+                m_dictDatetimeQuered = new Dictionary<int, DateTime>();
+                foreach (int key in keys)
+                    m_dictDatetimeQuered.Add(key, DateTime.MinValue);
 
                 m_state = STATE.NEW;
 
@@ -201,7 +101,7 @@ namespace xmlLoader
 
             public DateTime m_dtRecieved;
 
-            public DateTime m_dtQuered;
+            public Dictionary<int, DateTime> m_dictDatetimeQuered;
 
             public DataTable m_tableValues;
 
@@ -214,8 +114,10 @@ namespace xmlLoader
 
         private List<DATASET> _listDataSet;
 
-        private void addDataSet(DateTime dtDataSet, DataTable values, DataTable parameters)
+        private int addDataSet(IEnumerable<int>keys, DateTime dtDataSet, DataTable values, DataTable parameters)
         {
+            int iRes = 0;
+
             DATASET dataSet;
             // определить лимит даты/времени хранения пакетов времени выполнения
             DateTime dtLimit = dtDataSet - TS_HISTORY_RUNTIME;
@@ -234,7 +136,7 @@ namespace xmlLoader
             });
             // добавить текущий пакет (даже, если он не удовлетворяет критерию "лимит")
             try {
-                _listDataSet.Add(dataSet = new DATASET(dtDataSet, values, parameters));
+                _listDataSet.Add(dataSet = new DATASET(keys, dtDataSet, values, parameters));
 
                 s_Statistic.SetAt(STATISTIC.INDEX_ITEM.DATETIME_DATASET_LAST_RECIEVED, dataSet.m_dtRecieved);
                 s_Statistic.SetAt(STATISTIC.INDEX_ITEM.LENGTH_DATASET_LAST_RECIEVED, dataSet.m_tableValues.Rows.Count);
@@ -244,29 +146,36 @@ namespace xmlLoader
                 else
                     ;
             } catch (Exception e) {
+                iRes = -1;
+
                 Logging.Logg().Exception(e, string.Format(@"Добавление набора дата/время получения={0} и статистики для него", dtDataSet), Logging.INDEX_MESSAGE.NOT_SET);
             }
+
+            return iRes;
         }
 
         private static int COUNT_VIEW_DATASET_ITEM = 6;
 
-        private List<FormMain.VIEW_ITEM> listViewDataSetItem
+        private List<FormMain.VIEW_ITEM> getListViewDataSetItem(int key)
         {
-            get {
-                List<FormMain.VIEW_ITEM> listRes = new List<FormMain.VIEW_ITEM>();
+            List<FormMain.VIEW_ITEM> listRes = new List<FormMain.VIEW_ITEM>();
 
-                (from dataSet in _listDataSet
-                 orderby dataSet.m_dtRecieved descending
-                 select new FormMain.VIEW_ITEM {
-                     Values = new object[] {
-                        dataSet.m_tableValues.Rows.Count
-                        , dataSet.m_dtRecieved
-                        , dataSet.m_dtQuered
-                    }
-                 }).Take(COUNT_VIEW_DATASET_ITEM).ToList().ForEach(item => listRes.Add(item));
+            (from dataSet in _listDataSet
+                orderby dataSet.m_dtRecieved descending
+                select new FormMain.VIEW_ITEM {
+                    Values = new object[] {
+                    dataSet.m_tableValues.Rows.Count
+                    , dataSet.m_dtRecieved
+                    , dataSet.m_dictDatetimeQuered[key]
+                }
+                }).Take(COUNT_VIEW_DATASET_ITEM).ToList().ForEach(item => listRes.Add(item));
 
-                return listRes;
-            }
+            return listRes;
+        }
+
+        private void writerDbHandler_OnDatasetQuered(int idConnSett)
+        {
+            _listDataSet[_listDataSet.Count - 1].m_dictDatetimeQuered[idConnSett] = DateTime.UtcNow;
         }
 
         protected override int StateCheckResponse(int s, out bool error, out object outobj)
@@ -288,7 +197,17 @@ namespace xmlLoader
 
                         itemQueue = Peek;
 
-                        addDataSet((DateTime)itemQueue.Pars[0], itemQueue.Pars[1] as DataTable, itemQueue.Pars[2] as DataTable);
+                        error = (iRes = addDataSet(_writer.ListConnSettKey, (DateTime)itemQueue.Pars[0], itemQueue.Pars[1] as DataTable, itemQueue.Pars[2] as DataTable)) < 0 ? true : false; ;
+
+                        debugMsg = string.Format(@"Добавление нового набора [{0}]...", (DateTime)itemQueue.Pars[0]);
+
+                        if (error == false) {
+                        // добавленный набор поставить в очередь на запись
+                            outobj = _listDataSet[_listDataSet.Count - 1].m_query;
+
+                            Logging.Logg().Debug(MethodBase.GetCurrentMethod(), debugMsg, Logging.INDEX_MESSAGE.NOT_SET);
+                        } else
+                            Logging.Logg().Error(MethodBase.GetCurrentMethod(), debugMsg, Logging.INDEX_MESSAGE.NOT_SET);
                         break;
                     case StatesMachine.LIST_DEST: // получен спискок объектов с парметрами соединения с БД
                         iRes = 0;
@@ -308,7 +227,10 @@ namespace xmlLoader
 
                         itemQueue = Peek;
 
-                        outobj = listViewDataSetItem;
+                        if (!((int)itemQueue.Pars[0] < 0))
+                            outobj = getListViewDataSetItem((int)itemQueue.Pars[0]);
+                        else
+                            ;
                         break;
                     case StatesMachine.DATASET_CONTENT: // запрос на передачу содержимого набора, выбранного пользователем для отображения
                         iRes = 0;
@@ -316,11 +238,18 @@ namespace xmlLoader
 
                         itemQueue = Peek;
                         break;
-                    case StatesMachine.STATISTIC: // 
+                    //case StatesMachine.STATISTIC: // 
+                    //    iRes = 0;
+                    //    error = false;
+
+                    //    itemQueue = Peek;
+                    //    break;
+                    case StatesMachine.CONNSET_USE_CHANGED:
                         iRes = 0;
                         error = false;
 
                         itemQueue = Peek;
+                        _writer.ChangeConnSettUse((int)itemQueue.Pars[0]);
                         break;
                     default:
                         break;
@@ -359,7 +288,8 @@ namespace xmlLoader
                 case StatesMachine.LIST_DEST:
                 case StatesMachine.LIST_DATASET: //
                 case StatesMachine.DATASET_CONTENT: //
-                case StatesMachine.STATISTIC: //
+                //case StatesMachine.STATISTIC: //
+                case StatesMachine.CONNSET_USE_CHANGED: // 
                     // не требуют запроса
                 default:
                     break;
@@ -374,13 +304,16 @@ namespace xmlLoader
             ItemQueue itemQueue = Peek;
 
             switch ((StatesMachine)state) {
-                case StatesMachine.NEW: // 
+                case StatesMachine.NEW: // самый старый набор для постановки в очередь на запись, 
+                    _writer.Request((string)obj);
+                    break;
                 case StatesMachine.LIST_DEST: // получены параметры соединения БД, ответа не требуется
+                case StatesMachine.CONNSET_USE_CHANGED:
                     //Ответа не требуется/не требуют обработки результата
                     break;
                 case StatesMachine.LIST_DATASET: // отправить главному окну(для отображения) информацию о поученных/обработанных наборах с данными
                 case StatesMachine.DATASET_CONTENT: // отправить главному окну(для отображения) информацию о выбранном для отображения в главном окне
-                case StatesMachine.STATISTIC: // статический объект (obj = null)
+                //case StatesMachine.STATISTIC: // статический объект (obj = null)
                     if ((!(itemQueue == null))
                         //&& (!(itemQueue.m_dataHostRecieved == null)) FormMain не реализует интерфейс 'IDataHost'
                         )
@@ -394,6 +327,8 @@ namespace xmlLoader
                 default:
                     break;
             }
+
+            Debug.WriteLine(string.Format(@"WriterHandlerQueue::StateResponse(state={0}) - ...", ((StatesMachine)state).ToString()));
 
             return iRes;
         }
