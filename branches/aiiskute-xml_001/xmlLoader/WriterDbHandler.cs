@@ -11,7 +11,7 @@ namespace xmlLoader
 {
     partial class WriterHandlerQueue
     {
-        private class WriterDbHandler : HHandlerDb
+        private class WriterDbHandler : HHandlerDb, IDataHost
         {
             private enum StatesMachine { Truncate, Merge, SP }
 
@@ -23,7 +23,8 @@ namespace xmlLoader
 
             private Thread _threadRequest;
 
-            public DelegateIntFunc EvtDatasetQuered;
+            //public event DelegateIntFunc EvtDatasetQuered;
+            public event DelegateObjectFunc EvtDataAskedHost;
 
             public IEnumerable<int> ListConnSettKey
             {
@@ -61,7 +62,8 @@ namespace xmlLoader
             public void Request(string query)
             {
                 // остановить поток, если выполняется
-                if (_threadRequest.IsAlive == true) {
+                if ((!(_threadRequest == null))
+                    && (_threadRequest.IsAlive == true)) {
                     if (_threadRequest.Join(666) == false) {
                         _threadRequest.Interrupt();
                         if (((_threadRequest.ThreadState & ThreadState.Running) == ThreadState.Running)
@@ -118,7 +120,7 @@ namespace xmlLoader
 
                         if (indxReasonCompleted == INDEX_WAITHANDLE_REASON.SUCCESS)
                         // оповестить об успешном выполнении группы запросов
-                            EvtDatasetQuered?.Invoke(IdConnSettCurrent);
+                            DataAskedHost(IdConnSettCurrent);
                         else
                             ;
                     }
@@ -260,6 +262,16 @@ namespace xmlLoader
                 Logging.Logg().Warning(
                     string.Format(@"WriterDbHandler::StateWarnings (state={0}, req={1}, res={2}) - ...", ((StatesMachine)state).ToString(), req, res)
                     , Logging.INDEX_MESSAGE.NOT_SET);
+            }
+
+            public void DataAskedHost(object par)
+            {
+                EvtDataAskedHost?.Invoke(par);
+            }
+
+            public void OnEvtDataRecievedHost(object res)
+            {
+                throw new NotImplementedException();
             }
         }
     }

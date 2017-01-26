@@ -402,6 +402,11 @@ namespace xmlLoader
 
                         itemQueue = Peek;
 
+                        EvtToFormMain?.Invoke(new object[] { PackageHandlerQueue.StatesMachine.MESSAGE_TO_STATUSSTRIP
+                            , FormMain.STATUS_STRIP_STATE.Debug
+                            , string.Format(@"Получен новый пакет {0}", (DateTime)itemQueue.Pars[0])
+                        });
+
                         error = (iRes = addPackage((DateTime)itemQueue.Pars[0], (XmlDocument)itemQueue.Pars[1])) < 0 ? true : false;                        
                         break;
                     case StatesMachine.LIST_PACKAGE: // список пакетов

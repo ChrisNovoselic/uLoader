@@ -38,7 +38,7 @@ namespace xmlLoader
             _listDataSet = new List<DATASET>();
 
             _writer = new WriterDbHandler();
-            _writer.EvtDatasetQuered += new DelegateIntFunc(writerDbHandler_OnDatasetQuered);
+            _writer.EvtDataAskedHost += new DelegateObjectFunc(writerDbHandler_OnDataAskedHost);
         }
 
         private void initialize(List<ConnectionSettings>listConnSett)
@@ -174,9 +174,11 @@ namespace xmlLoader
             return listRes;
         }
 
-        private void writerDbHandler_OnDatasetQuered(int idConnSett)
+        private void writerDbHandler_OnDataAskedHost(object obj)
         {
-            _listDataSet[_listDataSet.Count - 1].m_dictDatetimeQuered[idConnSett] = DateTime.UtcNow;
+            int idConnSett = (int)obj;
+
+            _listDataSet[_listDataSet.Count - 1].m_dictDatetimeQuered[(int)obj] = DateTime.UtcNow;
         }
 
         protected override int StateCheckResponse(int s, out bool error, out object outobj)
@@ -201,6 +203,8 @@ namespace xmlLoader
                         error = (iRes = addDataSet(_writer.ListConnSettKey, (DateTime)itemQueue.Pars[0], itemQueue.Pars[1] as DataTable, itemQueue.Pars[2] as DataTable)) < 0 ? true : false; ;
 
                         debugMsg = string.Format(@"Добавление нового набора [{0}]...", (DateTime)itemQueue.Pars[0]);
+
+                        EvtToFormMain(new object[] { StatesMachine.MESSAGE_TO_STATUSSTRIP, FormMain.STATUS_STRIP_STATE.Debug, debugMsg });
 
                         if (error == false) {
                         // добавленный набор поставить в очередь на запись

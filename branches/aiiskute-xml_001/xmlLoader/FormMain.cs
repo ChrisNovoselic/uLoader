@@ -22,6 +22,10 @@ namespace xmlLoader
         /// </summary>
         private enum INDEX_CONTROL { CBX_READ_SESSION_START, CBX_READ_SESSION_STOP }
 
+        public enum STATUS_STRIP_STATE { Unknown = -1
+            , Error, Warning, Action, Debug
+        }
+
         public class ListXmlTree : List<object>
         {
             public string Tag;
@@ -52,7 +56,9 @@ namespace xmlLoader
         }
 
         private delegate DataGridViewRow DelegateStatisticIndexItemFunc (PackageHandlerQueue.STATISTIC.INDEX_ITEM tag);
-
+        /// <summary>
+        /// Обновить значения в представлении для отображения статистических данных
+        /// </summary>
         private void updateDataGridViewStatistic()
         {
             DataGridView dgv = m_dgvStatistic;
@@ -322,59 +328,13 @@ namespace xmlLoader
             public object[] Values;
         }
 
-        //private void handlerPackageQueue (object arg) {
-        //    PackageHandlerQueue.StatesMachine state = (PackageHandlerQueue.StatesMachine)(arg as object[])[0];
-
-        //    switch (state) {
-        //        case PackageHandlerQueue.StatesMachine.LIST_PACKAGE:
-        //            m_dgvPackageList.UpdateData((IEnumerable<VIEW_PACKAGE_ITEM>)(arg as object[])[1]);
-        //            break;
-        //        case PackageHandlerQueue.StatesMachine.PACKAGE_CONTENT:
-        //            //m_tabControlViewPackage.Update();
-        //            switch ((INDEX_TABPAGE_VIEW_PACKAGE)m_tabControlViewPackage.SelectedTab.Tag) {
-        //                case INDEX_TABPAGE_VIEW_PACKAGE.XML:
-        //                    m_tbxViewPackage.Text = ((XmlDocument)(arg as object[])[1]).InnerXml;
-        //                    break;
-        //                case INDEX_TABPAGE_VIEW_PACKAGE.TREE:
-        //                    m_treeViewPackage.UpdateData((ListXmlTree)(arg as object[])[1]);
-        //                    break;
-        //                default:
-        //                    throw new Exception(@"Неизвестный тип панели для представления содержимого пакета");
-        //            }
-        //            break;
-        //        case PackageHandlerQueue.StatesMachine.STATISTIC:
-        //            m_dgvStatistic.UpdateData();
-        //            break;
-        //        case PackageHandlerQueue.StatesMachine.TIMER_TABLERES:
-        //            if ((arg as object[]).Length == 4)
-        //                //m_handlerWriter.Push(null, new object[] {
-        //                //    new object[] {
-        //                //        new object[] {
-        //                //            WriterHandlerQueue.StatesMachine.DATASET_CONTENT
-        //                //            , (DateTime)(arg as object[])[1]
-        //                //            , (DataTable)(arg as object[])[2]
-        //                //            , (DataTable)(arg as object[])[3]
-        //                //        }
-        //                //    }
-        //                //})
-        //                ;
-        //            else
-        //                Logging.Logg().Warning(MethodBase.GetCurrentMethod()
-        //                    , string.Format(@"некорректное кол-во аргументов state={0}", state)
-        //                    , Logging.INDEX_MESSAGE.NOT_SET);
-        //            break;
-        //        case PackageHandlerQueue.StatesMachine.NEW: //??? не м.б. получен, иначе фиксировать ошибку
-        //        default: //??? неизвестный идентикатор, фиксировать ошибку
-        //            break;
-        //    }
-        //}
-
         private void onHandlerPackageQueue(object obj)
         {
+            PackageHandlerQueue.StatesMachine state = (PackageHandlerQueue.StatesMachine)(obj as object[])[0];
+
             // анонимный метод(функция) для выполнения операций с элементами интерфейса
             DelegateObjectFunc handlerPackageQueue = delegate (object arg)
             {
-                PackageHandlerQueue.StatesMachine state = (PackageHandlerQueue.StatesMachine)(arg as object[])[0];
                 object[] dataSet;
 
                 switch (state) {
@@ -425,40 +385,54 @@ namespace xmlLoader
                 }
             };
 
-            if (InvokeRequired == true)
-                // выполнить анонимный метод ы контексте формы
-                this.BeginInvoke(
-                        //new DelegateObjectFunc (
-                        handlerPackageQueue
-                    //)
-                    , obj)
-                ;
-            else
-                handlerPackageQueue(obj);
+            switch (state) {
+                case PackageHandlerQueue.StatesMachine.MESSAGE_TO_STATUSSTRIP:
+                    break;
+                default:
+                    if (InvokeRequired == true)
+                        // выполнить анонимный метод ы контексте формы
+                        this.BeginInvoke(
+                                //new DelegateObjectFunc (
+                                handlerPackageQueue
+                            //)
+                            , obj)
+                        ;
+                    else
+                        handlerPackageQueue(obj);
+                    break;
+            }
         }
 
         private void onHandlerWriterQueue(object obj)
         {
+            WriterHandlerQueue.StatesMachine state = (WriterHandlerQueue.StatesMachine)(obj as object[])[0];
+
             // анонимный метод(функция) для выполнения операций с элементами интерфейса
             DelegateObjectFunc handlerDataSetQueue = delegate (object arg)
             {
-                WriterHandlerQueue.StatesMachine state = (WriterHandlerQueue.StatesMachine)(arg as object[])[0];
-
                 switch (state) {
                     case WriterHandlerQueue.StatesMachine.LIST_DATASET:
                         updateDataGridViewItem (m_dgvDestDatabaseListAction, (IEnumerable<VIEW_ITEM>)(arg as object[])[1]);
-                        break;                    
+                        break;
+                    case WriterHandlerQueue.StatesMachine.MESSAGE_TO_STATUSSTRIP:
+                        break;
                     case WriterHandlerQueue.StatesMachine.NEW: //??? не м.б. получен, иначе фиксировать ошибку
                     default: //??? неизвестный идентикатор, фиксировать ошибку
                         break;
                 }
             };
 
-            if (InvokeRequired == true)
-                // выполнить анонимный метод ы контексте формы
-                this.BeginInvoke(handlerDataSetQueue, obj);
-            else
-                handlerDataSetQueue(obj);
+            switch (state) {
+                case WriterHandlerQueue.StatesMachine.MESSAGE_TO_STATUSSTRIP:
+                    break;
+                default:
+                    if (InvokeRequired == true)
+                    // выполнить анонимный метод ы контексте формы
+                        this.BeginInvoke(handlerDataSetQueue, obj);
+                    else
+                        handlerDataSetQueue(obj);
+                    break;
+            }
         }
         /// <summary>
         /// Обработчик события - сообщение от обработчика очереди событий
