@@ -536,7 +536,7 @@ namespace xmlLoader
             // m_tabControlDest
             // 
             m_tabControlDest.Controls.Add(this.m_tpageDestValue);
-            m_tabControlDest.Controls.Add(this.m_tpageDestParameter);            
+            m_tabControlDest.Controls.Add(this.m_tpageDestParameter);
             m_tabControlDest.Dock = System.Windows.Forms.DockStyle.Fill;
             m_tabControlDest.Location = new System.Drawing.Point(0, 0);
             m_tabControlDest.Name = "m_tabControlDest";

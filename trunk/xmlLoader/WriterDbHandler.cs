@@ -6,6 +6,7 @@ using HClassLibrary;
 using System.Data;
 using System.Reflection;
 using System.Threading;
+using System.ComponentModel;
 
 namespace xmlLoader
 {
@@ -21,7 +22,8 @@ namespace xmlLoader
 
             private Dictionary<int, bool> m_dictConnSettUsed;
 
-            private Thread _threadRequest;
+            //private Thread _threadRequest;
+            private BackgroundWorker _threadRequest;
 
             //public event DelegateIntFunc EvtDatasetQuered;
             public event DelegateObjectFunc EvtDataAskedHost;
@@ -43,7 +45,11 @@ namespace xmlLoader
             {
                 m_dictConnSettUsed = new Dictionary<int, bool>();
 
-                m_queueIdConnSett = new Queue<int>();                
+                m_queueIdConnSett = new Queue<int>();
+
+                _threadRequest = new BackgroundWorker();
+                _threadRequest.WorkerSupportsCancellation = true;
+                _threadRequest.DoWork += new DoWorkEventHandler(fThreadRequest);
             }
             /// <summary>
             /// Инициализировать дополнительные объекты синхронизации
@@ -55,28 +61,47 @@ namespace xmlLoader
 
                 base.InitializeSyncState();
             }
+            public override void Stop()
+            {
+                _threadRequest.Dispose();
+
+                base.Stop();
+            }
             /// <summary>
             /// Выполнить запрос
             /// </summary>
             /// <param name="query">Запрос для выполнения</param>
-            public void Request(string query)
+            public void Request(DATASET_WRITER dataSetWriter)
             {
                 // остановить поток, если выполняется
-                if ((!(_threadRequest == null))
-                    && (_threadRequest.IsAlive == true)) {
-                    if (_threadRequest.Join(666) == false) {
-                        _threadRequest.Interrupt();
-                        if (((_threadRequest.ThreadState & ThreadState.Running) == ThreadState.Running)
-                            || ((_threadRequest.ThreadState & ThreadState.Background) == ThreadState.Background)
-                            || ((_threadRequest.ThreadState & ThreadState.Suspended) == ThreadState.Suspended))
-                            _threadRequest.Abort();
-                        else
-                            ;
-                    } else
-                        ;
+                if (!(_threadRequest == null)) {
+                    //if (_threadRequest.IsAlive == true) {
+                    //    if (_threadRequest.Join(666) == false)
+                    //    {
+                    //        _threadRequest.Interrupt();
+                    //        if (((_threadRequest.ThreadState & ThreadState.Running) == ThreadState.Running)
+                    //            || ((_threadRequest.ThreadState & ThreadState.Background) == ThreadState.Background)
+                    //            || ((_threadRequest.ThreadState & ThreadState.Suspended) == ThreadState.Suspended))
+                    //            _threadRequest.Abort();
+                    //        else
+                    //            ;
+                    //    } else
+                    //        ;
+                    //} else {
+                    //}
+
+                    ////WaitHandle.
+                    ////_threadRequest.
+                    //_threadRequest = null;
+
+                    if (_threadRequest.IsBusy == true) {
+                        _threadRequest.CancelAsync();
+                    } else {
+                    }
+
+                    GC.Collect();
                 } else
                     ;
-                _threadRequest = null;
 
                 // очистить очередь идентификаторов источников данных
                 m_queueIdConnSett.Clear();
@@ -85,10 +110,15 @@ namespace xmlLoader
                     if (m_dictConnSettUsed[connSett.id] == true) m_queueIdConnSett.Enqueue(connSett.id); else;
                 // запустить, при необходимости поток выполнения запроса
                 if (m_queueIdConnSett.Count > 0) {
-                    _threadRequest = new Thread(new ParameterizedThreadStart(fThreadRequest));
-                    _threadRequest.IsBackground = true;
-                    _threadRequest.Name = @"WriterDbHandler.Request";
-                    _threadRequest.Start(query);
+                    // вариант №1 - поток
+                    //_threadRequest = //new Thread(new ParameterizedThreadStart(fThreadRequest));
+                    //_threadRequest.IsBackground = true;
+                    //_threadRequest.Name = @"WriterDbHandler.Request";
+                    //_threadRequest.Start(dataSetWriter);
+                    // вариант №2
+                    _threadRequest.RunWorkerAsync(dataSetWriter);
+                    //// вариант №3 - без потока
+                    //fThreadRequest(dataSetWriter);
                 } else
                     ;
             }
@@ -96,36 +126,43 @@ namespace xmlLoader
             /// Потоковая функция - выполнить запросы к источникам данных в ~ соответствии со сформированной очередью
             /// </summary>
             /// <param name="obj">Аргумент при вызове</param>
-            private void fThreadRequest(object obj)
+            private void fThreadRequest(object obj, DoWorkEventArgs ev)
             {
                 INDEX_WAITHANDLE_REASON indxReasonCompleted = INDEX_WAITHANDLE_REASON.COUNT_INDEX_WAITHANDLE_REASON;
-                string fmtMsg = @"Cохранение значений для {0}";
+                DATASET_WRITER dataSetWriter = (DATASET_WRITER)ev.Argument;
+                string fmtMsg = @"сохранение набора для IdConnSett={0}, [{1}]";
 
-                Query =
-                    //(string)obj
-                    @"INSERT INTO [dbo].[BIYSK_LOADER] ([XML_SECTION_NAME],[XML_ITEM_NAME],[VALUE],[DATA_DATE]) VALUES ('SEC', 'PAR', 0.00, GETDATE())"
-                    ;
+                Query = dataSetWriter.m_query;
 
                 try {
                     while (m_queueIdConnSett.Count > 0) {
+                        ClearStates();
+
                         IdConnSettCurrent = m_queueIdConnSett.Dequeue();
 
                         AddState((int)StatesMachine.Truncate); // добавить состояние для очистки таблицы перед вставкой
                         AddState((int)StatesMachine.Merge); // добавить состояние для выполнения целевого запроса(вставка значений)
                         AddState((int)StatesMachine.SP); // добавить состояние для выполнения ХП обработкии вставленных значений
                         // обработать все состояния
-                        Run(string.Format(fmtMsg, IdConnSettCurrent));
+                        Run(string.Format(fmtMsg, IdConnSettCurrent, dataSetWriter.m_dtRecieved.ToString()));
                         // ожидать завершения обработки всех состояний
                         indxReasonCompleted = (INDEX_WAITHANDLE_REASON)WaitHandle.WaitAny(m_waitHandleState);
-
+                        // зафиксировать в логе результат
                         if (indxReasonCompleted == INDEX_WAITHANDLE_REASON.SUCCESS)
-                        // оповестить об успешном выполнении группы запросов
-                            DataAskedHost(IdConnSettCurrent);
+                            Logging.Logg().Debug(MethodBase.GetCurrentMethod()
+                                , string.Format(fmtMsg, IdConnSettCurrent, dataSetWriter.m_dtRecieved.ToString())
+                                , Logging.INDEX_MESSAGE.NOT_SET);
                         else
-                            ;
+                            Logging.Logg().Error(MethodBase.GetCurrentMethod()
+                                , string.Format(fmtMsg, IdConnSettCurrent, dataSetWriter.m_dtRecieved.ToString())
+                                , Logging.INDEX_MESSAGE.NOT_SET);
+                        // оповестить об завершении выполнения группы запросов
+                        DataAskedHost(new object[] { indxReasonCompleted, IdConnSettCurrent, dataSetWriter.m_dtRecieved });
                     }
                 } catch (Exception e) {
-                    Logging.Logg().Exception(e, string.Format(fmtMsg, IdConnSettCurrent), Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Exception(e
+                        , string.Format(fmtMsg, IdConnSettCurrent, dataSetWriter.m_dtRecieved.ToString())
+                        , Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
 

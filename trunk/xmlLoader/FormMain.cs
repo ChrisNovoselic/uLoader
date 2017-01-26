@@ -20,7 +20,12 @@ namespace xmlLoader
         /// <summary>
         /// Перечисление - идентификаторы(Tag) некоторых элементов интерфейса
         /// </summary>
-        private enum INDEX_CONTROL { CBX_READ_SESSION_START, CBX_READ_SESSION_STOP }
+        public enum INDEX_CONTROL {
+            CBX_READ_SESSION_START, CBX_READ_SESSION_STOP
+            , DGV_PACKAGE_LIST, DGV_DATASET_LIST
+            , TABPAGE_VIEW_PACKAGE_XML, TABPAGE_VIEW_PACKAGE_TREE, TABPAGE_VIEW_PACKAGE_TABLE_VALUE, TABPAGE_VIEW_PACKAGE_TABLE_PARAMETER
+            , TABPAGE_VIEW_DATASET_TABLE_VALUE, TABPAGE_VIEW_DATASET_TABLE_PARAMETER
+        }
 
         public enum STATUS_STRIP_STATE { Unknown = -1
             , Error, Warning, Action, Debug
@@ -229,13 +234,17 @@ namespace xmlLoader
 
             m_timerUpdate = new System.Threading.Timer(timerUpdate_OnCallback, null, System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
 
-            m_dgvPackageList.SelectionChanged += dgvPackageList_SelectionChanged;            
+            m_dgvPackageList.SelectionChanged += dgvPackageList_SelectionChanged;
 
             m_tabControlViewPackage.Selecting += tabControl_Selecting;
             m_tabControlViewPackage.Selected += tabControlViewPackage_Selected;
-            m_tpageViewPackageXml.Tag = INDEX_TABPAGE_VIEW_PACKAGE.XML;
-            m_tpageViewPackageTree.Tag = INDEX_TABPAGE_VIEW_PACKAGE.TREE;
-            m_tpageViewPackageTableValue.Tag = INDEX_TABPAGE_VIEW_PACKAGE.TABLE_VALUE;
+            m_tpageViewPackageXml.Tag = INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_XML;
+            m_tpageViewPackageTree.Tag = INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_TREE;
+            m_tpageViewPackageTableValue.Tag = INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_TABLE_VALUE;
+
+            //!!! обработчики событий уже назначены
+            m_tpageDestValue.Tag = INDEX_CONTROL.TABPAGE_VIEW_DATASET_TABLE_VALUE;
+            m_tpageDestParameter.Tag = INDEX_CONTROL.TABPAGE_VIEW_DATASET_TABLE_PARAMETER;
         }
 
         private void dgvDestList_SelectionChanged(object sender, EventArgs e)
@@ -266,10 +275,8 @@ namespace xmlLoader
                             break;
                     }
             } else
-                ;            
+                ;
         }
-
-        public enum INDEX_TABPAGE_VIEW_PACKAGE { XML, TREE, TABLE_VALUE, TABLE_PARAMETER }
 
         private void tabControlViewPackage_Selected(object sender, TabControlEventArgs e)
         {
@@ -318,6 +325,40 @@ namespace xmlLoader
                 else
                     ;
         }
+        /// <summary>
+        /// Отправить запрос на получение контента выбранного набора
+        /// </summary>
+        private void pushDataSetContent()
+        {
+            pushItemContent(INDEX_CONTROL.DGV_DATASET_LIST);
+        }
+        /// <summary>
+        /// Отправить запрос на получение контента выбранного элемента
+        /// </summary>
+        /// <param name="indxItem">Индекс(таг) элемента управления</param>
+        private void pushItemContent(INDEX_CONTROL indxItem)
+        {
+            DataGridView dgv = indxItem == INDEX_CONTROL.DGV_PACKAGE_LIST ? m_dgvPackageList :
+                indxItem == INDEX_CONTROL.DGV_DATASET_LIST ? m_dgvDestList :
+                    null;
+
+            if (!(dgv == null))
+                if (dgv.SelectedRows.Count == 1)
+                    m_handlerPackage.Push(null, new object[] {
+                        new object[] {
+                            new object [] {
+                                PackageHandlerQueue.StatesMachine.PACKAGE_CONTENT, dgv.SelectedRows[0].Tag, m_tabControlViewPackage.SelectedTab.Tag
+                            }
+                        }
+                    });
+                else
+                    if (m_dgvPackageList.SelectedRows.Count > 1)
+                        throw new Exception(@"Строк выбрано {0} больше, чем указано в свойствах {1}...");
+                else
+                    ;
+            else
+                throw new Exception(string.Format(@"Аргумент {0} указывает на несуществущий элемент управления...", indxItem.ToString()));
+        }
 
         public struct VIEW_ITEM
         {
@@ -343,11 +384,11 @@ namespace xmlLoader
                         break;
                     case PackageHandlerQueue.StatesMachine.PACKAGE_CONTENT:
                         //m_tabControlViewPackage.Update();
-                        switch ((INDEX_TABPAGE_VIEW_PACKAGE)m_tabControlViewPackage.SelectedTab.Tag) {
-                            case INDEX_TABPAGE_VIEW_PACKAGE.XML:
+                        switch ((INDEX_CONTROL)m_tabControlViewPackage.SelectedTab.Tag) {
+                            case INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_XML:
                                 m_tbxViewPackage.Text = ((XmlDocument)(arg as object[])[1]).InnerXml;
                                 break;
-                            case INDEX_TABPAGE_VIEW_PACKAGE.TREE:
+                            case INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_TREE:
                                 m_treeViewPackage.UpdateData((ListXmlTree)(arg as object[])[1]);
                                 break;
                             default:

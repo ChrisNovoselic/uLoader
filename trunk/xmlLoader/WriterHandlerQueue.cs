@@ -11,6 +11,9 @@ namespace xmlLoader
 {
     public partial class WriterHandlerQueue : HClassLibrary.HHandlerQueue
     {
+        private static int COUNT_VIEW_DATASET_ITEM = 12;
+
+        private static TimeSpan TS_HISTORY_RUNTIME = TimeSpan.FromSeconds(5 * 60);
         /// <summary>
         /// Перечисление - возможные состояния для обработки
         /// </summary>
@@ -73,8 +76,6 @@ namespace xmlLoader
 
         public static STATISTIC s_Statistic;
 
-        private static TimeSpan TS_HISTORY_RUNTIME = TimeSpan.FromSeconds(5 * 60);
-
         private struct DATASET
         {
             public enum STATE : short { UNKNOWN = -1
@@ -95,7 +96,7 @@ namespace xmlLoader
 
                 m_tableParameters = tableParameters.Copy();
 
-                m_query = string.Empty;
+                m_query = @"INSERT INTO [dbo].[BIYSK_LOADER] ([XML_SECTION_NAME],[XML_ITEM_NAME],[VALUE],[DATA_DATE]) VALUES ('SEC', 'PAR', 0.00, GETDATE())";
 
                 m_state = STATE.QUERING;
             }
@@ -131,7 +132,7 @@ namespace xmlLoader
                     ;
             // удалить пакеты дата/время получения которых больше, чем "лимит"
             listIndxToRemove.ForEach(indx => {
-                Logging.Logg().Debug(MethodBase.GetCurrentMethod(), string.Format(@"удален пакет {0}", _listDataSet[indx].m_dtRecieved), Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Debug(MethodBase.GetCurrentMethod(), string.Format(@"удален набор [{0}]", _listDataSet[indx].m_dtRecieved), Logging.INDEX_MESSAGE.NOT_SET);
 
                 _listDataSet.RemoveAt(indx);
             });
@@ -155,8 +156,6 @@ namespace xmlLoader
             return iRes;
         }
 
-        private static int COUNT_VIEW_DATASET_ITEM = 6;
-
         private List<FormMain.VIEW_ITEM> getListViewDataSetItem(int key)
         {
             List<FormMain.VIEW_ITEM> listRes = new List<FormMain.VIEW_ITEM>();
@@ -176,9 +175,21 @@ namespace xmlLoader
 
         private void writerDbHandler_OnDataAskedHost(object obj)
         {
-            int idConnSett = (int)obj;
+            INDEX_WAITHANDLE_REASON indxReasonCompleted = (INDEX_WAITHANDLE_REASON)(obj as object[])[0];
+            int idConnSett = (int)(obj as object[])[1];
+            DateTime dtRecieved = (DateTime)(obj as object[])[2];
 
-            _listDataSet[_listDataSet.Count - 1].m_dictDatetimeQuered[(int)obj] = DateTime.UtcNow;
+            try {
+                var writerDataSet = (from dataSet in _listDataSet where dataSet.m_dtRecieved == dtRecieved select dataSet).ElementAt(0);
+                writerDataSet.m_dictDatetimeQuered[idConnSett] =
+                    indxReasonCompleted == INDEX_WAITHANDLE_REASON.SUCCESS ? DateTime.UtcNow :
+                        indxReasonCompleted == INDEX_WAITHANDLE_REASON.ERROR ? DateTime.MaxValue :
+                            DateTime.MinValue;
+            } catch (Exception e) {
+                Logging.Logg().Exception(e
+                    , string.Format(@"не найден набор для IdConnSett={0}, [{1}]", idConnSett, dtRecieved.ToString())
+                    , Logging.INDEX_MESSAGE.NOT_SET);
+            }
         }
 
         protected override int StateCheckResponse(int s, out bool error, out object outobj)
@@ -208,7 +219,10 @@ namespace xmlLoader
 
                         if (error == false) {
                         // добавленный набор поставить в очередь на запись
-                            outobj = _listDataSet[_listDataSet.Count - 1].m_query;
+                            outobj = new DATASET_WRITER() {
+                                 m_dtRecieved = _listDataSet[_listDataSet.Count - 1].m_dtRecieved
+                                , m_query = _listDataSet[_listDataSet.Count - 1].m_query
+                            };
 
                             Logging.Logg().Debug(MethodBase.GetCurrentMethod(), debugMsg, Logging.INDEX_MESSAGE.NOT_SET);
                         } else
@@ -303,6 +317,13 @@ namespace xmlLoader
             return iRes;
         }
 
+        private struct DATASET_WRITER
+        {
+            public DateTime m_dtRecieved;
+
+            public string m_query;
+        }
+
         protected override int StateResponse(int state, object obj)
         {
             int iRes = 0;
@@ -310,7 +331,7 @@ namespace xmlLoader
 
             switch ((StatesMachine)state) {
                 case StatesMachine.NEW: // самый старый набор для постановки в очередь на запись, 
-                    _writer.Request((string)obj);
+                    _writer.Request((DATASET_WRITER)obj);
                     break;
                 case StatesMachine.LIST_DEST: // получены параметры соединения БД, ответа не требуется
                 case StatesMachine.CONNSET_USE_CHANGED:

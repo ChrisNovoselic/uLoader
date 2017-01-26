@@ -10,9 +10,9 @@ namespace xmlLoader
 {
     public class PackageHandlerQueue : HClassLibrary.HHandlerQueue
     {
-        private static TimeSpan TS_TIMER_TABLERES = TimeSpan.FromSeconds(10);
+        private static TimeSpan TS_TIMER_TABLERES = TimeSpan.FromSeconds(6);
 
-        private static int COUNT_VIEW_PACKAGE_ITEM = 6;
+        private static int COUNT_VIEW_PACKAGE_ITEM = 12;
 
         private static TimeSpan TS_HISTORY_RUNTIME = TimeSpan.FromSeconds(60);
         private static TimeSpan TS_HISTORY_ALONG = TimeSpan.FromSeconds(0);
@@ -352,7 +352,7 @@ namespace xmlLoader
                     ;
             // удалить пакеты дата/время получения которых больше, чем "лимит"
             listIndxToRemove.ForEach(indx => {
-                Logging.Logg().Debug(MethodBase.GetCurrentMethod(), string.Format(@"удален пакет {0}", _listPackage[indx].m_dtRecieved), Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Debug(MethodBase.GetCurrentMethod(), string.Format(@"удален пакет [{0}]", _listPackage[indx].m_dtRecieved), Logging.INDEX_MESSAGE.NOT_SET);
 
                 _listPackage.RemoveAt(indx);
             });
@@ -427,11 +427,11 @@ namespace xmlLoader
                         if (selectPackages.Count() == 1) {
                             package = selectPackages.ElementAt(0);
 
-                            switch ((FormMain.INDEX_TABPAGE_VIEW_PACKAGE)itemQueue.Pars[1]) {
-                                case FormMain.INDEX_TABPAGE_VIEW_PACKAGE.XML:
+                            switch ((FormMain.INDEX_CONTROL)itemQueue.Pars[1]) {
+                                case FormMain.INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_XML:
                                     outobj = package.m_xmlSource;
                                     break;
-                                case FormMain.INDEX_TABPAGE_VIEW_PACKAGE.TREE:
+                                case FormMain.INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_TREE:
                                     outobj = package.m_listXmlTree;
                                     break;
                                 default: //??? - ошибка неизвестный тип вкладки просмотра XML-документа
