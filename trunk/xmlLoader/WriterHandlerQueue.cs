@@ -195,6 +195,8 @@ namespace xmlLoader
         protected override int StateCheckResponse(int s, out bool error, out object outobj)
         {
             int iRes = -1;
+
+            DATASET dataSet;
             StatesMachine state = (StatesMachine)s;
             string debugMsg = string.Empty;
 
@@ -256,6 +258,23 @@ namespace xmlLoader
                         error = false;
 
                         itemQueue = Peek;
+
+                        var selectDataSets = from l in _listDataSet where l.m_dtRecieved == (DateTime)itemQueue.Pars[0] select l;
+                        if (selectDataSets.Count() == 1) {
+                            dataSet = selectDataSets.ElementAt(0);
+
+                            switch ((FormMain.INDEX_CONTROL)itemQueue.Pars[1]) {
+                                case FormMain.INDEX_CONTROL.TABPAGE_VIEW_DATASET_TABLE_VALUE:
+                                    outobj = dataSet.m_tableValues;
+                                    break;
+                                case FormMain.INDEX_CONTROL.TABPAGE_VIEW_DATASET_TABLE_PARAMETER:
+                                    outobj = dataSet.m_tableParameters;
+                                    break;
+                                default: //??? - ошибка неизвестный тип вкладки просмотра набора
+                                    break;
+                            }
+                        } else
+                            ; //??? - ошибка пакет не найден либо пакетов много
                         break;
                     //case StatesMachine.STATISTIC: // 
                     //    iRes = 0;

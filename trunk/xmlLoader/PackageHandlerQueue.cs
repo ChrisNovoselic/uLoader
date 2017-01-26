@@ -434,6 +434,12 @@ namespace xmlLoader
                                 case FormMain.INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_TREE:
                                     outobj = package.m_listXmlTree;
                                     break;
+                                case FormMain.INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_TABLE_VALUE:
+                                    outobj = package.m_tableValues;
+                                    break;
+                                case FormMain.INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_TABLE_PARAMETER:
+                                    outobj = package.m_tableParameters;
+                                    break;
                                 default: //??? - ошибка неизвестный тип вкладки просмотра XML-документа
                                     break;
                             }

@@ -151,7 +151,7 @@ namespace xmlLoader
                     foreach (int indx in listItemIndexToAdding) {
                         // создать строку (если строку добавить сразу, то значение Tag будет присвоено после события 'SelectionChanged' - нельхя определить идентификатор строки)
                         rowAdding = new DataGridViewRow();
-                        rowAdding.CreateCells(m_dgvDestDatabaseListAction);
+                        rowAdding.CreateCells(m_dgvDestDatasetList);
                         if (rowAdding.SetValues(items.ElementAt(indx).Values) == true) {
                             // установить идентификатор строки
                             rowAdding.Tag = items.ElementAt(indx).Values[(int)VIEW_ITEM.INDEX.DATETIME_RECIEVED];
@@ -234,6 +234,7 @@ namespace xmlLoader
 
             m_timerUpdate = new System.Threading.Timer(timerUpdate_OnCallback, null, System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
 
+            m_dgvPackageList.AllowUserToResizeRows = false;
             m_dgvPackageList.SelectionChanged += dgvPackageList_SelectionChanged;
 
             m_tabControlViewPackage.Selecting += tabControl_Selecting;
@@ -241,9 +242,14 @@ namespace xmlLoader
             m_tpageViewPackageXml.Tag = INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_XML;
             m_tpageViewPackageTree.Tag = INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_TREE;
             m_tpageViewPackageTableValue.Tag = INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_TABLE_VALUE;
+            ((Control)m_tpageViewPackageTableValue).Enabled = true;
 
-            //!!! обработчики событий уже назначены
+            m_dgvDestDatasetList.AllowUserToResizeRows = false;
+            m_dgvDestDatasetList.SelectionChanged += dgvDatasetList_SelectionChanged;
+
+            m_tabControlDest.Selecting += tabControl_Selecting;
             m_tpageDestValue.Tag = INDEX_CONTROL.TABPAGE_VIEW_DATASET_TABLE_VALUE;
+            ((Control)m_tpageDestParameter).Enabled = true;
             m_tpageDestParameter.Tag = INDEX_CONTROL.TABPAGE_VIEW_DATASET_TABLE_PARAMETER;
         }
 
@@ -301,10 +307,17 @@ namespace xmlLoader
         /// <param name="e">Аргумент события</param>
         private void dgvPackageList_SelectionChanged(object sender, EventArgs e)
         {
+            //??? зачем очищать, если TABPAGE не отображается (проверить?)
             m_treeViewPackage.Nodes.Clear();
 
             // отправить запрос на получение контента выбранного пакета
             pushPackageContent();
+        }
+
+        private void dgvDatasetList_SelectionChanged(object sender, EventArgs e)
+        {
+            // отправить запрос на получение контента выбранного пакета
+            pushDataSetContent();
         }
         /// <summary>
         /// Отправить запрос на получение контента выбранного пакета
@@ -333,27 +346,27 @@ namespace xmlLoader
             pushItemContent(INDEX_CONTROL.DGV_DATASET_LIST);
         }
         /// <summary>
-        /// Отправить запрос на получение контента выбранного элемента
+        /// ??? Общий метод - отправить запрос на получение контента выбранного элемента
         /// </summary>
         /// <param name="indxItem">Индекс(таг) элемента управления</param>
         private void pushItemContent(INDEX_CONTROL indxItem)
         {
             DataGridView dgv = indxItem == INDEX_CONTROL.DGV_PACKAGE_LIST ? m_dgvPackageList :
-                indxItem == INDEX_CONTROL.DGV_DATASET_LIST ? m_dgvDestList :
+                indxItem == INDEX_CONTROL.DGV_DATASET_LIST ? m_dgvDestDatasetList :
                     null;
 
             if (!(dgv == null))
                 if (dgv.SelectedRows.Count == 1)
-                    m_handlerPackage.Push(null, new object[] {
+                    m_handlerWriter.Push(null, new object[] {
                         new object[] {
                             new object [] {
-                                PackageHandlerQueue.StatesMachine.PACKAGE_CONTENT, dgv.SelectedRows[0].Tag, m_tabControlViewPackage.SelectedTab.Tag
+                                WriterHandlerQueue.StatesMachine.DATASET_CONTENT, dgv.SelectedRows[0].Tag, m_tabControlDest.SelectedTab.Tag
                             }
                         }
                     });
                 else
-                    if (m_dgvPackageList.SelectedRows.Count > 1)
-                        throw new Exception(@"Строк выбрано {0} больше, чем указано в свойствах {1}...");
+                    if (dgv.SelectedRows.Count > 1)
+                        throw new Exception(string.Format(@"Строк выбрано {0} больше, чем указано в свойствах {1}...", dgv.SelectedRows.Count, indxItem.ToString()));
                 else
                     ;
             else
@@ -383,7 +396,6 @@ namespace xmlLoader
                         updateDataGridViewItem (m_dgvPackageList, (IEnumerable<VIEW_ITEM>)(arg as object[])[1]);
                         break;
                     case PackageHandlerQueue.StatesMachine.PACKAGE_CONTENT:
-                        //m_tabControlViewPackage.Update();
                         switch ((INDEX_CONTROL)m_tabControlViewPackage.SelectedTab.Tag) {
                             case INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_XML:
                                 m_tbxViewPackage.Text = ((XmlDocument)(arg as object[])[1]).InnerXml;
@@ -391,6 +403,12 @@ namespace xmlLoader
                             case INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_TREE:
                                 m_treeViewPackage.UpdateData((ListXmlTree)(arg as object[])[1]);
                                 break;
+                            case INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_TABLE_VALUE:
+                                m_dgvViewPackageTableValue.DataSource = (DataTable)(arg as object[])[1];
+                                break;
+                            //case INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_TABLE_PARAMETER:
+                            //    m_dgvViewPackageTableParameter.DataSource = (DataTable)(arg as object[])[1];
+                            //    break;
                             default:
                                 throw new Exception(@"Неизвестный тип панели для представления содержимого пакета");
                         }
@@ -453,9 +471,20 @@ namespace xmlLoader
             {
                 switch (state) {
                     case WriterHandlerQueue.StatesMachine.LIST_DATASET:
-                        updateDataGridViewItem (m_dgvDestDatabaseListAction, (IEnumerable<VIEW_ITEM>)(arg as object[])[1]);
+                        updateDataGridViewItem (m_dgvDestDatasetList, (IEnumerable<VIEW_ITEM>)(arg as object[])[1]);
                         break;
-                    case WriterHandlerQueue.StatesMachine.MESSAGE_TO_STATUSSTRIP:
+                    case WriterHandlerQueue.StatesMachine.DATASET_CONTENT:
+                        //arg as object[])[1]
+                        switch ((INDEX_CONTROL)m_tabControlDest.SelectedTab.Tag) {
+                            case INDEX_CONTROL.TABPAGE_VIEW_DATASET_TABLE_VALUE:
+                                m_dgvDestValue.DataSource = (DataTable)(arg as object[])[1];
+                                break;
+                            case INDEX_CONTROL.TABPAGE_VIEW_DATASET_TABLE_PARAMETER:
+                                m_dgvDestParameter.DataSource = (DataTable)(arg as object[])[1];
+                                break;
+                            default:
+                                throw new Exception(@"Неизвестный тип панели для представления содержимого пакета");
+                        }
                         break;
                     case WriterHandlerQueue.StatesMachine.NEW: //??? не м.б. получен, иначе фиксировать ошибку
                     default: //??? неизвестный идентикатор, фиксировать ошибку
