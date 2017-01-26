@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 
 using HClassLibrary;
+using uLoaderCommon;
 
 namespace uLoader
 {
@@ -42,7 +43,7 @@ namespace uLoader
 
         private HHandlerQueue Handler { get { return m_handler as HHandlerQueue; } }
 
-        public FormMain() : base ()
+        public FormMain() : base (@"IconMainULoader")
         {
             InitializeComponent();
 

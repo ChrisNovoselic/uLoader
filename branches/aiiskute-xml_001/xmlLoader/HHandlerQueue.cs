@@ -25,6 +25,7 @@ namespace xmlLoader
             , XML_PACKAGE_TEMPLATE //Шаблон XML-пакета
             , NUDP_LISTENER //Номер порта прослушивателя
             , LIST_DEST //Список источников данных (назначение - сохранение полученных значений)
+            , MESSAGE_TO_STATUSSTRIP
         }
 
         private FormMain.FileINI m_fileINI;

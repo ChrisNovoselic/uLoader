@@ -174,9 +174,11 @@ namespace xmlLoader
         /// <summary>
         /// Конструктор - основной (без параметров)
         /// </summary>
-        public FormMain() : base ()
+        public FormMain() : base (@"IconMainxmlLoader")
         {
             int indxRow = -1;
+
+            //this.Icon = this.Icon = ((System.Drawing.Icon)(new System.ComponentModel.ComponentResourceManager(typeof(FormMain)).GetObject("IconMainxmlLoader")));
 
             InitializeComponent();
             // указать идентификаторы некорым элементам интерфейса

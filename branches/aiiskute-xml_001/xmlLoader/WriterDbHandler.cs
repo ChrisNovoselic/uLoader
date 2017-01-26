@@ -21,6 +21,8 @@ namespace xmlLoader
 
             private Dictionary<int, bool> m_dictConnSettUsed;
 
+            private Thread _threadRequest;
+
             public DelegateIntFunc EvtDatasetQuered;
 
             public IEnumerable<int> ListConnSettKey
@@ -42,27 +44,56 @@ namespace xmlLoader
 
                 m_queueIdConnSett = new Queue<int>();                
             }
-
+            /// <summary>
+            /// Инициализировать дополнительные объекты синхронизации
+            /// </summary>
             protected override void InitializeSyncState()
             {
+                m_waitHandleState = new WaitHandle[2];
+                m_waitHandleState[(int)INDEX_WAITHANDLE_REASON.ERROR] = new AutoResetEvent(true);
+
                 base.InitializeSyncState();
             }
-
+            /// <summary>
+            /// Выполнить запрос
+            /// </summary>
+            /// <param name="query">Запрос для выполнения</param>
             public void Request(string query)
             {
-                Thread threadRequest;
+                // остановить поток, если выполняется
+                if (_threadRequest.IsAlive == true) {
+                    if (_threadRequest.Join(666) == false) {
+                        _threadRequest.Interrupt();
+                        if (((_threadRequest.ThreadState & ThreadState.Running) == ThreadState.Running)
+                            || ((_threadRequest.ThreadState & ThreadState.Background) == ThreadState.Background)
+                            || ((_threadRequest.ThreadState & ThreadState.Suspended) == ThreadState.Suspended))
+                            _threadRequest.Abort();
+                        else
+                            ;
+                    } else
+                        ;
+                } else
+                    ;
+                _threadRequest = null;
 
+                // очистить очередь идентификаторов источников данных
                 m_queueIdConnSett.Clear();
-
+                // сформировать очередь с источниками данных, в ~ от его вкл./выкл. для выполнения запроса к ним
                 foreach (ConnectionSettings connSett in m_listConnSett)
                     if (m_dictConnSettUsed[connSett.id] == true) m_queueIdConnSett.Enqueue(connSett.id); else;
-
-                threadRequest = new Thread(new ParameterizedThreadStart(fThreadRequest));
-                threadRequest.IsBackground = true;
-                threadRequest.Name = @"WriterDbHandler.Request";
-                threadRequest.Start(query);
+                // запустить, при необходимости поток выполнения запроса
+                if (m_queueIdConnSett.Count > 0) {
+                    _threadRequest = new Thread(new ParameterizedThreadStart(fThreadRequest));
+                    _threadRequest.IsBackground = true;
+                    _threadRequest.Name = @"WriterDbHandler.Request";
+                    _threadRequest.Start(query);
+                } else
+                    ;
             }
-
+            /// <summary>
+            /// Потоковая функция - выполнить запросы к источникам данных в ~ соответствии со сформированной очередью
+            /// </summary>
+            /// <param name="obj">Аргумент при вызове</param>
             private void fThreadRequest(object obj)
             {
                 INDEX_WAITHANDLE_REASON indxReasonCompleted = INDEX_WAITHANDLE_REASON.COUNT_INDEX_WAITHANDLE_REASON;
@@ -77,15 +108,16 @@ namespace xmlLoader
                     while (m_queueIdConnSett.Count > 0) {
                         IdConnSettCurrent = m_queueIdConnSett.Dequeue();
 
-                        AddState((int)StatesMachine.Truncate);
-                        AddState((int)StatesMachine.Merge);
-                        AddState((int)StatesMachine.SP);
-
+                        AddState((int)StatesMachine.Truncate); // добавить состояние для очистки таблицы перед вставкой
+                        AddState((int)StatesMachine.Merge); // добавить состояние для выполнения целевого запроса(вставка значений)
+                        AddState((int)StatesMachine.SP); // добавить состояние для выполнения ХП обработкии вставленных значений
+                        // обработать все состояния
                         Run(string.Format(fmtMsg, IdConnSettCurrent));
-
+                        // ожидать завершения обработки всех состояний
                         indxReasonCompleted = (INDEX_WAITHANDLE_REASON)WaitHandle.WaitAny(m_waitHandleState);
 
                         if (indxReasonCompleted == INDEX_WAITHANDLE_REASON.SUCCESS)
+                        // оповестить об успешном выполнении группы запросов
                             EvtDatasetQuered?.Invoke(IdConnSettCurrent);
                         else
                             ;
@@ -175,10 +207,7 @@ namespace xmlLoader
             {
                 HHandler.INDEX_WAITHANDLE_REASON resReason = INDEX_WAITHANDLE_REASON.SUCCESS;
 
-                if (isLastState(state) == true)
-                    this.completeHandleStates(INDEX_WAITHANDLE_REASON.ERROR);
-                else
-                    ;
+                this.completeHandleStates(INDEX_WAITHANDLE_REASON.ERROR);
 
                 Logging.Logg().Error(
                     string.Format(@"WriterDbHandler::StateErrors (state={0}, req={1}, res={2}) - ...", ((StatesMachine)state).ToString(), req, res)

@@ -28,6 +28,7 @@ namespace xmlLoader
             , PACKAGE_CONTENT // запрос для получения пакета
             , TIMER_TABLERES = 106 // событие устаревания XML-пакета ??? совпадает с 'WriteHandlerQueue.StatesMachine::STATISTIC'
             , STATISTIC
+            , MESSAGE_TO_STATUSSTRIP
         }
 
         public struct STATISTIC

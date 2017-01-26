@@ -30,7 +30,7 @@ namespace uLoader
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
+            //System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             this.MainMenuStrip = new System.Windows.Forms.MenuStrip();
             this.файлToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.файлКонфигурацияToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -158,7 +158,10 @@ namespace uLoader
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(792, 640);
             this.Controls.Add(this.MainMenuStrip);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            //this.Icon = ((System.Drawing.Icon)
+            //    //(resources.GetObject("IconMainuLoader")))
+            //    uLoaderCommon.Properties.Resources.IconMainULoader.ToBitmap()
+            //    ;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
             this.MaximizeBox = false;
             this.Name = "FormMain";

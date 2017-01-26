@@ -17,17 +17,19 @@ namespace uLoaderCommon
         /// <summary>
         /// Конструктор - основной (без параметров)
         /// </summary>
-        public FormMainBase()
+        public FormMainBase(string iconResourceName)
         {
             new HCmd_Arg();
 
-            InitializeComponent();
+            InitializeComponent(iconResourceName);
         }
 
-        private void InitializeComponent()
+        private void InitializeComponent(string iconResourceName)
         {
+            this.Icon = (System.Drawing.Icon)Properties.Resources.ResourceManager.GetObject(iconResourceName);
+
             this.m_notifyIcon = new System.Windows.Forms.NotifyIcon();
-            //this.m_notifyIcon.Icon = this.Icon; // пиктограмма еще не определена
+            this.m_notifyIcon.Icon = this.Icon; //??? пиктограмма еще не определена
             this.m_notifyIcon.Click += new System.EventHandler(NotifyIcon_Click);
 
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormMain_Closing);
@@ -46,7 +48,7 @@ namespace uLoaderCommon
         /// </summary>
         protected void initFormMainSizing()
         {
-            this.m_notifyIcon.Icon = this.Icon;
+            //this.m_notifyIcon.Icon = this.Icon; //??? уже назначена
 
             if (HCmd_Arg.IsNormalized == true) {
             // нормальный размер окна

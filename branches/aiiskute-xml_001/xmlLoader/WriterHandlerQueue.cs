@@ -23,6 +23,7 @@ namespace xmlLoader
             , DATASET_CONTENT // запрос для получения пакета
             //, STATISTIC
             , CONNSET_USE_CHANGED
+            , MESSAGE_TO_STATUSSTRIP
         }
         /// <summary>
         /// Событие для отправки сообщения главной экранной форме
@@ -328,7 +329,7 @@ namespace xmlLoader
                     break;
             }
 
-            Debug.WriteLine(string.Format(@"WriterHandlerQueue::StateResponse(state={0}) - ...", ((StatesMachine)state).ToString()));
+            //Debug.WriteLine(string.Format(@"WriterHandlerQueue::StateResponse(state={0}) - ...", ((StatesMachine)state).ToString()));
 
             return iRes;
         }
