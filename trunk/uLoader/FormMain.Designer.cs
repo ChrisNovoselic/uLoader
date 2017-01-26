@@ -30,7 +30,7 @@ namespace uLoader
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
+            //System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             this.MainMenuStrip = new System.Windows.Forms.MenuStrip();
             this.файлToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.файлКонфигурацияToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -43,9 +43,6 @@ namespace uLoader
             this.конфигурацияToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.помощьToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.оПрограммеToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-
-            this.m_notifyIcon = new System.Windows.Forms.NotifyIcon ();
-            this.m_notifyIcon.Click += new System.EventHandler(NotifyIcon_Click);
 
             this.MainMenuStrip.SuspendLayout();
             this.SuspendLayout();
@@ -161,14 +158,15 @@ namespace uLoader
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(792, 640);
             this.Controls.Add(this.MainMenuStrip);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            //this.Icon = ((System.Drawing.Icon)
+            //    //(resources.GetObject("IconMainuLoader")))
+            //    uLoaderCommon.Properties.Resources.IconMainULoader.ToBitmap()
+            //    ;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
             this.MaximizeBox = false;
             this.Name = "FormMain";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Загрузчик данных (универсальный)";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormMain_FormClosing);
-            this.Load += new System.EventHandler(this.FormMain_Load);
             this.MainMenuStrip.ResumeLayout(false);
             this.MainMenuStrip.PerformLayout();
 
@@ -197,8 +195,6 @@ namespace uLoader
         #endregion
 
         private HTabCtrlEx m_TabCtrl;
-
-        private System.Windows.Forms.NotifyIcon m_notifyIcon;
 
         //private System.Windows.Forms.MenuStrip m_menuStripMain;
         private System.Windows.Forms.ToolStripMenuItem файлToolStripMenuItem;
