@@ -74,12 +74,10 @@ namespace xmlLoader
                 }
             }
 
-            public enum INDEX_CONNECTION_SETTING { ID, NAME_SHR, IP, NPORT, INSTANCE, DB_NAME, UID, PSWD }
-
-            public List<ConnectionSettings> ListDest
+            public List<WriterHandlerQueue.ConnectionSettings> ListDest
             {
                 get {
-                    List <ConnectionSettings> listRes = new List<ConnectionSettings>();
+                    List <WriterHandlerQueue.ConnectionSettings> listRes = new List<WriterHandlerQueue.ConnectionSettings>();
 
                     //ConnectionSettings connSett;
                     int i = -1; // индекс источника данных
@@ -96,8 +94,9 @@ namespace xmlLoader
                         //??? сверить ключи keys И dictValues.Keys
 
                         if (!(values.Count < keys.Count))
-                            listRes.Add(new ConnectionSettings(
-                                Int32.Parse(values[keys.IndexOf(@"ID")])
+                            listRes.Add(new WriterHandlerQueue.ConnectionSettings(
+                                bool.Parse(values[keys.IndexOf(@"AUTO_START")])
+                                , Int32.Parse(values[keys.IndexOf(@"ID")])
                                 , values[keys.IndexOf(@"NAME_SHR")]
                                 , values[keys.IndexOf(@"IP")]
                                 , string.Empty // Instanse

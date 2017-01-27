@@ -206,18 +206,20 @@ namespace xmlLoader
             //indxRow = m_dgvStatistic.Rows.Add();
             //m_dgvStatistic.Rows[indxRow].HeaderCell.Value = @"Принятых пакетов";
             // инициализировать строками статические представления - Параметры источников для сохранения значений
-            indxRow = m_dgvDestSetting.Rows.Add(); m_dgvDestSetting.Rows[indxRow].Tag = FileINI.INDEX_CONNECTION_SETTING.IP;
-            m_dgvDestSetting.Rows[indxRow].HeaderCell.Value = @"Сервер";
-            indxRow = m_dgvDestSetting.Rows.Add(); m_dgvDestSetting.Rows[indxRow].Tag = FileINI.INDEX_CONNECTION_SETTING.NPORT;
-            m_dgvDestSetting.Rows[indxRow].HeaderCell.Value = @"№ порт";
-            indxRow = m_dgvDestSetting.Rows.Add(); m_dgvDestSetting.Rows[indxRow].Tag = FileINI.INDEX_CONNECTION_SETTING.INSTANCE;
-            m_dgvDestSetting.Rows[indxRow].HeaderCell.Value = @"Экземпляр";
-            indxRow = m_dgvDestSetting.Rows.Add(); m_dgvDestSetting.Rows[indxRow].Tag = FileINI.INDEX_CONNECTION_SETTING.DB_NAME;
-            m_dgvDestSetting.Rows[indxRow].HeaderCell.Value = @"Имя БД";
-            indxRow = m_dgvDestSetting.Rows.Add(); m_dgvDestSetting.Rows[indxRow].Tag = FileINI.INDEX_CONNECTION_SETTING.UID;
-            m_dgvDestSetting.Rows[indxRow].HeaderCell.Value = @"Пользователь";
-            indxRow = m_dgvDestSetting.Rows.Add(); m_dgvDestSetting.Rows[indxRow].Tag = FileINI.INDEX_CONNECTION_SETTING.PSWD;
-            m_dgvDestSetting.Rows[indxRow].HeaderCell.Value = @"Пароль";
+            indxRow = m_dgvDestDetail.Rows.Add(); m_dgvDestDetail.Rows[indxRow].Tag = WriterHandlerQueue.ConnectionSettings.INDEX_ITEM.AUTO_START;
+            m_dgvDestDetail.Rows[indxRow].HeaderCell.Value = @"Авто-старт";
+            indxRow = m_dgvDestDetail.Rows.Add(); m_dgvDestDetail.Rows[indxRow].Tag = WriterHandlerQueue.ConnectionSettings.INDEX_ITEM.SERVER;
+            m_dgvDestDetail.Rows[indxRow].HeaderCell.Value = @"Сервер";
+            indxRow = m_dgvDestDetail.Rows.Add(); m_dgvDestDetail.Rows[indxRow].Tag = WriterHandlerQueue.ConnectionSettings.INDEX_ITEM.NPORT;
+            m_dgvDestDetail.Rows[indxRow].HeaderCell.Value = @"№ порт";
+            indxRow = m_dgvDestDetail.Rows.Add(); m_dgvDestDetail.Rows[indxRow].Tag = WriterHandlerQueue.ConnectionSettings.INDEX_ITEM.INSTANCE;
+            m_dgvDestDetail.Rows[indxRow].HeaderCell.Value = @"Экземпляр";
+            indxRow = m_dgvDestDetail.Rows.Add(); m_dgvDestDetail.Rows[indxRow].Tag = WriterHandlerQueue.ConnectionSettings.INDEX_ITEM.DB_NAME;
+            m_dgvDestDetail.Rows[indxRow].HeaderCell.Value = @"Имя БД";
+            indxRow = m_dgvDestDetail.Rows.Add(); m_dgvDestDetail.Rows[indxRow].Tag = WriterHandlerQueue.ConnectionSettings.INDEX_ITEM.UID;
+            m_dgvDestDetail.Rows[indxRow].HeaderCell.Value = @"Пользователь";
+            indxRow = m_dgvDestDetail.Rows.Add(); m_dgvDestDetail.Rows[indxRow].Tag = WriterHandlerQueue.ConnectionSettings.INDEX_ITEM.PSWD;
+            m_dgvDestDetail.Rows[indxRow].HeaderCell.Value = @"Пароль";
 
             createHandlerQueue (typeof(HHandlerQueue));
             (m_handler as HHandlerQueue).EvtToFormMain += new DelegateObjectFunc (onHandlerMainQueue);
@@ -279,32 +281,13 @@ namespace xmlLoader
 
         private void dgvDestList_SelectionChanged(object sender, EventArgs e)
         {
-            int indxDest = -1;
-
-            if (m_dgvDestList.SelectedRows.Count > 0) {
-                indxDest = m_dgvDestList.SelectedRows[0].Index;
-
-                foreach (DataGridViewRow row in m_dgvDestSetting.Rows)
-                    switch ((FileINI.INDEX_CONNECTION_SETTING)row.Tag) {
-                        case FileINI.INDEX_CONNECTION_SETTING.IP:
-                            row.Cells[0].Value = _listDestConnSett[indxDest].server;
-                            break;
-                        case FileINI.INDEX_CONNECTION_SETTING.NPORT:
-                            row.Cells[0].Value = _listDestConnSett[indxDest].port;
-                            break;
-                        case FileINI.INDEX_CONNECTION_SETTING.DB_NAME:
-                            row.Cells[0].Value = _listDestConnSett[indxDest].dbName;
-                            break;
-                        case FileINI.INDEX_CONNECTION_SETTING.UID:
-                            row.Cells[0].Value = _listDestConnSett[indxDest].userName;
-                            break;
-                        case FileINI.INDEX_CONNECTION_SETTING.PSWD:
-                            row.Cells[0].Value = _listDestConnSett[indxDest].password;
-                            break;
-                        default:
-                            break;
+            if (m_dgvDestList.SelectedRows.Count > 0)
+                m_handler.Push(null, new object[] {
+                    new object [] {
+                        new object [] { HHandlerQueue.StatesMachine.DEST_DETAIL, (int)m_dgvDestList.SelectedRows[0].Tag }
                     }
-            } else
+                });
+            else
                 ;
         }
 
@@ -361,25 +344,6 @@ namespace xmlLoader
             // отправить запрос на получение контента выбранного пакета
             pushItemContent(INDEX_CONTROL.DGV_DATASET_LIST, (INDEX_CONTROL)m_tabControlDest.SelectedTab.Tag);
         }
-        ///// <summary>
-        ///// Отправить запрос на получение контента выбранного пакета
-        ///// </summary>
-        //private void pushPackageContent()
-        //{
-        //    if (m_dgvPackageList.SelectedRows.Count == 1)
-        //        m_handlerPackage.Push(null, new object[] {
-        //            new object[] {
-        //                new object [] {
-        //                    PackageHandlerQueue.StatesMachine.PACKAGE_CONTENT, m_dgvPackageList.SelectedRows[0].Tag, m_tabControlViewPackage.SelectedTab.Tag
-        //                }
-        //            }
-        //        });
-        //    else
-        //        if (m_dgvPackageList.SelectedRows.Count > 1)
-        //            throw new Exception(@"Строк выбрано больше, чем указано в свойствах...");
-        //        else
-        //            ;
-        //}
         /// <summary>
         /// ??? Общий метод - отправить запрос на получение контента выбранного элемента
         /// </summary>
@@ -408,10 +372,6 @@ namespace xmlLoader
             if ((!(dgv == null))
                 && (!(handlerQueue == null))
                 && (!(state < 0))) {
-                //tabParent = dgv.Parent;
-                //while (!(tabParent is TabControl))
-                //    tabParent = tabParent.Parent;
-
                 //if (!(tabParent == null))
                     if (dgv.SelectedRows.Count == 1)
                         handlerQueue.Push(null, new object[] {
@@ -615,6 +575,9 @@ namespace xmlLoader
                         }
                     });
                     break;
+                case HHandlerQueue.StatesMachine.DEST_DETAIL:
+                    BeginInvoke(new DelegateObjectFunc(fillDestDetail), (obj as object[])[1]);
+                    break;
                 case HHandlerQueue.StatesMachine.OPTION_PACKAGE:
                     BeginInvoke(new DelegateObjectFunc(setOptionPackage), (obj as object[])[1]);
 
@@ -692,22 +655,40 @@ namespace xmlLoader
             // поставить в очередь обработки событий
             m_handler.Push(m_udpListener, new object[] { obj });
         }
-
-        private List<ConnectionSettings> _listDestConnSett;
+        ///// <summary>
+        ///// Список объектов с параметрами соединения с источниками данных
+        /////  (хранение списка не обязательно, но при этом не требует постоянного опроса при выборе)
+        ///// </summary>
+        //private List<ConnectionSettings> _listDestConnSett;
 
         private void fillDestList(object obj)
         {
             DataGridViewRow rowAdding;
+            bool bPressed = false;
 
-            _listDestConnSett = obj as List<ConnectionSettings>;
+            List<WriterHandlerQueue.ConnectionSettings> listDestConnSett = obj as List<WriterHandlerQueue.ConnectionSettings>;
 
-            foreach(ConnectionSettings conSett in _listDestConnSett) {
+            foreach(WriterHandlerQueue.ConnectionSettings conSett in listDestConnSett) {
                 rowAdding = new DataGridViewRow();
                 rowAdding.CreateCells(m_dgvDestList);
                 if (rowAdding.SetValues(new object[] { conSett.name, @"->" }) == true) {
                     rowAdding.Tag = conSett.id;
 
                     m_dgvDestList.Rows.Add(rowAdding);
+
+                    bPressed = (bool)conSett.m_listItems[(int)WriterHandlerQueue.ConnectionSettings.INDEX_ITEM.AUTO_START];
+
+                    if (bPressed == true) {
+                        (rowAdding.Cells[1] as DataGridViewPressedButtonCell).Pressed =
+                            bPressed;
+
+                        m_handlerWriter.Push(null, new object[] {
+                            new object[] {
+                                new object[] { WriterHandlerQueue.StatesMachine.CONNSET_USE_CHANGED , conSett.id }
+                            }
+                        });
+                    } else
+                        ;
                 } else
                     ;
             }
@@ -719,6 +700,35 @@ namespace xmlLoader
                 m_dgvDestList.Rows[0].Selected = true;
             else
                 ;
+        }
+
+        private void fillDestDetail(object obj)
+        {
+            WriterHandlerQueue.ConnectionSettings connSett = obj as WriterHandlerQueue.ConnectionSettings;
+
+            foreach (DataGridViewRow row in m_dgvDestDetail.Rows)
+                switch ((WriterHandlerQueue.ConnectionSettings.INDEX_ITEM)row.Tag) {
+                    case WriterHandlerQueue.ConnectionSettings.INDEX_ITEM.AUTO_START:
+                        row.Cells[0].Value = connSett.m_listItems[(int)WriterHandlerQueue.ConnectionSettings.INDEX_ITEM.AUTO_START];
+                        break;
+                    case WriterHandlerQueue.ConnectionSettings.INDEX_ITEM.SERVER:
+                        row.Cells[0].Value = connSett.server;
+                        break;
+                    case WriterHandlerQueue.ConnectionSettings.INDEX_ITEM.NPORT:
+                        row.Cells[0].Value = connSett.port;
+                        break;
+                    case WriterHandlerQueue.ConnectionSettings.INDEX_ITEM.DB_NAME:
+                        row.Cells[0].Value = connSett.dbName;
+                        break;
+                    case WriterHandlerQueue.ConnectionSettings.INDEX_ITEM.UID:
+                        row.Cells[0].Value = connSett.userName;
+                        break;
+                    case WriterHandlerQueue.ConnectionSettings.INDEX_ITEM.PSWD:
+                        row.Cells[0].Value = connSett.password;
+                        break;
+                    default:
+                        break;
+                }
         }
 
         private void dgvDestList_CellContentClick(object sender, DataGridViewCellEventArgs e)

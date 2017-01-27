@@ -202,7 +202,7 @@ namespace xmlLoader
             /// <param name="indx">Индекс в массиве - элементе словаря с идентификаторами соединений</param>
             /// <param name="connSett">Параметры соединения с источником информации</param>
             /// <param name="name">Наименование соединения</param>
-            protected override void register(int id, int indx, ConnectionSettings connSett, string name)
+            protected override void register(int id, int indx, HClassLibrary.ConnectionSettings connSett, string name)
             {
                 bool bReq = true;
 

@@ -6,76 +6,124 @@ using System.Data;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Text;
 
 namespace xmlLoader
 {
     public class PackageHandlerQueue : HClassLibrary.HHandlerQueue
     {
+        /// <summary>
+        /// Структура для хранения значений настраиваемых параметров
+        /// </summary>
         public struct OPTION
         {
+            /// <summary>
+            /// Количество одновременно отображаемых элементов
+            /// </summary>
             public int COUNT_VIEW_ITEM;
-
+            /// <summary>
+            /// Интервал времени по прошествии которого отправить XML-пакет для сохранения
+            /// </summary>
             public TimeSpan TS_TIMER_TABLERES;
-
+            /// <summary>
+            /// Интервал времени по прошествии которого считать XML-пакет в приложениии (ОЗУ) устаревшим (удалять)
+            /// </summary>
             public TimeSpan TS_HISTORY_RUNTIME;
-
+            /// <summary>
+            /// Интервал времени в течение которого хранить устаревшие XML-пакеты вне приложения (ПЗУ)
+            /// </summary>
             public TimeSpan TS_HISTORY_ALONG;
+            /// <summary>
+            /// Признак хранения устаревших XML-пакетов
+            /// </summary>
+            public bool HISTORY_ISSUE;
         }
-
+        /// <summary>
+        /// Объект для хранения значений настраиваемых параметров
+        /// </summary>
         private static OPTION s_Option;
-
         /// <summary>
         /// Перечисление - возможные состояния для обработки
         /// </summary>
         public enum StatesMachine
         {
             UNKNOWN = -1
-            , NEW = 100// получен новый пакет            
+            , NEW = 100// получен новый пакет
             , LIST_PACKAGE // запрос для получения списка пакетов
             , PACKAGE_CONTENT // запрос для получения пакета
             , TIMER_TABLERES = 106 // событие устаревания XML-пакета ??? совпадает с 'WriteHandlerQueue.StatesMachine::STATISTIC'
-            , STATISTIC
-            , OPTION
-            , MESSAGE_TO_STATUSSTRIP
+            , STATISTIC // запрос на получение статистических данных
+            , OPTION // установить значения настраиваемых параметров
+            , MESSAGE_TO_STATUSSTRIP // сообщение для вывода в строку статуса главной формы
         }
-
+        /// <summary>
+        /// Структура для хранения статистических данных
+        /// </summary>
         public struct STATISTIC
         {
+            /// <summary>
+            /// Перечисление индексы для индексирования массива со статистическими данными 
+            /// </summary>
             public enum INDEX_ITEM {
-                DATETIME_PACKAGE_LAST_RECIEVED
-                , LENGTH_PACKAGE_LAST_RECIEVED
-                , COUNT_PACKAGE_RECIEVED
-                , COUNT_PACKAGE_PARSED
+                DATETIME_PACKAGE_LAST_RECIEVED // дата/время получения крайнего XML-пакета
+                , LENGTH_PACKAGE_LAST_RECIEVED // длина(размер) крайнего полученного XML-пакета
+                , COUNT_PACKAGE_RECIEVED // кол-во принятых пакетов (всего)
+                , COUNT_PACKAGE_PARSED // кол-во успешно разобранных пакетов (всего)
             }
-
+            /// <summary>
+            /// Структура для хранения информации об элементе массива со статистическими данными
+            /// </summary>
             public struct ITEM
             {
+                /// <summary>
+                /// Значение элемента
+                /// </summary>
                 public object value;
-
+                /// <summary>
+                /// Признак вывода для отображения
+                /// </summary>
                 public bool visibled;
-
+                /// <summary>
+                /// Описание элемента (заголовок строки представления)
+                /// </summary>
                 public string desc;
             }
-
+            /// <summary>
+            /// Массив элементов представления со статистическими данными
+            /// </summary>
             private ITEM[] _values;
-
+            /// <summary>
+            /// Конструктор - основной (с параметрами)
+            /// </summary>
+            /// <param name="values">Массив элементов</param>
             public STATISTIC(ITEM[]values)
             {
                 _values = new ITEM[values.Length];
 
                 values.CopyTo(_values, 0); 
             }
-
+            /// <summary>
+            /// Получить элемент из массива статистических данных по индексу
+            /// </summary>
+            /// <param name="indx">Индекс элемента</param>
+            /// <returns>Элемент статистических данных</returns>
             public ITEM ElementAt(INDEX_ITEM indx)
             {
                 return _values[(int)indx];
             }
-
+            /// <summary>
+            /// Установить значение для элемента в массиве по индексу
+            /// </summary>
+            /// <param name="indx">Индекс элемента</param>
+            /// <param name="value">Значение элемента</param>
             public void SetAt(INDEX_ITEM indx, object value)
             {
                 _values[(int)indx].value = value;
             }
-
+            /// <summary>
+            /// Увеличить значение элемента на еденицу (счетчик)
+            /// </summary>
+            /// <param name="indx">Индекс элемента</param>
             public void Counter(INDEX_ITEM indx)
             {
                 if (_values[(int)indx].value == null)
@@ -83,7 +131,9 @@ namespace xmlLoader
                 else
                     _values[(int)indx].value = (int)(_values[(int)indx].value) + 1;
             }
-
+            /// <summary>
+            /// Проверить является ли массив пустым
+            /// </summary>
             public bool IsEmpty {
                 get {
                     return (_values == null)
@@ -91,7 +141,9 @@ namespace xmlLoader
                 }
             }
         }
-
+        /// <summary>
+        /// Объект для хранения статистических данных
+        /// </summary>
         public static STATISTIC s_Statistic = new STATISTIC (new STATISTIC.ITEM[] {
             new STATISTIC.ITEM { desc = @"Вр.кр.пакета", visibled = true, value = DateTime.MinValue } // DATETIME_PACKAGE_LAST_RECIEVED
             , new STATISTIC.ITEM { desc = @"Разм.кр.пакета", visibled = true, value = 0 } // LENGTH_PACKAGE_LAST_RECIEVED
@@ -282,14 +334,17 @@ namespace xmlLoader
             // создать объект таймера, не запускать
             m_timerTableRes = new System.Threading.Timer(timerTableRes_onCallback, null, System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
         }
-
+        /// <summary>
+        /// Объект синхронизации для исключения преждевременного старта/активации текущего объекта
+        ///  старт/активация только при получении значений настраиваемых параметров
+        /// </summary>
         private ManualResetEvent m_manualEventSetOption;
 
         //public override void Start()
         //{
         //    base.Start();
 
-        //    //EvtToFormMain?.Invoke(new object[] { PackageHandlerQueue.StatesMachine.SETUP });
+        //    //EvtToFormMain?.Invoke(new object[] { PackageHandlerQueue.StatesMachine.OPTION });
         //}
         /// <summary>
         /// (Де)активировать таймер, определяющий срок отправления XML-пакета для обработки
@@ -343,7 +398,7 @@ namespace xmlLoader
                  orderby package.m_dtRecieved descending
                  select new FormMain.VIEW_ITEM {
                     Values = new object[] {
-                        package.m_tableValues.Rows.Count
+                        Encoding.ASCII.GetBytes(package.m_xmlSource.InnerXml).Length //package.m_tableValues.Rows.Count
                         , package.m_dtRecieved
                         , package.m_dtSended
                     }
@@ -408,7 +463,7 @@ namespace xmlLoader
         {
             int iRes = -1;
             StatesMachine state = (StatesMachine)s;
-            PACKAGE package;            
+            PACKAGE package;
             string debugMsg = string.Empty;
 
             error = true;
@@ -417,7 +472,7 @@ namespace xmlLoader
             ItemQueue itemQueue = null;
 
             try {
-                switch (state) {                    
+                switch (state) {
                     case StatesMachine.NEW: // новый пакет
                         iRes = 0;
                         error = false;

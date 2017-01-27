@@ -83,7 +83,6 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <None Include="app.config" />
     <None Include="Config\setup.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -101,7 +100,6 @@
     <Content Include="Config\template-1.3.1.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="IconMainxmlLoader.ico" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\uLoaderCommon\uLoaderCommon.csproj">

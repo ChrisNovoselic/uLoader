@@ -16,7 +16,7 @@ namespace xmlLoader
         /// </summary>
         public enum StatesMachine
         {
-            UNKNOWN = -1            
+            UNKNOWN = -1
             , UDP_CONNECTED_CHANGE // запрос на изменение состояния
             , WRITER_READY_CHANGE // запрос на изменение состояния
             , UDP_CONNECTED_CHANGED // событие - факт изменения состояния
@@ -25,9 +25,9 @@ namespace xmlLoader
             , XML_PACKAGE_TEMPLATE //Шаблон XML-пакета
             , NUDP_LISTENER //Номер порта прослушивателя
             , OPTION_PACKAGE, OPTION_DEST //Настраиваемые параметры
-            , LIST_DEST //Список источников данных (назначение - сохранение полученных значений)
+            , LIST_DEST, DEST_DETAIL //Список источников данных (назначение - сохранение полученных значений), параметры для соединения
             , TIMER_UPDATE
-            , MESSAGE_TO_STATUSSTRIP
+            , MESSAGE_TO_STATUSSTRIP // сообщение для вывода в строку статуса главной формы
         }
 
         private FormMain.FileINI m_fileINI;
@@ -139,6 +139,14 @@ namespace xmlLoader
 
                         EvtToFormMain?.Invoke(new object[] { state, m_fileINI.ListDest });
                         break;
+                    case StatesMachine.DEST_DETAIL: // параметры соединения с источником данных
+                        iRes = 0;
+                        error = false;
+
+                        itemQueue = Peek;
+
+                        EvtToFormMain?.Invoke(new object[] { state, m_fileINI.ListDest.Find(connSett => { return connSett.id == (int)itemQueue.Pars[0]; }) });
+                        break;
                     case StatesMachine.TIMER_UPDATE:
                         EvtToFormMain?.Invoke(new object[] { state, m_fileINI.TimerUpdate });
                         break;
@@ -182,6 +190,7 @@ namespace xmlLoader
                 case StatesMachine.OPTION_PACKAGE: //
                 case StatesMachine.OPTION_DEST: //
                 case StatesMachine.LIST_DEST: // cписок источников данных (назначение - сохранение полученных значений)
+                case StatesMachine.DEST_DETAIL: //
                 case StatesMachine.TIMER_UPDATE:
                     // не требуют запроса
                 default:
@@ -202,6 +211,7 @@ namespace xmlLoader
                     //Ответа не требуется/не требуют обработки результата
                     break;
                 case StatesMachine.LIST_DEST: // cписок источников данных (назначение - сохранение полученных значений)
+                case StatesMachine.DEST_DETAIL: //
                 case StatesMachine.OPTION_PACKAGE: // настраиваемые парметры Reader
                 case StatesMachine.OPTION_DEST: // настраиваемые парметры Writer
                 case StatesMachine.TIMER_UPDATE:

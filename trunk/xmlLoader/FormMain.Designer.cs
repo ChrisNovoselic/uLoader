@@ -60,7 +60,7 @@ namespace xmlLoader
             this.m_dgvDestList = new System.Windows.Forms.DataGridView();
             this.ColumnDestListName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColumnDestListState = new DataGridViewPressedButtonColumn();
-            this.m_dgvDestSetting = new System.Windows.Forms.DataGridView();
+            this.m_dgvDestDetail = new System.Windows.Forms.DataGridView();
             this.ColumnDestSettingValue = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.m_tabControlDest = new System.Windows.Forms.TabControl();
             this.m_tpageDestValue = new System.Windows.Forms.TabPage();
@@ -114,7 +114,7 @@ namespace xmlLoader
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvStatistic)).BeginInit();
             m_groupBoxDestSetting.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestList)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestSetting)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestDetail)).BeginInit();
             this.m_tabControlDest.SuspendLayout();
             this.m_tpageDestValue.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestValue)).BeginInit();
@@ -443,7 +443,7 @@ namespace xmlLoader
             m_groupBoxDestSetting.Controls.Add(this.m_btnDestRemove);
             m_groupBoxDestSetting.Controls.Add(this.m_btnDestAdd);
             m_groupBoxDestSetting.Controls.Add(this.m_dgvDestList);
-            m_groupBoxDestSetting.Controls.Add(this.m_dgvDestSetting);
+            m_groupBoxDestSetting.Controls.Add(this.m_dgvDestDetail);
             m_groupBoxDestSetting.Dock = System.Windows.Forms.DockStyle.Top;
             m_groupBoxDestSetting.Location = new System.Drawing.Point(0, 0);
             m_groupBoxDestSetting.Name = "m_groupBoxDestSetting";
@@ -505,22 +505,22 @@ namespace xmlLoader
             // 
             // m_dgvDestSetting
             // 
-            this.m_dgvDestSetting.AllowUserToAddRows = false;
-            this.m_dgvDestSetting.AllowUserToDeleteRows = false;
-            this.m_dgvDestSetting.AllowUserToResizeRows = false;
-            this.m_dgvDestSetting.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            this.m_dgvDestDetail.AllowUserToAddRows = false;
+            this.m_dgvDestDetail.AllowUserToDeleteRows = false;
+            this.m_dgvDestDetail.AllowUserToResizeRows = false;
+            this.m_dgvDestDetail.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.m_dgvDestSetting.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.m_dgvDestSetting.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.m_dgvDestDetail.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.m_dgvDestDetail.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.ColumnDestSettingValue});
-            this.m_dgvDestSetting.Location = new System.Drawing.Point(150, 19);
-            this.m_dgvDestSetting.MultiSelect = false;
-            this.m_dgvDestSetting.Name = "m_dgvDestSetting";
-            this.m_dgvDestSetting.ReadOnly = true;
-            this.m_dgvDestSetting.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
-            this.m_dgvDestSetting.Size = new System.Drawing.Size(257, 101);
-            this.m_dgvDestSetting.TabIndex = 0;
+            this.m_dgvDestDetail.Location = new System.Drawing.Point(150, 19);
+            this.m_dgvDestDetail.MultiSelect = false;
+            this.m_dgvDestDetail.Name = "m_dgvDestSetting";
+            this.m_dgvDestDetail.ReadOnly = true;
+            this.m_dgvDestDetail.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
+            this.m_dgvDestDetail.Size = new System.Drawing.Size(257, 101);
+            this.m_dgvDestDetail.TabIndex = 0;
             // 
             // ColumnDestSettingValue
             // 
@@ -988,7 +988,7 @@ namespace xmlLoader
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvStatistic)).EndInit();
             m_groupBoxDestSetting.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestList)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestSetting)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestDetail)).EndInit();
             this.m_tabControlDest.ResumeLayout(false);
             this.m_tpageDestValue.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestValue)).EndInit();
@@ -1062,7 +1062,7 @@ namespace xmlLoader
         private System.Windows.Forms.TabPage m_tpageDestValue;
         private System.Windows.Forms.DataGridView m_dgvDestValue;
         private DataGridView m_dgvPackageList;
-        private System.Windows.Forms.DataGridView m_dgvDestSetting;
+        private System.Windows.Forms.DataGridView m_dgvDestDetail;
         private System.Windows.Forms.Button m_btnDestRemove;
         private System.Windows.Forms.Button m_btnDestAdd;
         private System.Windows.Forms.DataGridView m_dgvDestList;

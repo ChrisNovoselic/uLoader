@@ -38,7 +38,7 @@ namespace xmlLoader
                 }
 
                 if (!(formMain == null))
-                    try {                        
+                    try {
                         Application.Run(formMain);
                     } catch (Exception e) {
                         strHeader = "Ошибка выполнения приложения";

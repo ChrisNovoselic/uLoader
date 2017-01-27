@@ -11,14 +11,66 @@ namespace xmlLoader
 {
     public partial class WriterHandlerQueue : HClassLibrary.HHandlerQueue
     {
+        /// <summary>
+        /// Структура для хранения значений настраиваемых параметров
+        ///  (из файла конфигурации)
+        /// </summary>
         public struct OPTION
         {
+            /// <summary>
+            /// Количество одновременно отображаемых наборов
+            /// </summary>
             public int COUNT_VIEW_ITEM;
-
+            /// <summary>
+            /// Интервал времени, в течение которого в ОЗУ удерживаются наборы
+            ///  , полученные для сохранения в БД
+            /// </summary>
             public TimeSpan TS_HISTORY_RUNTIME;
         }
+        /// <summary>
+        /// Объект со значениями настраиваемых параметров
+        /// </summary>
+        private static OPTION s_Option;
 
-        private static OPTION s_Option;        
+        public class ConnectionSettings : HClassLibrary.ConnectionSettings
+        {
+            public enum INDEX_ITEM {
+                AUTO_START
+                , ID, NAME_SHR, SERVER, INSTANCE, NPORT, DB_NAME, UID, PSWD
+            }
+
+            public List<object> m_listItems;
+
+            private void initialize(bool bAutoStart)
+            {
+                m_listItems = new List<object>() {
+                    bAutoStart
+                    , base.id, base.name, base.server, base.instance, base.port, base.dbName, base.userName, base.password
+                };
+            }
+
+            public ConnectionSettings(bool bAutoStart) : base()
+            {
+                initialize(bAutoStart);
+            }
+
+            public ConnectionSettings(bool bAutoStart, HClassLibrary.ConnectionSettings connSett) : base(connSett)
+            {
+                initialize(bAutoStart);
+            }
+
+            public ConnectionSettings(bool bAutoStart, string nameConn, string srv, string instance, int port, string dbName, string uid, string pswd)
+                : base(nameConn, srv, instance, port, dbName, uid, pswd)
+            {
+                initialize(bAutoStart);
+            }
+
+            public ConnectionSettings(bool bAutoStart, int id, string nameConn, string srv, string instance, int port, string dbName, string uid, string pswd)
+                : base(id, nameConn, srv, instance, port, dbName, uid, pswd)
+            {
+                initialize(bAutoStart);
+            }
+        }
         /// <summary>
         /// Перечисление - возможные состояния для обработки
         /// </summary>
@@ -30,9 +82,9 @@ namespace xmlLoader
             , LIST_DATASET // запрос для получения списка пакетов
             , DATASET_CONTENT // запрос для получения пакета
             //, STATISTIC
-            , CONNSET_USE_CHANGED
-            , OPTION
-            , MESSAGE_TO_STATUSSTRIP
+            , CONNSET_USE_CHANGED // изменилось состояние источника данных отправлять/запретить отправку наборов
+            , OPTION // установить значения настраиваемых параметров
+            , MESSAGE_TO_STATUSSTRIP // сообщение для вывода в строку статуса главной формы
         }
         /// <summary>
         /// Событие для отправки сообщения главной экранной форме
@@ -242,7 +294,7 @@ namespace xmlLoader
 
                         itemQueue = Peek;
                         // инициализация переданными значениями
-                        initialize(itemQueue.Pars[0] as List<ConnectionSettings>);
+                        initialize(itemQueue.Pars[0] as List<WriterHandlerQueue.ConnectionSettings>);
                         // установка соединения с источниками данных
                         _writer.StartDbInterfaces();
                         // обеспечить готовность к приему событий (TSQL-запросов для выполнения)
