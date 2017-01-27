@@ -16,7 +16,7 @@ namespace xmlLoader
         /// </summary>
         public enum StatesMachine
         {
-            UNKNOWN = -1
+            UNKNOWN = -1            
             , UDP_CONNECTED_CHANGE // запрос на изменение состояния
             , WRITER_READY_CHANGE // запрос на изменение состояния
             , UDP_CONNECTED_CHANGED // событие - факт изменения состояния
@@ -24,7 +24,9 @@ namespace xmlLoader
             , XML_PACKAGE_VERSION //Версия(строка) шаблон XML-пакета
             , XML_PACKAGE_TEMPLATE //Шаблон XML-пакета
             , NUDP_LISTENER //Номер порта прослушивателя
+            , OPTION_PACKAGE, OPTION_DEST //Настраиваемые параметры
             , LIST_DEST //Список источников данных (назначение - сохранение полученных значений)
+            , TIMER_UPDATE
             , MESSAGE_TO_STATUSSTRIP
         }
 
@@ -109,9 +111,25 @@ namespace xmlLoader
                         iRes = 0;
                         error = false;
 
-                        itemQueue = Peek;
+                        //itemQueue = Peek;
 
                         outobj = m_fileINI.NUDPListener;
+                        break;
+                    case StatesMachine.OPTION_PACKAGE:
+                        iRes = 0;
+                        error = false;
+
+                        itemQueue = Peek;
+
+                        EvtToFormMain?.Invoke(new object[] { state, m_fileINI.OptionPackage });
+                        break;
+                    case StatesMachine.OPTION_DEST:
+                        iRes = 0;
+                        error = false;
+
+                        //itemQueue = Peek;
+
+                        EvtToFormMain?.Invoke(new object[] { state, m_fileINI.OptionDataSet });
                         break;
                     case StatesMachine.LIST_DEST: // cписок источников данных (назначение - сохранение полученных значений)
                         iRes = 0;
@@ -120,6 +138,9 @@ namespace xmlLoader
                         itemQueue = Peek;
 
                         EvtToFormMain?.Invoke(new object[] { state, m_fileINI.ListDest });
+                        break;
+                    case StatesMachine.TIMER_UPDATE:
+                        EvtToFormMain?.Invoke(new object[] { state, m_fileINI.TimerUpdate });
                         break;
                     default:
                         break;
@@ -158,7 +179,10 @@ namespace xmlLoader
                 case StatesMachine.XML_PACKAGE_VERSION: // версия(строка) шаблон XML-пакета
                 case StatesMachine.XML_PACKAGE_TEMPLATE: // шаблон XML-пакета
                 case StatesMachine.NUDP_LISTENER: // номер порта прослушивателя
+                case StatesMachine.OPTION_PACKAGE: //
+                case StatesMachine.OPTION_DEST: //
                 case StatesMachine.LIST_DEST: // cписок источников данных (назначение - сохранение полученных значений)
+                case StatesMachine.TIMER_UPDATE:
                     // не требуют запроса
                 default:
                     break;
@@ -175,8 +199,13 @@ namespace xmlLoader
             switch ((StatesMachine)state) {                
                 case StatesMachine.UDP_CONNECTED_CHANGED:
                 case StatesMachine.UDP_LISTENER_PACKAGE_RECIEVED: // получен очередной XML-пакет
-                case StatesMachine.LIST_DEST: // cписок источников данных (назначение - сохранение полученных значений)
                     //Ответа не требуется/не требуют обработки результата
+                    break;
+                case StatesMachine.LIST_DEST: // cписок источников данных (назначение - сохранение полученных значений)
+                case StatesMachine.OPTION_PACKAGE: // настраиваемые парметры Reader
+                case StatesMachine.OPTION_DEST: // настраиваемые парметры Writer
+                case StatesMachine.TIMER_UPDATE:
+                    // взаимодействие через событие 'EvtToMainForm'
                     break;
                 case StatesMachine.UDP_CONNECTED_CHANGE:
                 case StatesMachine.WRITER_READY_CHANGE:

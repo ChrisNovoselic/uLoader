@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿using HClassLibrary;
+using System.Windows.Forms;
 
 namespace xmlLoader
 {
@@ -43,7 +44,7 @@ namespace xmlLoader
             this.m_dateTimePickerPackageFilterStart = new System.Windows.Forms.DateTimePicker();
             this.m_dateTimePickerPackageFilterEnd = new System.Windows.Forms.DateTimePicker();
             this.m_btnLoadPackageHistory = new System.Windows.Forms.Button();
-            this.m_nudnSettingPackageHistoryDepth = new System.Windows.Forms.NumericUpDown();
+            this.m_nudnPackageHistoryAlong = new System.Windows.Forms.NumericUpDown();
             this.m_cbxSettingPackageHistoryIssue = new System.Windows.Forms.CheckBox();
             this.m_dgvPackageList = new System.Windows.Forms.DataGridView();
             this.ColumnPackageListItemCount = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -58,7 +59,7 @@ namespace xmlLoader
             this.m_btnDestAdd = new System.Windows.Forms.Button();
             this.m_dgvDestList = new System.Windows.Forms.DataGridView();
             this.ColumnDestListName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnDestListState = new xmlLoader.DataGridViewPressedButtonColumn();
+            this.ColumnDestListState = new DataGridViewPressedButtonColumn();
             this.m_dgvDestSetting = new System.Windows.Forms.DataGridView();
             this.ColumnDestSettingValue = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.m_tabControlDest = new System.Windows.Forms.TabControl();
@@ -106,7 +107,7 @@ namespace xmlLoader
             m_labelDestDisplayCount = new System.Windows.Forms.Label();
             m_groupBoxListPackage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_nudnPackageDisplayCount)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.m_nudnSettingPackageHistoryDepth)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.m_nudnPackageHistoryAlong)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvPackageList)).BeginInit();
             m_groupBoxSession.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_nudnUDPPort)).BeginInit();
@@ -149,7 +150,7 @@ namespace xmlLoader
             m_groupBoxListPackage.Controls.Add(this.m_dateTimePickerPackageFilterStart);
             m_groupBoxListPackage.Controls.Add(this.m_dateTimePickerPackageFilterEnd);
             m_groupBoxListPackage.Controls.Add(this.m_btnLoadPackageHistory);
-            m_groupBoxListPackage.Controls.Add(this.m_nudnSettingPackageHistoryDepth);
+            m_groupBoxListPackage.Controls.Add(this.m_nudnPackageHistoryAlong);
             m_groupBoxListPackage.Controls.Add(this.m_cbxSettingPackageHistoryIssue);
             m_groupBoxListPackage.Controls.Add(this.m_dgvPackageList);
             m_groupBoxListPackage.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -197,7 +198,7 @@ namespace xmlLoader
             // 
             // m_cbxPackageIndiciesIssue
             // 
-            this.m_cbxPackageIndiciesIssue.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.m_cbxPackageIndiciesIssue.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)));
             this.m_cbxPackageIndiciesIssue.Appearance = System.Windows.Forms.Appearance.Button;
             this.m_cbxPackageIndiciesIssue.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.m_cbxPackageIndiciesIssue.Enabled = false;
@@ -211,7 +212,7 @@ namespace xmlLoader
             // 
             // m_btnPackageReSend
             // 
-            this.m_btnPackageReSend.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.m_btnPackageReSend.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)));
             this.m_btnPackageReSend.Enabled = false;
             this.m_btnPackageReSend.Location = new System.Drawing.Point(7, 156);
             this.m_btnPackageReSend.Name = "m_btnPackageReSend";
@@ -262,14 +263,14 @@ namespace xmlLoader
             // 
             // m_nudnSettingPackageHistoryDepth
             // 
-            this.m_nudnSettingPackageHistoryDepth.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.m_nudnSettingPackageHistoryDepth.Enabled = false;
-            this.m_nudnSettingPackageHistoryDepth.Location = new System.Drawing.Point(91, 200);
-            this.m_nudnSettingPackageHistoryDepth.Name = "m_nudnSettingPackageHistoryDepth";
-            this.m_nudnSettingPackageHistoryDepth.Size = new System.Drawing.Size(56, 20);
-            this.m_nudnSettingPackageHistoryDepth.TabIndex = 2;
-            this.m_nudnSettingPackageHistoryDepth.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.m_nudnSettingPackageHistoryDepth.ThousandsSeparator = true;
+            this.m_nudnPackageHistoryAlong.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.m_nudnPackageHistoryAlong.Enabled = false;
+            this.m_nudnPackageHistoryAlong.Location = new System.Drawing.Point(91, 200);
+            this.m_nudnPackageHistoryAlong.Name = "m_nudnSettingPackageHistoryDepth";
+            this.m_nudnPackageHistoryAlong.Size = new System.Drawing.Size(56, 20);
+            this.m_nudnPackageHistoryAlong.TabIndex = 2;
+            this.m_nudnPackageHistoryAlong.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.m_nudnPackageHistoryAlong.ThousandsSeparator = true;
             // 
             // m_cbxSettingPackageHistoryIssue
             // 
@@ -979,7 +980,7 @@ namespace xmlLoader
             m_groupBoxListPackage.ResumeLayout(false);
             m_groupBoxListPackage.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_nudnPackageDisplayCount)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.m_nudnSettingPackageHistoryDepth)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.m_nudnPackageHistoryAlong)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvPackageList)).EndInit();
             m_groupBoxSession.ResumeLayout(false);
             m_groupBoxSession.PerformLayout();
@@ -1039,7 +1040,7 @@ namespace xmlLoader
         private System.Windows.Forms.TabPage m_tpageViewPackageTableValue;
         private System.Windows.Forms.DataGridView m_dgvViewPackageTableValue;
         private System.Windows.Forms.Button m_btnLoadPackageHistory;
-        private System.Windows.Forms.NumericUpDown m_nudnSettingPackageHistoryDepth;
+        private System.Windows.Forms.NumericUpDown m_nudnPackageHistoryAlong;
         private System.Windows.Forms.CheckBox m_cbxSettingPackageHistoryIssue;
         private DataGridView m_dgvStatistic;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelEventName;

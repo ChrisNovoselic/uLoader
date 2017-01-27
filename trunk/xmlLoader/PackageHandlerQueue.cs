@@ -5,17 +5,24 @@ using System.Xml;
 using System.Data;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 
 namespace xmlLoader
 {
     public class PackageHandlerQueue : HClassLibrary.HHandlerQueue
     {
-        private static TimeSpan TS_TIMER_TABLERES = TimeSpan.FromSeconds(6);
+        public struct OPTION
+        {
+            public int COUNT_VIEW_ITEM;
 
-        private static int COUNT_VIEW_PACKAGE_ITEM = 12;
+            public TimeSpan TS_TIMER_TABLERES;
 
-        private static TimeSpan TS_HISTORY_RUNTIME = TimeSpan.FromSeconds(60);
-        private static TimeSpan TS_HISTORY_ALONG = TimeSpan.FromSeconds(0);
+            public TimeSpan TS_HISTORY_RUNTIME;
+
+            public TimeSpan TS_HISTORY_ALONG;
+        }
+
+        private static OPTION s_Option;
 
         /// <summary>
         /// Перечисление - возможные состояния для обработки
@@ -23,11 +30,12 @@ namespace xmlLoader
         public enum StatesMachine
         {
             UNKNOWN = -1
-            , NEW = 100// получен новый пакет
+            , NEW = 100// получен новый пакет            
             , LIST_PACKAGE // запрос для получения списка пакетов
             , PACKAGE_CONTENT // запрос для получения пакета
             , TIMER_TABLERES = 106 // событие устаревания XML-пакета ??? совпадает с 'WriteHandlerQueue.StatesMachine::STATISTIC'
             , STATISTIC
+            , OPTION
             , MESSAGE_TO_STATUSSTRIP
         }
 
@@ -266,17 +274,23 @@ namespace xmlLoader
         /// Конструктор основной (с парметрами)
         /// </summary>
         /// <param name="secIntervalOutdated">Интервал(сек) между отправлением XML-пакета для обработки</param>
-        public PackageHandlerQueue(short secIntervalOutdated = -1)
+        public PackageHandlerQueue()
         {
-            if (secIntervalOutdated > 0)
-                TS_TIMER_TABLERES = TimeSpan.FromSeconds(secIntervalOutdated);
-            else
-                ;
-
             _listPackage = new List<PACKAGE>();
+            // создать объект синхронизации для исключения преждевременной активации (запуска таймера с 0 мсек)
+            m_manualEventSetOption = new ManualResetEvent(false);
             // создать объект таймера, не запускать
             m_timerTableRes = new System.Threading.Timer(timerTableRes_onCallback, null, System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
         }
+
+        private ManualResetEvent m_manualEventSetOption;
+
+        //public override void Start()
+        //{
+        //    base.Start();
+
+        //    //EvtToFormMain?.Invoke(new object[] { PackageHandlerQueue.StatesMachine.SETUP });
+        //}
         /// <summary>
         /// (Де)активировать таймер, определяющий срок отправления XML-пакета для обработки
         /// </summary>
@@ -287,7 +301,15 @@ namespace xmlLoader
             bool bRes = base.Activate(active);
 
             if (bRes == true) {
-                m_timerTableRes.Change(active == true ? (int)TS_TIMER_TABLERES.TotalMilliseconds : System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+                if ((active == true)
+                    && (IsFirstActivated == true))
+                    new Thread(new ParameterizedThreadStart(delegate (object obj) {
+                        m_manualEventSetOption.WaitOne();
+
+                        m_timerTableRes.Change((bool)obj == true ? (int)s_Option.TS_TIMER_TABLERES.TotalMilliseconds : System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+                    })).Start(active);
+                else
+                    ;
             } else
                 ;
 
@@ -307,7 +329,7 @@ namespace xmlLoader
                 }
             });
 
-            m_timerTableRes.Change((int)TS_TIMER_TABLERES.TotalMilliseconds, System.Threading.Timeout.Infinite);
+            m_timerTableRes.Change((int)s_Option.TS_TIMER_TABLERES.TotalMilliseconds, System.Threading.Timeout.Infinite);
         }
         /// <summary>
         /// Список паектов для отправки на главную форму для отображения
@@ -325,7 +347,7 @@ namespace xmlLoader
                         , package.m_dtRecieved
                         , package.m_dtSended
                     }
-                }).Take(COUNT_VIEW_PACKAGE_ITEM).ToList().ForEach(item => listRes.Add(item));
+                }).Take(s_Option.COUNT_VIEW_ITEM).ToList().ForEach(item => listRes.Add(item));
 
                 return listRes;
             }
@@ -342,7 +364,7 @@ namespace xmlLoader
 
             PACKAGE package;
             // определить лимит даты/времени хранения пакетов времени выполнения
-            DateTime dtLimit = dtPackage - TS_HISTORY_RUNTIME;
+            DateTime dtLimit = dtPackage - s_Option.TS_HISTORY_RUNTIME;
             //список индексов элементов(пакетов) для удаления
             List<int> listIndxToRemove = new List<int>();
             for (int i = 0; i < _listPackage.Count; i++)
@@ -386,7 +408,7 @@ namespace xmlLoader
         {
             int iRes = -1;
             StatesMachine state = (StatesMachine)s;
-            PACKAGE package;
+            PACKAGE package;            
             string debugMsg = string.Empty;
 
             error = true;
@@ -395,7 +417,7 @@ namespace xmlLoader
             ItemQueue itemQueue = null;
 
             try {
-                switch (state) {
+                switch (state) {                    
                     case StatesMachine.NEW: // новый пакет
                         iRes = 0;
                         error = false;
@@ -453,6 +475,17 @@ namespace xmlLoader
                         itemQueue = Peek;
 
                         //outobj = ??? объект статический
+                        break;
+                    case StatesMachine.OPTION:
+                        iRes = 0;
+                        error = false;
+
+                        itemQueue = Peek;
+
+                        s_Option = (OPTION)itemQueue.Pars[0];
+                        m_manualEventSetOption.Set();
+
+                        //outobj = ??? только в одну сторону: форма -> handler
                         break;
                     case StatesMachine.TIMER_TABLERES: // срок отправлять очередной пакет
                         iRes = 0;
@@ -514,6 +547,7 @@ namespace xmlLoader
                 case StatesMachine.LIST_PACKAGE: //
                 case StatesMachine.PACKAGE_CONTENT: //
                 case StatesMachine.STATISTIC: //
+                case StatesMachine.OPTION: //
                 case StatesMachine.TIMER_TABLERES: //
                     // не требуют запроса
                 default:
@@ -530,6 +564,7 @@ namespace xmlLoader
 
             switch ((StatesMachine)state) {
                 case StatesMachine.NEW: // 
+                case StatesMachine.OPTION: //
                     //Ответа не требуется/не требуют обработки результата
                     break;
                 case StatesMachine.LIST_PACKAGE: // 

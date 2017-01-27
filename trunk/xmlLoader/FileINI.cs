@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Xml;
+using uLoaderCommon;
 
 namespace xmlLoader
 {
@@ -26,14 +27,51 @@ namespace xmlLoader
                 return GetSecValueOfKey(secName, key).Split(new Char[] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToList();
             }
 
+            public ushort TimerUpdate { get { return (ushort)new HTimeSpan(GetMainValueOfKey(@"TIMER_UPDATE")).Value.TotalSeconds; } }
+
+            public PackageHandlerQueue.OPTION OptionPackage
+            {
+                get {
+                    Dictionary<string, string> dictOption = GetSecValuesOfKey(@"Reader", @"OPTION");
+
+                    return new PackageHandlerQueue.OPTION() {
+                        COUNT_VIEW_ITEM = Int32.Parse(dictOption[@"COUNT_VIEW_ITEM"])
+                        , TS_TIMER_TABLERES = new HTimeSpan(dictOption[@"TIMER_TABLERES"]).Value
+                        , TS_HISTORY_RUNTIME = new HTimeSpan(dictOption[@"HISTORY_RUNTIME"]).Value
+                        , TS_HISTORY_ALONG = new HTimeSpan(dictOption[@"HISTORY_ALONG"]).Value
+                    };
+                }
+            }
+
+            public WriterHandlerQueue.OPTION OptionDataSet
+            {
+                get {
+                    Dictionary<string, string> dictOption = GetSecValuesOfKey(@"Writer", @"OPTION");
+
+                    return new WriterHandlerQueue.OPTION() {
+                        COUNT_VIEW_ITEM = Int32.Parse(dictOption[@"COUNT_VIEW_ITEM"])
+                        , TS_HISTORY_RUNTIME = new HTimeSpan(dictOption[@"HISTORY_RUNTIME"]).Value
+                    };
+                }
+            }
+
             public int NUDPListener
             {
                 get { return Int32.Parse(GetSecValueOfKey(@"Reader", @"NUDP")); }
             }
 
+            private Dictionary <string, string> xmlTemplate
+            {
+                get {
+                    return GetSecValuesOfKey(@"Reader", @"XML_TEMPLATE");
+                }
+            }
+
             public string XMLPackageVersion
             {
-                get { return GetSecValueOfKey(@"Reader", @"XML_TEMPLATE_VERSION"); }
+                get {
+                    return xmlTemplate[@"VERSION"];
+                }
             }
 
             public enum INDEX_CONNECTION_SETTING { ID, NAME_SHR, IP, NPORT, INSTANCE, DB_NAME, UID, PSWD }
@@ -54,6 +92,8 @@ namespace xmlLoader
                     i = 0;
                     while (true) {
                         values = getSecValuesOfKey(secName, string.Format(@"S{0}", i));
+
+                        //??? сверить ключи keys И dictValues.Keys
 
                         if (!(values.Count < keys.Count))
                             listRes.Add(new ConnectionSettings(
@@ -82,7 +122,7 @@ namespace xmlLoader
 
                 string nameXMLTemplate = string.Empty;
 
-                nameXMLTemplate = GetSecValueOfKey(@"Reader", @"XML_TEMPLATE_NAME");
+                nameXMLTemplate = xmlTemplate[@"NAME"];
                 nameXMLTemplate = nameXMLTemplate.Replace(@"?VERSION?", ver);
                 nameXMLTemplate = string.Format(@"{0}\{1}"
                     , Path.GetDirectoryName (m_NameFileINI)
@@ -99,7 +139,7 @@ namespace xmlLoader
                 }
 
                 return docRes;
-                }
+            }
         }
     }
 }

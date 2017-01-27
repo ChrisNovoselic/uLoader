@@ -20,9 +20,10 @@ namespace xmlLoader
         /// <summary>
         /// Перечисление - идентификаторы(Tag) некоторых элементов интерфейса
         /// </summary>
-        public enum INDEX_CONTROL {
-            CBX_READ_SESSION_START, CBX_READ_SESSION_STOP
+        public enum INDEX_CONTROL { UNKNOWN = -1
+            , CBX_READ_SESSION_START, CBX_READ_SESSION_STOP
             , DGV_PACKAGE_LIST, DGV_DATASET_LIST
+            , TABCONTROL_VIEW_PACKAGE, TABCONTROL_DEST
             , TABPAGE_VIEW_PACKAGE_XML, TABPAGE_VIEW_PACKAGE_TREE, TABPAGE_VIEW_PACKAGE_TABLE_VALUE, TABPAGE_VIEW_PACKAGE_TABLE_PARAMETER
             , TABPAGE_VIEW_DATASET_TABLE_VALUE, TABPAGE_VIEW_DATASET_TABLE_PARAMETER
         }
@@ -46,6 +47,8 @@ namespace xmlLoader
 
                 foreach (ListXmlTree itemXmlTree in listXmlTree)
                     addNodes(itemXmlTree, topNode.Nodes);
+
+                topNode.Expand();
             }
 
             private void addNodes(ListXmlTree listXmlTree, TreeNodeCollection nodes)
@@ -234,23 +237,44 @@ namespace xmlLoader
 
             m_timerUpdate = new System.Threading.Timer(timerUpdate_OnCallback, null, System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
 
-            m_dgvPackageList.AllowUserToResizeRows = false;
+            m_dgvPackageList.AllowUserToResizeRows = false; //??? почему не установлено в 'InitializeComponent'
             m_dgvPackageList.SelectionChanged += dgvPackageList_SelectionChanged;
+            m_dgvViewPackageTableValue.AllowUserToResizeColumns = false; //??? почему не установлено в 'InitializeComponent'
+            m_dgvViewPackageTableValue.AllowUserToResizeRows = false; //??? почему не установлено в 'InitializeComponent'
+            m_dgvViewPackageTableValue.DataSourceChanged += dgvViewDataTable_DataSourceChanged;
+            //m_dgvViewPackageTableParameter.DataSourceChanged += dgvViewDataTable_DataSourceChanged;
 
+            m_tabControlViewPackage.Tag = INDEX_CONTROL.TABCONTROL_VIEW_PACKAGE;
             m_tabControlViewPackage.Selecting += tabControl_Selecting;
-            m_tabControlViewPackage.Selected += tabControlViewPackage_Selected;
+            m_tabControlViewPackage.Selected += tabControl_Selected;
             m_tpageViewPackageXml.Tag = INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_XML;
             m_tpageViewPackageTree.Tag = INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_TREE;
             m_tpageViewPackageTableValue.Tag = INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_TABLE_VALUE;
             ((Control)m_tpageViewPackageTableValue).Enabled = true;
 
-            m_dgvDestDatasetList.AllowUserToResizeRows = false;
+            m_dgvDestDatasetList.AllowUserToResizeRows = false; //??? почему не установлено в 'InitializeComponent'
             m_dgvDestDatasetList.SelectionChanged += dgvDatasetList_SelectionChanged;
+            m_dgvDestValue.AllowUserToResizeColumns = false; //??? почему не установлено в 'InitializeComponent'
+            m_dgvDestValue.AllowUserToResizeRows = false; //??? почему не установлено в 'InitializeComponent'
+            m_dgvDestValue.RowHeadersVisible = false; //??? почему не установлено в 'InitializeComponent'
+            m_dgvDestValue.DataSourceChanged += dgvViewDataTable_DataSourceChanged;
+            m_dgvDestParameter.AllowUserToResizeColumns = false; //??? почему не установлено в 'InitializeComponent'
+            m_dgvDestParameter.AllowUserToResizeRows = false; //??? почему не установлено в 'InitializeComponent'
+            m_dgvDestParameter.RowHeadersVisible = false; //??? почему не установлено в 'InitializeComponent'
+            m_dgvDestParameter.DataSourceChanged += dgvViewDataTable_DataSourceChanged;
 
+            m_tabControlDest.Tag = INDEX_CONTROL.TABCONTROL_DEST;
             m_tabControlDest.Selecting += tabControl_Selecting;
+            m_tabControlDest.Selected += tabControl_Selected;
             m_tpageDestValue.Tag = INDEX_CONTROL.TABPAGE_VIEW_DATASET_TABLE_VALUE;
             ((Control)m_tpageDestParameter).Enabled = true;
             m_tpageDestParameter.Tag = INDEX_CONTROL.TABPAGE_VIEW_DATASET_TABLE_PARAMETER;
+        }
+
+        private void dgvViewDataTable_DataSourceChanged(object sender, EventArgs e)
+        {
+            foreach (DataGridViewColumn column in (sender as DataGridView).Columns)
+                column.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
         }
 
         private void dgvDestList_SelectionChanged(object sender, EventArgs e)
@@ -284,10 +308,25 @@ namespace xmlLoader
                 ;
         }
 
-        private void tabControlViewPackage_Selected(object sender, TabControlEventArgs e)
+        private void tabControl_Selected(object sender, TabControlEventArgs e)
         {
+            INDEX_CONTROL indxTypeItemList = (INDEX_CONTROL)(sender as Control).Tag == INDEX_CONTROL.TABCONTROL_VIEW_PACKAGE ?
+                INDEX_CONTROL.DGV_PACKAGE_LIST :
+                    (INDEX_CONTROL)(sender as Control).Tag == INDEX_CONTROL.TABCONTROL_DEST ?
+                        INDEX_CONTROL.DGV_DATASET_LIST : INDEX_CONTROL.UNKNOWN;
+
+            if ((INDEX_CONTROL)e.TabPage.Tag == INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_TREE)
+                m_treeViewPackage.Nodes.Clear();
+            else
+                ;
+
+            if (!(indxTypeItemList == INDEX_CONTROL.UNKNOWN))
             // отправить запрос на получение контента выбранного пакета
-            pushPackageContent();
+                pushItemContent(indxTypeItemList, (INDEX_CONTROL)e.TabPage.Tag);
+            else
+                Logging.Logg().Error(MethodBase.GetCurrentMethod()
+                    , string.Format(@"не найден идентификатор для представления, соответствующий {0}...", ((INDEX_CONTROL)(sender as Control).Tag).ToString())
+                    , Logging.INDEX_MESSAGE.NOT_SET);
         }
         /// <summary>
         /// Обработчик события - перед изменением активной вкладки
@@ -308,69 +347,89 @@ namespace xmlLoader
         private void dgvPackageList_SelectionChanged(object sender, EventArgs e)
         {
             //??? зачем очищать, если TABPAGE не отображается (проверить?)
-            m_treeViewPackage.Nodes.Clear();
+            if ((INDEX_CONTROL)m_tabControlViewPackage.SelectedTab.Tag == INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_TREE)
+                m_treeViewPackage.Nodes.Clear();
+            else
+                ;
 
             // отправить запрос на получение контента выбранного пакета
-            pushPackageContent();
+            pushItemContent(INDEX_CONTROL.DGV_PACKAGE_LIST, (INDEX_CONTROL)m_tabControlViewPackage.SelectedTab.Tag);
         }
 
         private void dgvDatasetList_SelectionChanged(object sender, EventArgs e)
         {
             // отправить запрос на получение контента выбранного пакета
-            pushDataSetContent();
+            pushItemContent(INDEX_CONTROL.DGV_DATASET_LIST, (INDEX_CONTROL)m_tabControlDest.SelectedTab.Tag);
         }
-        /// <summary>
-        /// Отправить запрос на получение контента выбранного пакета
-        /// </summary>
-        private void pushPackageContent()
-        {
-            if (m_dgvPackageList.SelectedRows.Count == 1)
-                m_handlerPackage.Push(null, new object[] {
-                    new object[] {
-                        new object [] {
-                            PackageHandlerQueue.StatesMachine.PACKAGE_CONTENT, m_dgvPackageList.SelectedRows[0].Tag, m_tabControlViewPackage.SelectedTab.Tag
-                        }
-                    }
-                });
-            else
-                if (m_dgvPackageList.SelectedRows.Count > 1)
-                    throw new Exception(@"Строк выбрано больше, чем указано в свойствах...");
-                else
-                    ;
-        }
-        /// <summary>
-        /// Отправить запрос на получение контента выбранного набора
-        /// </summary>
-        private void pushDataSetContent()
-        {
-            pushItemContent(INDEX_CONTROL.DGV_DATASET_LIST);
-        }
+        ///// <summary>
+        ///// Отправить запрос на получение контента выбранного пакета
+        ///// </summary>
+        //private void pushPackageContent()
+        //{
+        //    if (m_dgvPackageList.SelectedRows.Count == 1)
+        //        m_handlerPackage.Push(null, new object[] {
+        //            new object[] {
+        //                new object [] {
+        //                    PackageHandlerQueue.StatesMachine.PACKAGE_CONTENT, m_dgvPackageList.SelectedRows[0].Tag, m_tabControlViewPackage.SelectedTab.Tag
+        //                }
+        //            }
+        //        });
+        //    else
+        //        if (m_dgvPackageList.SelectedRows.Count > 1)
+        //            throw new Exception(@"Строк выбрано больше, чем указано в свойствах...");
+        //        else
+        //            ;
+        //}
         /// <summary>
         /// ??? Общий метод - отправить запрос на получение контента выбранного элемента
         /// </summary>
         /// <param name="indxItem">Индекс(таг) элемента управления</param>
-        private void pushItemContent(INDEX_CONTROL indxItem)
+        private void pushItemContent(INDEX_CONTROL indxItem, INDEX_CONTROL tagSelectedTab)
         {
-            DataGridView dgv = indxItem == INDEX_CONTROL.DGV_PACKAGE_LIST ? m_dgvPackageList :
-                indxItem == INDEX_CONTROL.DGV_DATASET_LIST ? m_dgvDestDatasetList :
-                    null;
+            DataGridView dgv = null;
+            IHHandlerQueue handlerQueue = null;
+            int state = -1;
 
-            if (!(dgv == null))
-                if (dgv.SelectedRows.Count == 1)
-                    m_handlerWriter.Push(null, new object[] {
-                        new object[] {
-                            new object [] {
-                                WriterHandlerQueue.StatesMachine.DATASET_CONTENT, dgv.SelectedRows[0].Tag, m_tabControlDest.SelectedTab.Tag
+            switch(indxItem) {
+                case INDEX_CONTROL.DGV_PACKAGE_LIST:
+                    state = (int)PackageHandlerQueue.StatesMachine.PACKAGE_CONTENT;
+                    dgv = m_dgvPackageList;
+                    handlerQueue = m_handlerPackage;
+                    break;
+                case INDEX_CONTROL.DGV_DATASET_LIST:
+                    state = (int)WriterHandlerQueue.StatesMachine.DATASET_CONTENT;
+                    dgv = m_dgvDestDatasetList;
+                    handlerQueue = m_handlerWriter;
+                    break;
+                default:
+                    break;
+            }
+
+            if ((!(dgv == null))
+                && (!(handlerQueue == null))
+                && (!(state < 0))) {
+                //tabParent = dgv.Parent;
+                //while (!(tabParent is TabControl))
+                //    tabParent = tabParent.Parent;
+
+                //if (!(tabParent == null))
+                    if (dgv.SelectedRows.Count == 1)
+                        handlerQueue.Push(null, new object[] {
+                            new object[] {
+                                new object [] {
+                                  state, dgv.SelectedRows[0].Tag, tagSelectedTab
+                                }
                             }
-                        }
-                    });
-                else
-                    if (dgv.SelectedRows.Count > 1)
-                        throw new Exception(string.Format(@"Строк выбрано {0} больше, чем указано в свойствах {1}...", dgv.SelectedRows.Count, indxItem.ToString()));
-                else
-                    ;
-            else
-                throw new Exception(string.Format(@"Аргумент {0} указывает на несуществущий элемент управления...", indxItem.ToString()));
+                        });
+                    else
+                        if (dgv.SelectedRows.Count > 1)
+                            throw new Exception(string.Format(@"Строк выбрано {0} больше, чем указано в свойствах {1}...", dgv.SelectedRows.Count, indxItem.ToString()));
+                        else
+                            ;
+                //else
+                //    throw new Exception(string.Format(@"Среди владельцев объекта {0} нет элементов с требуемым типом...", indxItem.ToString()));
+            } else
+                throw new Exception(string.Format(@"Аргумент {0} указывает на несуществующий элемент управления...", indxItem.ToString()));
         }
 
         public struct VIEW_ITEM
@@ -392,6 +451,10 @@ namespace xmlLoader
                 object[] dataSet;
 
                 switch (state) {
+                    //case PackageHandlerQueue.StatesMachine.SETUP:
+                    //    m_handler.Push(m_handlerPackage, new object[] {
+                    //    });
+                    //    break;
                     case PackageHandlerQueue.StatesMachine.LIST_PACKAGE:
                         updateDataGridViewItem (m_dgvPackageList, (IEnumerable<VIEW_ITEM>)(arg as object[])[1]);
                         break;
@@ -552,9 +615,69 @@ namespace xmlLoader
                         }
                     });
                     break;
+                case HHandlerQueue.StatesMachine.OPTION_PACKAGE:
+                    BeginInvoke(new DelegateObjectFunc(setOptionPackage), (obj as object[])[1]);
+
+                    m_handlerPackage.Push(null, new object[] {
+                        new object[] {
+                            new object [] {
+                                PackageHandlerQueue.StatesMachine.OPTION, (obj as object[])[1]
+                            }
+                        }
+                    });
+                    break;
+                case HHandlerQueue.StatesMachine.OPTION_DEST:
+                    BeginInvoke(new DelegateObjectFunc(setOptionDataSet), (obj as object[])[1]);
+
+                    m_handlerWriter.Push(null, new object[] {
+                        new object[] {
+                            new object [] {
+                                WriterHandlerQueue.StatesMachine.OPTION, (obj as object[])[1]
+                            }
+                        }
+                    });
+                    break;
+                case HHandlerQueue.StatesMachine.TIMER_UPDATE:
+                    // запустить таймер на обновление информации
+                    m_timerUpdate.Change((SEC_TIMER_UPDATE = (ushort)(obj as object[])[1]) * 1000, System.Threading.Timeout.Infinite);
+                    break;
                 default:
                     break;
             }            
+        }
+
+        private void setOptionPackage(object obj)
+        {
+            PackageHandlerQueue.OPTION optionPackage = (PackageHandlerQueue.OPTION)obj;
+
+            m_nudnPackageDisplayCount.Value = optionPackage.COUNT_VIEW_ITEM;
+            m_nudnPackageDisplayCount.ValueChanged += nudnPackageDisplayCount_ValueChanged;
+
+            m_nudnPackageHistoryAlong.Value = (int)optionPackage.TS_HISTORY_ALONG.TotalHours;
+            m_nudnPackageHistoryAlong.ValueChanged += nudnPackageHistoryAlong_ValueChanged;
+        }
+
+        private void nudnPackageDisplayCount_ValueChanged(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void nudnPackageHistoryAlong_ValueChanged(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void setOptionDataSet(object obj)
+        {
+            WriterHandlerQueue.OPTION optionDataSet = (WriterHandlerQueue.OPTION)obj;
+
+            m_nudnDestDisplayCount.Value = optionDataSet.COUNT_VIEW_ITEM;
+            m_nudnDestDisplayCount.ValueChanged += nudnDestDisplayCount_ValueChanged;
+        }
+
+        private void nudnDestDisplayCount_ValueChanged(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
         }
         /// <summary>
         /// Событие для постановки в очередь обработки событий сообщение для объекта-прослушивателя пакетов
@@ -651,9 +774,7 @@ namespace xmlLoader
             // запуск, активация обработчика очереди событий разбора пакетов
             m_handlerPackage.Start(); m_handlerPackage.Activate(true);
             // запуск объекта прослушивателя XML-пакетов (НЕ опрос)
-            m_udpListener.Start();
-            // запустить таймер на обновление информации
-            m_timerUpdate.Change(SEC_TIMER_UPDATE * 1000, System.Threading.Timeout.Infinite);
+            m_udpListener.Start();            
 
             // запросить(команда) изменение состояния
             if ((m_handler as HHandlerQueue).AutoStart == true)
@@ -663,8 +784,11 @@ namespace xmlLoader
 
             // запросить список параметров соединения с БД
             m_handler.Push(null, new object[] {
-                new object[] {
-                    new object[] { HHandlerQueue.StatesMachine.LIST_DEST }
+                new object[] {                    
+                    new object[] { HHandlerQueue.StatesMachine.OPTION_PACKAGE }
+                    , new object[] { HHandlerQueue.StatesMachine.OPTION_DEST }
+                    , new object[] { HHandlerQueue.StatesMachine.LIST_DEST }
+                    , new object[] { HHandlerQueue.StatesMachine.TIMER_UPDATE }
                 }
             });
         }

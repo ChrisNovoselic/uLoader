@@ -11,9 +11,14 @@ namespace xmlLoader
 {
     public partial class WriterHandlerQueue : HClassLibrary.HHandlerQueue
     {
-        private static int COUNT_VIEW_DATASET_ITEM = 12;
+        public struct OPTION
+        {
+            public int COUNT_VIEW_ITEM;
 
-        private static TimeSpan TS_HISTORY_RUNTIME = TimeSpan.FromSeconds(5 * 60);
+            public TimeSpan TS_HISTORY_RUNTIME;
+        }
+
+        private static OPTION s_Option;        
         /// <summary>
         /// Перечисление - возможные состояния для обработки
         /// </summary>
@@ -26,6 +31,7 @@ namespace xmlLoader
             , DATASET_CONTENT // запрос для получения пакета
             //, STATISTIC
             , CONNSET_USE_CHANGED
+            , OPTION
             , MESSAGE_TO_STATUSSTRIP
         }
         /// <summary>
@@ -122,7 +128,7 @@ namespace xmlLoader
 
             DATASET dataSet;
             // определить лимит даты/времени хранения пакетов времени выполнения
-            DateTime dtLimit = dtDataSet - TS_HISTORY_RUNTIME;
+            DateTime dtLimit = dtDataSet - s_Option.TS_HISTORY_RUNTIME;
             //список индексов элементов(пакетов) для удаления
             List<int> listIndxToRemove = new List<int>();
             for (int i = 0; i < _listDataSet.Count; i++)
@@ -168,7 +174,7 @@ namespace xmlLoader
                     , dataSet.m_dtRecieved
                     , dataSet.m_dictDatetimeQuered[key]
                 }
-                }).Take(COUNT_VIEW_DATASET_ITEM).ToList().ForEach(item => listRes.Add(item));
+                }).Take(s_Option.COUNT_VIEW_ITEM).ToList().ForEach(item => listRes.Add(item));
 
             return listRes;
         }
@@ -289,6 +295,15 @@ namespace xmlLoader
                         itemQueue = Peek;
                         _writer.ChangeConnSettUse((int)itemQueue.Pars[0]);
                         break;
+                    case StatesMachine.OPTION:
+                        iRes = 0;
+                        error = false;
+
+                        itemQueue = Peek;
+                        s_Option = (OPTION)itemQueue.Pars[0];
+
+                        //outobj = ??? только в одну сторону: форма -> handler
+                        break;
                     default:
                         break;
                 }
@@ -328,6 +343,7 @@ namespace xmlLoader
                 case StatesMachine.DATASET_CONTENT: //
                 //case StatesMachine.STATISTIC: //
                 case StatesMachine.CONNSET_USE_CHANGED: // 
+                case StatesMachine.OPTION: //
                     // не требуют запроса
                 default:
                     break;
@@ -354,6 +370,7 @@ namespace xmlLoader
                     break;
                 case StatesMachine.LIST_DEST: // получены параметры соединения БД, ответа не требуется
                 case StatesMachine.CONNSET_USE_CHANGED:
+                case StatesMachine.OPTION: //
                     //Ответа не требуется/не требуют обработки результата
                     break;
                 case StatesMachine.LIST_DATASET: // отправить главному окну(для отображения) информацию о поученных/обработанных наборах с данными
