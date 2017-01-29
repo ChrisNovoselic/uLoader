@@ -544,6 +544,10 @@ namespace xmlLoader
                     bConnected;
                 m_cbxReadSessionStop.Checked =
                     !m_cbxReadSessionStart.Checked;
+
+                имитацияпакетциклToolStripMenuItemPerformClick();
+
+                m_handlerPackage.Activate(m_cbxReadSessionStart.Checked);
             };
 
             Logging.Logg().Debug(MethodBase.GetCurrentMethod()
@@ -666,6 +670,10 @@ namespace xmlLoader
             DataGridViewRow rowAdding;
             bool bPressed = false;
 
+            //??? почему не выполнено в 'InitializeComponent'
+            ((from column in m_dgvDestList.Columns.Cast<DataGridViewColumn>() where column.GetType().Equals(typeof(DataGridViewPressedButtonColumn)) == true select column).ElementAt(0) as DataGridViewPressedButtonColumn).PressChanged +=
+                dgvDestList_PressChanged;
+
             List<WriterHandlerQueue.ConnectionSettings> listDestConnSett = obj as List<WriterHandlerQueue.ConnectionSettings>;
 
             foreach(WriterHandlerQueue.ConnectionSettings conSett in listDestConnSett) {
@@ -681,12 +689,7 @@ namespace xmlLoader
                     if (bPressed == true) {
                         (rowAdding.Cells[1] as DataGridViewPressedButtonCell).Pressed =
                             bPressed;
-
-                        m_handlerWriter.Push(null, new object[] {
-                            new object[] {
-                                new object[] { WriterHandlerQueue.StatesMachine.CONNSET_USE_CHANGED , conSett.id }
-                            }
-                        });
+                        
                     } else
                         ;
                 } else
@@ -737,16 +740,25 @@ namespace xmlLoader
                 && (!(e.RowIndex < 0))) {
                 ((sender as DataGridView).Rows[e.RowIndex].Cells[e.ColumnIndex] as DataGridViewPressedButtonCell).Pressed =
                     !((sender as DataGridView).Rows[e.RowIndex].Cells[e.ColumnIndex] as DataGridViewPressedButtonCell).Pressed;
+                // перенесено в 'dgvDestList_PressChanged'
+                //m_handlerWriter.Push(null, new object[] {
+                //    new object[] {
+                //        new object[] { WriterHandlerQueue.StatesMachine.CONNSET_USE_CHANGED , IdCurrentConnSett }
+                //    }
+                //});
 
                 (sender as DataGridView).Rows[e.RowIndex].Selected = true;
-
-                m_handlerWriter.Push(null, new object[] {
-                    new object[] {
-                        new object[] { WriterHandlerQueue.StatesMachine.CONNSET_USE_CHANGED , IdCurrentConnSett }
-                    }
-                });
             } else
                 ;
+        }
+
+        private void dgvDestList_PressChanged(int param)
+        {
+            m_handlerWriter.Push(null, new object[] {
+                new object[] {
+                    new object[] { WriterHandlerQueue.StatesMachine.CONNSET_USE_CHANGED , (int)m_dgvDestList.Rows[param].Tag }
+                }
+            });
         }
         /// <summary>
         /// Обработчик события - выбор п. главного меню Выход
@@ -782,25 +794,25 @@ namespace xmlLoader
             // запуск, активация обработчика очереди событий при записи значений в БД
             m_handlerWriter.Start(); m_handlerWriter.Activate(true);
             // запуск, активация обработчика очереди событий разбора пакетов
-            m_handlerPackage.Start(); m_handlerPackage.Activate(true);
+            m_handlerPackage.Start(); //m_handlerPackage.Activate(true);
             // запуск объекта прослушивателя XML-пакетов (НЕ опрос)
-            m_udpListener.Start();            
-
-            // запросить(команда) изменение состояния
-            if ((m_handler as HHandlerQueue).AutoStart == true)
-                evtUDPListenerDataAskedHost(new object[] { new object[] { HHandlerQueue.StatesMachine.UDP_CONNECTED_CHANGE, !m_cbxReadSessionStart.Checked } });
-            else
-                ;
+            m_udpListener.Start();
 
             // запросить список параметров соединения с БД
             m_handler.Push(null, new object[] {
-                new object[] {                    
+                new object[] {
                     new object[] { HHandlerQueue.StatesMachine.OPTION_PACKAGE }
                     , new object[] { HHandlerQueue.StatesMachine.OPTION_DEST }
                     , new object[] { HHandlerQueue.StatesMachine.LIST_DEST }
                     , new object[] { HHandlerQueue.StatesMachine.TIMER_UPDATE }
                 }
             });
+
+            // запросить(команда) изменение состояния
+            if ((m_handler as HHandlerQueue).AutoStart == true)
+                evtUDPListenerDataAskedHost(new object[] { new object[] { HHandlerQueue.StatesMachine.UDP_CONNECTED_CHANGE, !m_cbxReadSessionStart.Checked } });
+            else
+                ;
         }
         /// <summary>
         /// Обработчик события - Старт-Стоп для сессии (прием сообщений из UDP-канала)
@@ -811,18 +823,32 @@ namespace xmlLoader
         {
             bool bStartChecked = m_cbxReadSessionStart.Checked;
 
-            if (bStartChecked == true)
-                // команда на отключение - проверить включен ли отладочный цикл генерации серии пакетов
-                if (имитацияпакетциклToolStripMenuItem.Checked == true)
-                // серия также в работе - отключить
-                    имитацияпакетциклToolStripMenuItem.PerformClick();
-                else
-                    ;
-            else
-                ;
+            //if (bStartChecked == имитацияпакетциклToolStripMenuItem.Checked) {
+            //// команда на в(от)ключение - проверить в(ы)ключен ли отладочный цикл генерации серии пакетов
+            //// отладочная серия одинаковое состояние с 'UDPListener.connect' - в(от)ключить
+            //    имитацияпакетциклToolStripMenuItemPerformClick();
+            //} else
+            //    ;
 
             // запросить(команда) изменение состояния
             evtUDPListenerDataAskedHost(new object[] { new object[] { HHandlerQueue.StatesMachine.UDP_CONNECTED_CHANGE, !bStartChecked } });
+        }
+
+        private void имитацияпакетциклToolStripMenuItemPerformClick()
+        {
+            bool bPrevMenuItemEnabled = имитацияпакетциклToolStripMenuItem.Enabled;
+
+            if (bPrevMenuItemEnabled == false)
+                имитацияпакетциклToolStripMenuItem.Enabled = true;
+            else
+                ;
+
+            имитацияпакетциклToolStripMenuItem.PerformClick();
+
+            if (!(имитацияпакетциклToolStripMenuItem.Enabled = bPrevMenuItemEnabled))
+                имитацияпакетциклToolStripMenuItem.Enabled = bPrevMenuItemEnabled;
+            else
+                ;
         }
         /// <summary>
         /// Обработчик события - выбор п. меню "Отладака-Чтение-Пакет-Один"

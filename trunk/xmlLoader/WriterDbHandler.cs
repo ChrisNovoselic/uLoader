@@ -177,10 +177,11 @@ namespace xmlLoader
 
             public void ChangeConnSettUse(int idConnSett)
             {
-                if (!(idConnSett < 0))
+                if ((!(idConnSett < 0))
+                    && (m_dictConnSettUsed.ContainsKey(idConnSett) == true))
                     m_dictConnSettUsed[idConnSett] = !m_dictConnSettUsed[idConnSett];
                 else
-                    ;
+                    Logging.Logg().Error(MethodBase.GetCurrentMethod(), string.Format(@"не найден ключ={0}", idConnSett), Logging.INDEX_MESSAGE.NOT_SET);
             }
 
             public override void ClearValues()

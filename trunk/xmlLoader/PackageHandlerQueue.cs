@@ -356,15 +356,17 @@ namespace xmlLoader
             bool bRes = base.Activate(active);
 
             if (bRes == true) {
-                if ((active == true)
-                    && (IsFirstActivated == true))
-                    new Thread(new ParameterizedThreadStart(delegate (object obj) {
-                        m_manualEventSetOption.WaitOne();
+                if (IsFirstActivated == true)
+                    if (active == true)
+                        new Thread(new ParameterizedThreadStart(delegate (object obj) {
+                            m_manualEventSetOption.WaitOne();
 
-                        m_timerTableRes.Change((bool)obj == true ? (int)s_Option.TS_TIMER_TABLERES.TotalMilliseconds : System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
-                    })).Start(active);
+                            m_timerTableRes.Change((bool)obj == true ? (int)s_Option.TS_TIMER_TABLERES.TotalMilliseconds : System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+                        })).Start(active);
+                    else
+                        ;
                 else
-                    ;
+                    m_timerTableRes.Change(active == true ? (int)s_Option.TS_TIMER_TABLERES.TotalMilliseconds : System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
             } else
                 ;
 
