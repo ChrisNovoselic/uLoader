@@ -553,6 +553,9 @@ namespace xmlLoader
                 , Logging.INDEX_MESSAGE.NOT_SET);
             
             switch (state) {
+                case HHandlerQueue.StatesMachine.MESSAGE_TO_STATUSSTRIP:
+                    m_statusStripMain.Message((FormMain.StatusStrip.STATE)(obj as object[])[1], (string)(obj as object[])[2]);
+                    break;
                 case HHandlerQueue.StatesMachine.UDP_CONNECTED_CHANGED:
                     // выполнить анонимный метод
                     Invoke(new DelegateBoolFunc (connectedChanged), (bool)(obj as object[])[1]);
@@ -610,7 +613,10 @@ namespace xmlLoader
                     break;
             }            
         }
-
+        /// <summary>
+        /// Установить значения настраиваемых параметров
+        /// </summary>
+        /// <param name="obj">Объект со значениями настраиваемых параметров</param>
         private void setOptionPackage(object obj)
         {
             PackageHandlerQueue.OPTION optionPackage = (PackageHandlerQueue.OPTION)obj;
@@ -787,6 +793,8 @@ namespace xmlLoader
             base.FormMain_Load(sender, e);
             Text = (m_handler as HHandlerQueue).FormMainText;
 
+            m_statusStripMain.Start();
+
             // запуск, активация основного обработчика очереди событий
             m_handler.Start(); m_handler.Activate(true);
             // запуск, активация обработчика очереди событий при записи значений в БД
@@ -811,6 +819,13 @@ namespace xmlLoader
                 evtUDPListenerDataAskedHost(new object[] { new object[] { HHandlerQueue.StatesMachine.UDP_CONNECTED_CHANGE, !m_cbxReadSessionStart.Checked } });
             else
                 ;
+        }
+
+        protected override void FormMain_Closing(object sender, FormClosingEventArgs e)
+        {
+            m_statusStripMain.Stop();
+
+            base.FormMain_Closing(sender, e);
         }
         /// <summary>
         /// Обработчик события - Старт-Стоп для сессии (прием сообщений из UDP-канала)

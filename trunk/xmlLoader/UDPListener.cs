@@ -1,8 +1,11 @@
 ﻿using HClassLibrary;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -14,7 +17,7 @@ namespace xmlLoader
     {
         private const int SEC_INTERVAL_SERIES_EVENT_PACKAGE_RECIEVED = 3;
 
-        private static int m_iNPort;
+        private IPEndPoint m_Server;
 
         [Flags]
         private enum STATE : short {
@@ -51,6 +54,8 @@ namespace xmlLoader
             }
         }
 
+        private BackgroundWorker m_threadRecived;
+
         private static XmlDocument s_packageTemplate;
 
         private Timer m_debugTmerSeries;
@@ -61,12 +66,36 @@ namespace xmlLoader
         {
             m_debugTmerSeries = new Timer(debugTimerSeries_CallBack, null, Timeout.Infinite, Timeout.Infinite);
 
-            m_iNPort = -1;
+            m_threadRecived = new BackgroundWorker();
+            m_threadRecived.WorkerSupportsCancellation = true;
+            m_threadRecived.DoWork += fThreadRecived_DoWork;
+
+            m_Server = null;
             _versionXMLPackage = string.Empty;
         }
 
-        public event DelegateObjectFunc EvtDataAskedHost;
+        private void fThreadRecived_DoWork(object sender, DoWorkEventArgs e)
+        {
+            IPEndPoint remEP = null;
+            byte[] resRecieved;
+            
+            using (UdpClient udpClient = new UdpClient(m_Server))
+            {
+                while (true) {
+                    resRecieved = udpClient.Receive(ref remEP);
 
+
+                }
+            };
+        }
+
+        /// <summary>
+        /// Реализация интерфейса 'IDataHost' - событие для отправления сообщения
+        /// </summary>
+        public event DelegateObjectFunc EvtDataAskedHost;
+        /// <summary>
+        /// Событие для изменения 
+        /// </summary>
         private DelegateFunc evtStateChanged;
 
         private DelegateFunc evtConnectedChanged;
@@ -75,11 +104,11 @@ namespace xmlLoader
         {
             int iErr = 0;
 
-            if ((!(m_iNPort > 0))
-                && (_versionXMLPackage.Equals(string.Empty) == true))
+            if ((m_Server == null)
+                || (_versionXMLPackage.Equals(string.Empty) == true))
             // запросить номер порта, шаблон пакета(м номером версии)
                 DataAskedHost(new object[] {
-                    new object[] { HHandlerQueue.StatesMachine.NUDP_LISTENER }
+                    new object[] { HHandlerQueue.StatesMachine.UDP_LISTENER }
                     , new object[] { HHandlerQueue.StatesMachine.XML_PACKAGE_VERSION }
                 });
             else
@@ -143,7 +172,9 @@ namespace xmlLoader
 
             m_debugTmerSeries.Change(0, secInterval * 1000);
         }
-
+        /// <summary>
+        /// Метод отладки - останов процесса генерации серии пакетов
+        /// </summary>
         public void DebugStopSeriesEventPackageRecieved()
         {
             string debugMsg = @"СТОП генерации серии XML-пакетов";
@@ -153,7 +184,10 @@ namespace xmlLoader
 
             m_debugTmerSeries.Change(Timeout.Infinite, Timeout.Infinite);
         }
-
+        /// <summary>
+        /// Метод обратного вызова для таймера генерации серии пакетов
+        /// </summary>
+        /// <param name="obj">Аргумент при вызове метода</param>
         private void debugTimerSeries_CallBack(object obj)
         {
             string debugMsg = @"сгенерирован XML-пакет";
@@ -172,12 +206,19 @@ namespace xmlLoader
                 , xmlDoc }
             });
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns>Объект один из серии пакетов</returns>
         private XmlDocument debugGeneratePackageRecieved()
         {
             return CopyXmlDocument(s_packageTemplate);
         }
-
+        /// <summary>
+        /// Копировать XML-документ
+        /// </summary>
+        /// <param name="source">Источник для копирования</param>
+        /// <returns>Копия аргумента</returns>
         public static XmlDocument CopyXmlDocument(XmlDocument source)
         {
             XmlDocument xmlDocRes = new XmlDocument();
@@ -193,20 +234,27 @@ namespace xmlLoader
 
             return xmlDocRes;
         }
-
+        /// <summary>
+        /// Реализация интерфейса 'IDataHost' - отправить сообщение
+        /// </summary>
+        /// <param name="par">Объект для передачи</param>
         public void DataAskedHost(object par)
         {
             EvtDataAskedHost?.Invoke(par);
         }
-
+        /// <summary>
+        /// Реализация интерфейса 'IDataHost' - принять сообщение
+        /// </summary>
+        /// <param name="res">Объект с принятым сообщением</param>
         public void OnEvtDataRecievedHost(object res)
         {
             HHandlerQueue.StatesMachine stateMashine = (HHandlerQueue.StatesMachine)(res as object[])[0];
 
             try {
                 switch (stateMashine) {
-                    case HHandlerQueue.StatesMachine.NUDP_LISTENER:
-                        m_iNPort = (int)(res as object[])[1];
+                    case HHandlerQueue.StatesMachine.UDP_LISTENER:
+                        m_Server = new IPEndPoint(IPAddress.Parse((string)((res as object[])[1] as object[])[0])
+                            , (int)((res as object[])[1] as object[])[1]);
                         break;
                     case HHandlerQueue.StatesMachine.UDP_CONNECTED_CHANGE:
                         if ((bool)(res as object[])[1] == true)
@@ -235,12 +283,15 @@ namespace xmlLoader
                     , Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
-
+        /// <summary>
+        /// Установить соединение
+        /// </summary>
+        /// <returns>Результат выполнения метода</returns>
         private int connect()
         {
             int iRes = 0;
 
-            if (m_iNPort > 0)
+            if (!(m_Server == null))
                 state |= STATE.CONNECT
                     ;
             else
@@ -248,7 +299,9 @@ namespace xmlLoader
 
             return iRes;
         }
-
+        /// <summary>
+        /// Разорвать соединение с сервером - источником XML-пакетом
+        /// </summary>
         private void disconnect()
         {
             state -= STATE.CONNECT;

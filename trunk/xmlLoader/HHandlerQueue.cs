@@ -23,7 +23,7 @@ namespace xmlLoader
             , UDP_LISTENER_PACKAGE_RECIEVED //Получен очередной XML-пакет
             , XML_PACKAGE_VERSION //Версия(строка) шаблон XML-пакета
             , XML_PACKAGE_TEMPLATE //Шаблон XML-пакета
-            , NUDP_LISTENER //Номер порта прослушивателя
+            , UDP_LISTENER //Номер порта прослушивателя
             , OPTION_PACKAGE, OPTION_DEST //Настраиваемые параметры
             , LIST_DEST, DEST_DETAIL //Список источников данных (назначение - сохранение полученных значений), параметры для соединения
             , TIMER_UPDATE
@@ -107,13 +107,13 @@ namespace xmlLoader
 
                         outobj = m_fileINI.GetXMLPackageTemplate((string)itemQueue.Pars[0]);
                         break;
-                    case StatesMachine.NUDP_LISTENER: // номер порта прослушивателя
+                    case StatesMachine.UDP_LISTENER: // номер порта прослушивателя
                         iRes = 0;
                         error = false;
 
                         //itemQueue = Peek;
 
-                        outobj = m_fileINI.NUDPListener;
+                        outobj = new object[] { m_fileINI.IpUDPListener, m_fileINI.NUDPListener };
                         break;
                     case StatesMachine.OPTION_PACKAGE:
                         iRes = 0;
@@ -148,6 +148,9 @@ namespace xmlLoader
                         EvtToFormMain?.Invoke(new object[] { state, m_fileINI.ListDest.Find(connSett => { return connSett.id == (int)itemQueue.Pars[0]; }) });
                         break;
                     case StatesMachine.TIMER_UPDATE:
+                        iRes = 0;
+                        error = false;
+
                         EvtToFormMain?.Invoke(new object[] { state, m_fileINI.TimerUpdate });
                         break;
                     default:
@@ -170,6 +173,11 @@ namespace xmlLoader
                     break;
             }
 
+            EvtToFormMain(new object[] {
+                StatesMachine.MESSAGE_TO_STATUSSTRIP
+                , FormMain.StatusStrip.STATE.Error
+                , string.Format(@"При обработке события {0}", ((StatesMachine)state).ToString()) });
+
             Logging.Logg().Error(@"HHandlerQueue::StateErrors () - не обработана ошибка [" + ((StatesMachine)state).ToString() + @", REQ=" + req + @", RES=" + res + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
 
             return HHandler.INDEX_WAITHANDLE_REASON.SUCCESS;
@@ -186,7 +194,7 @@ namespace xmlLoader
                 case StatesMachine.UDP_LISTENER_PACKAGE_RECIEVED: // получен очередной XML-пакет
                 case StatesMachine.XML_PACKAGE_VERSION: // версия(строка) шаблон XML-пакета
                 case StatesMachine.XML_PACKAGE_TEMPLATE: // шаблон XML-пакета
-                case StatesMachine.NUDP_LISTENER: // номер порта прослушивателя
+                case StatesMachine.UDP_LISTENER: // номер порта прослушивателя
                 case StatesMachine.OPTION_PACKAGE: //
                 case StatesMachine.OPTION_DEST: //
                 case StatesMachine.LIST_DEST: // cписок источников данных (назначение - сохранение полученных значений)
@@ -221,7 +229,7 @@ namespace xmlLoader
                 case StatesMachine.WRITER_READY_CHANGE:
                 case StatesMachine.XML_PACKAGE_VERSION: // версия(строка) шаблон XML-пакета
                 case StatesMachine.XML_PACKAGE_TEMPLATE: // шаблон XML-пакета
-                case StatesMachine.NUDP_LISTENER: // номер порта прослушивателя                
+                case StatesMachine.UDP_LISTENER: // номер порта прослушивателя                
                     if ((!(itemQueue == null))
                         && (!(itemQueue.m_dataHostRecieved == null)))
                         itemQueue.m_dataHostRecieved.OnEvtDataRecievedHost(new object[] { state, obj });

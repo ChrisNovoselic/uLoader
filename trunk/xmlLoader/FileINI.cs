@@ -22,9 +22,19 @@ namespace xmlLoader
                 Logging.Logg().Debug(MethodBase.GetCurrentMethod(), @"успех", Logging.INDEX_MESSAGE.NOT_SET);
             }
 
-            private List<string> getSecValuesOfKey(string secName, string key)
+            private List<string> getSecListValuesOfKey(string secName, string key)
             {
                 return GetSecValueOfKey(secName, key).Split(new Char[] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            }
+
+            private List<string> getSecListValuesOfKey(string secName, string key, Char[] separator)
+            {
+                return GetSecValueOfKey(secName, key).Split(separator, StringSplitOptions.RemoveEmptyEntries).ToList();
+            }
+
+            private List<string> getSecListValuesOfKey(string secName, string key, string separator)
+            {
+                return GetSecValueOfKey(secName, key).Split(new string[] { separator }, StringSplitOptions.RemoveEmptyEntries).ToList();
             }
 
             public ushort TimerUpdate { get { return (ushort)new HTimeSpan(GetMainValueOfKey(@"TIMER_UPDATE")).Value.TotalSeconds; } }
@@ -57,7 +67,12 @@ namespace xmlLoader
 
             public int NUDPListener
             {
-                get { return Int32.Parse(GetSecValueOfKey(@"Reader", @"NUDP")); }
+                get { return Int32.Parse(getSecListValuesOfKey(@"Reader", @"SERVER", @"::")[1]); }
+            }
+
+            public string IpUDPListener
+            {
+                get { return getSecListValuesOfKey(@"Reader", @"SERVER", @"::")[0]; }
             }
 
             private Dictionary <string, string> xmlTemplate
@@ -85,11 +100,11 @@ namespace xmlLoader
                     List<string> keys
                         , values;
 
-                    keys = getSecValuesOfKey(secName, @"S-PARS");
+                    keys = getSecListValuesOfKey(secName, @"S-PARS");
 
                     i = 0;
                     while (true) {
-                        values = getSecValuesOfKey(secName, string.Format(@"S{0}", i));
+                        values = getSecListValuesOfKey(secName, string.Format(@"S{0}", i));
 
                         //??? сверить ключи keys И dictValues.Keys
 
