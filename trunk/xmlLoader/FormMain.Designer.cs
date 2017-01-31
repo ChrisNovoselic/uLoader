@@ -76,7 +76,7 @@ namespace xmlLoader
             this.m_dateTimePickerDestDataBaseFilterStart = new System.Windows.Forms.DateTimePicker();
             this.m_dateTimePickerDestDataBaseFilterStop = new System.Windows.Forms.DateTimePicker();
             this.m_btnDestDatabaseLoad = new System.Windows.Forms.Button();
-            this.m_statusStripMain = new StatusStrip();            
+            this.m_statusStripMain = StatusStrip.This;
             this.m_menuStripMain = new System.Windows.Forms.MenuStrip();
             this.файлToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.файлToolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();

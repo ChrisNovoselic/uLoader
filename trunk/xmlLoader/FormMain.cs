@@ -28,10 +28,6 @@ namespace xmlLoader
             , TABPAGE_VIEW_DATASET_TABLE_VALUE, TABPAGE_VIEW_DATASET_TABLE_PARAMETER
         }
 
-        public enum STATUS_STRIP_STATE { Unknown = -1
-            , Error, Warning, Action, Debug
-        }
-
         public class ListXmlTree : List<object>
         {
             public string Tag;
@@ -469,6 +465,7 @@ namespace xmlLoader
 
             switch (state) {
                 case PackageHandlerQueue.StatesMachine.MESSAGE_TO_STATUSSTRIP:
+                    m_statusStripMain.Message((FormMain.StatusStrip.STATE)(obj as object[])[1], (string)(obj as object[])[2]);
                     break;
                 default:
                     if (InvokeRequired == true)
@@ -517,6 +514,7 @@ namespace xmlLoader
 
             switch (state) {
                 case WriterHandlerQueue.StatesMachine.MESSAGE_TO_STATUSSTRIP:
+                    m_statusStripMain.Message((FormMain.StatusStrip.STATE)(obj as object[])[1], (string)(obj as object[])[2]);
                     break;
                 default:
                     if (InvokeRequired == true)

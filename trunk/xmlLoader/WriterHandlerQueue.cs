@@ -275,8 +275,6 @@ namespace xmlLoader
 
                         debugMsg = string.Format(@"Добавление нового набора [{0}]...", (DateTime)itemQueue.Pars[0]);
 
-                        EvtToFormMain(new object[] { StatesMachine.MESSAGE_TO_STATUSSTRIP, FormMain.STATUS_STRIP_STATE.Debug, debugMsg });
-
                         if (error == false) {
                         // добавленный набор поставить в очередь на запись
                             outobj = new DATASET_WRITER() {
@@ -415,6 +413,12 @@ namespace xmlLoader
         {
             int iRes = 0;
             ItemQueue itemQueue = Peek;
+
+            EvtToFormMain?.Invoke(new object[] {
+                StatesMachine.MESSAGE_TO_STATUSSTRIP
+                , FormMain.StatusStrip.STATE.Action
+                , string.Format(@"WriterHandlerQueue - обработка события {0}", ((StatesMachine)state).ToString())
+            });
 
             switch ((StatesMachine)state) {
                 case StatesMachine.NEW: // самый старый набор для постановки в очередь на запись, 
