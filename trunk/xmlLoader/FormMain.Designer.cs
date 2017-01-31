@@ -76,10 +76,7 @@ namespace xmlLoader
             this.m_dateTimePickerDestDataBaseFilterStart = new System.Windows.Forms.DateTimePicker();
             this.m_dateTimePickerDestDataBaseFilterStop = new System.Windows.Forms.DateTimePicker();
             this.m_btnDestDatabaseLoad = new System.Windows.Forms.Button();
-            this.m_statusStripMain = new System.Windows.Forms.StatusStrip();
-            this.toolStripStatusLabelEventName = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusLabelEventDateTime = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusLabelEventDesc = new System.Windows.Forms.ToolStripStatusLabel();
+            this.m_statusStripMain = new StatusStrip();            
             this.m_menuStripMain = new System.Windows.Forms.MenuStrip();
             this.файлToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.файлToolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
@@ -122,8 +119,7 @@ namespace xmlLoader
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestParameter)).BeginInit();
             m_groupBoxDatabase.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_nudnDestDisplayCount)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestDatasetList)).BeginInit();
-            this.m_statusStripMain.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestDatasetList)).BeginInit();            
             this.m_menuStripMain.SuspendLayout();
             this.splitContainerMain.Panel1.SuspendLayout();
             this.splitContainerMain.Panel2.SuspendLayout();
@@ -727,43 +723,7 @@ namespace xmlLoader
             this.m_btnDestDatabaseLoad.Size = new System.Drawing.Size(140, 23);
             this.m_btnDestDatabaseLoad.TabIndex = 7;
             this.m_btnDestDatabaseLoad.Text = "Загрузить";
-            this.m_btnDestDatabaseLoad.UseVisualStyleBackColor = true;
-            // 
-            // m_statusStripMain
-            // 
-            this.m_statusStripMain.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripStatusLabelEventName,
-            this.toolStripStatusLabelEventDateTime,
-            this.toolStripStatusLabelEventDesc});
-            this.m_statusStripMain.Location = new System.Drawing.Point(0, 694);
-            this.m_statusStripMain.Name = "m_statusStripMain";
-            this.m_statusStripMain.Size = new System.Drawing.Size(861, 22);
-            this.m_statusStripMain.TabIndex = 0;
-            this.m_statusStripMain.Text = "statusStrip1";
-            // 
-            // toolStripStatusLabelEventName
-            // 
-            this.toolStripStatusLabelEventName.AutoSize = false;
-            this.toolStripStatusLabelEventName.Name = "toolStripStatusLabelEventName";
-            this.toolStripStatusLabelEventName.Size = new System.Drawing.Size(120, 17);
-            this.toolStripStatusLabelEventName.Text = "Событие";
-            this.toolStripStatusLabelEventName.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // toolStripStatusLabelEventDateTime
-            // 
-            this.toolStripStatusLabelEventDateTime.AutoSize = false;
-            this.toolStripStatusLabelEventDateTime.Name = "toolStripStatusLabelEventDateTime";
-            this.toolStripStatusLabelEventDateTime.Size = new System.Drawing.Size(120, 17);
-            this.toolStripStatusLabelEventDateTime.Text = "Дата/время";
-            this.toolStripStatusLabelEventDateTime.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // toolStripStatusLabelEventDesc
-            // 
-            this.toolStripStatusLabelEventDesc.Name = "toolStripStatusLabelEventDesc";
-            this.toolStripStatusLabelEventDesc.Size = new System.Drawing.Size(606, 17);
-            this.toolStripStatusLabelEventDesc.Spring = true;
-            this.toolStripStatusLabelEventDesc.Text = "Описание события";
-            this.toolStripStatusLabelEventDesc.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.m_btnDestDatabaseLoad.UseVisualStyleBackColor = true;            
             // 
             // m_menuStripMain
             // 
@@ -997,9 +957,7 @@ namespace xmlLoader
             m_groupBoxDatabase.ResumeLayout(false);
             m_groupBoxDatabase.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_nudnDestDisplayCount)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestDatasetList)).EndInit();
-            this.m_statusStripMain.ResumeLayout(false);
-            this.m_statusStripMain.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestDatasetList)).EndInit();            
             this.m_menuStripMain.ResumeLayout(false);
             this.m_menuStripMain.PerformLayout();
             this.splitContainerMain.Panel1.ResumeLayout(false);
@@ -1024,7 +982,7 @@ namespace xmlLoader
 
         #endregion
 
-        private System.Windows.Forms.StatusStrip m_statusStripMain;
+        private StatusStrip m_statusStripMain;
         private System.Windows.Forms.MenuStrip m_menuStripMain;
         private System.Windows.Forms.ToolStripMenuItem файлToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator файлToolStripSeparator1;
@@ -1042,10 +1000,7 @@ namespace xmlLoader
         private System.Windows.Forms.Button m_btnLoadPackageHistory;
         private System.Windows.Forms.NumericUpDown m_nudnPackageHistoryAlong;
         private System.Windows.Forms.CheckBox m_cbxSettingPackageHistoryIssue;
-        private DataGridView m_dgvStatistic;
-        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelEventName;
-        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelEventDateTime;
-        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelEventDesc;
+        private DataGridView m_dgvStatistic;        
         private System.Windows.Forms.SplitContainer splitContainerMainWrite;
         private System.Windows.Forms.DateTimePicker m_dateTimePickerPackageFilterStart;
         private System.Windows.Forms.DateTimePicker m_dateTimePickerPackageFilterEnd;
