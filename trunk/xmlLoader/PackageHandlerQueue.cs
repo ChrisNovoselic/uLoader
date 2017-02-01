@@ -281,13 +281,13 @@ namespace xmlLoader
 
                 m_tableParameters = new DataTable();
                 m_tableParameters.Columns.AddRange(new DataColumn[] {
-                    new DataColumn (@"GROUP", typeof(string))
-                    , new DataColumn(@"PARAMETER", typeof(string))
+                    new DataColumn (@"XML_SECTION_NAME", typeof(string))
+                    , new DataColumn(@"XML_ITEM_NAME", typeof(string))
                 });
                 m_tableValues = new DataTable();
                 m_tableValues.Columns.AddRange(new DataColumn[] {
-                    new DataColumn (@"GROUP", typeof(string))
-                    , new DataColumn(@"PARAMETER", typeof(string))
+                    new DataColumn (@"XML_SECTION_NAME", typeof(string))
+                    , new DataColumn(@"XML_ITEM_NAME", typeof(string))
                     , new DataColumn(@"VALUE", typeof(float))
                 });
 
@@ -601,6 +601,7 @@ namespace xmlLoader
                 case StatesMachine.STATISTIC: //
                 case StatesMachine.OPTION: //
                 case StatesMachine.TIMER_TABLERES: //
+                case StatesMachine.MESSAGE_TO_STATUSSTRIP:
                     // не требуют запроса
                 default:
                     break;

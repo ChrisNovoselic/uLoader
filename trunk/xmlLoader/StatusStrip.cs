@@ -252,12 +252,16 @@ namespace xmlLoader
             /// <param name="msg">Описание сообщения</param>
             private void message(string msg)
             {
-                toolStripStatusLabelEventName.Text = m_dictEvent[_state].m_Name;
-                toolStripStatusLabelEventName.ForeColor = m_dictEvent[_state].m_clrFore;
-                //toolStripStatusLabelEventName.BackColor = m_dictEvent[_state].m_clrBackground;
+                try {
+                    toolStripStatusLabelEventName.Text = m_dictEvent[_state].m_Name;
+                    toolStripStatusLabelEventName.ForeColor = m_dictEvent[_state].m_clrFore;
+                    //toolStripStatusLabelEventName.BackColor = m_dictEvent[_state].m_clrBackground;
 
-                toolStripStatusLabelEventDateTime.Text = DateTime.Now.ToString();
-                toolStripStatusLabelEventDesc.Text = msg;
+                    toolStripStatusLabelEventDateTime.Text = DateTime.Now.ToString();
+                    toolStripStatusLabelEventDesc.Text = msg;
+                } catch (Exception e) {
+                    Logging.Logg().Exception(e, string.Format(@"Неизвестный тип сообщения state={0}", _state.ToString()), Logging.INDEX_MESSAGE.NOT_SET);
+                }
             }
         }
     }

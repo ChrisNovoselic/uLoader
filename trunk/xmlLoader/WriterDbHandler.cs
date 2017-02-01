@@ -56,11 +56,12 @@ namespace xmlLoader
             /// </summary>
             protected override void InitializeSyncState()
             {
-                m_waitHandleState = new WaitHandle[2];
-                m_waitHandleState[(int)INDEX_WAITHANDLE_REASON.ERROR] = new AutoResetEvent(true);
-
+                m_waitHandleState = new WaitHandle[(int)INDEX_WAITHANDLE_REASON.COUNT_INDEX_WAITHANDLE_REASON];
                 base.InitializeSyncState();
+                for (int i = (int)INDEX_WAITHANDLE_REASON.SUCCESS + 1; i < (int)INDEX_WAITHANDLE_REASON.COUNT_INDEX_WAITHANDLE_REASON; i++)
+                    m_waitHandleState[i] = new ManualResetEvent(false);
             }
+
             public override void Stop()
             {
                 _threadRequest.Dispose();
@@ -132,6 +133,9 @@ namespace xmlLoader
                 DATASET_WRITER dataSetWriter = (DATASET_WRITER)ev.Argument;
                 string fmtMsg = @"сохранение набора для IdConnSett={0}, [{1}]";
 
+                for (INDEX_WAITHANDLE_REASON i = INDEX_WAITHANDLE_REASON.ERROR; i < (INDEX_WAITHANDLE_REASON.ERROR + 1); i++)
+                    ((ManualResetEvent)m_waitHandleState[(int)i]).Reset();
+
                 Query = dataSetWriter.m_query;
 
                 try {
@@ -140,13 +144,18 @@ namespace xmlLoader
 
                         IdConnSettCurrent = m_queueIdConnSett.Dequeue();
 
-                        AddState((int)StatesMachine.Truncate); // добавить состояние для очистки таблицы перед вставкой
-                        AddState((int)StatesMachine.Merge); // добавить состояние для выполнения целевого запроса(вставка значений)
-                        AddState((int)StatesMachine.SP); // добавить состояние для выполнения ХП обработкии вставленных значений
-                        // обработать все состояния
-                        Run(string.Format(fmtMsg, IdConnSettCurrent, dataSetWriter.m_dtRecieved.ToString()));
-                        // ожидать завершения обработки всех состояний
-                        indxReasonCompleted = (INDEX_WAITHANDLE_REASON)WaitHandle.WaitAny(m_waitHandleState);
+                        foreach (StatesMachine state in Enum.GetValues(typeof(StatesMachine))) {
+                            AddState((int)state);
+
+                            Run(string.Format(fmtMsg, IdConnSettCurrent, dataSetWriter.m_dtRecieved.ToString()));
+                            // ожидать завершения обработки состояния
+                            indxReasonCompleted = (INDEX_WAITHANDLE_REASON)WaitHandle.WaitAny(m_waitHandleState);
+
+                            if (indxReasonCompleted == INDEX_WAITHANDLE_REASON.ERROR)
+                                break;
+                            else
+                                ; // continue
+                        }
                         // зафиксировать в логе результат
                         if (indxReasonCompleted == INDEX_WAITHANDLE_REASON.SUCCESS)
                             Logging.Logg().Debug(MethodBase.GetCurrentMethod()
@@ -245,15 +254,18 @@ namespace xmlLoader
 
             protected override INDEX_WAITHANDLE_REASON StateErrors(int state, int req, int res)
             {
-                HHandler.INDEX_WAITHANDLE_REASON resReason = INDEX_WAITHANDLE_REASON.SUCCESS;
+                HHandler.INDEX_WAITHANDLE_REASON indxReasonRes =
+                    //INDEX_WAITHANDLE_REASON.SUCCESS
+                    INDEX_WAITHANDLE_REASON.ERROR
+                    ;
 
-                this.completeHandleStates(INDEX_WAITHANDLE_REASON.ERROR);
+                //this.completeHandleStates(INDEX_WAITHANDLE_REASON.ERROR);
 
                 Logging.Logg().Error(
                     string.Format(@"WriterDbHandler::StateErrors (state={0}, req={1}, res={2}) - ...", ((StatesMachine)state).ToString(), req, res)
                     , Logging.INDEX_MESSAGE.NOT_SET);
 
-                return resReason;
+                return indxReasonRes;
             }
 
             protected override int StateRequest(int state)
@@ -286,13 +298,15 @@ namespace xmlLoader
 
             protected override int StateResponse(int state, object obj)
             {
-                if (isLastState(state) == true)
-                    this.completeHandleStates(INDEX_WAITHANDLE_REASON.SUCCESS);
-                else
-                    ;
+                INDEX_WAITHANDLE_REASON indxReasonRes = INDEX_WAITHANDLE_REASON.SUCCESS;
+
+                //if (isLastState(state) == true)
+                //    this.completeHandleStates(INDEX_WAITHANDLE_REASON.SUCCESS);
+                //else
+                //    ;
 
                 // ответ не требуется
-                return 0;
+                return (int)indxReasonRes;
             }
 
             protected override void StateWarnings(int state, int req, int res)

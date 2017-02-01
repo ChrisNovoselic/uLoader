@@ -6,6 +6,7 @@ using HClassLibrary;
 using System.Data;
 using System.Reflection;
 using System.Diagnostics;
+using System.Threading;
 
 namespace xmlLoader
 {
@@ -142,6 +143,9 @@ namespace xmlLoader
 
             public DATASET(IEnumerable<int>keys, DateTime dtRecieved, DataTable tableValues, DataTable tableParameters)
             {
+                string values = string.Empty
+                    , replacing = @"?VALUES?";
+
                 m_dtRecieved = dtRecieved;
 
                 m_dictDatetimeQuered = new Dictionary<int, DateTime>();
@@ -154,9 +158,37 @@ namespace xmlLoader
 
                 m_tableParameters = tableParameters.Copy();
 
-                m_query = @"INSERT INTO [dbo].[BIYSK_LOADER] ([XML_SECTION_NAME],[XML_ITEM_NAME],[VALUE],[DATA_DATE]) VALUES ('SEC', 'PAR', 0.00, GETDATE())";
+                m_query = @"MERGE [BIYSK_DATAARCHIVES].[dbo].[BIYSK_LOADER] AS [T]"
+                    + @" USING ("
+                    + @"SELECT [XML_SECTION_NAME],[XML_ITEM_NAME],[VALUE] FROM (VALUES"
+                    + replacing
+                    + @") AS [SOURCE]([XML_SECTION_NAME],[XML_ITEM_NAME],[VALUE])"
+                + @") AS [S]"
+                + @" ON ([T].[XML_SECTION_NAME] = [S].[XML_SECTION_NAME] AND [T].[XML_ITEM_NAME] = [S].[XML_ITEM_NAME])"
+                + @" WHEN NOT MATCHED BY TARGET THEN INSERT ([XML_SECTION_NAME], [XML_ITEM_NAME], [VALUE], [DATETIME])"
+                + @" VALUES ([XML_SECTION_NAME], [XML_ITEM_NAME], [VALUE], GETUTCDATE());";
 
-                m_state = STATE.QUERING;
+                if (m_tableValues.Rows.Count > 0) {
+                    foreach (DataRow r in m_tableValues.Rows) {
+                        values += string.Format(@"('{0}','{1}',{2}),"
+                            , r[@"XML_SECTION_NAME"]
+                            , r[@"XML_ITEM_NAME"]
+                            , r[@"VALUE"]
+                        );
+                    }
+
+                    if (values.Length > 0) {
+                        values = values.Substring(0, values.Length - 1);
+
+                        m_query = m_query.Replace(replacing, values);
+
+                        m_state = STATE.QUERING;
+                    } else
+                    // состояние набора остается прежним 'NEW'
+                        m_query = string.Empty;
+                } else
+                // состояние набора остается прежним 'NEW'
+                    m_query = string.Empty;
             }
 
             public DateTime m_dtRecieved;
@@ -243,6 +275,15 @@ namespace xmlLoader
                     indxReasonCompleted == INDEX_WAITHANDLE_REASON.SUCCESS ? DateTime.UtcNow :
                         indxReasonCompleted == INDEX_WAITHANDLE_REASON.ERROR ? DateTime.MaxValue :
                             DateTime.MinValue;
+
+                if (indxReasonCompleted == INDEX_WAITHANDLE_REASON.ERROR)
+                    EvtToFormMain?.Invoke(new object[] {
+                        StatesMachine.MESSAGE_TO_STATUSSTRIP
+                        , FormMain.StatusStrip.STATE.Error
+                        , string.Format(@"WriterHandlerQueue - ошибка при сохранении значений для источника={0} за {1:HH.mm.ss}", idConnSett, dtRecieved)
+                    });
+                else
+                    ;
             } catch (Exception e) {
                 Logging.Logg().Exception(e
                     , string.Format(@"не найден набор для IdConnSett={0}, [{1}]", idConnSett, dtRecieved.ToString())
@@ -369,6 +410,12 @@ namespace xmlLoader
 
         protected override INDEX_WAITHANDLE_REASON StateErrors(int state, int req, int res)
         {
+            EvtToFormMain?.Invoke(new object[] {
+                StatesMachine.MESSAGE_TO_STATUSSTRIP
+                , FormMain.StatusStrip.STATE.Error
+                , string.Format(@"WriterHandlerQueue - обработка события {0}", ((StatesMachine)state).ToString())
+            });
+
             switch ((StatesMachine)state) {
                 default:
                     break;
@@ -394,6 +441,7 @@ namespace xmlLoader
                 //case StatesMachine.STATISTIC: //
                 case StatesMachine.CONNSET_USE_CHANGED: // 
                 case StatesMachine.OPTION: //
+                case StatesMachine.MESSAGE_TO_STATUSSTRIP:
                     // не требуют запроса
                 default:
                     break;

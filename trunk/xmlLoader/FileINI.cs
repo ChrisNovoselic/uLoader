@@ -48,6 +48,7 @@ namespace xmlLoader
                         COUNT_VIEW_ITEM = Int32.Parse(dictOption[@"COUNT_VIEW_ITEM"])
                         , TS_TIMER_TABLERES = new HTimeSpan(dictOption[@"TIMER_TABLERES"]).Value
                         , TS_HISTORY_RUNTIME = new HTimeSpan(dictOption[@"HISTORY_RUNTIME"]).Value
+                        , HISTORY_ISSUE = bool.Parse(dictOption[@"HISTORY_ISSUE"])
                         , TS_HISTORY_ALONG = new HTimeSpan(dictOption[@"HISTORY_ALONG"]).Value
                     };
                 }
@@ -65,14 +66,24 @@ namespace xmlLoader
                 }
             }
 
-            public int NUDPListener
+            public object [] UDPListener
             {
-                get { return Int32.Parse(getSecListValuesOfKey(@"Reader", @"SERVER", @"::")[1]); }
+                get {
+                    return new object[] { getSecListValuesOfKey(@"Reader", @"SERVER", @"::")[0]
+                        , Int32.Parse(getSecListValuesOfKey(@"Reader", @"SERVER", @"::")[1])
+                    };
+                }
             }
 
-            public string IpUDPListener
+            public object[] UDPDebug
             {
-                get { return getSecListValuesOfKey(@"Reader", @"SERVER", @"::")[0]; }
+                get {
+                    Dictionary<string, string> dictDebug = GetMainValuesOfKey(@"UDP_DEBUG");
+
+                    return new object[] { dictDebug[@"TURN"]
+                        , dictDebug[@"INTERVAL_SERIES"]
+                    };
+                }
             }
 
             private Dictionary <string, string> xmlTemplate

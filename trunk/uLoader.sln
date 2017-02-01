@@ -33,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SrcVzlet", "SrcVzlet\SrcVzl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xmlLoader", "xmlLoader\xmlLoader.csproj", "{ED79A578-6896-47E3-8A93-300C113903D1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xmlServer", "xmlServer\xmlServer.csproj", "{928E5D35-775E-4FE6-9480-EF89730B703E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -221,6 +223,22 @@ Global
 		{ED79A578-6896-47E3-8A93-300C113903D1}.Release|x64.Build.0 = Release|Any CPU
 		{ED79A578-6896-47E3-8A93-300C113903D1}.Release|x86.ActiveCfg = Release|Any CPU
 		{ED79A578-6896-47E3-8A93-300C113903D1}.Release|x86.Build.0 = Release|Any CPU
+		{928E5D35-775E-4FE6-9480-EF89730B703E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{928E5D35-775E-4FE6-9480-EF89730B703E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{928E5D35-775E-4FE6-9480-EF89730B703E}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{928E5D35-775E-4FE6-9480-EF89730B703E}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{928E5D35-775E-4FE6-9480-EF89730B703E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{928E5D35-775E-4FE6-9480-EF89730B703E}.Debug|x64.Build.0 = Debug|Any CPU
+		{928E5D35-775E-4FE6-9480-EF89730B703E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{928E5D35-775E-4FE6-9480-EF89730B703E}.Debug|x86.Build.0 = Debug|Any CPU
+		{928E5D35-775E-4FE6-9480-EF89730B703E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{928E5D35-775E-4FE6-9480-EF89730B703E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{928E5D35-775E-4FE6-9480-EF89730B703E}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{928E5D35-775E-4FE6-9480-EF89730B703E}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{928E5D35-775E-4FE6-9480-EF89730B703E}.Release|x64.ActiveCfg = Release|Any CPU
+		{928E5D35-775E-4FE6-9480-EF89730B703E}.Release|x64.Build.0 = Release|Any CPU
+		{928E5D35-775E-4FE6-9480-EF89730B703E}.Release|x86.ActiveCfg = Release|Any CPU
+		{928E5D35-775E-4FE6-9480-EF89730B703E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

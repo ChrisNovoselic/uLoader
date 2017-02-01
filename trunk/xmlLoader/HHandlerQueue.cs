@@ -17,6 +17,7 @@ namespace xmlLoader
         public enum StatesMachine
         {
             UNKNOWN = -1
+            , UDP_DEBUG
             , UDP_CONNECTED_CHANGE // запрос на изменение состояния
             , WRITER_READY_CHANGE // запрос на изменение состояния
             , UDP_CONNECTED_CHANGED // событие - факт изменения состояния
@@ -77,7 +78,7 @@ namespace xmlLoader
 
                         itemQueue = Peek;
 
-                        EvtToFormMain?.Invoke(new object[] { state, itemQueue.Pars[0] });
+                        EvtToFormMain?.Invoke(new object[] { state, itemQueue.Pars[0], itemQueue.Pars[1] });
                         break;
                     case StatesMachine.UDP_LISTENER_PACKAGE_RECIEVED: // получен очередной XML-пакет
                         iRes = 0;
@@ -107,13 +108,21 @@ namespace xmlLoader
 
                         outobj = m_fileINI.GetXMLPackageTemplate((string)itemQueue.Pars[0]);
                         break;
+                    case StatesMachine.UDP_DEBUG: // параметры отладки
+                        iRes = 0;
+                        error = false;
+
+                        //itemQueue = Peek;
+
+                        outobj = m_fileINI.UDPDebug;
+                        break;
                     case StatesMachine.UDP_LISTENER: // номер порта прослушивателя
                         iRes = 0;
                         error = false;
 
                         //itemQueue = Peek;
 
-                        outobj = new object[] { m_fileINI.IpUDPListener, m_fileINI.NUDPListener };
+                        outobj = m_fileINI.UDPListener;
                         break;
                     case StatesMachine.OPTION_PACKAGE:
                         iRes = 0;
@@ -194,6 +203,7 @@ namespace xmlLoader
                 case StatesMachine.UDP_LISTENER_PACKAGE_RECIEVED: // получен очередной XML-пакет
                 case StatesMachine.XML_PACKAGE_VERSION: // версия(строка) шаблон XML-пакета
                 case StatesMachine.XML_PACKAGE_TEMPLATE: // шаблон XML-пакета
+                case StatesMachine.UDP_DEBUG: //
                 case StatesMachine.UDP_LISTENER: // номер порта прослушивателя
                 case StatesMachine.OPTION_PACKAGE: //
                 case StatesMachine.OPTION_DEST: //
@@ -229,6 +239,7 @@ namespace xmlLoader
                 case StatesMachine.WRITER_READY_CHANGE:
                 case StatesMachine.XML_PACKAGE_VERSION: // версия(строка) шаблон XML-пакета
                 case StatesMachine.XML_PACKAGE_TEMPLATE: // шаблон XML-пакета
+                case StatesMachine.UDP_DEBUG: //
                 case StatesMachine.UDP_LISTENER: // номер порта прослушивателя                
                     if ((!(itemQueue == null))
                         && (!(itemQueue.m_dataHostRecieved == null)))

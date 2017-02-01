@@ -535,15 +535,21 @@ namespace xmlLoader
             HHandlerQueue.StatesMachine state = (HHandlerQueue.StatesMachine)(obj as object[])[0];
 
             // анонимная функция для выполнения в контексте формы
-            DelegateBoolFunc connectedChanged = delegate (bool bConnected) {
+            Action<bool, bool> connectedChanged = delegate (bool bConnected, bool bDebugTurn) {
+
                 имитацияпакетодинToolStripMenuItem.Enabled =
                 имитацияпакетциклToolStripMenuItem.Enabled =
+                    bConnected && bDebugTurn;
+
                 m_cbxReadSessionStart.Checked =
                     bConnected;
                 m_cbxReadSessionStop.Checked =
                     !m_cbxReadSessionStart.Checked;
 
-                имитацияпакетциклToolStripMenuItemPerformClick();
+                if (bDebugTurn == true)
+                    имитацияпакетциклToolStripMenuItemPerformClick();
+                else
+                    ;
 
                 m_handlerPackage.Activate(m_cbxReadSessionStart.Checked);
             };
@@ -558,7 +564,7 @@ namespace xmlLoader
                     break;
                 case HHandlerQueue.StatesMachine.UDP_CONNECTED_CHANGED:
                     // выполнить анонимный метод
-                    Invoke(new DelegateBoolFunc (connectedChanged), (bool)(obj as object[])[1]);
+                    Invoke(new Action<bool, bool> (connectedChanged), (obj as object[])[1], (obj as object[])[2]);
                     break;
                 case HHandlerQueue.StatesMachine.UDP_LISTENER_PACKAGE_RECIEVED:
                     m_handlerPackage.Push(null, new object [] {

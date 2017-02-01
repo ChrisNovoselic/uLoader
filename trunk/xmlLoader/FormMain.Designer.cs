@@ -472,6 +472,8 @@ namespace xmlLoader
             // 
             this.m_dgvDestList.AllowUserToAddRows = false;
             this.m_dgvDestList.AllowUserToDeleteRows = false;
+            this.m_dgvDestList.AllowUserToResizeColumns = false;
+            this.m_dgvDestList.AllowUserToResizeRows = false;
             this.m_dgvDestList.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
             this.m_dgvDestList.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
@@ -481,7 +483,7 @@ namespace xmlLoader
             this.m_dgvDestList.Location = new System.Drawing.Point(7, 19);
             this.m_dgvDestList.MultiSelect = false;
             this.m_dgvDestList.Name = "m_dgvDestList";
-            this.m_dgvDestList.RowHeadersVisible = false;
+            this.m_dgvDestList.RowHeadersVisible = false;            
             this.m_dgvDestList.Size = new System.Drawing.Size(140, 71);
             this.m_dgvDestList.TabIndex = 1;
             // 
