@@ -86,11 +86,7 @@ namespace xmlLoader
 
                         itemQueue = Peek;
 
-                        EvtToFormMain?.Invoke(new object[] { state, itemQueue.Pars[0], itemQueue.Pars[1] });
-
-                        debugMsg = @"получен XML-пакет, добавлен в очередь для обработки";
-                        Logging.Logg().Debug(MethodBase.GetCurrentMethod(), debugMsg, Logging.INDEX_MESSAGE.NOT_SET);
-                        Debug.WriteLine(string.Format(@"{0}: {1}", DateTime.Now.ToString(), debugMsg));
+                        EvtToFormMain?.Invoke(new object[] { state, itemQueue.Pars[0], itemQueue.Pars[1] });                        
                         break;
                     case StatesMachine.XML_PACKAGE_VERSION: // версия(строка) шаблон XML-пакета
                         iRes = 0;

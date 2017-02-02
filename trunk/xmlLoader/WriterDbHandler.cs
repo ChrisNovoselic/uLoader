@@ -7,6 +7,7 @@ using System.Data;
 using System.Reflection;
 using System.Threading;
 using System.ComponentModel;
+using System.Threading.Tasks;
 
 namespace xmlLoader
 {
@@ -14,20 +15,26 @@ namespace xmlLoader
     {
         private class WriterDbHandler : HHandlerDb, IDataHost
         {
+            /// <summary>
+            /// Перечисление - 
+            /// </summary>
             private enum StatesMachine { Truncate, Merge, SP }
-
+            /// <summary>
+            /// Список объектов с параметрами соединения с БД (источники данных)
+            /// </summary>
             private List<ConnectionSettings> m_listConnSett;
-
+            /// <summary>
+            /// Очередь (из идентификаторов источников данных) для очередного запроса
+            ///  - зависит от вкл./откл. конкретного источника данных
+            /// </summary>
             private Queue<int> m_queueIdConnSett;
-
-            private Dictionary<int, bool> m_dictConnSettUsed;
-
-            //private Thread _threadRequest;
-            private BackgroundWorker _threadRequest;
-
-            //public event DelegateIntFunc EvtDatasetQuered;
+            /// <summary>
+            /// Реализация интерфейса 'IDataHost' - событие для передачи данных
+            /// </summary>
             public event DelegateObjectFunc EvtDataAskedHost;
-
+            /// <summary>
+            /// Возвратить список идентификаторов известных источников данных
+            /// </summary>
             public IEnumerable<int> ListConnSettKey
             {
                 get {
@@ -40,16 +47,14 @@ namespace xmlLoader
                     //return listRes;
                 }
             }
-
+            /// <summary>
+            /// Конструктор - основной (без параметров)
+            /// </summary>
             public WriterDbHandler()
             {
-                m_dictConnSettUsed = new Dictionary<int, bool>();
-
                 m_queueIdConnSett = new Queue<int>();
-
-                _threadRequest = new BackgroundWorker();
-                _threadRequest.WorkerSupportsCancellation = true;
-                _threadRequest.DoWork += new DoWorkEventHandler(fThreadRequest);
+                //??? некорректно, следует пересмотреть порядок инициализации объектов
+                m_manualEventInitListConnSett = new ManualResetEvent(false);
             }
             /// <summary>
             /// Инициализировать дополнительные объекты синхронизации
@@ -64,43 +69,22 @@ namespace xmlLoader
 
             public override void Stop()
             {
-                _threadRequest.Dispose();
+                //_threadRequest.Dispose();
 
                 base.Stop();
             }
+
+            CancellationTokenSource _cancelRequest;
             /// <summary>
             /// Выполнить запрос
             /// </summary>
             /// <param name="query">Запрос для выполнения</param>
             public void Request(DATASET_WRITER dataSetWriter)
             {
-                // остановить поток, если выполняется
-                if (!(_threadRequest == null)) {
-                    //if (_threadRequest.IsAlive == true) {
-                    //    if (_threadRequest.Join(666) == false)
-                    //    {
-                    //        _threadRequest.Interrupt();
-                    //        if (((_threadRequest.ThreadState & ThreadState.Running) == ThreadState.Running)
-                    //            || ((_threadRequest.ThreadState & ThreadState.Background) == ThreadState.Background)
-                    //            || ((_threadRequest.ThreadState & ThreadState.Suspended) == ThreadState.Suspended))
-                    //            _threadRequest.Abort();
-                    //        else
-                    //            ;
-                    //    } else
-                    //        ;
-                    //} else {
-                    //}
-
-                    ////WaitHandle.
-                    ////_threadRequest.
-                    //_threadRequest = null;
-
-                    if (_threadRequest.IsBusy == true) {
-                        _threadRequest.CancelAsync();
-                    } else {
-                    }
-
-                    GC.Collect();
+                if (!(_cancelRequest == null)) {
+                    _cancelRequest.Cancel();
+                    _cancelRequest.Dispose();
+                    _cancelRequest = null;
                 } else
                     ;
 
@@ -108,66 +92,65 @@ namespace xmlLoader
                 m_queueIdConnSett.Clear();
                 // сформировать очередь с источниками данных, в ~ от его вкл./выкл. для выполнения запроса к ним
                 foreach (ConnectionSettings connSett in m_listConnSett)
-                    if (m_dictConnSettUsed[connSett.id] == true) m_queueIdConnSett.Enqueue(connSett.id); else;
-                // запустить, при необходимости поток выполнения запроса
-                if (m_queueIdConnSett.Count > 0) {
-                    // вариант №1 - поток
-                    //_threadRequest = //new Thread(new ParameterizedThreadStart(fThreadRequest));
-                    //_threadRequest.IsBackground = true;
-                    //_threadRequest.Name = @"WriterDbHandler.Request";
-                    //_threadRequest.Start(dataSetWriter);
-                    // вариант №2
-                    _threadRequest.RunWorkerAsync(dataSetWriter);
-                    //// вариант №3 - без потока
-                    //fThreadRequest(dataSetWriter);
-                } else
-                    ;
+                    if ((bool)connSett.Items[(int)ConnectionSettings.INDEX_ITEM.TURN] == true) m_queueIdConnSett.Enqueue(connSett.id); else;
+
+                _cancelRequest = new CancellationTokenSource();
+
+                Task.Run(() => fThreadRequest(dataSetWriter), _cancelRequest.Token);                
             }
             /// <summary>
             /// Потоковая функция - выполнить запросы к источникам данных в ~ соответствии со сформированной очередью
             /// </summary>
             /// <param name="obj">Аргумент при вызове</param>
-            private void fThreadRequest(object obj, DoWorkEventArgs ev)
+            private void fThreadRequest(DATASET_WRITER dataSet)
+            //private void fThreadRequest_DoWork(object obj, DoWorkEventArgs ev)
             {
                 INDEX_WAITHANDLE_REASON indxReasonCompleted = INDEX_WAITHANDLE_REASON.COUNT_INDEX_WAITHANDLE_REASON;
-                DATASET_WRITER dataSetWriter = (DATASET_WRITER)ev.Argument;
+                DATASET_WRITER dataSetWriter = dataSet;
                 string fmtMsg = @"сохранение набора для IdConnSett={0}, [{1}]";
 
                 for (INDEX_WAITHANDLE_REASON i = INDEX_WAITHANDLE_REASON.ERROR; i < (INDEX_WAITHANDLE_REASON.ERROR + 1); i++)
                     ((ManualResetEvent)m_waitHandleState[(int)i]).Reset();
 
-                Query = dataSetWriter.m_query;
+                Query = dataSetWriter.m_values;
 
                 try {
                     while (m_queueIdConnSett.Count > 0) {
                         ClearStates();
 
                         IdConnSettCurrent = m_queueIdConnSett.Dequeue();
-
-                        foreach (StatesMachine state in Enum.GetValues(typeof(StatesMachine))) {
+                        // добавить необходимые состояния
+                        foreach (StatesMachine state in Enum.GetValues(typeof(StatesMachine)))
                             AddState((int)state);
 
-                            Run(string.Format(fmtMsg, IdConnSettCurrent, dataSetWriter.m_dtRecieved.ToString()));
-                            // ожидать завершения обработки состояния
-                            indxReasonCompleted = (INDEX_WAITHANDLE_REASON)WaitHandle.WaitAny(m_waitHandleState);
-
-                            if (indxReasonCompleted == INDEX_WAITHANDLE_REASON.ERROR)
+                        Run(string.Format(fmtMsg, IdConnSettCurrent, dataSetWriter.m_dtRecieved.ToString()));
+                        // ожидать завершения обработки состояния
+                        switch(WaitHandle.WaitAny(new WaitHandle[] {
+                            m_waitHandleState[(int)INDEX_WAITHANDLE_REASON.BREAK] // признак успешной обработки крайнего состояния
+                            , m_waitHandleState[(int)INDEX_WAITHANDLE_REASON.ERROR]                             
+                        })) {
+                            case 0:
+                                indxReasonCompleted = INDEX_WAITHANDLE_REASON.SUCCESS;
                                 break;
-                            else
-                                ; // continue
+                            case 1:
+                            default:
+                                indxReasonCompleted = INDEX_WAITHANDLE_REASON.ERROR;
+                                break;
                         }
+
                         // зафиксировать в логе результат
                         if (indxReasonCompleted == INDEX_WAITHANDLE_REASON.SUCCESS)
                             Logging.Logg().Debug(MethodBase.GetCurrentMethod()
                                 , string.Format(fmtMsg, IdConnSettCurrent, dataSetWriter.m_dtRecieved.ToString())
                                 , Logging.INDEX_MESSAGE.NOT_SET);
                         else
+                        // ERROR
                             Logging.Logg().Error(MethodBase.GetCurrentMethod()
                                 , string.Format(fmtMsg, IdConnSettCurrent, dataSetWriter.m_dtRecieved.ToString())
                                 , Logging.INDEX_MESSAGE.NOT_SET);
                         // оповестить об завершении выполнения группы запросов
                         DataAskedHost(new object[] { indxReasonCompleted, IdConnSettCurrent, dataSetWriter.m_dtRecieved });
-                    }
+                    } // while
                 } catch (Exception e) {
                     Logging.Logg().Exception(e
                         , string.Format(fmtMsg, IdConnSettCurrent, dataSetWriter.m_dtRecieved.ToString())
@@ -175,22 +158,32 @@ namespace xmlLoader
                 }
             }
 
+            private ManualResetEvent m_manualEventInitListConnSett;
+
             public void Initialize(List<ConnectionSettings> listConnSett)
             {
                 m_listConnSett = listConnSett;
-
-                m_dictConnSettUsed.Clear();
-                foreach (ConnectionSettings connSett in m_listConnSett)
-                    m_dictConnSettUsed.Add(connSett.id, false);
+                // показать, что инициализация списка завершена
+                m_manualEventInitListConnSett.Set();
             }
 
             public void ChangeConnSettUse(int idConnSett)
             {
-                if ((!(idConnSett < 0))
-                    && (m_dictConnSettUsed.ContainsKey(idConnSett) == true))
-                    m_dictConnSettUsed[idConnSett] = !m_dictConnSettUsed[idConnSett];
-                else
-                    Logging.Logg().Error(MethodBase.GetCurrentMethod(), string.Format(@"не найден ключ={0}", idConnSett), Logging.INDEX_MESSAGE.NOT_SET);
+                // ожидать пока не завершится инициализация списка
+                m_manualEventInitListConnSett.WaitOne();
+
+                ConnectionSettings connSett = null;
+
+                if (!(idConnSett < 0)) {
+                    connSett = m_listConnSett.Find(item => { return item.id == idConnSett; });
+                    // проверить результат поиска
+                    if (!(connSett == null))
+                    // изменить сотояние вкл./откл. источника данных
+                        connSett.Items[(int)ConnectionSettings.INDEX_ITEM.TURN] = !(bool)connSett.Items[(int)ConnectionSettings.INDEX_ITEM.TURN];
+                    else
+                        ;
+                } else
+                    Logging.Logg().Error(MethodBase.GetCurrentMethod(), string.Format(@"не найден источник данных с идентификатором = {0}", idConnSett), Logging.INDEX_MESSAGE.NOT_SET);
             }
 
             public override void ClearValues()
@@ -316,10 +309,11 @@ namespace xmlLoader
             {
                 INDEX_WAITHANDLE_REASON indxReasonRes = INDEX_WAITHANDLE_REASON.SUCCESS;
 
-                //if (isLastState(state) == true)
-                //    this.completeHandleStates(INDEX_WAITHANDLE_REASON.SUCCESS);
-                //else
-                //    ;
+                if (isLastState(state) == true)
+                    //indxReasonRes = INDEX_WAITHANDLE_REASON.BREAK;
+                    this.completeHandleStates(INDEX_WAITHANDLE_REASON.BREAK);
+                else
+                    ;
 
                 // ответ не требуется
                 return (int)indxReasonRes;

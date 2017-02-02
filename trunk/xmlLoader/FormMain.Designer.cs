@@ -490,8 +490,9 @@ namespace xmlLoader
             // ColumnDestListName
             // 
             this.ColumnDestListName.Frozen = true;
+            this.ColumnDestListName.ReadOnly = true;
             this.ColumnDestListName.HeaderText = "Наим.";
-            this.ColumnDestListName.Name = "ColumnDestListName";
+            this.ColumnDestListName.Name = "ColumnDestListName";            
             // 
             // ColumnDestListState
             // 

@@ -43,7 +43,7 @@ namespace xmlLoader
             ///  , доступ к 'Items'
             /// </summary>
             public enum INDEX_ITEM {
-                AUTO_START
+                AUTO_START, TURN
                 , ID, NAME_SHR, SERVER, INSTANCE, NPORT, DB_NAME, UID, PSWD
             }
             /// <summary>
@@ -57,7 +57,7 @@ namespace xmlLoader
             private void initialize(bool bAutoStart)
             {
                 Items = new List<object>() {
-                    bAutoStart
+                    bAutoStart, false
                     , base.id, base.name, base.server, base.instance, base.port, base.dbName, base.userName, base.password
                 };
             }
@@ -343,11 +343,12 @@ namespace xmlLoader
                 orderby dataSet.m_dtRecieved descending
                 select new FormMain.VIEW_ITEM {
                     Values = new object[] {
-                    dataSet.m_tableValues.Rows.Count
-                    , dataSet.m_dtRecieved
-                    , dataSet.m_dictDatetimeQuered[key]
+                        dataSet.m_tableValues.Rows.Count
+                        , dataSet.m_dtRecieved
+                        , dataSet.m_dictDatetimeQuered[key]
+                    }
                 }
-                }).Take(s_Option.COUNT_VIEW_ITEM).ToList().ForEach(item => listRes.Add(item));
+            ).Take(s_Option.COUNT_VIEW_ITEM).ToList().ForEach(item => listRes.Add(item));
 
             return listRes;
         }
@@ -372,7 +373,7 @@ namespace xmlLoader
                     EvtToFormMain?.Invoke(new object[] {
                         StatesMachine.MESSAGE_TO_STATUSSTRIP
                         , FormMain.StatusStrip.STATE.Error
-                        , string.Format(@"WriterHandlerQueue - ошибка при сохранении значений для источника={0} за {1:HH.mm.ss}", idConnSett, dtRecieved)
+                        , string.Format(@"WriterHandlerQueue - ошибка при сохранении значений для источника={0} за {1}", idConnSett, dtRecieved)
                     });
                 else
                     ;

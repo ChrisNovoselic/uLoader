@@ -134,8 +134,7 @@ namespace xmlLoader
                             // пакет не был найден - для добавления
                             listItemIndexToAdding.Add(items.ToList().IndexOf(item));
                         else {
-                            dgv.Rows[indxRow].Cells[(int)VIEW_ITEM.INDEX.DATETIME_COMPLTETED].Value =
-                                item.Values[(int)VIEW_ITEM.INDEX.DATETIME_COMPLTETED];
+                            dgv.Rows[indxRow].Cells[(int)VIEW_ITEM.INDEX.DATETIME_COMPLTETED].Value = item.Values[(int)VIEW_ITEM.INDEX.DATETIME_COMPLTETED];
                         }
                     }
                     // удалить, при необходимости, строки
@@ -237,6 +236,7 @@ namespace xmlLoader
 
             m_dgvPackageList.AllowUserToResizeRows = false; //??? почему не установлено в 'InitializeComponent'
             m_dgvPackageList.SelectionChanged += dgvPackageList_SelectionChanged;
+            m_dgvPackageList.CellFormatting += dgvListItem_CellFormatting;
             m_dgvViewPackageTableValue.AllowUserToResizeColumns = false; //??? почему не установлено в 'InitializeComponent'
             m_dgvViewPackageTableValue.AllowUserToResizeRows = false; //??? почему не установлено в 'InitializeComponent'
             m_dgvViewPackageTableValue.DataSourceChanged += dgvViewDataTable_DataSourceChanged;
@@ -252,6 +252,7 @@ namespace xmlLoader
 
             m_dgvDestDatasetList.AllowUserToResizeRows = false; //??? почему не установлено в 'InitializeComponent'
             m_dgvDestDatasetList.SelectionChanged += dgvDatasetList_SelectionChanged;
+            //m_dgvDestDatasetList.CellFormatting += dgvListItem_CellFormatting;
             m_dgvDestValue.AllowUserToResizeColumns = false; //??? почему не установлено в 'InitializeComponent'
             m_dgvDestValue.AllowUserToResizeRows = false; //??? почему не установлено в 'InitializeComponent'
             m_dgvDestValue.RowHeadersVisible = false; //??? почему не установлено в 'InitializeComponent'
@@ -267,6 +268,24 @@ namespace xmlLoader
             m_tpageDestValue.Tag = INDEX_CONTROL.TABPAGE_VIEW_DATASET_TABLE_VALUE;
             ((Control)m_tpageDestParameter).Enabled = true;
             m_tpageDestParameter.Tag = INDEX_CONTROL.TABPAGE_VIEW_DATASET_TABLE_PARAMETER;
+        }
+
+        private void dgvListItem_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            DataGridView dgv = sender as DataGridView;
+            DataGridViewCell cell;
+
+            if (e.ColumnIndex == (int)VIEW_ITEM.INDEX.DATETIME_COMPLTETED) {
+                cell = dgv.Rows[e.RowIndex].Cells[e.ColumnIndex];
+
+                if (cell.Value is DateTime)
+                    cell.Value = ((DateTime)cell.Value).Equals(DateTime.MinValue) == true ? @"Пропуск" :
+                        ((DateTime)cell.Value).Equals(DateTime.MaxValue) == true ? @"Ошибка" :
+                             cell.Value;
+                else
+                    ;
+            } else
+                ;
         }
 
         private void dgvViewDataTable_DataSourceChanged(object sender, EventArgs e)
@@ -417,7 +436,10 @@ namespace xmlLoader
                     case PackageHandlerQueue.StatesMachine.PACKAGE_CONTENT:
                         switch ((INDEX_CONTROL)m_tabControlViewPackage.SelectedTab.Tag) {
                             case INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_XML:
-                                m_tbxViewPackage.Text = ((XmlDocument)(arg as object[])[1]).InnerXml;
+                                if (!((arg as object[])[1] == null))
+                                    m_tbxViewPackage.Text = ((XmlDocument)(arg as object[])[1]).InnerXml;
+                                else
+                                    m_tbxViewPackage.Text = string.Empty;
                                 break;
                             case INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_TREE:
                                 m_treeViewPackage.UpdateData((ListXmlTree)(arg as object[])[1]);
@@ -436,24 +458,30 @@ namespace xmlLoader
                         updateDataGridViewStatistic();
                         break;
                     case PackageHandlerQueue.StatesMachine.TIMER_TABLERES:
-                        if (((arg as object[]).Length == 2)
-                            && ((arg as object[])[1] is Array)) {
-                            dataSet = (arg as object[])[1] as object[];
+                        if ((arg as object[]).Length == 2) {
+                            if (((arg as object[])[1] is Array)) {
+                                dataSet = (arg as object[])[1] as object[];
 
-                            if (dataSet.Length == 3)
-                                m_handlerWriter.Push(null, new object[] {
-                                    new object[] {
+                                if (dataSet.Length == 3)
+                                    m_handlerWriter.Push(null, new object[] {
                                         new object[] {
-                                            WriterHandlerQueue.StatesMachine.NEW
-                                            , (DateTime)dataSet[0]
-                                            , (DataTable)dataSet[1]
-                                            , (DataTable)dataSet[2]
+                                            new object[] { // формат DATA_SET
+                                                WriterHandlerQueue.StatesMachine.NEW
+                                                , (DateTime)dataSet[0]
+                                                , (DataTable)dataSet[1]
+                                                , (DataTable)dataSet[2]
+                                            }
                                         }
-                                    }
-                                })
-                                ;
+                                    })
+                                    ;
+                                else
+                                // не соблюдается формат DATA_SET
+                                    ;
+                            } else
+                            // нет пакетов для сохранения
+                                ; 
                         } else
-                            Logging.Logg().Warning(MethodBase.GetCurrentMethod()
+                            Logging.Logg().Error(MethodBase.GetCurrentMethod()
                                 , string.Format(@"некорректное кол-во аргументов state={0}", state)
                                 , Logging.INDEX_MESSAGE.NOT_SET);
                         break;
@@ -536,10 +564,12 @@ namespace xmlLoader
 
             // анонимная функция для выполнения в контексте формы
             Action<bool, bool> connectedChanged = delegate (bool bConnected, bool bDebugTurn) {
-
-                имитацияпакетодинToolStripMenuItem.Enabled =
-                имитацияпакетциклToolStripMenuItem.Enabled =
-                    bConnected && bDebugTurn;
+                if (bDebugTurn == true)
+                    имитацияпакетодинToolStripMenuItem.Enabled =
+                    имитацияпакетциклToolStripMenuItem.Enabled =
+                        bConnected;
+                else
+                    сервисToolStripMenuItem.Visible = false;
 
                 m_cbxReadSessionStart.Checked =
                     bConnected;
@@ -750,16 +780,10 @@ namespace xmlLoader
                 && (!(e.RowIndex < 0))) {
                 ((sender as DataGridView).Rows[e.RowIndex].Cells[e.ColumnIndex] as DataGridViewPressedButtonCell).Pressed =
                     !((sender as DataGridView).Rows[e.RowIndex].Cells[e.ColumnIndex] as DataGridViewPressedButtonCell).Pressed;
-                // перенесено в 'dgvDestList_PressChanged'
-                //m_handlerWriter.Push(null, new object[] {
-                //    new object[] {
-                //        new object[] { WriterHandlerQueue.StatesMachine.CONNSET_USE_CHANGED , IdCurrentConnSett }
-                //    }
-                //});
-
-                (sender as DataGridView).Rows[e.RowIndex].Selected = true;
             } else
                 ;
+
+            (sender as DataGridView).Rows[e.RowIndex].Selected = true;
         }
 
         private void dgvDestList_PressChanged(int param)

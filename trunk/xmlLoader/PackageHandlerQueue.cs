@@ -409,19 +409,11 @@ namespace xmlLoader
                 return listRes;
             }
         }
-        /// <summary>
-        /// Добавить XML-пакет в список
-        /// </summary>
-        /// <param name="dtPackage">Метка даты/времени получения XML-пакета</param>
-        /// <param name="xmlDoc">XML-документ</param>
-        /// <returns>Признак выполнения метода</returns>
-        private int addPackage(DateTime dtPackage, XmlDocument xmlDoc)
-        {
-            int iRes = 0;
 
-            PACKAGE package;
+        private void removePackage()
+        {
             // определить лимит даты/времени хранения пакетов времени выполнения
-            DateTime dtLimit = dtPackage - s_Option.TS_HISTORY_RUNTIME;
+            DateTime dtLimit = (DateTime)s_Statistic.ElementAt(STATISTIC.INDEX_ITEM.DATETIME_PACKAGE_LAST_RECIEVED).value - s_Option.TS_HISTORY_RUNTIME;
             //список индексов элементов(пакетов) для удаления
             List<int> listIndxToRemove = new List<int>();
             for (int i = 0; i < _listPackage.Count; i++)
@@ -435,9 +427,23 @@ namespace xmlLoader
 
                 _listPackage.RemoveAt(indx);
             });
-            // добавить текущий пакет (даже, если он не удовлетворяет критерию "лимит")
+        }
+        /// <summary>
+        /// Добавить XML-пакет в список
+        /// </summary>
+        /// <param name="dtPackage">Метка даты/времени получения XML-пакета</param>
+        /// <param name="xmlDoc">XML-документ</param>
+        /// <returns>Признак выполнения метода</returns>
+        private int addPackage(DateTime dtPackage, XmlDocument xmlDoc)
+        {
+            int iRes = 0;
+
+            PACKAGE package;            
+
             try {
+                // добавить текущий пакет
                 _listPackage.Add(package = new PACKAGE(dtPackage, xmlDoc));
+                Logging.Logg().Debug(MethodBase.GetCurrentMethod(), string.Format(@"добавлен пакет [{0}]", dtPackage), Logging.INDEX_MESSAGE.NOT_SET);
 
                 s_Statistic.SetAt(STATISTIC.INDEX_ITEM.DATETIME_PACKAGE_LAST_RECIEVED, package.m_dtRecieved);
                 s_Statistic.SetAt(STATISTIC.INDEX_ITEM.LENGTH_PACKAGE_LAST_RECIEVED, package.m_tableValues.Rows.Count);
@@ -446,6 +452,8 @@ namespace xmlLoader
                     s_Statistic.Counter(STATISTIC.INDEX_ITEM.COUNT_PACKAGE_PARSED);
                 else
                     ;
+                // удалить лишние пакеты
+                removePackage();
             } catch (Exception e) {
                 iRes = -1;
 
@@ -544,20 +552,24 @@ namespace xmlLoader
                         error = false;
 
                         itemQueue = Peek;
-
-                        var orderPckages = from p in _listPackage where p.m_dtSended == DateTime.MinValue orderby p.m_dtRecieved descending select p;
+                        // отправить строго крайний, при этом XML-пакет д.б. не отправленным
+                        var orderPckages = from p in _listPackage /*where p.m_dtSended == DateTime.MinValue*/ orderby p.m_dtRecieved descending select p;
                         if (orderPckages.Count() > 0) {
                             package = orderPckages.ElementAt(0);
 
-                            package.m_dtSended = DateTime.UtcNow;
-
-                            outobj = new object[] {
-                                package.m_dtSended
-                                , package.m_tableValues.Copy()
-                                , package.m_tableParameters.Copy()
-                            };
+                            if (package.m_dtSended == DateTime.MinValue) {
+                                package.m_dtSended = DateTime.UtcNow;
+                                // объект со структурой DATA_SET
+                                outobj = new object[] {
+                                    package.m_dtSended
+                                    , package.m_tableValues.Copy()
+                                    , package.m_tableParameters.Copy()
+                                };
+                            } else
+                            // не отправлять пакет на обработку
+                                outobj = false;
                         } else {
-                            //??? - ошибка пакет не найден либо пакетов много
+                        //??? - ошибка пакет не найден либо пакетов много
                         //    iRes = -1;
                         //    error = true;
                             outobj = false;
