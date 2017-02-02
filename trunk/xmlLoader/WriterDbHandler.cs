@@ -238,6 +238,22 @@ namespace xmlLoader
 
             private int IdConnSettCurrent { get; set; }
 
+            private static string s_Replacing = @"?VALUES?";
+
+            private static string[] s_Queries = {
+                @"TRUNCATE TABLE [dbo].[BIYSK_LOADER]" // Truncate
+                , @"MERGE [dbo].[BIYSK_LOADER] AS [T]"
+                        + @" USING ("
+                        + @"SELECT [XML_SECTION_NAME],[XML_ITEM_NAME],[VALUE] FROM (VALUES"
+                        + s_Replacing //replacing
+                        + @") AS [SOURCE]([XML_SECTION_NAME],[XML_ITEM_NAME],[VALUE])"
+                    + @") AS [S]"
+                    + @" ON ([T].[XML_SECTION_NAME] = [S].[XML_SECTION_NAME] AND [T].[XML_ITEM_NAME] = [S].[XML_ITEM_NAME])"
+                    + @" WHEN NOT MATCHED BY TARGET THEN INSERT ([XML_SECTION_NAME], [XML_ITEM_NAME], [VALUE], [DATETIME])"
+                    + @" VALUES ([XML_SECTION_NAME], [XML_ITEM_NAME], [VALUE], GETUTCDATE());" // Merge
+                , @"EXECUTE [dbo].[WORK_DATALOADER]" // Exec
+            };
+
             private string Query { get; set; }
 
             /// <summary>
@@ -277,15 +293,15 @@ namespace xmlLoader
                         case StatesMachine.Truncate:
                             Request(m_dictIdListeners[IdConnSettCurrent][0]
                                 ,
-                                @"TRUNCATE TABLE [dbo].[BIYSK_LOADER]"
-                                //@"SELECT * FROM [dbo].[BIYSK_LOADER]"
+                                    s_Queries[state]
+                                    //@"SELECT * FROM [dbo].[BIYSK_LOADER]"
                             );
                             break;
                         case StatesMachine.Merge:
-                            Request(m_dictIdListeners[IdConnSettCurrent][0], Query);
+                            Request(m_dictIdListeners[IdConnSettCurrent][0], s_Queries[state].Replace(s_Replacing, Query));
                             break;
                         case StatesMachine.SP:
-                            Request(m_dictIdListeners[IdConnSettCurrent][0], @"EXECUTE [dbo].[WORK_DATALOADER]");
+                            Request(m_dictIdListeners[IdConnSettCurrent][0], s_Queries[state]);
                             break;
                         default:
                             break;

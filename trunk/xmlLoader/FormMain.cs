@@ -694,7 +694,7 @@ namespace xmlLoader
 
                     m_dgvDestList.Rows.Add(rowAdding);
 
-                    bPressed = (bool)conSett.m_listItems[(int)WriterHandlerQueue.ConnectionSettings.INDEX_ITEM.AUTO_START];
+                    bPressed = (bool)conSett.Items[(int)WriterHandlerQueue.ConnectionSettings.INDEX_ITEM.AUTO_START];
 
                     if (bPressed == true) {
                         (rowAdding.Cells[1] as DataGridViewPressedButtonCell).Pressed =
@@ -722,7 +722,7 @@ namespace xmlLoader
             foreach (DataGridViewRow row in m_dgvDestDetail.Rows)
                 switch ((WriterHandlerQueue.ConnectionSettings.INDEX_ITEM)row.Tag) {
                     case WriterHandlerQueue.ConnectionSettings.INDEX_ITEM.AUTO_START:
-                        row.Cells[0].Value = connSett.m_listItems[(int)WriterHandlerQueue.ConnectionSettings.INDEX_ITEM.AUTO_START];
+                        row.Cells[0].Value = connSett.Items[(int)WriterHandlerQueue.ConnectionSettings.INDEX_ITEM.AUTO_START];
                         break;
                     case WriterHandlerQueue.ConnectionSettings.INDEX_ITEM.SERVER:
                         row.Cells[0].Value = connSett.server;

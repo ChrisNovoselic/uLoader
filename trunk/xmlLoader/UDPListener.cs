@@ -1,4 +1,6 @@
-﻿using HClassLibrary;
+﻿#define _NETFRAMEWORK45
+
+using HClassLibrary;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -10,7 +12,9 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+#if _NETFRAMEWORK45
 using System.Threading.Tasks;
+#endif
 using System.Xml;
 using uLoaderCommon;
 
@@ -18,27 +22,25 @@ namespace xmlLoader
 {
     public class UDPListener : IDataHost
     {
+        #region .Net Framework
+#if _NETFRAMEWORK45
         private class UdpClientAsync : IDisposable
         {
-            private readonly IPAddress _hostIpAddress;
-            private readonly int _port;
+            private readonly IPEndPoint _server;
             private readonly Action<UdpReceiveResult> _processor;
             private TaskCompletionSource<bool> _tcs = new TaskCompletionSource<bool>();
             private CancellationTokenSource _tokenSource = new CancellationTokenSource();
             private CancellationTokenRegistration _tokenReg;
             private UdpClient _udpClient;
 
-            public UdpClientAsync(IPEndPoint server, Action<UdpReceiveResult> processor) : this (server.Address, server.Port, processor)
+            public UdpClientAsync(IPEndPoint server, Action<UdpReceiveResult> processor)
             {
+                _server = server;
+                _processor = processor;
             }
 
-            public UdpClientAsync(IPAddress hostIpAddress, int port, Action<UdpReceiveResult> processor)
+            public UdpClientAsync(IPAddress hostIpAddress, int port, Action<UdpReceiveResult> processor) : this(new IPEndPoint(hostIpAddress, port), processor)
             {
-                _hostIpAddress = hostIpAddress;
-                _port = port;
-                _processor = processor;
-
-
             }
 
             public Task ReceiveAsync()
@@ -48,8 +50,7 @@ namespace xmlLoader
                 {
                     try
                     {
-                        _udpClient = new UdpClient();
-                        _udpClient.Connect(_hostIpAddress, _port);
+                        _udpClient = new UdpClient(_server);
                         _tokenReg = _tokenSource.Token.Register(() => _udpClient.Close());
                         BeginReceive();
                     }
@@ -114,6 +115,9 @@ namespace xmlLoader
                 }
             }
         }
+#else
+#endif
+        #endregion
 
         private IPEndPoint m_Server;
 
@@ -460,7 +464,10 @@ namespace xmlLoader
             }
         }
 
-        private UdpClientAsync m_udpClient;
+        private
+            //UdpClient
+            UdpClientAsync
+            m_udpClient;
         /// <summary>
         /// Установить соединение
         /// </summary>
@@ -468,15 +475,25 @@ namespace xmlLoader
         private int connect()
         {
             int iRes = 0;
+            //Task task;
 
             if (((m_Server.Address.Equals(IPAddress.None) == false)
                     && (m_Server.Address.Equals(IPAddress.Any) == false))
                 && (m_Server.Port > 0)) {
-                m_udpClient = new UdpClientAsync(m_Server, recieve_callBack);
+                m_udpClient = new
+#if !_NETFRAMEWORK45
+                    UdpClient(m_Server)
+#else
+                    UdpClientAsync(m_Server, recieve_callBack)
+#endif
+                    ;
 
                 m_udpClient.
-                    //BeginReceive(new AsyncCallback(recieve_callBack), new object[] { m_udpClient, m_Server })
+#if !_NETFRAMEWORK45
+                    BeginReceive(new AsyncCallback(recieve_callBack), new object[] { m_udpClient, m_Server })
+#else
                     ReceiveAsync()
+#endif
                     ;
 
                 state |= STATE.CONNECT;
@@ -486,43 +503,72 @@ namespace xmlLoader
             return iRes;
         }
 
+        #region .Net Framework 4.5
+#if _NETFRAMEWORK45
+        /// <summary>
+        /// Метод обратного вызова при асинхронном чтении данных по UDP
+        /// </summary>
+        /// <param name="res">Результат чтения канала по UDP</param>
         private void recieve_callBack(UdpReceiveResult res)
         {
+            // обработать результат чтения
+            recieve(res.Buffer);
         }
 
+        public Task<UdpReceiveResult> ReceiveAsync(UdpClient client, CancellationToken breakToken)
+            => breakToken.IsCancellationRequested
+                ? Task<UdpReceiveResult>.Run(() => new UdpReceiveResult())
+                : Task<UdpReceiveResult>.Factory.FromAsync(
+                    (callback, state) => client.BeginReceive(callback, state)
+                    , (iar) => {
+                        if (breakToken.IsCancellationRequested == true)
+                            return new UdpReceiveResult();
+                        else
+                            ;
+
+                        IPEndPoint remoteEP = null;
+                        var buffer = client.EndReceive(iar, ref remoteEP);
+                        return new UdpReceiveResult(buffer, remoteEP);
+                    }
+                    , null);
+#endif
+        #endregion
+        /// <summary>
+        /// Метод обратного вызова при асинхронном чтении данных по UDP
+        /// </summary>
+        /// <param name="iar">Объекты состояния, синхронизации</param>
+        [Obsolete(@"Использовать .Net Framework 4.5 и recieve_callBack(UdpReceiveResult res)")]
         private void recieve_callBack(IAsyncResult iar)
         {
-            Byte[] receiveBytes = null;
             string strReceived = string.Empty;
-            XmlDocument xmlDoc;
 
             UdpClient udpClient;
             IPEndPoint server;
 
-            lock (this) {
+            try {
+                // получить объекты состояния
                 udpClient = (iar.AsyncState as object[])[0] as UdpClient;
                 server = (iar.AsyncState as object[])[1] as IPEndPoint;
-
+                // проверить наличие соединения
                 if (!(udpClient.Client == null)) {
-                    receiveBytes = udpClient.EndReceive(iar, ref server);
-                    strReceived = Encoding.ASCII.GetString(receiveBytes);
-
-                    xmlDoc = new XmlDocument();
-                    xmlDoc.LoadXml(strReceived);
-
-                    // отправить XML-пакет
-                    DataAskedHost(new object[] { new object[] {
-                        HHandlerQueue.StatesMachine.UDP_LISTENER_PACKAGE_RECIEVED
-                        , DateTime.UtcNow
-                        , xmlDoc }
-                    });
-
+                    // получить, обработать результат чтения
+                    recieve(udpClient.EndReceive(iar, ref server));
+                    // начать новое асинхронное чтение канала по UDP
                     m_udpClient.
-                        //BeginReceive(new AsyncCallback(recieve_callBack), new object[] { udpClient, server })
+#if !_NETFRAMEWORK45
+                        BeginReceive(new AsyncCallback(recieve_callBack), new object[] { udpClient, server })
+#else
                         ReceiveAsync()
+#endif
                         ;
-                } else
+                }
+                else
                     ;
+            }
+            catch (ObjectDisposedException e) { // нормально при разрыве соединения
+            }
+            catch (Exception e) {
+                Logging.Logg().Exception(e, string.Format(@"Метод обратного вызова при асинхронном чтении данных по UDP"), Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
         /// <summary>
@@ -531,12 +577,36 @@ namespace xmlLoader
         private void disconnect()
         {
             if (!(m_udpClient == null)) {
-                m_udpClient.Dispose();
+                m_udpClient.
+#if !_NETFRAMEWORK45
+                    Close
+#else
+                    Stop
+#endif
+                    ();
                 m_udpClient = null;
             } else
                 ;
 
             state -= STATE.CONNECT;
+        }
+        /// <summary>
+        /// Обработать результат чтения канала по UDP
+        /// </summary>
+        /// <param name="buffer">Буффер, полученный при чтении канала по UDP<</param>
+        private void recieve(byte[] buffer)
+        {
+            XmlDocument xmlDoc;
+
+            xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(Encoding.ASCII.GetString(buffer));
+
+            // отправить XML-пакет
+            DataAskedHost(new object[] { new object[] {
+                HHandlerQueue.StatesMachine.UDP_LISTENER_PACKAGE_RECIEVED
+                , DateTime.UtcNow
+                , xmlDoc }
+            });
         }
     }
 }
