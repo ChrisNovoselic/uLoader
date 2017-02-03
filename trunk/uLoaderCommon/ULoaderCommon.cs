@@ -1616,6 +1616,12 @@ namespace uLoaderCommon
             // если обрабатывается указанная группа сигналов
             if (IdGroupSignalsCurrent == id)
             {
+                lock (m_lockState)
+                {
+                    //Очистить все состояния
+                    ClearStates();
+                }
+
                 Logging.Logg().Debug(@"HHandlerDbULoader::Stop (Id=" + _iPlugin._Id + @", key=" + id + @") - ожидание окончания обработки группы сигналов...", Logging.INDEX_MESSAGE.NOT_SET);
                 // ожидать окончания обработки
                 m_manualEvtStateHandlerCompleted.WaitOne();
@@ -1725,7 +1731,7 @@ namespace uLoaderCommon
         /// <summary>
         /// Остановить поток обработки очереди событий
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Результат выполнения метода</returns>
         private int stopThreadQueue()
         {
             int iRes = 0;
