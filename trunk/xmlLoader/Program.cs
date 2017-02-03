@@ -17,7 +17,7 @@ namespace xmlLoader
             int iRes = 0;
             FormMain formMain = null;
 
-            Logging.s_mode = Logging.LOG_MODE.FILE_EXE;
+            Logging.SetMode(@"log=", Logging.LOG_MODE.FILE_EXE);
 
             try { ProgramBase.Start(); }
             catch (Exception e) {

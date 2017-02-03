@@ -149,7 +149,7 @@ namespace xmlLoader
                     foreach (int indx in listItemIndexToAdding) {
                         // создать строку (если строку добавить сразу, то значение Tag будет присвоено после события 'SelectionChanged' - нельхя определить идентификатор строки)
                         rowAdding = new DataGridViewRow();
-                        rowAdding.CreateCells(m_dgvDestDatasetList);
+                        rowAdding.CreateCells(dgv);
                         if (rowAdding.SetValues(items.ElementAt(indx).Values) == true) {
                             // установить идентификатор строки
                             rowAdding.Tag = items.ElementAt(indx).Values[(int)VIEW_ITEM.INDEX.DATETIME_RECIEVED];
@@ -236,7 +236,7 @@ namespace xmlLoader
 
             m_dgvPackageList.AllowUserToResizeRows = false; //??? почему не установлено в 'InitializeComponent'
             m_dgvPackageList.SelectionChanged += dgvPackageList_SelectionChanged;
-            m_dgvPackageList.CellFormatting += dgvListItem_CellFormatting;
+            m_dgvPackageList.CellFormatting += dgvViewItem_CellFormatting;
             m_dgvViewPackageTableValue.AllowUserToResizeColumns = false; //??? почему не установлено в 'InitializeComponent'
             m_dgvViewPackageTableValue.AllowUserToResizeRows = false; //??? почему не установлено в 'InitializeComponent'
             m_dgvViewPackageTableValue.DataSourceChanged += dgvViewDataTable_DataSourceChanged;
@@ -252,7 +252,7 @@ namespace xmlLoader
 
             m_dgvDestDatasetList.AllowUserToResizeRows = false; //??? почему не установлено в 'InitializeComponent'
             m_dgvDestDatasetList.SelectionChanged += dgvDatasetList_SelectionChanged;
-            //m_dgvDestDatasetList.CellFormatting += dgvListItem_CellFormatting;
+            m_dgvDestDatasetList.CellFormatting += dgvViewItem_CellFormatting;
             m_dgvDestValue.AllowUserToResizeColumns = false; //??? почему не установлено в 'InitializeComponent'
             m_dgvDestValue.AllowUserToResizeRows = false; //??? почему не установлено в 'InitializeComponent'
             m_dgvDestValue.RowHeadersVisible = false; //??? почему не установлено в 'InitializeComponent'
@@ -270,7 +270,7 @@ namespace xmlLoader
             m_tpageDestParameter.Tag = INDEX_CONTROL.TABPAGE_VIEW_DATASET_TABLE_PARAMETER;
         }
 
-        private void dgvListItem_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        private void dgvViewItem_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
             DataGridView dgv = sender as DataGridView;
             DataGridViewCell cell;

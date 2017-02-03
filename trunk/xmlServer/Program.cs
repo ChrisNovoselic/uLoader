@@ -8,6 +8,8 @@ namespace xmlServer
     {
         static void Main(string[] args)
         {
+            Logging.SetMode(@"log=", Logging.LOG_MODE.FILE_EXE);
+
             TimeSpan tsIntervalSeries = TimeSpan.Zero;
 
             UdpServer udpServer;

@@ -397,7 +397,7 @@ namespace xmlLoader
                 List<FormMain.VIEW_ITEM> listRes = new List<FormMain.VIEW_ITEM>();
 
                 (from package in _listPackage
-                 orderby package.m_dtRecieved descending
+                 orderby package.m_dtRecieved //descending
                  select new FormMain.VIEW_ITEM {
                     Values = new object[] {
                         Encoding.ASCII.GetBytes(package.m_xmlSource.InnerXml).Length //package.m_tableValues.Rows.Count
@@ -412,21 +412,26 @@ namespace xmlLoader
 
         private void removePackage()
         {
-            // определить лимит даты/времени хранения пакетов времени выполнения
-            DateTime dtLimit = (DateTime)s_Statistic.ElementAt(STATISTIC.INDEX_ITEM.DATETIME_PACKAGE_LAST_RECIEVED).value - s_Option.TS_HISTORY_RUNTIME;
-            //список индексов элементов(пакетов) для удаления
-            List<int> listIndxToRemove = new List<int>();
-            for (int i = 0; i < _listPackage.Count; i++)
-                if ((dtLimit - _listPackage[i].m_dtRecieved).TotalSeconds > 0)
-                    listIndxToRemove.Add(i);
-                else
-                    ;
-            // удалить пакеты дата/время получения которых больше, чем "лимит"
-            listIndxToRemove.ForEach(indx => {
-                Logging.Logg().Debug(MethodBase.GetCurrentMethod(), string.Format(@"удален пакет [{0}]", _listPackage[indx].m_dtRecieved), Logging.INDEX_MESSAGE.NOT_SET);
+            DateTime dtLimit;
 
-                _listPackage.RemoveAt(indx);
-            });
+            if (((DateTime)s_Statistic.ElementAt(STATISTIC.INDEX_ITEM.DATETIME_PACKAGE_LAST_RECIEVED).value).Equals(DateTime.MinValue) == false) {
+                // определить лимит даты/времени хранения пакетов времени выполнения
+                dtLimit = (DateTime)s_Statistic.ElementAt(STATISTIC.INDEX_ITEM.DATETIME_PACKAGE_LAST_RECIEVED).value - s_Option.TS_HISTORY_RUNTIME;
+                //список индексов элементов(пакетов) для удаления
+                List<int> listIndxToRemove = new List<int>();
+                for (int i = 0; i < _listPackage.Count; i++)
+                    if ((dtLimit - _listPackage[i].m_dtRecieved).TotalSeconds > 0)
+                        listIndxToRemove.Add(i);
+                    else
+                        ;
+                // удалить пакеты дата/время получения которых больше, чем "лимит"
+                listIndxToRemove.ForEach(indx => {
+                    Logging.Logg().Debug(MethodBase.GetCurrentMethod(), string.Format(@"удален пакет [{0}]", _listPackage[indx].m_dtRecieved), Logging.INDEX_MESSAGE.NOT_SET);
+
+                    _listPackage.RemoveAt(indx);
+                });
+            } else
+                ;
         }
         /// <summary>
         /// Добавить XML-пакет в список
@@ -451,9 +456,7 @@ namespace xmlLoader
                 if (package.m_state == PACKAGE.STATE.PARSED)
                     s_Statistic.Counter(STATISTIC.INDEX_ITEM.COUNT_PACKAGE_PARSED);
                 else
-                    ;
-                // удалить лишние пакеты
-                removePackage();
+                    ;                
             } catch (Exception e) {
                 iRes = -1;
 
@@ -488,6 +491,9 @@ namespace xmlLoader
                         error = false;
 
                         itemQueue = Peek;
+
+                        // удалить лишние пакеты
+                        removePackage();
 
                         error = (iRes = addPackage((DateTime)itemQueue.Pars[0], (XmlDocument)itemQueue.Pars[1])) < 0 ? true : false;                        
                         break;
