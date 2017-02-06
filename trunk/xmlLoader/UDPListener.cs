@@ -26,21 +26,19 @@ namespace xmlLoader
 #if _NETFRAMEWORK45
         private class UdpClientAsync : IDisposable
         {
-            private readonly IPEndPoint _server;
+            //private readonly IPEndPoint _server;
+            private readonly int _port;
             private readonly Action<UdpReceiveResult> _processor;
             private TaskCompletionSource<bool> _tcs = new TaskCompletionSource<bool>();
             private CancellationTokenSource _tokenSource = new CancellationTokenSource();
             private CancellationTokenRegistration _tokenReg;
             private UdpClient _udpClient;
 
-            public UdpClientAsync(IPEndPoint server, Action<UdpReceiveResult> processor)
+            public UdpClientAsync(int port, Action<UdpReceiveResult> processor)
             {
-                _server = server;
+                //_server = server;
+                _port = port;
                 _processor = processor;
-            }
-
-            public UdpClientAsync(IPAddress hostIpAddress, int port, Action<UdpReceiveResult> processor) : this(new IPEndPoint(hostIpAddress, port), processor)
-            {
             }
 
             public Task ReceiveAsync()
@@ -50,7 +48,7 @@ namespace xmlLoader
                 {
                     try
                     {
-                        _udpClient = new UdpClient(_server);
+                        _udpClient = new UdpClient(1052);
                         _tokenReg = _tokenSource.Token.Register(() => _udpClient.Close());
                         BeginReceive();
                     }
@@ -119,7 +117,10 @@ namespace xmlLoader
 #endif
         #endregion
 
-        private IPEndPoint m_Server;
+        //private
+            //IPEndPoint
+            int
+            m_Server;
 
         [Flags]
         private enum STATE : short {
@@ -183,7 +184,7 @@ namespace xmlLoader
             //m_threadRecived.WorkerSupportsCancellation = true;
             //m_threadRecived.DoWork += fThreadRecived_DoWork;
 
-            m_Server = null;
+            m_Server = -1;
             _versionXMLPackage = string.Empty;
         }
 
@@ -431,8 +432,10 @@ namespace xmlLoader
                         state |= STATE.DEBUG;
                         break;
                     case HHandlerQueue.StatesMachine.UDP_LISTENER:
-                        m_Server = new IPEndPoint(IPAddress.Parse((string)((res as object[])[1] as object[])[0])
-                            , (int)((res as object[])[1] as object[])[1]);
+                        m_Server =
+                            //new IPEndPoint(IPAddress.Parse((string)((res as object[])[1] as object[])[0]),
+                            (int)(res as object[])[1]
+                        ;
                         break;
                     case HHandlerQueue.StatesMachine.UDP_CONNECTED_CHANGE:
                         if ((bool)(res as object[])[1] == true)
@@ -477,9 +480,11 @@ namespace xmlLoader
             int iRes = 0;
             //Task task;
 
-            if (((m_Server.Address.Equals(IPAddress.None) == false)
-                    && (m_Server.Address.Equals(IPAddress.Any) == false))
-                && (m_Server.Port > 0)) {
+            if (
+                //((m_Server.Address.Equals(IPAddress.None) == false)
+                //    && (m_Server.Address.Equals(IPAddress.Any) == false)) &&
+                    (m_Server > 0)
+                ) {
                 m_udpClient = new
 #if !_NETFRAMEWORK45
                     UdpClient(m_Server)

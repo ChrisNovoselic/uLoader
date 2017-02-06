@@ -6,13 +6,87 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Xml;
+using uLoaderCommon;
 
 namespace xmlServer
 {
+    class HCmd_Arg : HClassLibrary.HCmd_Arg
+    {
+        private MAIN_ARG[] _args;
+
+        public int Length { get { return m_dictCmdArgs.Count; } }
+
+        public object ElementAt(string name)
+        {
+            object objRes = null;
+
+            foreach(MAIN_ARG arg in _args)
+                if (arg.m_Name.Equals(name) == true) {
+                    objRes = arg.m_Value;
+
+                    break;
+                } else
+                    ;
+
+            return objRes;
+        }
+
+        public string[] List { get; }
+
+        private struct MAIN_ARG
+        {
+            public static string delimMainArg = string.Format(@"{0}", ' ');
+
+            public static string prefixMainArg = string.Format(@"{0}", @"/");
+
+            public string m_Name;
+
+            public object m_defaultValue;
+
+            public object m_Value;
+
+            public int m_State;
+        }
+
+        public HCmd_Arg() : base(Environment.GetCommandLineArgs())
+        {
+            _args = new MAIN_ARG[] {
+                new MAIN_ARG() { m_Name = @"dest", m_defaultValue = new IPAddress(new byte[] { 127, 0, 0, 1 }), m_State = -1, m_Value = null }
+                , new MAIN_ARG() { m_Name = @"period", m_defaultValue = TimeSpan.FromSeconds(3), m_State = -1, m_Value = null  }
+            };
+
+            for (int i = 0; i < _args.Length; i++)
+                try {
+                    if (m_dictCmdArgs.ContainsKey(_args[i].m_Name) == true) {
+                        switch (_args[i].m_Name) {
+                            case @"dest":
+                                _args[i].m_Value = IPAddress.Parse(m_dictCmdArgs[_args[i].m_Name]);
+                                break;
+                            case @"period":
+                                _args[i].m_Value = new HTimeSpan(m_dictCmdArgs[_args[i].m_Name]).Value;
+                                break;
+                            default:
+                                break;
+                        }
+                        // присваивание по значению
+                        _args[i].m_State = 0;
+                    } else {
+                        _args[i].m_Value = _args[i].m_defaultValue;
+                        // присваивание по умолчанию
+                        _args[i].m_State = 1;
+                    }
+                } catch (Exception e) {
+                    Console.WriteLine(string.Format(@"Исключение при обработке аргумента {1}{0}{2}", Environment.NewLine, _args[i].m_Name, e.Message));
+
+                    _args[i].m_Value = _args[i].m_defaultValue;
+                    // присваивание по исключение
+                    _args[i].m_State = -2;
+                }
+        }
+    }
+
     class UdpServer
     {
-        private const int SEC_INTERVAL_SERIES = 3;
-
         private int _counter;
 
         private TimeSpan m_tsIntervalSeries;
@@ -21,27 +95,33 @@ namespace xmlServer
 
         private UdpClient m_Server;
 
+        private const int PORT = 1052;
+
         private Timer m_timerSend;
 
-        public UdpServer(TimeSpan tsIntervalSeries)
+        public UdpServer(IPAddress ip, TimeSpan tsIntervalSeries)
         {
             _counter = 0;
+            m_tsIntervalSeries = tsIntervalSeries;
 
             string folder = @"config"
                 , name = @"template"
                 , ver = @"1.3.1"
-                , ext = @"xml";
+                , ext = @"xml"
+                , xmlPath = string.Format(@"{0}\{1}-{2}.{3}", folder, name, ver, ext);
 
-            if (tsIntervalSeries.Equals(TimeSpan.Zero) == false)
-                m_tsIntervalSeries = tsIntervalSeries;
-            else
-                m_tsIntervalSeries = TimeSpan.FromSeconds(SEC_INTERVAL_SERIES);
+            Console.WriteLine(string.Format(@"Создание объекта [IP={0}, порт={1}, период={2}, шаблон={3}]..."
+                , ip.ToString()
+                , PORT
+                , tsIntervalSeries.ToString()                
+                , xmlPath
+            ));
 
             m_xmlDoc = new XmlDocument();
-            m_xmlDoc.Load(string.Format(@"{0}\{1}-{2}.{3}", folder, name, ver, ext));
+            m_xmlDoc.Load(xmlPath);
 
             m_Server = new UdpClient();
-            m_Server.Connect(new IPEndPoint(new IPAddress(new byte[] { 127, 0, 0, 1 }), 1052));
+            m_Server.Connect(new IPEndPoint(ip, PORT));
             m_timerSend = new Timer(new TimerCallback(fTimer_callBack), new object[] { m_Server }, Timeout.Infinite, Timeout.Infinite);
         }
 

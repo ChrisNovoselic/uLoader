@@ -107,7 +107,7 @@ namespace xmlLoader
         /// </summary>
         /// <param name="dgv">Представление в котором требуется обновить значения</param>
         /// <param name="items">Список(актуальный) элементов для отображения (возможно, повторяет уже отображенные)</param>
-        private void updateDataGridViewItem(DataGridView dgv, IEnumerable<VIEW_ITEM> items)
+        private void updateDataGridViewItem(DataGridView dgv, IEnumerable<VIEW_ITEM> items, EventHandler handler_SelectionChanged)
         {
             int indxRow = -1
                 , cntViewPackageItem = -1;
@@ -137,14 +137,26 @@ namespace xmlLoader
                             dgv.Rows[indxRow].Cells[(int)VIEW_ITEM.INDEX.DATETIME_COMPLTETED].Value = item.Values[(int)VIEW_ITEM.INDEX.DATETIME_COMPLTETED];
                         }
                     }
+                    // отменить регистрацию обработчика события - чтобы при удалении 2-х и более строк
+                    // , обработчик не вызывался бы столько раз
+                    // , сколько будет удалено строк
+                    if (dgv.RowCount + listItemIndexToAdding.Count > cntViewPackageItem)
+                        dgv.SelectionChanged -= handler_SelectionChanged;
+                    else
+                        ;
                     // удалить, при необходимости, строки
                     while (dgv.RowCount + listItemIndexToAdding.Count > cntViewPackageItem) {
-                        // требуется удаление строк
+                    // требуется удаление строк
                         // сортировать строки с меткой меткой даты/времени получения XML-пакета от минимальной к максимальной
                         var rowsOrdering = from row in (dgv.Rows.Cast<DataGridViewRow>().ToList()) orderby (DateTime)row.Tag /*descending*/ select row;
+                        if ((dgv.RowCount + listItemIndexToAdding.Count - cntViewPackageItem) == 1)
+                        // перед крайним удалением воостанавливаем обработчик
+                            dgv.SelectionChanged += handler_SelectionChanged;
+                        else
+                            ;
                         //  , затем удалить 1-ый элемент из списка
                         dgv.Rows.Remove(rowsOrdering.ElementAt(0));
-                    }
+                    }                    
                     // добавить строки в представление
                     foreach (int indx in listItemIndexToAdding) {
                         // создать строку (если строку добавить сразу, то значение Tag будет присвоено после события 'SelectionChanged' - нельхя определить идентификатор строки)
@@ -315,8 +327,7 @@ namespace xmlLoader
 
             if ((INDEX_CONTROL)e.TabPage.Tag == INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_TREE)
                 m_treeViewPackage.Nodes.Clear();
-            else
-                ;
+            else ;
 
             if (!(indxTypeItemList == INDEX_CONTROL.UNKNOWN))
             // отправить запрос на получение контента выбранного пакета
@@ -347,8 +358,7 @@ namespace xmlLoader
             //??? зачем очищать, если TABPAGE не отображается (проверить?)
             if ((INDEX_CONTROL)m_tabControlViewPackage.SelectedTab.Tag == INDEX_CONTROL.TABPAGE_VIEW_PACKAGE_TREE)
                 m_treeViewPackage.Nodes.Clear();
-            else
-                ;
+            else ;
 
             // отправить запрос на получение контента выбранного пакета
             pushItemContent(INDEX_CONTROL.DGV_PACKAGE_LIST, (INDEX_CONTROL)m_tabControlViewPackage.SelectedTab.Tag);
@@ -392,7 +402,7 @@ namespace xmlLoader
                         handlerQueue.Push(null, new object[] {
                             new object[] {
                                 new object [] {
-                                  state, dgv.SelectedRows[0].Tag, tagSelectedTab
+                                  state, dgv.SelectedRows[0].Tag, tagSelectedTab, dgv.SelectedRows[0].Index, dgv.SelectedRows[0].State
                                 }
                             }
                         });
@@ -431,7 +441,7 @@ namespace xmlLoader
                     //    });
                     //    break;
                     case PackageHandlerQueue.StatesMachine.LIST_PACKAGE:
-                        updateDataGridViewItem (m_dgvPackageList, (IEnumerable<VIEW_ITEM>)(arg as object[])[1]);
+                        updateDataGridViewItem (m_dgvPackageList, (IEnumerable<VIEW_ITEM>)(arg as object[])[1], dgvPackageList_SelectionChanged);
                         break;
                     case PackageHandlerQueue.StatesMachine.PACKAGE_CONTENT:
                         switch ((INDEX_CONTROL)m_tabControlViewPackage.SelectedTab.Tag) {
@@ -519,7 +529,7 @@ namespace xmlLoader
             {
                 switch (state) {
                     case WriterHandlerQueue.StatesMachine.LIST_DATASET:
-                        updateDataGridViewItem (m_dgvDestDatasetList, (IEnumerable<VIEW_ITEM>)(arg as object[])[1]);
+                        updateDataGridViewItem (m_dgvDestDatasetList, (IEnumerable<VIEW_ITEM>)(arg as object[])[1], dgvDatasetList_SelectionChanged);
                         break;
                     case WriterHandlerQueue.StatesMachine.DATASET_CONTENT:
                         //arg as object[])[1]

@@ -7,6 +7,8 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Text;
+using System.Windows.Forms;
+using System.Globalization;
 
 namespace xmlLoader
 {
@@ -233,7 +235,7 @@ namespace xmlLoader
                     try {
                         if (!(node.Attributes == null)) {
                             if (string.IsNullOrEmpty(node.Attributes.GetNamedItem("value").Value) == false)
-                                if (float.TryParse(node.Attributes.GetNamedItem("value").Value, out value) == false)
+                                if (float.TryParse(node.Attributes.GetNamedItem("value").Value, NumberStyles.Currency, System.Globalization.CultureInfo.InvariantCulture, out value) == false)
                                     value = -1F;
                                 else
                                     ; //значние получено
@@ -397,7 +399,7 @@ namespace xmlLoader
                 List<FormMain.VIEW_ITEM> listRes = new List<FormMain.VIEW_ITEM>();
 
                 (from package in _listPackage
-                 orderby package.m_dtRecieved //descending
+                 orderby package.m_dtRecieved descending
                  select new FormMain.VIEW_ITEM {
                     Values = new object[] {
                         Encoding.ASCII.GetBytes(package.m_xmlSource.InnerXml).Length //package.m_tableValues.Rows.Count
@@ -405,6 +407,8 @@ namespace xmlLoader
                         , package.m_dtSended
                     }
                 }).Take(s_Option.COUNT_VIEW_ITEM).ToList().ForEach(item => listRes.Add(item));
+
+                listRes.Sort((i1, i2) => ((DateTime)i1.Values[1]).CompareTo((DateTime)i2.Values[1]));
 
                 return listRes;
             }
@@ -419,11 +423,11 @@ namespace xmlLoader
                 dtLimit = (DateTime)s_Statistic.ElementAt(STATISTIC.INDEX_ITEM.DATETIME_PACKAGE_LAST_RECIEVED).value - s_Option.TS_HISTORY_RUNTIME;
                 //список индексов элементов(пакетов) для удаления
                 List<int> listIndxToRemove = new List<int>();
-                for (int i = 0; i < _listPackage.Count; i++)
+                for (int i = _listPackage.Count - 1; !(i < 0); i--)
                     if ((dtLimit - _listPackage[i].m_dtRecieved).TotalSeconds > 0)
                         listIndxToRemove.Add(i);
                     else
-                        ;
+                        ; //??? break - т.к. список упорядочен по дате/времени
                 // удалить пакеты дата/время получения которых больше, чем "лимит"
                 listIndxToRemove.ForEach(indx => {
                     Logging.Logg().Debug(MethodBase.GetCurrentMethod(), string.Format(@"удален пакет [{0}]", _listPackage[indx].m_dtRecieved), Logging.INDEX_MESSAGE.NOT_SET);
@@ -510,6 +514,9 @@ namespace xmlLoader
                         error = false;
 
                         itemQueue = Peek;
+
+                        Console.WriteLine(string.Format(@"{0} - Запрос {1}: за [{2}], индекс={3}, состояние={4}" //
+                            , DateTime.UtcNow, state.ToString(), (DateTime)itemQueue.Pars[0], (int)itemQueue.Pars[2], ((DataGridViewElementStates)itemQueue.Pars[3]).ToString())); //
 
                         var selectPackages = from p in _listPackage where p.m_dtRecieved == (DateTime)itemQueue.Pars[0] select p;
                         if (selectPackages.Count() == 1) {

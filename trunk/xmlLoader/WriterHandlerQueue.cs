@@ -340,7 +340,7 @@ namespace xmlLoader
             List<FormMain.VIEW_ITEM> listRes = new List<FormMain.VIEW_ITEM>();
 
             (from dataSet in _listDataSet
-                orderby dataSet.m_dtRecieved //descending
+                orderby dataSet.m_dtRecieved descending
                 select new FormMain.VIEW_ITEM {
                     Values = new object[] {
                         dataSet.m_tableValues.Rows.Count

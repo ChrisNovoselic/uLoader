@@ -66,12 +66,10 @@ namespace xmlLoader
                 }
             }
 
-            public object [] UDPListener
+            public int UDPListener
             {
                 get {
-                    return new object[] { getSecListValuesOfKey(@"Reader", @"SERVER", @"::")[0]
-                        , Int32.Parse(getSecListValuesOfKey(@"Reader", @"SERVER", @"::")[1])
-                    };
+                    return Int32.Parse(GetSecValueOfKey(@"Reader", @"NUDP"));
                 }
             }
 
