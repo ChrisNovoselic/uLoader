@@ -606,6 +606,8 @@ namespace xmlLoader
             xmlDoc = new XmlDocument();
             xmlDoc.LoadXml(Encoding.ASCII.GetString(buffer));
 
+            Logging.Logg().Debug(xmlDoc.InnerXml, Logging.INDEX_MESSAGE.NOT_SET);
+
             // отправить XML-пакет
             DataAskedHost(new object[] { new object[] {
                 HHandlerQueue.StatesMachine.UDP_LISTENER_PACKAGE_RECIEVED

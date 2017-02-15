@@ -7,6 +7,7 @@ using System.Data;
 using System.Reflection;
 using System.Diagnostics;
 using System.Threading;
+using System.Globalization;
 
 namespace xmlLoader
 {
@@ -237,7 +238,7 @@ namespace xmlLoader
                         m_values += string.Format(@"('{0}','{1}',{2}),"
                             , r[@"XML_SECTION_NAME"]
                             , r[@"XML_ITEM_NAME"]
-                            , r[@"VALUE"]
+                            , ((float)r[@"VALUE"]).ToString(CultureInfo.InvariantCulture)
                         );
                     }
 

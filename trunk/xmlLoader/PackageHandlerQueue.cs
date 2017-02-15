@@ -331,6 +331,7 @@ namespace xmlLoader
         public PackageHandlerQueue()
         {
             _listPackage = new List<PACKAGE>();
+            _dictParameterRecieved = new DictionaryParameter();
             // создать объект синхронизации для исключения преждевременной активации (запуска таймера с 0 мсек)
             m_manualEventSetOption = new ManualResetEvent(false);
             // создать объект таймера, не запускать
@@ -455,7 +456,7 @@ namespace xmlLoader
                 Logging.Logg().Debug(MethodBase.GetCurrentMethod(), string.Format(@"добавлен пакет [{0}]", dtPackage), Logging.INDEX_MESSAGE.NOT_SET);
 
                 s_Statistic.SetAt(STATISTIC.INDEX_ITEM.DATETIME_PACKAGE_LAST_RECIEVED, package.m_dtRecieved);
-                s_Statistic.SetAt(STATISTIC.INDEX_ITEM.LENGTH_PACKAGE_LAST_RECIEVED, package.m_tableValues.Rows.Count);
+                s_Statistic.SetAt(STATISTIC.INDEX_ITEM.LENGTH_PACKAGE_LAST_RECIEVED, package.m_xmlSource.InnerXml.Length);
                 s_Statistic.Counter(STATISTIC.INDEX_ITEM.COUNT_PACKAGE_RECIEVED);
                 if (package.m_state == PACKAGE.STATE.PARSED)
                     s_Statistic.Counter(STATISTIC.INDEX_ITEM.COUNT_PACKAGE_PARSED);
@@ -469,6 +470,73 @@ namespace xmlLoader
 
             return iRes;
         }
+
+        private struct PARAMETER
+        {
+            private enum INDEX_DATETIME { PREVIOUS, CURRENT }
+
+            public PARAMETER(DateTime dtRec)
+            {
+                m_arDateTimeRecieved = new DateTime[] { DateTime.MinValue, dtRec };
+
+                _counter = 0;
+            }
+
+            public void Update(bool bChanged)
+            {
+                if (bChanged == true)
+                    m_arDateTimeRecieved[(int)INDEX_DATETIME.PREVIOUS] = m_arDateTimeRecieved[(int)INDEX_DATETIME.CURRENT];
+                else
+                    ;
+                m_arDateTimeRecieved[(int)INDEX_DATETIME.CURRENT] = DateTime.UtcNow;
+
+                _counter++;
+            }
+
+            public bool IsUpdate
+            {
+                get {
+                    bool bRes = false;
+
+                    bRes = ((m_arDateTimeRecieved[(int)INDEX_DATETIME.CURRENT] -
+                        m_arDateTimeRecieved[(int)INDEX_DATETIME.PREVIOUS]) - s_Option.TS_TIMER_TABLERES).Ticks > 0;
+
+                    return bRes;
+                }
+            }
+
+            public DateTime[] m_arDateTimeRecieved;
+
+            public uint _counter;
+        }
+
+        private XmlDocument m_xmlDocRecieved;
+
+        private class DictionaryParameter : Dictionary<string, PARAMETER>
+        {
+            public bool IsUpdate
+            {
+                get {
+                    bool bRes = true;
+
+                    foreach (PARAMETER par in Values)
+                        if ((bRes = par.IsUpdate) == false)
+                            break;
+                        else
+                            ;
+
+                    return bRes;
+                }
+            }
+
+            public void Update()
+            {
+                foreach (PARAMETER par in Values)
+                    par.Update(true);
+            }
+        }
+
+        private DictionaryParameter _dictParameterRecieved;
         /// <summary>
         /// Подготовить объект для отправки адресату по его запросу
         /// </summary>
@@ -481,6 +549,8 @@ namespace xmlLoader
             int iRes = -1;
             StatesMachine state = (StatesMachine)s;
             PACKAGE package;
+            XmlDocument xmlDocNew;
+            XmlNode nodeRec;
             string debugMsg = string.Empty;
 
             error = true;
@@ -499,7 +569,43 @@ namespace xmlLoader
                         // удалить лишние пакеты
                         removePackage();
 
-                        error = (iRes = addPackage((DateTime)itemQueue.Pars[0], (XmlDocument)itemQueue.Pars[1])) < 0 ? true : false;                        
+                        xmlDocNew = (XmlDocument)itemQueue.Pars[1];
+
+                        if (m_xmlDocRecieved == null)
+                            m_xmlDocRecieved = UDPListener.CopyXmlDocument(xmlDocNew);
+                        else
+                            ;
+
+                        foreach (XmlNode nodeNew in xmlDocNew.ChildNodes[1]) { //[0] - header, [1] - xml
+                            debugMsg += string.Format(@"{0}, ", nodeNew.Name);
+
+                            if (_dictParameterRecieved.ContainsKey(nodeNew.Name) == false)
+                                _dictParameterRecieved.Add(nodeNew.Name, new PARAMETER(DateTime.UtcNow));
+                            else {
+                                _dictParameterRecieved[nodeNew.Name].Update(false);
+
+                                if (_dictParameterRecieved[nodeNew.Name].IsUpdate == true) {
+                                    nodeRec = m_xmlDocRecieved.ChildNodes[1].SelectSingleNode(nodeNew.Name);
+
+                                    if (nodeRec == null) {
+                                        nodeRec = m_xmlDocRecieved.CreateNode(XmlNodeType.Element, nodeNew.Name, nodeNew.NamespaceURI);
+                                        nodeRec.InnerXml = nodeNew.InnerXml;
+                                        m_xmlDocRecieved.ChildNodes[1].AppendChild(nodeRec);
+                                    } else
+                                        //m_xmlDocRecieved.ChildNodes[1].ReplaceChild(xmlNode, node);
+                                        nodeRec.InnerXml = nodeNew.InnerXml;
+                                } else
+                                    ;
+                            }
+                        }
+                        //Console.WriteLine(string.Format(@"{0} получены: {1}", DateTime.UtcNow, debugMsg));
+
+                        if (_dictParameterRecieved.IsUpdate == true) {
+                            error = (iRes = addPackage((DateTime)itemQueue.Pars[0], m_xmlDocRecieved)) < 0 ? true : false;
+
+                            _dictParameterRecieved.Update();
+                        } else
+                            error = false;
                         break;
                     case StatesMachine.LIST_PACKAGE: // список пакетов
                         iRes = 0;

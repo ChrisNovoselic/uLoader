@@ -553,6 +553,9 @@ namespace xmlLoader
             // m_dgvDestValue
             // 
             this.m_dgvDestValue.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.m_dgvDestValue.MultiSelect = false;
+            this.m_dgvDestValue.AllowUserToAddRows = false;
+            this.m_dgvDestValue.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             this.m_dgvDestValue.Dock = System.Windows.Forms.DockStyle.Fill;
             this.m_dgvDestValue.Location = new System.Drawing.Point(3, 3);
             this.m_dgvDestValue.Name = "m_dgvDestValue";
