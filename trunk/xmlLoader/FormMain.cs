@@ -271,6 +271,7 @@ namespace xmlLoader
             m_dgvDestValue.DataSourceChanged += dgvViewDataTable_DataSourceChanged;
             m_dgvDestParameter.AllowUserToResizeColumns = false; //??? почему не установлено в 'InitializeComponent'
             m_dgvDestParameter.AllowUserToResizeRows = false; //??? почему не установлено в 'InitializeComponent'
+            m_dgvDestParameter.AllowUserToAddRows = false; //??? 
             m_dgvDestParameter.RowHeadersVisible = false; //??? почему не установлено в 'InitializeComponent'
             m_dgvDestParameter.DataSourceChanged += dgvViewDataTable_DataSourceChanged;
 

@@ -251,6 +251,11 @@ namespace xmlLoader
                                     , string.Format(@"XML-элемент Name={0} не имеет аттрибута 'value'...", node.Name)
                                     , Logging.INDEX_MESSAGE.NOT_SET);
 
+                            m_tableParameters.Rows.Add(new object[] {
+                                node.ParentNode.Name
+                                , node.Name
+                            });
+
                             m_tableValues.Rows.Add(new object[] {
                                 node.ParentNode.Name
                                 , node.Name
@@ -331,7 +336,7 @@ namespace xmlLoader
         public PackageHandlerQueue()
         {
             _listPackage = new List<PACKAGE>();
-            _dictParameterRecieved = new DictionaryParameter();
+            _dictBuildingParameterRecieved = new DictionaryParameter();
             // создать объект синхронизации для исключения преждевременной активации (запуска таймера с 0 мсек)
             m_manualEventSetOption = new ManualResetEvent(false);
             // создать объект таймера, не запускать
@@ -535,8 +540,11 @@ namespace xmlLoader
                     par.Update(true);
             }
         }
-
-        private DictionaryParameter _dictParameterRecieved;
+        /// <summary>
+        /// Словарь (ключ - наименование группы параметров) с нараращиваемым перечнем групп сигналов
+        ///  для контроля их актуальности и определения времени для передачи для обработки
+        /// </summary>
+        private DictionaryParameter _dictBuildingParameterRecieved;
         /// <summary>
         /// Подготовить объект для отправки адресату по его запросу
         /// </summary>
@@ -579,12 +587,12 @@ namespace xmlLoader
                         foreach (XmlNode nodeNew in xmlDocNew.ChildNodes[1]) { //[0] - header, [1] - xml
                             debugMsg += string.Format(@"{0}, ", nodeNew.Name);
 
-                            if (_dictParameterRecieved.ContainsKey(nodeNew.Name) == false)
-                                _dictParameterRecieved.Add(nodeNew.Name, new PARAMETER(DateTime.UtcNow));
+                            if (_dictBuildingParameterRecieved.ContainsKey(nodeNew.Name) == false)
+                                _dictBuildingParameterRecieved.Add(nodeNew.Name, new PARAMETER(DateTime.UtcNow));
                             else {
-                                _dictParameterRecieved[nodeNew.Name].Update(false);
+                                _dictBuildingParameterRecieved[nodeNew.Name].Update(false);
 
-                                if (_dictParameterRecieved[nodeNew.Name].IsUpdate == true) {
+                                if (_dictBuildingParameterRecieved[nodeNew.Name].IsUpdate == true) {
                                     nodeRec = m_xmlDocRecieved.ChildNodes[1].SelectSingleNode(nodeNew.Name);
 
                                     if (nodeRec == null) {
@@ -600,10 +608,10 @@ namespace xmlLoader
                         }
                         //Console.WriteLine(string.Format(@"{0} получены: {1}", DateTime.UtcNow, debugMsg));
 
-                        if (_dictParameterRecieved.IsUpdate == true) {
+                        if (_dictBuildingParameterRecieved.IsUpdate == true) {
                             error = (iRes = addPackage((DateTime)itemQueue.Pars[0], m_xmlDocRecieved)) < 0 ? true : false;
 
-                            _dictParameterRecieved.Update();
+                            _dictBuildingParameterRecieved.Update();
                         } else
                             error = false;
                         break;
