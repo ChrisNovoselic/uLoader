@@ -25,6 +25,7 @@ namespace xmlLoader
             , XML_PACKAGE_VERSION //Версия(строка) шаблон XML-пакета
             , XML_PACKAGE_TEMPLATE //Шаблон XML-пакета
             , UDP_LISTENER //Номер порта прослушивателя
+            , LOGGING_SET // Прочитать из лог-файла признаки логгирования
             , OPTION_PACKAGE, OPTION_DEST //Настраиваемые параметры
             , LIST_DEST, DEST_DETAIL //Список источников данных (назначение - сохранение полученных значений), параметры для соединения
             , TIMER_UPDATE
@@ -120,11 +121,19 @@ namespace xmlLoader
 
                         outobj = m_fileINI.UDPListener;
                         break;
+                    case StatesMachine.LOGGING_SET:
+                        iRes = 0;
+                        error = false;
+
+                        //itemQueue = Peek;
+
+                        EvtToFormMain?.Invoke(new object[] { state, m_fileINI.LoggingSet });
+                        break;
                     case StatesMachine.OPTION_PACKAGE:
                         iRes = 0;
                         error = false;
 
-                        itemQueue = Peek;
+                        //itemQueue = Peek;
 
                         EvtToFormMain?.Invoke(new object[] { state, m_fileINI.OptionPackage });
                         break;
@@ -201,6 +210,7 @@ namespace xmlLoader
                 case StatesMachine.XML_PACKAGE_TEMPLATE: // шаблон XML-пакета
                 case StatesMachine.UDP_DEBUG: //
                 case StatesMachine.UDP_LISTENER: // номер порта прослушивателя
+                case StatesMachine.LOGGING_SET: // настройки логгирования
                 case StatesMachine.OPTION_PACKAGE: //
                 case StatesMachine.OPTION_DEST: //
                 case StatesMachine.LIST_DEST: // cписок источников данных (назначение - сохранение полученных значений)
@@ -226,6 +236,7 @@ namespace xmlLoader
                     break;
                 case StatesMachine.LIST_DEST: // cписок источников данных (назначение - сохранение полученных значений)
                 case StatesMachine.DEST_DETAIL: //
+                case StatesMachine.LOGGING_SET: // настройки логгирования
                 case StatesMachine.OPTION_PACKAGE: // настраиваемые парметры Reader
                 case StatesMachine.OPTION_DEST: // настраиваемые парметры Writer
                 case StatesMachine.TIMER_UPDATE:

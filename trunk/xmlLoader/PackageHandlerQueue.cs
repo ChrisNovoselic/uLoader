@@ -28,6 +28,14 @@ namespace xmlLoader
             /// </summary>
             public TimeSpan TS_TIMER_TABLERES;
             /// <summary>
+            /// Интервал времени
+            /// </summary>
+            public TimeSpan TS_PARAMETER_UPDATE;
+            /// <summary>
+            /// Интервал времени
+            /// </summary>
+            public TimeSpan TS_PARAMETER_LIVE;
+            /// <summary>
             /// Интервал времени по прошествии которого считать XML-пакет в приложениии (ОЗУ) устаревшим (удалять)
             /// </summary>
             public TimeSpan TS_HISTORY_RUNTIME;
@@ -336,7 +344,7 @@ namespace xmlLoader
         public PackageHandlerQueue()
         {
             _listPackage = new List<PACKAGE>();
-            _dictBuildingParameterRecieved = new DictionaryParameter();
+            _dictBuildingParameterRecieved = new DictionaryGroupParameter();
             // создать объект синхронизации для исключения преждевременной активации (запуска таймера с 0 мсек)
             m_manualEventSetOption = new ManualResetEvent(false);
             // создать объект таймера, не запускать
@@ -419,8 +427,10 @@ namespace xmlLoader
                 return listRes;
             }
         }
-
-        private void removePackage()
+        /// <summary>
+        /// Удалить устаревшие пакеты
+        /// </summary>
+        private void removePackages()
         {
             DateTime dtLimit;
 
@@ -475,21 +485,29 @@ namespace xmlLoader
 
             return iRes;
         }
-
-        private struct PARAMETER
+        /// <summary>
+        /// Данные по группе параметров для контроля их актуальности (времени обновления)
+        /// </summary>
+        private struct GROUP_PARAMETER
         {
             private enum INDEX_DATETIME { PREVIOUS, CURRENT }
-
-            public PARAMETER(DateTime dtRec)
+            /// <summary>
+            /// Конструктор - основной (с параметрами)
+            /// </summary>
+            /// <param name="dtRec">Метка даты/времени получения пакета со значениями для группы сигналов</param>
+            public GROUP_PARAMETER(DateTime dtRec)
             {
                 m_arDateTimeRecieved = new DateTime[] { DateTime.MinValue, dtRec };
 
                 _counter = 0;
             }
-
-            public void Update(bool bChanged)
+            /// <summary>
+            /// Установить текущее время в качестве метки получения пакета со значениями для группы
+            /// </summary>
+            /// <param name="bReset">Признак типа выполнения установки: с сохранением - true, с заменой - false</param>
+            public void Update(bool bReset)
             {
-                if (bChanged == true)
+                if (bReset == true)
                     m_arDateTimeRecieved[(int)INDEX_DATETIME.PREVIOUS] = m_arDateTimeRecieved[(int)INDEX_DATETIME.CURRENT];
                 else
                     ;
@@ -498,53 +516,70 @@ namespace xmlLoader
                 _counter++;
             }
 
+            public override string ToString()
+            {
+                string strRes = string.Empty;
+
+                strRes = string.Format(@"CURRENT={0}, DIFF={1}, IsUpdate={2}"
+                    , m_arDateTimeRecieved[(int)INDEX_DATETIME.CURRENT]
+                    , m_arDateTimeRecieved[(int)INDEX_DATETIME.CURRENT] - m_arDateTimeRecieved[(int)INDEX_DATETIME.PREVIOUS]
+                    , IsUpdate
+                );
+
+                return strRes;
+            }
+
             public bool IsUpdate
             {
                 get {
                     bool bRes = false;
 
                     bRes = ((m_arDateTimeRecieved[(int)INDEX_DATETIME.CURRENT] -
-                        m_arDateTimeRecieved[(int)INDEX_DATETIME.PREVIOUS]) - s_Option.TS_TIMER_TABLERES).Ticks > 0;
+                        m_arDateTimeRecieved[(int)INDEX_DATETIME.PREVIOUS]) - s_Option.TS_PARAMETER_UPDATE).Ticks > 0;
 
                     return bRes;
                 }
             }
 
-            public DateTime[] m_arDateTimeRecieved;
+            private DateTime[] m_arDateTimeRecieved;
 
             public uint _counter;
         }
 
         private XmlDocument m_xmlDocRecieved;
 
-        private class DictionaryParameter : Dictionary<string, PARAMETER>
+        private class DictionaryGroupParameter : Dictionary<string, GROUP_PARAMETER>
         {
             public bool IsUpdate
             {
                 get {
                     bool bRes = true;
 
-                    foreach (PARAMETER par in Values)
-                        if ((bRes = par.IsUpdate) == false)
+                    foreach (KeyValuePair <string, GROUP_PARAMETER> pair in this)
+                        if ((bRes = pair.Value.IsUpdate) == false) {
+                            Logging.Logg().Debug(string.Format(@"{0} - обновление НЕ требуется [{1}]"
+                                    , pair.Key, pair.Value.ToString())
+                                , Logging.INDEX_MESSAGE.D_004);
+
                             break;
-                        else
+                        } else
                             ;
 
                     return bRes;
                 }
             }
 
-            public void Update()
+            public void Update(bool bReset)
             {
-                foreach (PARAMETER par in Values)
-                    par.Update(true);
+                foreach (GROUP_PARAMETER par in Values)
+                    par.Update(bReset);
             }
         }
         /// <summary>
         /// Словарь (ключ - наименование группы параметров) с нараращиваемым перечнем групп сигналов
         ///  для контроля их актуальности и определения времени для передачи для обработки
         /// </summary>
-        private DictionaryParameter _dictBuildingParameterRecieved;
+        private DictionaryGroupParameter _dictBuildingParameterRecieved;
         /// <summary>
         /// Подготовить объект для отправки адресату по его запросу
         /// </summary>
@@ -575,7 +610,7 @@ namespace xmlLoader
                         itemQueue = Peek;
 
                         // удалить лишние пакеты
-                        removePackage();
+                        removePackages();
 
                         xmlDocNew = (XmlDocument)itemQueue.Pars[1];
 
@@ -588,7 +623,7 @@ namespace xmlLoader
                             debugMsg += string.Format(@"{0}, ", nodeNew.Name);
 
                             if (_dictBuildingParameterRecieved.ContainsKey(nodeNew.Name) == false)
-                                _dictBuildingParameterRecieved.Add(nodeNew.Name, new PARAMETER(DateTime.UtcNow));
+                                _dictBuildingParameterRecieved.Add(nodeNew.Name, new GROUP_PARAMETER(DateTime.UtcNow));
                             else {
                                 _dictBuildingParameterRecieved[nodeNew.Name].Update(false);
 
@@ -608,12 +643,14 @@ namespace xmlLoader
                         }
                         //Console.WriteLine(string.Format(@"{0} получены: {1}", DateTime.UtcNow, debugMsg));
 
-                        if (_dictBuildingParameterRecieved.IsUpdate == true) {
-                            error = (iRes = addPackage((DateTime)itemQueue.Pars[0], m_xmlDocRecieved)) < 0 ? true : false;
+                        lock (this) {
+                            if (_dictBuildingParameterRecieved.IsUpdate == true) {
+                                error = (iRes = addPackage((DateTime)itemQueue.Pars[0], m_xmlDocRecieved)) < 0 ? true : false;
 
-                            _dictBuildingParameterRecieved.Update();
-                        } else
-                            error = false;
+                                _dictBuildingParameterRecieved.Update(true);
+                            } else
+                                error = false;
+                        }
                         break;
                     case StatesMachine.LIST_PACKAGE: // список пакетов
                         iRes = 0;
@@ -701,6 +738,8 @@ namespace xmlLoader
                         //    error = true;
                             outobj = false;
                         }
+
+                        _dictBuildingParameterRecieved.Update(false);
                         break;
                     default:
                         break;

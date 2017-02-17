@@ -94,20 +94,16 @@ namespace xmlLoader
 
             private void HandleMessage(IAsyncResult iar)
             {
-                try
-                {
+                try {
                     IPEndPoint remoteEP = null;
                     Byte[] buffer = _udpClient.EndReceive(iar, ref remoteEP);
                     _processor(new UdpReceiveResult(buffer, remoteEP));
+
                     BeginReceive(); // do the next one
-                }
-                catch (ObjectDisposedException)
-                {
+                } catch (ObjectDisposedException) {
                     // we were canceled, i.e. completed normally
-                    _tcs.SetResult(true);
-                }
-                catch (Exception ex)
-                {
+                    _tcs.TrySetResult(true);
+                } catch (Exception ex) {
                     // we failed.
                     _tcs.TrySetException(ex);
                 }
@@ -606,7 +602,7 @@ namespace xmlLoader
             xmlDoc = new XmlDocument();
             xmlDoc.LoadXml(Encoding.ASCII.GetString(buffer));
 
-            Logging.Logg().Debug(xmlDoc.InnerXml, Logging.INDEX_MESSAGE.NOT_SET);
+            Logging.Logg().Debug(xmlDoc.InnerXml, Logging.INDEX_MESSAGE.D_003);
 
             // отправить XML-пакет
             DataAskedHost(new object[] { new object[] {

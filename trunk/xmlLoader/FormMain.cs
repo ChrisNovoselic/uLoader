@@ -27,6 +27,24 @@ namespace xmlLoader
             , TABPAGE_VIEW_PACKAGE_XML, TABPAGE_VIEW_PACKAGE_TREE, TABPAGE_VIEW_PACKAGE_TABLE_VALUE, TABPAGE_VIEW_PACKAGE_TABLE_PARAMETER
             , TABPAGE_VIEW_DATASET_TABLE_VALUE, TABPAGE_VIEW_DATASET_TABLE_PARAMETER
         }
+        /// <summary>
+        /// Набор признаков для логгированния тех или иных (LOGGING_ID) событий
+        /// </summary>
+        private HMark m_markLogging;
+
+        public enum LOGGING_ID {
+            PACKAGE_RECIEVED_EVENT
+            , PACKAGE_RECIEVED_CONTENT
+            , GROUP_PARAMETER_NOT_UPADTE            
+                //, COUNT
+            ,
+        }
+
+        //private static string[] s_arLoggingName
+        //    //= {
+        //    //    LOGGING_ID.GROUP_PARAMETER_NOT_UPADTE.ToString()
+        //    //}
+        //;
 
         public class ListXmlTree : List<object>
         {
@@ -199,6 +217,17 @@ namespace xmlLoader
         {
             int indxRow = -1;
 
+            m_markLogging = new HMark(0);
+            //s_arLoggingName = new string[Enum.GetValues(typeof(LOGGING_ID)).Length];
+            //foreach (LOGGING_ID id in Enum.GetValues(typeof(LOGGING_ID)))
+            //    s_arLoggingName[(int)id] = id.ToString();
+
+            Logging.DelegateGetINIParametersOfID = getLogParametersOfID;
+            //Logging.LinkId(Logging.INDEX_MESSAGE.D_001, 0);
+            Logging.LinkId(Logging.INDEX_MESSAGE.D_002, (int)LOGGING_ID.PACKAGE_RECIEVED_EVENT);
+            Logging.LinkId(Logging.INDEX_MESSAGE.D_003, (int)LOGGING_ID.PACKAGE_RECIEVED_CONTENT);
+            Logging.LinkId(Logging.INDEX_MESSAGE.D_004, (int)LOGGING_ID.GROUP_PARAMETER_NOT_UPADTE);
+
             //this.Icon = this.Icon = ((System.Drawing.Icon)(new System.ComponentModel.ComponentResourceManager(typeof(FormMain)).GetObject("IconMainxmlLoader")));
 
             InitializeComponent();
@@ -281,6 +310,11 @@ namespace xmlLoader
             m_tpageDestValue.Tag = INDEX_CONTROL.TABPAGE_VIEW_DATASET_TABLE_VALUE;
             ((Control)m_tpageDestParameter).Enabled = true;
             m_tpageDestParameter.Tag = INDEX_CONTROL.TABPAGE_VIEW_DATASET_TABLE_PARAMETER;
+        }
+
+        private string getLogParametersOfID(int id)
+        {
+            return m_markLogging.IsMarked(id).ToString();
         }
 
         private void dgvListItem_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
@@ -597,7 +631,7 @@ namespace xmlLoader
 
             Logging.Logg().Debug(MethodBase.GetCurrentMethod()
                 , string.Format(@"получено сообщение state={0} от обработчика очереди событий", state.ToString())
-                , Logging.INDEX_MESSAGE.NOT_SET);
+                , Logging.INDEX_MESSAGE.D_002);
             
             switch (state) {
                 case HHandlerQueue.StatesMachine.MESSAGE_TO_STATUSSTRIP:
@@ -629,6 +663,12 @@ namespace xmlLoader
                     break;
                 case HHandlerQueue.StatesMachine.DEST_DETAIL:
                     BeginInvoke(new DelegateObjectFunc(fillDestDetail), (obj as object[])[1]);
+                    break;
+                case HHandlerQueue.StatesMachine.LOGGING_SET:
+                    foreach (LOGGING_ID id in Enum.GetValues(typeof(LOGGING_ID)))                        
+                        m_markLogging.Set((int)id, ((obj as object[])[1] as bool[])[(int)id]);
+
+                    Logging.UpdateMarkDebugLog();
                     break;
                 case HHandlerQueue.StatesMachine.OPTION_PACKAGE:
                     BeginInvoke(new DelegateObjectFunc(setOptionPackage), (obj as object[])[1]);
@@ -848,7 +888,8 @@ namespace xmlLoader
             // запросить список параметров соединения с БД
             m_handler.Push(null, new object[] {
                 new object[] {
-                    new object[] { HHandlerQueue.StatesMachine.OPTION_PACKAGE }
+                    new object[] { HHandlerQueue.StatesMachine.LOGGING_SET }
+                    , new object[] { HHandlerQueue.StatesMachine.OPTION_PACKAGE }
                     , new object[] { HHandlerQueue.StatesMachine.OPTION_DEST }
                     , new object[] { HHandlerQueue.StatesMachine.LIST_DEST }
                     , new object[] { HHandlerQueue.StatesMachine.TIMER_UPDATE }

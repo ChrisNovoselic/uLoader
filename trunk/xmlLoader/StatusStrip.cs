@@ -260,7 +260,7 @@ namespace xmlLoader
                     toolStripStatusLabelEventDateTime.Text = DateTime.Now.ToString();
                     toolStripStatusLabelEventDesc.Text = msg;
                 } catch (Exception e) {
-                    Logging.Logg().Exception(e, string.Format(@"Неизвестный тип сообщения state={0}", _state.ToString()), Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Exception(e, string.Format(@"Неизвестный тип сообщения state={0} для message='{1}'", _state.ToString(), msg), Logging.INDEX_MESSAGE.NOT_SET);
                 }
             }
         }

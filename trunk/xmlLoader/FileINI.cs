@@ -39,6 +39,18 @@ namespace xmlLoader
 
             public ushort TimerUpdate { get { return (ushort)new HTimeSpan(GetMainValueOfKey(@"TIMER_UPDATE")).Value.TotalSeconds; } }
 
+            public bool[] LoggingSet
+            {
+                get {
+                    bool[] arRes = new bool[Enum.GetValues(typeof(LOGGING_ID)).Length];
+
+                    foreach (LOGGING_ID id in Enum.GetValues(typeof(LOGGING_ID)))
+                        bool.TryParse(GetSecValueOfKey(@"Logging", id.ToString()), out arRes[(int)id]);
+
+                    return arRes;
+                }
+            }
+
             public PackageHandlerQueue.OPTION OptionPackage
             {
                 get {
@@ -47,6 +59,8 @@ namespace xmlLoader
                     return new PackageHandlerQueue.OPTION() {
                         COUNT_VIEW_ITEM = Int32.Parse(dictOption[@"COUNT_VIEW_ITEM"])
                         , TS_TIMER_TABLERES = new HTimeSpan(dictOption[@"TIMER_TABLERES"]).Value
+                        , TS_PARAMETER_UPDATE = new HTimeSpan(dictOption[@"PARAMETER_UPDATE"]).Value
+                        , TS_PARAMETER_LIVE = new HTimeSpan(dictOption[@"PARAMETER_LIVE"]).Value
                         , TS_HISTORY_RUNTIME = new HTimeSpan(dictOption[@"HISTORY_RUNTIME"]).Value
                         , HISTORY_ISSUE = bool.Parse(dictOption[@"HISTORY_ISSUE"])
                         , TS_HISTORY_ALONG = new HTimeSpan(dictOption[@"HISTORY_ALONG"]).Value
