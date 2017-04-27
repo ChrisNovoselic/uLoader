@@ -1367,21 +1367,20 @@ namespace uLoaderCommon
             }
             //Освободить ресурс ядра ОС
             //??? "везде" 'true'
-            try
-            {
+            try {
                 if (bRes == false)
-                    m_autoResetEvtQueue.Reset();                    
+                    m_autoResetEvtQueue.Reset();
                 else
                     ;
 
                 m_autoResetEvtQueue.Close();
                 //??? предполагается, что для этого объекта 'Reset' уже выполнен
-                IdGroupSignalsCurrent = -1;
-                m_manualEvtStateHandlerCompleted.Close();
-            }
-            catch (Exception e)
-            { //System.Threading.SemaphoreFullException
+                IdGroupSignalsCurrent = -1;                
+            } catch (Exception e) { //System.Threading.SemaphoreFullException
                 Logging.Logg().Exception(e, "HHandlerDbULoader::fThreadQueue () - m_autoResetEvtQueue.Release(1)", Logging.INDEX_MESSAGE.NOT_SET);
+            } finally {
+                m_autoResetEvtQueue.Close();
+                m_manualEvtStateHandlerCompleted.Close();
             }
         }
         /// <summary>
@@ -1603,6 +1602,10 @@ namespace uLoaderCommon
             }
         }
         /// <summary>
+        /// Максимальное время ожидания завершения штатной операции обработки очередного события очередью обработки событий
+        /// </summary>
+        private const int MSEC_MAX_TIMEOUT_STOP_ID = 6666;
+        /// <summary>
         /// Остановить группу сигналов по указанному идентификатору
         /// </summary>
         /// <param name="id">Идентификатор группы сигналов</param>
@@ -1624,8 +1627,12 @@ namespace uLoaderCommon
 
                 Logging.Logg().Debug(@"HHandlerDbULoader::Stop (Id=" + _iPlugin._Id + @", key=" + id + @") - ожидание окончания обработки группы сигналов...", Logging.INDEX_MESSAGE.NOT_SET);
                 // ожидать окончания обработки
-                m_manualEvtStateHandlerCompleted.WaitOne();
-                //while (IdGroupSignalsCurrent == id) ;
+                if (m_manualEvtStateHandlerCompleted.WaitOne(MSEC_MAX_TIMEOUT_STOP_ID) == false)
+                    Logging.Logg().Error(string.Format(@"HHandlerDbULoader::Stop (Id={0}, key={1}) - превышено допустимое время({2}) ожидания окончания обработки группы сигналов..."
+                            , _iPlugin._Id, id, MSEC_MAX_TIMEOUT_STOP_ID)
+                        , Logging.INDEX_MESSAGE.NOT_SET);
+                else
+                    ;
             }
             else
                 ;
