@@ -34,13 +34,13 @@ namespace DestStat
             {
             }
 
-            protected override void setTableRes()
-            {
-                //Заполнить таблицы с повторяющимися/уникальными записями
-                base.setTableRes();
-                //добавить поле [tmdelta]
-                (m_DupTables as DataTableDuplicateTMDelta).Convert(TableRecievedPrev, Signals);
-            }
+            //protected override void setTableRes()
+            //{
+            //    //Заполнить таблицы с повторяющимися/уникальными записями
+            //    base.setTableRes();
+            //    //добавить поле [tmdelta]
+            //    (m_DupTables as DataTableDuplicateTMDelta).Convert(TableRecievedPrev, Signals);
+            //}
 
             protected override string getTargetValuesQuery()
             {

@@ -37,13 +37,13 @@ namespace DestStat
                 return new GroupSignalsDest.SIGNALIDsql(this, (int)objs[0], (int)objs[1], (int)objs[3]);
             }
 
-            protected override void setTableRes()
-            {
-                //Заполнить таблицы с повторяющимися/уникальными записями
-                base.setTableRes();
-                //добаить поле [tmdelta]
-                (m_DupTables as DataTableDuplicateTMDelta).Convert(TableRecievedPrev, Signals);
-            }
+            //protected override void setTableRes()
+            //{
+            //    //Заполнить таблицы с повторяющимися/уникальными записями
+            //    base.setTableRes();
+            //    //добаить поле [tmdelta]
+            //    (m_DupTables as DataTableDuplicateTMDelta).Convert(TableRecievedPrev, Signals);
+            //}
 
             protected override string getTargetValuesQuery()
             {

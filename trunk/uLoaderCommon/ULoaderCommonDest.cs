@@ -347,11 +347,12 @@ namespace uLoaderCommon
                 return iRes;
             }
 
-            protected virtual void setTableRes()
-            {
-                //Сравнить (удалить дублирующие записи) предыдущую и текущую таблицы
-                m_DupTables.Clear(TableRecievedPrev, TableRecieved);
-            }
+            //protected virtual void setTableRes()
+            //{
+            //    //Сравнить (удалить дублирующие записи) предыдущую и текущую таблицы
+            //    m_DupTables.Clear(TableRecievedPrev, TableRecieved);
+            //}
+            protected abstract void setTableRes();
             /// <summary>
             /// Получить строку с запросом на вставку значений
             /// </summary>
@@ -387,7 +388,9 @@ namespace uLoaderCommon
                     Logging.Logg().Exception(e, @"HHandlerDbULoaderDest::GroupSignlsDest () - " + strIds + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
 
-                Logging.Logg().Debug(@"Строк для вставки " + strIds + @": " + m_DupTables.TableDistinct.Rows.Count
+                Logging.Logg().Debug(string.Format(@"Строк для вставки {0}: {1}..."
+                        , strIds
+                        , (((!(m_DupTables == null)) && (!(m_DupTables.TableDistinct == null))) ? m_DupTables.TableDistinct.Rows.Count.ToString() : @"не известно"))
                     , Logging.INDEX_MESSAGE.NOT_SET);
 
                 return
@@ -835,6 +838,18 @@ namespace uLoaderCommon
                 }
             }
 
+            protected override void setTableRes()
+            {
+                lock (this) {
+                    ////Заполнить таблицы с повторяющимися/уникальными записями
+                    //base.setTableRes();
+                    //Сравнить (удалить дублирующие записи) предыдущую и текущую таблицы
+                    m_DupTables.Clear(TableRecievedPrev, TableRecieved);
+                    //добаить поле [tmdelta]
+                    (m_DupTables as DataTableDuplicateTMDelta).Convert(TableRecievedPrev, Signals);
+                }
+            }
+
             protected override DataTableDuplicate createDupTables()
             {
                 return new DataTableDuplicateTMDelta();
@@ -892,6 +907,12 @@ namespace uLoaderCommon
             {
                 //ID_MAIN, ID_SRC_SGNL, ID_STAT
                 return new SIGNALIDsql(this, (int)objs[0], (int)objs[1], (int)objs[3]);
+            }
+
+            protected override void setTableRes()
+            {
+                //Сравнить (удалить дублирующие записи) предыдущую и текущую таблицы
+                m_DupTables.Clear(TableRecievedPrev, TableRecieved);
             }
 
             protected override object getIdTarget(int idLink)
@@ -975,6 +996,14 @@ namespace uLoaderCommon
                 return new SIGNALStatKKSNAMEsql(this, (int)objs[0], (int)objs[1], (string)objs[indxKKS_NAMEStat]); //14.03.2016 было - 4
             }
 
+            //protected override void setTableRes()
+            //{
+            //    //Заполнить таблицы с повторяющимися/уникальными записями
+            //    base.setTableRes();
+            //    //добавить поле [tmdelta]
+            //    (m_DupTables as DataTableDuplicateTMDelta).Convert(TableRecievedPrev, Signals);
+            //}
+
             protected override object getIdTarget(int idLink)
             {
                 string strRes = string.Empty;
@@ -1021,20 +1050,6 @@ namespace uLoaderCommon
                 return iRes;
             }
         }
-
-        //protected abstract class GroupSignalsStatTMKKSNAMEOraDest : GroupSignalsStatTMKKSNAMEDest
-        //{
-        //    public GroupSignalsStatTMKKSNAMEOraDest(HHandlerDbULoader parent, int id, object[] pars)
-        //        : base(parent, id, pars)
-        //    {
-        //    }
-
-        //    protected override GroupSignals.SIGNAL createSignal(object[] objs)
-        //    {
-        //        //ID_MAIN, ID_SRC_SGNL, KKSNAME_STAT
-        //        return new SIGNALStatKKSNAMEsql((int)objs[0], (int)objs[1], (string)objs[4]); //14.03.2016 было - 4
-        //    }
-        //}
     }
 
     public class PlugInULoaderDest : PlugInULoader

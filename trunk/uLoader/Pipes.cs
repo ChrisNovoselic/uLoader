@@ -415,26 +415,38 @@ namespace uLoader.Pipes
 
                 try {
                     //m_pipeServer.WaitForConnection();//Ожидание подключения
-                    m_pipeStream.BeginWaitForConnection(callbackConnection, null);
+                    m_pipeStream.BeginWaitForConnection((iar) => {
+                        if (m_pipeStream.CanRead == true) {
+                            m_pipeStream.EndWaitForConnection(iar);
+
+                            if (m_pipeStream.IsConnected == true) {
+                                m_thread = new Thread(ThreadRead);//Новый поток работы канала
+                                m_thread.Start();//Старт потока
+                            } else
+                                ;
+                        } else
+                            ;
+                    }, null);
                 } catch (Exception e) {
                 //Если таймаут превышен
                     err = ERROR.OVER_ATTEMPT;
                 }
             }
 
-            private void callbackConnection(IAsyncResult res)
-            {
-                if (!(m_pipeStream == null)) {
-                    m_pipeStream.EndWaitForConnection(res);
+            //private void callbackConnection(IAsyncResult res)
+            //{
+            //    if ((!(m_pipeStream == null))
+            //        && (m_pipeStream.CanRead == true)) {
+            //        m_pipeStream.EndWaitForConnection(res);
 
-                    if (m_pipeStream.IsConnected == true) {
-                        m_thread = new Thread(ThreadRead);//Новый поток работы канала
-                        m_thread.Start();//Старт потока
-                    } else
-                        ;
-                } else
-                    ;
-            }
+            //        if (m_pipeStream.IsConnected == true) {
+            //            m_thread = new Thread(ThreadRead);//Новый поток работы канала
+            //            m_thread.Start();//Старт потока
+            //        } else
+            //            ;
+            //    } else
+            //        ;
+            //}
 
             /// <summary>
             /// Запуск канала
