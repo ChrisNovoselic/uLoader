@@ -1151,8 +1151,8 @@ namespace uLoaderCommon
                 lock (m_lockStateGroupSignals)
                 {
                     if (m_dictGroupSignals.Keys.Contains(id) == false)
-                    {//Считать переданные параметры - параметрами сигналов                
-                        m_dictGroupSignals.Add(id, createGroupSignals (id, pars));                       
+                    {//Считать переданные параметры - параметрами сигналов
+                        m_dictGroupSignals.Add(id, createGroupSignals (id, pars));
 
                         //Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - добавить группу сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
@@ -1237,9 +1237,9 @@ namespace uLoaderCommon
                 if (isPush (keyQueueCount) == true)
                     if (!(m_autoResetEvtQueue == null))
                         try
-                        {                        
+                        {
                             m_queueIdGroupSignals.Enqueue(key);
-                            iRes ++;                        
+                            iRes ++;
 
                             //Проверить активность потока очереди обработки событий
                             bool bSet = m_autoResetEvtQueue.WaitOne(0, true);
@@ -1269,7 +1269,7 @@ namespace uLoaderCommon
                 ;
 
             return iRes;
-        }        
+        }
 
         protected abstract int addAllStates ();
 
@@ -1310,7 +1310,7 @@ namespace uLoaderCommon
                     }
 
                     try
-                    {                        
+                    {
                         //m_manualEvtStateHandlerCompleted.Reset();
                         //Получить объект очереди событий
                         IdGroupSignalsCurrent = m_queueIdGroupSignals.Peek();
@@ -1340,7 +1340,7 @@ namespace uLoaderCommon
                         {
                             //Удалить объект очереди событий (обработанный)
                             m_queueIdGroupSignals.Dequeue();
-                        }                        
+                        }
 
                         lock (m_lockStateGroupSignals)
                         {
@@ -1624,6 +1624,8 @@ namespace uLoaderCommon
                     //Очистить все состояния
                     ClearStates();
                 }
+                // инициировать досрочное завершение обработки группы состояний
+                this.completeHandleStates(INDEX_WAITHANDLE_REASON.SUCCESS);
 
                 Logging.Logg().Debug(@"HHandlerDbULoader::Stop (Id=" + _iPlugin._Id + @", key=" + id + @") - ожидание окончания обработки группы сигналов...", Logging.INDEX_MESSAGE.NOT_SET);
                 // ожидать окончания обработки
