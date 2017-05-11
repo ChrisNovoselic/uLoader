@@ -1608,7 +1608,7 @@ namespace uLoader
 
                                     tblToPanel.Columns.AddRange(new DataColumn[] { new DataColumn (@"NAME_SHR", typeof (string))
                                                                                     , new DataColumn (@"VALUE", typeof (string)) //new DataColumn (@"VALUE", typeof (decimal))
-                                                                                    , new DataColumn (@"DATETIME", typeof (string)) //new DataColumn (@"DATETIME", typeof (DateTime))
+                                                                                    , new DataColumn (@"DATETIME", typeof (DateTime)) // new DataColumn (@"DATETIME", typeof (string))
                                                                                     , new DataColumn (@"COUNT", typeof (string)) //new DataColumn (@"COUNT", typeof (int))
                                                                                     });
 
@@ -1630,10 +1630,10 @@ namespace uLoader
                                         if (arSel.Length > 0)
                                             arObjToRow = new object[] { sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf (@"NAME_SHR")]
                                                 , arSel[0][@"VALUE"]
-                                                , ((DateTime)arSel[0][@"DATETIME"]).Add(tsToPanel).ToString(@"dd.MM.yyyy HH:mm:ss.fff")
+                                                , ((DateTime)arSel[0][@"DATETIME"]).Add(tsToPanel)
                                                 , arSel.Length };
                                         else
-                                            arObjToRow = new object[] { sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf(@"NAME_SHR")], string.Empty, string.Empty, string.Empty };
+                                            arObjToRow = new object[] { sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf(@"NAME_SHR")], string.Empty, DateTime.MinValue, string.Empty };
 
                                         tblToPanel.Rows.Add(arObjToRow);
                                     }

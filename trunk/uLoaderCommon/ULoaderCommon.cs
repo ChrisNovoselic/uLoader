@@ -1077,7 +1077,7 @@ namespace uLoaderCommon
                     //Значения параметров соединения с источником данных
                     m_connSett = new ConnectionSettings((pars[0] as ConnectionSettings));
 
-                    strMsg = @"HHandlerDbUloader::Initialize [ID=" + PlugInId + @":" + _iPlugin.KeySingleton + @"] - объект: ConnectionSettings.ID=" + m_connSett.id + @" ...";
+                    strMsg = @"HHandlerDbUloader::Initialize [" + string.Format(@"ID={0}:{1}", _iPlugin._Id, _iPlugin.KeySingleton) + @"] - объект: ConnectionSettings.ID=" + m_connSett.id + @" ...";
                     //Console.WriteLine(strMsg);
                     Logging.Logg ().Debug (strMsg, Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -1224,15 +1224,14 @@ namespace uLoaderCommon
         {
             int iRes = -1;
 
-            string msgDebug = @"HHandlerDbULoader::enqueue () - [" + PlugInId + @", key=" + key + @"] - queue.Count=";
+            string msgDebug = string.Format(@"HHandlerDbULoader::enqueue () - [ID={0}:{1}, key={2}] - queue.Count=", _iPlugin._Id, _iPlugin.KeySingleton, key);
             int keyQueueCount = -1;
 
             lock (m_lockQueue)
             {
                 keyQueueCount = m_queueIdGroupSignals.Count (delegate(int i1) { return i1 == key; });
 
-                msgDebug += QueueCount;
-                msgDebug += @"(" + (iRes = keyQueueCount) + @")";
+                msgDebug += string.Format(@"{0}({1})", QueueCount, iRes = keyQueueCount);
 
                 if (isPush (keyQueueCount) == true)
                     if (!(m_autoResetEvtQueue == null))
@@ -1254,7 +1253,7 @@ namespace uLoaderCommon
                         }
                         catch (Exception e)
                         {
-                            Logging.Logg().Exception(e, msgDebug + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+                            Logging.Logg().Exception(e, string.Format(@"{0} ...", msgDebug), Logging.INDEX_MESSAGE.NOT_SET);
                             msgDebug = string.Empty;
                         }
                     else
@@ -1264,7 +1263,7 @@ namespace uLoaderCommon
             }
 
             if (msgDebug.Equals (string.Empty) == false)
-                Logging.Logg().Debug(msgDebug + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Debug(string.Format(@"{0} ...", msgDebug), Logging.INDEX_MESSAGE.NOT_SET);
             else
                 ;
 
@@ -1440,7 +1439,11 @@ namespace uLoaderCommon
             {
                 base.register(id, indx, connSett, name);
 
-                Logging.Logg().Debug(@"HHandlerDbLoader::register (" + PlugInId + @", key=" + id + @")" + @" iListenerId = " + m_dictIdListeners[id][indx] + @"; кол-во_групп=" + m_dictGroupSignals.Count + @", идентификаторов_источников=" + m_dictIdListeners.Count, Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Debug(@"HHandlerDbLoader::register (" + string.Format(@"ID={0}:{1}, key={2}", _iPlugin._Id, _iPlugin.KeySingleton, id) + @")"
+                        + @" iListenerId = " + m_dictIdListeners[id][indx]
+                        + @"; кол-во_групп=" + m_dictGroupSignals.Count
+                        + @", идентификаторов_источников=" + m_dictIdListeners.Count
+                    , Logging.INDEX_MESSAGE.NOT_SET);
             }
             else
                 ;
@@ -1463,7 +1466,7 @@ namespace uLoaderCommon
 
             startThreadDepended ();
 
-            Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + PlugInId + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);            
+            Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + string.Format(@"ID={0}:{1}", _iPlugin._Id, _iPlugin.KeySingleton) + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);            
         }
 
         public bool IsInitSource { get { lock (m_lockInitSource) { return !(m_connSett == null); } } }
@@ -1505,8 +1508,8 @@ namespace uLoaderCommon
         {
             m_semaInitId.WaitOne ();
 
-            //Console.WriteLine(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - ...");
-            Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            //Console.WriteLine(@"HHandlerDbULoader::Start (" + string.Format(@"ID={0}:{1}, key={2}", _iPlugin._Id, _iPlugin.KeySingleton, id) + @") - ...");
+            Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + string.Format(@"ID={0}:{1}, key={2}", _iPlugin._Id, _iPlugin.KeySingleton, id) + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
             int iNeedStarted = -1; //Признак необходимости запуска "родительского" объекта
             GroupSignals.STATE initState = GroupSignals.STATE.UNKNOWN; //Новое состояние группы сигналов при старте
@@ -1538,8 +1541,8 @@ namespace uLoaderCommon
                         iNeedStarted = -1;
                 }
 
-                //Console.WriteLine(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - iNeedStarted=" + iNeedStarted + @" ...");
-                Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - iNeedStarted=" + iNeedStarted + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+                //Console.WriteLine(@"HHandlerDbULoader::Start (" + string.Format(@"ID={0}:{1}, key={2}", _iPlugin._Id, _iPlugin.KeySingleton, id) + @") - iNeedStarted=" + iNeedStarted + @" ...");
+                Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + string.Format(@"ID={0}:{1}, key={2}", _iPlugin._Id, _iPlugin.KeySingleton, id) + @") - iNeedStarted=" + iNeedStarted + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 //Проврить признак необходимости запуска "родительского" объекта
                 if (iNeedStarted == 1)
@@ -1555,7 +1558,7 @@ namespace uLoaderCommon
             }
             catch (Exception e)
             {
-                Logging.Logg().Exception(e, @"HHandlerDbULoader::Start (" + PlugInId + @", key=" + id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Exception(e, @"HHandlerDbULoader::Start (" + string.Format(@"ID={0}:{1}, key={2}", _iPlugin._Id, _iPlugin.KeySingleton, id) + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
 
             //Регистрация источника дфнных и установка с ним соединения

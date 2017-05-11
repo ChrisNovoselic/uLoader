@@ -701,7 +701,7 @@ namespace uLoaderCommon
                         }
                     }
                     else
-                        ; // не получено ни одного значения ни для одного bp аргументов формулы
+                        ; // не получено ни одного значения ни для одного из аргументов формулы
                 }
                 else
                     ;
@@ -1308,7 +1308,7 @@ namespace uLoaderCommon
                     throw new Exception(@"HHandlerDbULoaderDatetimeSrc::actualizeDateTimeStart () - неизвестный режим ...");
 
             Logging.Logg().Debug(@"HHandlerDbULoader::actualizeDateTimeStart () - "
-                                + @"[" + PlugInId + @", key=" + IdGroupSignalsCurrent + @"]"
+                                + string.Format(@"[ID={0}:{1}, key={2}]", _iPlugin._Id, _iPlugin.KeySingleton, IdGroupSignalsCurrent)
                                 + @", m_dtServer=" + m_dtServer.ToString(@"dd.MM.yyyy HH:mm.ss.fff")
                                 + @", DateTimeBegin=" + DateTimeBegin.ToString(@"dd.MM.yyyy HH:mm.ss.fff")
                                 + @", iRes=" + iRes

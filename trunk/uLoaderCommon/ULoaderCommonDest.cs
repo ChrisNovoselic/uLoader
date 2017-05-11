@@ -164,9 +164,11 @@ namespace uLoaderCommon
                     ;
 
                 string msg = @"HHandlerDbULoaderDest.GroupSignalsDest::dequeue () - DEQUEUE!"
-                        + @" [ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @":" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInULoader).KeySingleton 
-                            + @", key=" + (_parent as HHandlerDbULoaderDest).IdGroupSignalsCurrent
-                        + @"] queue.Count=" + (_parent as HHandlerDbULoaderDest).QueueCount
+                        + string.Format(@" [ID={0}:{1}, key={2}]"
+                            , ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id
+                            , ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInULoader).KeySingleton
+                            , (_parent as HHandlerDbULoaderDest).IdGroupSignalsCurrent)
+                        + @" queue.Count=" + (_parent as HHandlerDbULoaderDest).QueueCount
                         + @", queueTableRec.Count=" + m_queueTableRec.Count
                         + @", строк_было=" + cntPrev
                         + @", строк_стало=" + cntCur

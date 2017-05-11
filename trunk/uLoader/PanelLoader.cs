@@ -1150,7 +1150,10 @@ namespace uLoader
             {
                 int iRes = 0;
                 DataGridView dgv = null;
+                MaskedTextBox mtbxStartTime = null;
                 DataRow[] arSel = null;
+                DateTime datetimeValue = DateTime.MinValue
+                    , datetimeMinLastUpdate = DateTime.MinValue;
 
                 Logging.Logg().Debug(@"PanelLoaderSources::UpdateData () - строк для отображения=" + table.Rows.Count + @"...", Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -1161,8 +1164,15 @@ namespace uLoader
                         arSel = table.Select(@"NAME_SHR='" + dgvRow.Cells[0].Value + @"'");
                         if (arSel.Length == 1) {
                             try {
+                                datetimeValue = (DateTime)arSel[0][@"DATETIME"];
+
+                                if ((datetimeMinLastUpdate - datetimeValue).TotalSeconds < 0)
+                                    datetimeMinLastUpdate = (DateTime)arSel[0][@"DATETIME"];
+                                else
+                                    ;
+
                                 dgvRow.Cells[1].Value = arSel[0][@"VALUE"];
-                                dgvRow.Cells[2].Value = arSel[0][@"DATETIME"];
+                                dgvRow.Cells[2].Value = datetimeValue.Equals(DateTime.MinValue) == false ? datetimeValue.ToString(@"dd.MM.yyyy HH:mm:ss.fff") : string.Empty;
                                 dgvRow.Cells[3].Value = arSel[0][@"COUNT"];
                             } catch (Exception e) {
                                 Logging.Logg().Exception(e, @"PanelLoaderSources::UpdateData () - ...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -1177,6 +1187,9 @@ namespace uLoader
                                 string.Empty;
                         }
                     }
+
+                    mtbxStartTime = GetWorkingItem(KEY_CONTROLS.MTBX_START_TIME) as MaskedTextBox;
+                    mtbxStartTime.Text = datetimeMinLastUpdate.ToString(@"HH::mm");
                 } else
                     ;
 

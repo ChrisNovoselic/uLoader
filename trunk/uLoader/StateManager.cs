@@ -24,13 +24,13 @@ namespace uLoader
             /// <summary>
             /// Интервал в милисекундах для проверки меток времени обновления
             /// </summary>
-            public static int MSEC_TIMERFUNC_UPDATE = -1;
+            public static HTimeSpan s_tsTimerFuncUpdate = HTimeSpan.NotValue;
 
             private static int MIN_MSEC_WAIT_CONFIRMED = 46006;
             /// <summary>
             /// Интервал времени, в течении которого состояние объекта считать актуальным
             /// </summary>
-            public static int MSEC_WAIT_CONFIRMED = -1;
+            public static HTimeSpan s_tsWaitConfirmed = HTimeSpan.NotValue;
 
             public static int MAX_HISTORY_INFOCRASHED = 6
                 , MAX_COUNT_CRASHED_TO_RELOAD_GROUPSOURCES = 1;
@@ -105,10 +105,10 @@ namespace uLoader
                                         if (values[1].Equals(string.Empty) == false)
                                             switch (par) {
                                                 case INDEX_PARAMETER.WAIT_CONFIRMED:
-                                                    MSEC_WAIT_CONFIRMED = (int)new HTimeSpan(values[1]).Value.TotalSeconds * 1000; ;
+                                                    StateManager.s_tsWaitConfirmed = new HTimeSpan(values[1]);
                                                     break;
                                                 case INDEX_PARAMETER.TIMER_UPDATE:
-                                                    MSEC_TIMERFUNC_UPDATE = (int)new HTimeSpan(values[1]).Value.TotalSeconds * 1000;                                                    
+                                                    StateManager.s_tsTimerFuncUpdate = new HTimeSpan(values[1]);
                                                     break;
                                                 //case INDEX_PARAMETER.SHEDULE_TURN:
                                                 //    break;
@@ -132,7 +132,8 @@ namespace uLoader
 
                         // таймер включается только если интервал обновления > 6 сек И время ожидания подтверждения состояния > 46 сек
                         // т.к. иначе проверка работоспособности заблокирует выполнение основного потока
-                        m_bTurn = (!(MSEC_TIMERFUNC_UPDATE < MIN_MSEC_TIMERFUNC_UPDATE)) && (!(MSEC_WAIT_CONFIRMED < MIN_MSEC_WAIT_CONFIRMED));
+                        m_bTurn = (!((int)StateManager.s_tsTimerFuncUpdate.Value.TotalMilliseconds < MIN_MSEC_TIMERFUNC_UPDATE))
+                            && (!((int)StateManager.s_tsWaitConfirmed.Value.TotalMilliseconds < MIN_MSEC_WAIT_CONFIRMED));
                     } else
                         ;
                 } catch (Exception e) {
@@ -868,7 +869,7 @@ namespace uLoader
                         case STATE.ADDED:
                         case STATE.REMOVED:
                         case STATE.CRASH:
-                            msecLimit = StateManager.MSEC_WAIT_CONFIRMED;
+                            msecLimit = (int)StateManager.s_tsWaitConfirmed.Value.TotalMilliseconds;
                             break;
                         default:
                             break;
@@ -961,7 +962,7 @@ namespace uLoader
                 if (active == true)
                     if (m_stateManager.m_bTurn == true) {
                         due = 0;
-                        period = StateManager.MSEC_TIMERFUNC_UPDATE;
+                        period = (int)StateManager.s_tsTimerFuncUpdate.Value.TotalMilliseconds;
                     } else
                         if (active == false)
                             ; // оставить значения по умолчанию

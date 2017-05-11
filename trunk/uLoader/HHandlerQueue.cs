@@ -149,7 +149,7 @@ namespace uLoader
 #if _STATE_MANAGER
                             remove(ev.id_main, ev.id_detail, indx);
 #endif
-                            break;                        
+                            break;
                         default:
                             break;
                     }
