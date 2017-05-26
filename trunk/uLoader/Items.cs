@@ -1198,7 +1198,8 @@ namespace uLoader
                 id_cmd = (ID_DATA_ASKED_HOST)pars[0];
                 
                 iIDGroupSignals = (int)pars[1];
-                if (! (iIDGroupSignals < 0))
+                if ((! (iIDGroupSignals < 0))
+                    && (iIDGroupSignals < int.MaxValue))
                     grpSgnls = getGroupSignals(iIDGroupSignals);
                 else
                     ;
@@ -1226,6 +1227,8 @@ namespace uLoader
 
                         msgDebugLog += id_cmd.ToString ();
                         break;
+
+                    #region Отправить данные для инициализации группы сигналов, команду старт, если получено подтверждение приема/обработки данных инициализации
                     case ID_DATA_ASKED_HOST.INIT_SIGNALS: //Получен запрос на обрабатываемую группу сигналов
                         if ((ID_HEAD_ASKED_HOST)pars[2] == ID_HEAD_ASKED_HOST.GET)
                         {
@@ -1248,6 +1251,9 @@ namespace uLoader
 
                         msgDebugLog += id_cmd.ToString();
                         break;
+                    #endregion
+
+                    #region Обработать полученные из библиотеки результаты
                     case ID_DATA_ASKED_HOST.TABLE_RES:
                         if ((!(grpSgnls == null))
                             && ((!(pars[2] == null))
@@ -1273,37 +1279,45 @@ namespace uLoader
                         } else
                             ;
                         break;
+                    #endregion
+
                     case ID_DATA_ASKED_HOST.START:
                     case ID_DATA_ASKED_HOST.STOP:
-                        //m_semaStateChange.Release (1);
-                        //Вариант №2 (пост-установка)
-                        grpSgnls.StateChange();
-                        //Подтвердить изменение состояния группы сигналов
-                        // + установить/разорвать взаимосвязь между группами источников (при необходимости) - для 'GroupSourcesDest'
-                        this.PerformDataAskedHostQueue(new EventArgsDataHost(
-                            (int)Index
-                            , FormMain.FileINI.GetIDIndex(m_strID)
-                            , new object[] { iIDGroupSignals
-                                , id_cmd
-                                , ID_HEAD_ASKED_HOST.CONFIRM } // опционально - признак подтверждения выполнения команды
-                            ));
+                        try {
+                            if ((!(grpSgnls == null))
+                                && (iIDGroupSignals < int.MaxValue)) {
+                                grpSgnls.StateChange();
+                                //Подтвердить изменение состояния группы сигналов
+                                // + установить/разорвать взаимосвязь между группами источников (при необходимости) - для 'GroupSourcesDest'
+                                this.PerformDataAskedHostQueue(new EventArgsDataHost(
+                                    (int)Index
+                                    , FormMain.FileINI.GetIDIndex(m_strID)
+                                    , new object[] { iIDGroupSignals
+                                        , id_cmd
+                                        , ID_HEAD_ASKED_HOST.CONFIRM } // опционально - признак подтверждения выполнения команды
+                                    ));
 
-                        msgDebugLog = @"подтверждено: " + id_cmd.ToString();
+                                msgDebugLog = @"подтверждено: " + id_cmd.ToString();
 
-                        try
-                        {
-                            if ((grpSgnls.State == STATE.STOPPED)
-                                && (State == STATE.STOPPED)
-                                )
-                            {
-                                m_evtInitSourceSend.Reset();
-                                m_evtInitSourceConfirm.Reset();
-                            }
-                            else
-                                ;
-                            //Разрешить очередную команду на изменение состояния
-                            //Console.WriteLine(@"GroupSources::plugIn_OnEvtDataAskedHost () - m_evtGroupSgnlsState.Set() - " + msgDebugLog + @"...");
-                            m_evtGroupSgnlsState./*Release(1)*/Set();
+                                //Разрешить очередную команду на изменение состояния
+                                //Console.WriteLine(@"GroupSources::plugIn_OnEvtDataAskedHost () - m_evtGroupSgnlsState.Set() - " + msgDebugLog + @"...");
+                                m_evtGroupSgnlsState./*Release(1)*/Set();
+
+                                // очистить данные
+                                if (!(grpSgnls == null))
+                                    grpSgnls.m_tableData = new DataTable();
+                                else
+                                    ;
+                            } else
+                            // работа по группе источников
+                                if (
+                                    (State == STATE.STOPPED) // признак, что все группы сигналов остановлены
+                                    && (iIDGroupSignals == int.MaxValue) // признак, что выполнена команда стоп для интерфейса
+                                    ) {
+                                    m_evtInitSourceSend.Reset();
+                                    m_evtInitSourceConfirm.Reset();
+                                } else
+                                    ;
                         }
                         catch (Exception e)
                         {
@@ -1311,8 +1325,6 @@ namespace uLoader
                                 , @"GroupSources::plugIn_OnEvtDataAskedHost () - idGroupSgnls=" + iIDGroupSignals + @" ..."
                                 , Logging.INDEX_MESSAGE.NOT_SET);
                         }
-                        // очистить данные
-                        grpSgnls.m_tableData = new DataTable();
                         break;
                     case ID_DATA_ASKED_HOST.ERROR:
                         //???

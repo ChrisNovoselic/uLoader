@@ -1166,7 +1166,9 @@ namespace uLoaderCommon
                                 //Считать переданные параметры - параметрами сигналов
                                 m_dictGroupSignals[id] = createGroupSignals(id, pars);
 
-                                Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - ПЕРЕсоздать группу сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+                                Logging.Logg().Debug(string.Format(@"HHandlerDbULoader::Initialize () - ПЕРЕсоздать группу сигналов [ID={0}:{1}, key={2}]..."
+                                        , _iPlugin._Id, _iPlugin.KeySingleton, id)
+                                    , Logging.INDEX_MESSAGE.NOT_SET);
                             }
                             else
                             {//Считать переданные параметры - параметрами группы сигналов
@@ -1492,8 +1494,11 @@ namespace uLoaderCommon
                             ;
                 }
 
-                if ((bRes == true) && (base.IsStarted == false))
-                    Logging.Logg ().Error(@"HHandlerDbULoader::IsStarted.get [" + PlugInId + @" - несовпадение признака 'Старт' с базовым классом...", Logging.INDEX_MESSAGE.NOT_SET);
+                if ((bRes == true)
+                    && (base.IsStarted == false))
+                    Logging.Logg ().Error(string.Format(@"HHandlerDbULoader::IsStarted.get [{0}:{1}] - несовпадение признака 'Старт' с базовым классом..."
+                            , _iPlugin._Id, _iPlugin.KeySingleton)
+                        , Logging.INDEX_MESSAGE.NOT_SET);
                 else
                     ;
 
@@ -1576,10 +1581,6 @@ namespace uLoaderCommon
             m_semaInitId.Release(1);
         }
         /// <summary>
-        /// Идентификатор плюгина (строка, для лог-сообщений)
-        /// </summary>
-        protected string PlugInId { get { return @"PlugInID=" + ((_iPlugin == null) ? @"в составе проекта" : (_iPlugin as PlugInBase)._Id.ToString()); } }
-        /// <summary>
         /// Остановить объект и все зависимые потоки
         /// </summary>
         public override void Stop()
@@ -1587,7 +1588,7 @@ namespace uLoaderCommon
             lock (m_lockInitSource)
             {
                 //Console.WriteLine(@"HHandlerDbULoader::Stop (" + PlugInId + @") - ...");
-                Logging.Logg().Debug(@"HHandlerDbULoader::Stop (" + PlugInId + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Debug(@"HHandlerDbULoader::Stop (ID={0}:{1}) - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 // остановить поток обработки очереди событий
                 stopThreadQueue();                
                 //??? метод должен вызываться из-вне
@@ -1677,13 +1678,21 @@ namespace uLoaderCommon
                 }
                 catch (Exception e)
                 {
-                    Logging.Logg().Exception(e, @"HHandlerDbULoader::Stop (" + PlugInId + @", key=" + id + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Exception(e
+                        , string.Format(@"HHandlerDbULoader::Stop (ID={0}:{1}, key={2}) - ...", _iPlugin._Id, _iPlugin.KeySingleton, id)
+                        , Logging.INDEX_MESSAGE.NOT_SET);
                 }
                 //Проверить необходимость останова "родительского" для группы сигнала объекта
                 if (iNeedStopped == 1)
                 {
                     Activate(false);
                     Stop();
+
+                    if (!(_iPlugin == null))
+                        //Подтвердить клиенту останов группы сигналов
+                        (_iPlugin as PlugInBase).DataAskedHost(new object[] { _iPlugin.KeySingleton, ID_DATA_ASKED_HOST.STOP, int.MaxValue, direct });
+                    else
+                        ;
                 }
                 else
                     ;

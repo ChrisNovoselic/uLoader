@@ -520,7 +520,7 @@ namespace SrcMST
             int idGrpSgnls = (int) (pars as object [])[0];
             string []kks_names = ((string)(pars as object [])[1]).Split (new string [] {@","}, StringSplitOptions.RemoveEmptyEntries); 
             string strErr = string.Empty
-                , strIds = @" [" + PlugInId + @", key=" + idGrpSgnls + @"]: ";
+                , strIds = string.Format(@" [ID={0}:{1}, key={2}]: ", _iPlugin._Id, _iPlugin.KeySingleton, idGrpSgnls);
             // переменные для вызова 'm_torIsData.ReadItem'
             int quality, status;
             int type = 3;
@@ -627,7 +627,7 @@ namespace SrcMST
                     ;
                 // необходимо только в случае возникновения исключения или ошибки
                 idGrpSgnls = m_dictSignalsAdvised[kks_name];
-                strIds = @"[" + PlugInId + @", key=" + idGrpSgnls + @"]";
+                strIds = string.Format(@" [ID={0}:{1}, key={2}]", _iPlugin._Id, _iPlugin.KeySingleton, idGrpSgnls);
 
                 try
                 {

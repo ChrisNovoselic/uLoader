@@ -534,7 +534,7 @@ namespace uLoaderCommon
             HHandler.INDEX_WAITHANDLE_REASON resReason = INDEX_WAITHANDLE_REASON.SUCCESS;
             
             Logging.Logg().Error(@"HHandlerDbULoaderDest::StateErrors (state=" + ((StatesMachine)state).ToString() + @", req=" + req + @", res=" + res + @") - "
-                + @"[" + PlugInId + @", key=" + IdGroupSignalsCurrent + @"]"
+                + string.Format(@"[ID={0}:{1}, key={2}]", _iPlugin._Id, _iPlugin.KeySingleton, IdGroupSignalsCurrent)
                 + @"..."
                 , Logging.INDEX_MESSAGE.NOT_SET);
 

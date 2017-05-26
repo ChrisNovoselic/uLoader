@@ -754,7 +754,7 @@ namespace uLoaderCommon
                     break;
             }
 
-            Logging.Logg().Debug(string.Format("HHandlerDbULoaderSrc::StateRequest () - [id={0}:{1}, key={2}] - state={3}"
+            Logging.Logg().Debug(string.Format("HHandlerDbULoaderSrc::StateRequest () - [ID={0}:{1}, key={2}] - state={3}"
                     , _iPlugin._Id, _iPlugin.KeySingleton, IdGroupSignalsCurrent, (StatesMachine)state)
                 , Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -819,7 +819,7 @@ namespace uLoaderCommon
             else
                 ;
 
-            Logging.Logg().Error(@"[" + PlugInId + @", key=" + IdGroupSignalsCurrent + @"] - " + msgErr, Logging.INDEX_MESSAGE.NOT_SET);
+            Logging.Logg().Error(string.Format(@"[ID={0}:{1}, key={2}] - {3}...", _iPlugin._Id, _iPlugin.KeySingleton, IdGroupSignalsCurrent, msgErr), Logging.INDEX_MESSAGE.NOT_SET);
             //Console.WriteLine(@"Ошибка. " + msgErr);
 
             if (!(_iPlugin == null))
