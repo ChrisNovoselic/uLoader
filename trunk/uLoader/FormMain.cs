@@ -47,7 +47,10 @@ namespace uLoader
         {
             InitializeComponent();
 
-            m_formWait = FormWait.This;
+            if (HCmd_Arg.IsNormalized == true)
+                m_formWait = FormWait.This;
+            else
+                ;
 
             _statePanelWork = PanelWork.STATE.Unknown;
 
@@ -137,7 +140,10 @@ namespace uLoader
                 Logging.Logg().Exception(e, @"FormMain::interactionInitializeComlpeted () - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
 
-            m_formWait.StopWaitForm();
+            if (HCmd_Arg.IsNormalized == true)
+                m_formWait.StopWaitForm();
+            else
+                ;
         }
 
         private PanelWork.STATE _statePanelWork;
@@ -248,7 +254,10 @@ namespace uLoader
             m_panelConfig.Start();
             m_panelCS.Start();
 
-            m_formWait.StartWaitForm (Location, Size);
+            if (HCmd_Arg.IsNormalized == true)
+                m_formWait.StartWaitForm(Location, Size);
+            else
+                ;
 
             //Проверить признак отображения вкладки "работа"
             if (работаToolStripMenuItem.Checked == true)
