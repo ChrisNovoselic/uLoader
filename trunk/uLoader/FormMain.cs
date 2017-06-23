@@ -45,6 +45,8 @@ namespace uLoader
 
         public FormMain() : base (@"IconMainULoader")
         {
+            //Logging.Logg().Debug(string.Format(@"FormMain::ctor() - вХод, IsNormalized={0} ...", HCmd_Arg.IsNormalized), Logging.INDEX_MESSAGE.NOT_SET);
+
             InitializeComponent();
 
             if (HCmd_Arg.IsNormalized == true)
@@ -82,6 +84,8 @@ namespace uLoader
             m_TabCtrl.EventHTabCtrlExClose += new HTabCtrlEx.DelegateHTabCtrlEx(onCloseTabPage);
 
             initFormMainSizing();
+
+            //Logging.Logg().Debug(string.Format(@"FormMain::ctor() - вЫХод ..."), Logging.INDEX_MESSAGE.NOT_SET);
         }
 
         void файлКонфигурацияЗагрузитьToolStripMenuItem_Click(object sender, EventArgs e)

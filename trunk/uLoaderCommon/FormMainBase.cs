@@ -58,7 +58,9 @@ namespace uLoaderCommon
                 Message msg = new Message();
                 msg.Msg = 0x112;
                 msg.WParam = (IntPtr)(0xF020);
+
                 WndProc(ref msg);
+                Logging.Logg().Debug(string.Format(@"Отправлено сообщение: минимизация окна приложения [Msg={0}, wParam={1}]", msg.Msg, msg.WParam.ToInt32()), Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
         /// <summary>
