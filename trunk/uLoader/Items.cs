@@ -653,14 +653,14 @@ namespace uLoader
         /// <summary>
         /// Перечисление состояний группы источников
         /// </summary>
-        public enum STATE { UNKNOWN = -2, REVERSE, UNAVAILABLE, STOPPED, STARTED }        
+        public enum STATE { UNKNOWN = -2, REVERSE, UNAVAILABLE, STOPPED, STARTED }
         /// <summary>
         /// Объекты синхронизации (при автоматическом старте группы)
         ///  требуется ожидание перед инициализацией 1-ой из групп сигналов
         /// </summary>
-        private ManualResetEvent m_evtInitSourceSend
-            , m_evtInitSourceConfirm
-            , m_evtGroupSgnlsState;
+        private ManualResetEvent /*m_evtStartDo
+            ,*/ m_evtInitSourceConfirm;
+        private AutoResetEvent m_evtGroupSgnlsState;
         /// <summary>
         /// Состояние группы источников
         /// </summary>
@@ -823,17 +823,17 @@ namespace uLoader
                 return iRes;
             }
 
-            public int StateChange (STATE newState)
-            {
-                int iRes = 0;
+            //public int StateChange (STATE newState)
+            //{
+            //    int iRes = 0;
 
-                if (State == STATE.UNAVAILABLE)
-                    iRes = -1;
-                else
-                    State = newState;
+            //    if (State == STATE.UNAVAILABLE)
+            //        iRes = -1;
+            //    else
+            //        State = newState;
 
-                return iRes;
-            }
+            //    return iRes;
+            //}
 
             public object [] Pack ()
             {
@@ -914,9 +914,9 @@ namespace uLoader
             foreach (string skey in srcItem.m_listSKeys)
                 this.m_listSKeys.Add (skey);
 
-            m_evtInitSourceSend = new ManualResetEvent (false);
+            //m_evtStartDo = new ManualResetEvent (true);
             m_evtInitSourceConfirm = new ManualResetEvent(false);
-            m_evtGroupSgnlsState = new /*Semaphore*/ ManualResetEvent(/*0, 1*/false);
+            m_evtGroupSgnlsState = new /*Semaphore*/ AutoResetEvent(/*0, 1*/false);
 
             //Список с объектми параметров соединения с источниками данных
             foreach (KeyValuePair <string, ConnectionSettings> pair in srcItem.m_dictConnSett)
@@ -993,8 +993,6 @@ namespace uLoader
         private int sendInitSource ()
         {
             int iRes = 0;
-
-            m_evtInitSourceSend.Set();
 
             //Console.WriteLine(@"GroupSources::sendInitSource (id=" + m_iIdTypePlugInObjectLoaded + @") - ...");
             PerformDataAskedHostPlugIn(new EventArgsDataHost(m_iIdTypePlugInObjectLoaded, (int)ID_DATA_ASKED_HOST.INIT_SOURCE, Pack()));
@@ -1314,13 +1312,11 @@ namespace uLoader
                                     (State == STATE.STOPPED) // признак, что все группы сигналов остановлены
                                     && (iIDGroupSignals == int.MaxValue) // признак, что выполнена команда стоп для интерфейса
                                     ) {
-                                    m_evtInitSourceSend.Reset();
+                                    //m_evtStartDo.Set();
                                     m_evtInitSourceConfirm.Reset();
                                 } else
                                     ;
-                        }
-                        catch (Exception e)
-                        {
+                        } catch (Exception e) {
                             Logging.Logg().Exception(e
                                 , @"GroupSources::plugIn_OnEvtDataAskedHost () - idGroupSgnls=" + iIDGroupSignals + @" ..."
                                 , Logging.INDEX_MESSAGE.NOT_SET);
@@ -1535,17 +1531,21 @@ namespace uLoader
                 else
                     ; //Группа сигналов уже имеет указанное состояние ИЛИ не может изменить состояние на указанное
         }
-
+        /// <summary>
+        /// Изменить состояние группы сигналов
+        /// </summary>
+        /// <param name="iId">Идентификатор группы сигналов</param>
+        /// <param name="newState">Новое состояние группы сигналов</param>
         private void stateChange (int iId, STATE newState)
         {
             bool bSync = false;
 
             if ((newState == STATE.STARTED)
-                && (m_evtInitSourceSend.WaitOne(0) == false)
-                )
+                && (State == STATE.STOPPED))
+                /*if (m_evtStartDo.WaitOne() == true)*/
                 //??? возможно отправление повторного сообщения
                 // требуется ожидать подтверждения приема параметров соединения с источником
-                sendInitSource();
+                    sendInitSource();
             else
                 //if (newState == STATE.STOPPED)
                 //    m_evtInitSource.Reset();
