@@ -275,8 +275,9 @@ namespace uLoader
             else
                 ;
 
-            //initFormMainSizing();
-        }        
+            //??? почемы вызов не в базовом классе
+            initFormMainSizing();
+        }
         /// <summary>
         /// Обработчик события - закрытие формы
         /// </summary>

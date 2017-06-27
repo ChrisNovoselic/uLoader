@@ -35,13 +35,13 @@ namespace uLoaderCommon
             //this.HandleCreated += FormMainBase_HandleCreated;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormMain_Closing);
             this.Load += new System.EventHandler(this.FormMain_Load);
-            this.Shown += FormMainBase_Shown;
+            //this.Shown += FormMainBase_Shown;
         }
 
-        private void FormMainBase_Shown(object sender, EventArgs e)
-        {
-            initFormMainSizing();
-        }
+        //private void FormMainBase_Shown(object sender, EventArgs e)
+        //{
+        //    initFormMainSizing();
+        //}
 
         //private void FormMainBase_HandleCreated(object sender, EventArgs e)
         //{

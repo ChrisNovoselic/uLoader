@@ -899,8 +899,8 @@ namespace xmlLoader
             else
                 ;
 
-            ////??? почемы вызов не в базовом классе
-            //initFormMainSizing();
+            //??? почемы вызов не в базовом классе
+            initFormMainSizing();
         }
 
         protected override void FormMain_Closing(object sender, FormClosingEventArgs e)
