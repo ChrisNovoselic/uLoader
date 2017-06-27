@@ -270,9 +270,6 @@ namespace xmlLoader
             m_handlerWriter = new WriterHandlerQueue();
             m_handlerWriter.EvtToFormMain += onHandlerWriterQueue;
 
-            //??? почемы вызов не в базовом классе
-            initFormMainSizing();
-
             m_timerUpdate = new System.Threading.Timer(timerUpdate_OnCallback, null, System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
 
             m_dgvPackageList.AllowUserToResizeRows = false; //??? почему не установлено в 'InitializeComponent'
@@ -901,6 +898,9 @@ namespace xmlLoader
                 evtUDPListenerDataAskedHost(new object[] { new object[] { HHandlerQueue.StatesMachine.UDP_CONNECTED_CHANGE, !m_cbxReadSessionStart.Checked } });
             else
                 ;
+
+            ////??? почемы вызов не в базовом классе
+            //initFormMainSizing();
         }
 
         protected override void FormMain_Closing(object sender, FormClosingEventArgs e)

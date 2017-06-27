@@ -32,9 +32,21 @@ namespace uLoaderCommon
             this.m_notifyIcon.Icon = this.Icon; //??? пиктограмма еще не определена
             this.m_notifyIcon.Click += new System.EventHandler(NotifyIcon_Click);
 
+            //this.HandleCreated += FormMainBase_HandleCreated;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormMain_Closing);
             this.Load += new System.EventHandler(this.FormMain_Load);
+            this.Shown += FormMainBase_Shown;
         }
+
+        private void FormMainBase_Shown(object sender, EventArgs e)
+        {
+            initFormMainSizing();
+        }
+
+        //private void FormMainBase_HandleCreated(object sender, EventArgs e)
+        //{
+        //}
+
         /// <summary>
         /// Создать объект - обработчик очереди событий
         /// </summary>
@@ -50,17 +62,18 @@ namespace uLoaderCommon
         {
             //this.m_notifyIcon.Icon = this.Icon; //??? уже назначена
 
-            if (HCmd_Arg.IsNormalized == true) {
             // нормальный размер окна
-                this.OnMaximumSizeChanged(null);
-            } else {
-            // минимизация
+            this.OnMaximumSizeChanged(null);
+
+            if (HCmd_Arg.IsNormalized == false) {
+                // минимизация
                 Message msg = new Message();
                 msg.Msg = 0x112;
-                msg.WParam = (IntPtr)(0xF020);
+                msg.WParam = new IntPtr(0xF020);
 
                 WndProc(ref msg);
-                Logging.Logg().Debug(string.Format(@"Отправлено сообщение: минимизация окна приложения [Msg={0}, wParam={1}]", msg.Msg, msg.WParam.ToInt32()), Logging.INDEX_MESSAGE.NOT_SET);
+                //Logging.Logg().Debug(string.Format(@"Отправлено сообщение: минимизация окна приложения [Msg={0}, wParam={1}]", msg.Msg, msg.WParam.ToInt32()), Logging.INDEX_MESSAGE.NOT_SET);
+            } else {
             }
         }
         /// <summary>
@@ -100,18 +113,16 @@ namespace uLoaderCommon
         /// <param name="m">Объект сообщения</param>
         protected override void WndProc(ref Message m)
         {
-            if (m.Msg == 0x112)
-            {
-                if (m.WParam.ToInt32() == 0xF020)
-                {
+            if (m.Msg == 0x112) {
+                if (m.WParam.ToInt32() == 0xF020) {
                     this.WindowState = FormWindowState.Minimized;
                     this.ShowInTaskbar = false;
                     m_notifyIcon.Visible = true;
 
                     return;
-                }
-            }
-            else
+                } else
+                    ;
+            } else
                 ;
 
             base.WndProc(ref m);
@@ -141,6 +152,7 @@ namespace uLoaderCommon
 
         protected virtual void FormMain_Load(object sender, EventArgs e)
         {
+            //initFormMainSizing();
         }
     }
 }

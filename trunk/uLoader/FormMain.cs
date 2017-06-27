@@ -83,8 +83,6 @@ namespace uLoader
 
             m_TabCtrl.EventHTabCtrlExClose += new HTabCtrlEx.DelegateHTabCtrlEx(onCloseTabPage);
 
-            initFormMainSizing();
-
             //Logging.Logg().Debug(string.Format(@"FormMain::ctor() - вЫХод ..."), Logging.INDEX_MESSAGE.NOT_SET);
         }
 
@@ -276,6 +274,8 @@ namespace uLoader
             }
             else
                 ;
+
+            //initFormMainSizing();
         }        
         /// <summary>
         /// Обработчик события - закрытие формы
