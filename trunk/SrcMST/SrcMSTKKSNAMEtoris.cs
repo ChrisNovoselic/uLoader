@@ -421,11 +421,28 @@ namespace SrcMST
 
         public override void Start()
         {
+            int iResConnect = -1;
+
             base.Start();
 
             try
             {
-                m_torIsData.Connect();
+                switch (iResConnect = m_torIsData.Connect()) {
+                    case 0:
+                        break;
+                    case 1:
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                    default:
+                        break;
+                }
+
+                Logging.Logg().Action(string.Format(@"SrcMST.SrcMSTKKSNAMEToris::Start() - [ID={0}:{1}, key={2}], результат ={3}..."
+                        , _iPlugin._Id, _iPlugin.KeySingleton, IdGroupSignalsCurrent, iResConnect)
+                    , Logging.INDEX_MESSAGE.NOT_SET);
 
                 m_torIsData.ItemNewValue += new _ITorISDataEvents_ItemNewValueEventHandler(torIsData_ItemNewValue);
                 m_torIsData.ChangeAttributeValue += new _ITorISDataEvents_ChangeAttributeValueEventHandler(torIsData_ChangeAttributeValue);
