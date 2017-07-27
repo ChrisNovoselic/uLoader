@@ -194,6 +194,11 @@ namespace uLoaderCommon
         {
             return equ1.Value != equ2.Value;
         }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
     }
     
     public interface ILoader
@@ -245,14 +250,14 @@ namespace uLoaderCommon
         ON_REQUEST = -1,
         /// <summary>
         /// по текущему интервалу
-        /// </summary>        
+        /// </summary>
         CUR_INTERVAL,
         //CUR_INTERVAL_CAUSEPERIOD,
         //CUR_INTERVAL_CAUSENOT,
         /// <summary>
         /// выборочно (история)
         /// </summary>
-        COSTUMIZE,        
+        COSTUMIZE,
             COUNT_MODE_WORK
     }
     /// <summary>
@@ -312,7 +317,7 @@ namespace uLoaderCommon
                 foreach (SIGNAL s in m_arSignals)
                     s.ClearFormula();
 
-                State = GroupSignals.STATE.STOP;                
+                State = GroupSignals.STATE.STOP;
                 TableRecieved = null;
             }
 
@@ -457,7 +462,7 @@ namespace uLoaderCommon
                 /// <summary>
                 /// Добавить идентификатор аргумента при вычислении формулы (порядок учитывать)
                 /// </summary>
-                /// <param name="idMain"></param>
+                /// <param name="idMain">Идентификатор аргумента</param>
                 public void AddIdArg(int idMain)
                 {
                     if (m_listIdArgs == null)
@@ -601,7 +606,7 @@ namespace uLoaderCommon
                 /// Признак наличия строк после удаления дублирующих
                 ///  по итогам сравнения предыдущей и текущей таблиц 
                 /// </summary>
-                public bool IsDeterminate { get { return TableDistinct.Rows.Count > 0; } }
+                public bool IsDeterminate { get { return Equals(TableDistinct, null) == false ? TableDistinct.Rows.Count > 0 : false; } }
                 /// <summary>
                 /// Очистить "текущую" таблицу от записей,
                 ///  содержащихся в "предыдущей" таблице

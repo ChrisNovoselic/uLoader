@@ -378,7 +378,9 @@ namespace uLoaderCommon
 
                 try
                 {
-                    setTableRes();
+                    lock (this) {
+                        setTableRes();
+                    }
 
                     if (m_DupTables.IsDeterminate == true)
                         strRes = getTargetValuesQuery();
@@ -467,35 +469,45 @@ namespace uLoaderCommon
         protected override int StateRequest(int state)
         {
             int iRes = 0;
-            string query = string.Empty;
+            string query = string.Empty
+                , msg = string.Empty;
 
-            if (!(IdGroupSignalsCurrent < 0))
-                switch ((StatesMachine)state)
-                {
-                    case StatesMachine.CurrentTime:
-                        GetCurrentTimeRequest(DbInterface.DB_TSQL_INTERFACE_TYPE.MSSQL, m_dictIdListeners[IdGroupSignalsCurrent][0]);                    
-                        break;
-                    case StatesMachine.Values:
-                        query = (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).GetExistsValuesQuery();
-                        break;
-                    case StatesMachine.Insert:
-                        query = (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).GetTargetValuesQuery();
-                        break;
-                    default:
-                        break;
-                }
-            else
-                throw new Exception(@"HHandlerDbULoaderDest::StateRequest () - state=" + state.ToString() + @"...");
+            try {
+                msg = string.Format("HHandlerDbULoaderDest::StateRequest (state={3}) - [ID={0}:{1}, key={2}] - "
+                    , _iPlugin._Id, _iPlugin.KeySingleton, IdGroupSignalsCurrent, (StatesMachine)state);
 
-            if (isLastState(state) == true)
-                (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).Dequeue();
-            else
-                ;
+                if (!(IdGroupSignalsCurrent < 0))
+                    switch ((StatesMachine)state)
+                    {
+                        case StatesMachine.CurrentTime:
+                            GetCurrentTimeRequest(DbInterface.DB_TSQL_INTERFACE_TYPE.MSSQL, m_dictIdListeners[IdGroupSignalsCurrent][0]);
+                            break;
+                        case StatesMachine.Values:
+                            query = (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).ExistsValuesQuery;
+                            break;
+                        case StatesMachine.Insert:
+                            query = (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).TargetValuesQuery;
+                            break;
+                        default:
+                            break;
+                    }
+                else
+                    throw new Exception(string.Format(@"{0} ...", msg));
 
-            if (query.Equals(string.Empty) == false)
-                Request(m_dictIdListeners[IdGroupSignalsCurrent][0], query);
-            else
-                ;
+                if (isLastState(state) == true)
+                    (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).Dequeue();
+                else
+                    ;
+
+                if (query.Equals(string.Empty) == false)
+                    Request(m_dictIdListeners[IdGroupSignalsCurrent][0], query);
+                else
+                    ;
+            } catch (Exception e) {
+                Logging.Logg().Exception(e
+                    , string.Format(@"{0} ...", msg)
+                    , Logging.INDEX_MESSAGE.NOT_SET);
+            }
 
             return iRes;
         }
@@ -505,25 +517,31 @@ namespace uLoaderCommon
             int iRes = 0;
             string msg = string.Empty;
 
-            switch ((StatesMachine)state)
-            {
-                case StatesMachine.CurrentTime:
-                    m_dtServer = (DateTime)(obj as DataTable).Rows[0][0];
-                    //msg = @"HHandlerDbULoaderDest::StateResponse () ::" + ((StatesMachine)state).ToString() + @" - "
-                    //    + @"[" + PlugInId + @", key=" + m_IdGroupSignalsCurrent + @"] "
-                    //    + @"DATETIME=" + m_dtServer.ToString(@"dd.MM.yyyy HH.mm.ss.fff") + @"...";
-                    //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
-                    //Console.WriteLine (msg);
-                    (obj as DataTable).Columns.Clear();
-                    break;
-                case StatesMachine.Values:
-                    // ??? обработать результат запроса на получение текущих значений
-                    (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).Convert(obj as DataTable);
-                    break;
-                case StatesMachine.Insert:
-                    break;
-                default:
-                    break;
+            try {
+                msg = string.Format("HHandlerDbULoaderDest::StateResponse (state={3}) - [ID={0}:{1}, key={2}] - "
+                    , _iPlugin._Id, _iPlugin.KeySingleton, IdGroupSignalsCurrent, (StatesMachine)state);
+
+                switch ((StatesMachine)state) {
+                    case StatesMachine.CurrentTime:
+                        m_dtServer = (DateTime)(obj as DataTable).Rows[0][0];
+                        //msg = string.Format(@"{0} DATETIME={1} ...", msg, m_dtServer.ToString(@"dd.MM.yyyy HH.mm.ss.fff"));
+                        //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
+                        //Console.WriteLine (msg);
+                        (obj as DataTable).Columns.Clear();
+                        break;
+                    case StatesMachine.Values:
+                        // ??? обработать результат запроса на получение текущих значений
+                        (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsDest).Convert(obj as DataTable);
+                        break;
+                    case StatesMachine.Insert:
+                        break;
+                    default:
+                        break;
+                }
+            } catch (Exception e) {
+                Logging.Logg().Exception(e
+                    , string.Format(@"{0} ...", msg)
+                    , Logging.INDEX_MESSAGE.NOT_SET);
             }
 
             return iRes;
@@ -584,7 +602,7 @@ namespace uLoaderCommon
                     ;
             }
 
-            ////Logging.Logg().Debug(@"HHandlerDbULoaderDest::Insert () - " + msg + @" " + PlugInId + @", key=" + id + @", от [ID_SOURCE=" + pars[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
+            //Logging.Logg().Debug(@"HHandlerDbULoaderDest::Insert () - " + msg + @" " + PlugInId + @", key=" + id + @", от [ID_SOURCE=" + pars[0] + @"] ...", Logging.INDEX_MESSAGE.NOT_SET);
 
             return iRes;
         }
@@ -842,14 +860,15 @@ namespace uLoaderCommon
 
             protected override void setTableRes()
             {
-                lock (this) {
+                // 26.07.2017 пересено на вызов функции
+                //lock (this) {
                     ////Заполнить таблицы с повторяющимися/уникальными записями
                     //base.setTableRes();
                     //Сравнить (удалить дублирующие записи) предыдущую и текущую таблицы
                     m_DupTables.Clear(TableRecievedPrev, TableRecieved);
                     //добаить поле [tmdelta]
                     (m_DupTables as DataTableDuplicateTMDelta).Convert(TableRecievedPrev, Signals);
-                }
+                //}
             }
 
             protected override DataTableDuplicate createDupTables()

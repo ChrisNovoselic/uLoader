@@ -43,7 +43,13 @@ namespace SrcMST
 
         private void initialize()
         {
-            m_torIsData = new TorISData();
+            try {                
+                m_torIsData = (TorISData)System.Runtime.InteropServices.Marshal.GetActiveObject("TorIS.TorISData");
+            } catch (Exception e) {
+                try {
+                    m_torIsData = new TorISData();
+                } catch { }
+            }
 
             lockAdvisedItems = new object();
         }
@@ -427,7 +433,9 @@ namespace SrcMST
 
             try
             {
-                switch (iResConnect = m_torIsData.Connect()) {
+                iResConnect = m_torIsData.Connect();
+
+                switch (iResConnect) {
                     case 0:
                         break;
                     case 1:

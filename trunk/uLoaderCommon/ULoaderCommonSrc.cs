@@ -101,7 +101,7 @@ namespace uLoaderCommon
 
         public override int Initialize(int id, object[] pars)
         {
-            int iRes = -1;            
+            int iRes = -1;
 
             iRes = base.Initialize(id, pars);
 
@@ -116,7 +116,7 @@ namespace uLoaderCommon
                     lock (m_lockStateGroupSignals)
                     {
                         if (m_dictGroupSignals.Keys.Contains(id) == false)
-                            //Считать переданные параметры - параметрами сигналов                
+                            //Считать переданные параметры - параметрами сигналов
                             ; // выполнено в базлвой ф-и
 
                         else
@@ -129,7 +129,7 @@ namespace uLoaderCommon
                                     // выполнено в базовой ф-и
                                     ;
                                 else
-                                {//Считать переданные параметры - параметрами группы сигналов                                    
+                                {//Считать переданные параметры - параметрами группы сигналов
                                     // репарсинг 5-го параметра (описание формул для группы сигналов)
                                     if (((string)pars[5]).Equals(string.Empty) == false)
                                     {
@@ -491,7 +491,14 @@ namespace uLoaderCommon
                 get
                 {
                     if (string.IsNullOrEmpty(m_strQuery) == true)
-                        setQuery();
+                        try {
+                            setQuery();
+                        } catch (Exception e) {
+                            Logging.Logg().Exception(e
+                                , string.Format("HHandlerDbULoaderSrc.GroupSignalsSrc.Query - setQuery() - [ID={0}:{1}, key={2}] - ..."
+                                    , (_parent as HHandlerDbULoaderSrc)._iPlugin._Id, (_parent as HHandlerDbULoaderSrc)._iPlugin.KeySingleton, m_Id)
+                                , Logging.INDEX_MESSAGE.NOT_SET);
+                        }
                     else
                         ;
 
@@ -574,76 +581,35 @@ namespace uLoaderCommon
                         ;
             }
         }
-        ///// <summary>
-        ///// Изменить состояние - инициировать очередной запрос
-        ///// </summary>
-        ///// <param name="id">Идентификатор группы сигналов</param>
-        //private void changeState (int id)
-        //{
+        /// <summary>
+        /// Количество строк в таблице-результате для текущей (обрабатываемой) группы
+        /// </summary>
+        protected int RowCountRecieved
+        {
+            get
+            {
+                return (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsSrc).RowCountRecieved;
+            }
 
-        //    lock (m_lockStateGroupSignals)
-        //    {
-        //        if (m_dictGroupSignals[id].State == GroupSignals.STATE.SLEEP)
-        //        {
-        //            m_dictGroupSignals[id].State = GroupSignals.STATE.QUEUE;
-
-        //            push (id);
-        //        }
-        //        else
-        //            ;
-        //    }
-        //}
-        ///// <summary>
-        ///// Изменить состояние - инициировать очередной запрос
-        ///// </summary>
-        ///// <param name="state">Состояние групп сигналов</param>
-        //private void changeState(GroupSignals.STATE state)
-        //{
-        //    lock (m_lockStateGroupSignals)
-        //    {
-        //        //Logging.Logg().Debug(@"HHandlerDbULoader::fTimerActivate () - [" + PlugInId + @"]" + @" 'QUEUE' не найдено...", Logging.INDEX_MESSAGE.NOT_SET);
-        //        //Перевести в состояние "активное" ("ожидание") группы сигналов
-        //        foreach (KeyValuePair<int, GroupSignals> pair in m_dictGroupSignals)
-        //            if (pair.Value.State == state)
-        //                if (pair.Value.State == GroupSignals.STATE.TIMER)
-        //                {
-        //                    (pair.Value as GroupSignalsSrc).MSecRemaindToActivate -= m_msecIntervalTimerActivate;
-
-        //                    //Logging.Logg().Debug(@"HHandlerDbULoader::fTimerActivate () - [" + PlugInId + @", key=" + pair.Key + @"] - MSecRemaindToActivate=" + pair.Value.MSecRemaindToActivate + @"...", Logging.INDEX_MESSAGE.NOT_SET);
-
-        //                    if ((pair.Value as GroupSignalsSrc).MSecRemaindToActivate < 0)
-        //                    {
-        //                        pair.Value.State = GroupSignals.STATE.QUEUE;
-
-        //                        push(pair.Key);
-        //                    }
-        //                    else
-        //                        ;
-        //                }
-        //                else
-        //                    if (pair.Value.State == GroupSignals.STATE.SLEEP)
-        //                    {
-        //                        pair.Value.State = GroupSignals.STATE.QUEUE;
-
-        //                        push(pair.Key);
-        //                    }
-        //                    else
-        //                        ;
-        //            else
-        //                ;
-        //    }
-        //}
-        ///// <summary>
-        ///// Изменить состояние - интциировать очередной запрос
-        ///// </summary>
-        //public void ChangeState()
-        //{
-        //    changeState (GroupSignals.STATE.SLEEP);
-        //}
-        //Количество строк в таблице-результате для текущей (обрабатываемой) группы
-        protected int RowCountRecieved { get { return (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsSrc).RowCountRecieved; } set { (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsSrc).RowCountRecieved = value; } }
-        //Строка запроса для текущей (обрабатываемой) группы
-        private string Query { get { return (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsSrc).Query; } }
+            set
+            {
+                (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsSrc).RowCountRecieved = value;
+            }
+        }
+        /// <summary>
+        /// Строка запроса для текущей (обрабатываемой) группы
+        /// </summary>
+        private string _query
+        {
+            get
+            {
+                return Equals(m_dictGroupSignals, null) == false
+                    ? m_dictGroupSignals.ContainsKey(IdGroupSignalsCurrent) == true
+                        ? (m_dictGroupSignals[IdGroupSignalsCurrent] as GroupSignalsSrc).Query
+                            : string.Empty // словарь не содержит группы сигналов с идентификатором
+                                : string.Empty; // словарь не инициализирован
+            }
+        }
 
         protected virtual void calculateValues(ref DataTable tblRes)
         {
@@ -730,33 +696,42 @@ namespace uLoaderCommon
             int iRes = 0;
             string msg = string.Empty;
 
-            switch (state)
-            {
-                case (int)StatesMachine.CurrentTime:
-                    if (!(IdGroupSignalsCurrent < 0))
-                        GetCurrentTimeRequest(DbTSQLInterface.getTypeDB(m_connSett.port), m_dictIdListeners[IdGroupSignalsCurrent][0]);
-                    else
-                        throw new Exception(@"HHandlerDbULoader::StateRequest (::CurrentTime) - ...");
-                    break;
-                case (int)StatesMachine.Values:
-                    if (RowCountRecieved == -1)
-                        RowCountRecieved = 0;
-                    else
-                        ;
+            try {
+                msg = string.Format("HHandlerDbULoaderSrc::StateRequest (state={3}) - [ID={0}:{1}, key={2}] - "
+                    , _iPlugin._Id, _iPlugin.KeySingleton, IdGroupSignalsCurrent, (StatesMachine)state);
 
-                    msg = @"HHandlerDbULoaderSrc::StateRequest (::Values) - Query=" + Query;
-                    //Console.WriteLine (msg);
-                    //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
+                if ((!(IdGroupSignalsCurrent < 0))
+                    && (m_dictIdListeners.ContainsKey(IdGroupSignalsCurrent) == true)
+                    && (m_dictIdListeners[IdGroupSignalsCurrent].Length > 0)) {
+                    switch (state) {
+                        case (int)StatesMachine.CurrentTime:
+                            GetCurrentTimeRequest(DbTSQLInterface.getTypeDB(m_connSett.port), m_dictIdListeners[IdGroupSignalsCurrent][0]);
+                            break;
+                        case (int)StatesMachine.Values:
+                            if (RowCountRecieved == -1)
+                                RowCountRecieved = 0;
+                            else
+                                ;
 
-                    Request(m_dictIdListeners[IdGroupSignalsCurrent][0], Query);
-                    break;
-                default:
-                    break;
+                            msg = string.Format(@"{0} query={1} ...", msg, _query);
+                            //Console.WriteLine (msg);
+                            //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
+
+                            Request(m_dictIdListeners[IdGroupSignalsCurrent][0], _query);
+                            break;
+                        default:
+                            break;
+                    }
+
+                    Logging.Logg().Debug(string.Format(@"{0} ...", msg)
+                        , Logging.INDEX_MESSAGE.NOT_SET);
+                } else
+                    throw new Exception(string.Format(@"{0} ...", msg);
+            } catch (Exception e) {
+                Logging.Logg().Exception(e
+                    , string.Format(@"{0} ...", msg)
+                    , Logging.INDEX_MESSAGE.NOT_SET);
             }
-
-            Logging.Logg().Debug(string.Format("HHandlerDbULoaderSrc::StateRequest () - [ID={0}:{1}, key={2}] - state={3}"
-                    , _iPlugin._Id, _iPlugin.KeySingleton, IdGroupSignalsCurrent, (StatesMachine)state)
-                , Logging.INDEX_MESSAGE.NOT_SET);
 
             return iRes;
         }
@@ -767,13 +742,13 @@ namespace uLoaderCommon
             DataTable table = obj as DataTable;
             string msg = string.Empty;
 
-            try
-            {
-                switch (state)
-                {
+            try {
+                msg = string.Format("HHandlerDbULoaderSrc::StateResponse (state={3}) - [ID={0}:{1}, key={2}] - "
+                    , _iPlugin._Id, _iPlugin.KeySingleton, IdGroupSignalsCurrent, (StatesMachine)state);
+
+                switch (state) {
                     case (int)StatesMachine.CurrentTime:
                         m_dtServer = (DateTime)(table as DataTable).Rows[0][0];
-                        //msg =+ @"DATETIME=" + m_dtServer.ToString(@"dd.MM.yyyy HH.mm.ss.fff") + @"...";                        
                         break;
                     case (int)StatesMachine.Values:
                         parseValues(table);
@@ -781,10 +756,10 @@ namespace uLoaderCommon
                     default:
                         break;
                 }
-            }
-            catch (Exception e)
-            {
-                Logging.Logg().Exception(e, @"HHandlerDbULoader::StateResponse (::" + ((StatesMachine)state).ToString() + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+            } catch (Exception e) {
+                Logging.Logg().Exception(e
+                    , string.Format(@"{0} ...", msg)
+                    , Logging.INDEX_MESSAGE.NOT_SET);
             }
 
             //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
@@ -876,7 +851,7 @@ namespace uLoaderCommon
 
     public abstract class HHandlerDbULoaderDatetimeSrc : HHandlerDbULoaderSrc
     {
-        public HTimeSpan m_tsCurIntervalOffset;        
+        public HTimeSpan m_tsCurIntervalOffset;
 
         protected virtual string m_strDateTimeDBFormat { get; set; }
 
@@ -916,13 +891,26 @@ namespace uLoaderCommon
         /// </summary>
         protected abstract class GroupSignalsDatetimeSrc : GroupSignalsSrc
         {
-            private DateTime m_dtStart;
-            public DateTime DateTimeStart { get { return m_dtStart; } set { m_dtStart = value; } }
-            private DateTime m_dtBegin;
+            private DateTime _datetimeStart;
+            /// <summary>
+            /// Дата/время главного периода опроса
+            /// </summary>
+            public DateTime DateTimeStart
+            {
+                get { return _datetimeStart; }
+
+                set { _datetimeStart = value; }
+            }
+
+            private DateTime _datetimeBegin;
+            /// <summary>
+            /// Дата/время промежуточного периода опрса
+            /// </summary>
             public DateTime DateTimeBegin
             {
-                get { return m_dtBegin; }
-                set { m_dtBegin = value; }
+                get { return _datetimeBegin; }
+
+                set { _datetimeBegin = value; }
             }
 
             public GroupSignalsDatetimeSrc(HHandlerDbULoader parent, int id, object[] pars)
@@ -930,8 +918,8 @@ namespace uLoaderCommon
             {
                 //Инициализация "временнЫх" значений
                 // конкретные значения м.б. получены при "старте" 
-                m_dtStart =
-                m_dtBegin =
+                _datetimeStart =
+                _datetimeBegin =
                     DateTime.MinValue;
             }
 
