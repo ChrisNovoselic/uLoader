@@ -370,46 +370,52 @@ namespace uLoaderCommon
             /// Получить строку с запросом на вставку значений
             /// </summary>
             /// <returns>Строка с запросом на вставку значений</returns>
-            public string GetTargetValuesQuery()
+            public string TargetValuesQuery
             {
-                string strRes = string.Empty
-                    , strIds = @"[ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @":" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInULoader).KeySingleton
-                        + @", key=" + (_parent as HHandlerDbULoaderDest).IdGroupSignalsCurrent + @"]";
-
-                try
+                get
                 {
-                    lock (this) {
-                        setTableRes();
+                    string strRes = string.Empty
+                        , strIds = @"[ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @":" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInULoader).KeySingleton
+                            + @", key=" + (_parent as HHandlerDbULoaderDest).IdGroupSignalsCurrent + @"]";
+
+                    try
+                    {
+                        lock (this) {
+                            setTableRes();
+                        }
+
+                        if (m_DupTables.IsDeterminate == true)
+                            strRes = getTargetValuesQuery();
+                        else
+                            ;
+                    }
+                    catch (Exception e)
+                    {
+                        Logging.Logg().Exception(e, @"HHandlerDbULoaderDest::GroupSignlsDest () - " + strIds + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
 
-                    if (m_DupTables.IsDeterminate == true)
-                        strRes = getTargetValuesQuery();
-                    else
+                    Logging.Logg().Debug(string.Format(@"Строк для вставки {0}: {1}..."
+                            , strIds
+                            , (((!(m_DupTables == null)) && (!(m_DupTables.TableDistinct == null))) ? m_DupTables.TableDistinct.Rows.Count.ToString() : @"не известно"))
+                        , Logging.INDEX_MESSAGE.NOT_SET);
+
+                    return
+                        //string.Empty
+                        strRes
                         ;
-                }
-                catch (Exception e)
-                {
-                    Logging.Logg().Exception(e, @"HHandlerDbULoaderDest::GroupSignlsDest () - " + strIds + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
-                }
-
-                Logging.Logg().Debug(string.Format(@"Строк для вставки {0}: {1}..."
-                        , strIds
-                        , (((!(m_DupTables == null)) && (!(m_DupTables.TableDistinct == null))) ? m_DupTables.TableDistinct.Rows.Count.ToString() : @"не известно"))
-                    , Logging.INDEX_MESSAGE.NOT_SET);
-
-                return
-                    //string.Empty
-                    strRes
-                    ;
+                    }
             }
 
-            public string GetExistsValuesQuery()
+            public string ExistsValuesQuery
             {
-                string strRes = string.Empty;
+                get
+                {
+                    string strRes = string.Empty;
 
-                strRes = getExistsValuesQuery();
+                    strRes = getExistsValuesQuery();
 
-                return strRes;
+                    return strRes;
+                }
             }
 
             public override void Stop()

@@ -726,7 +726,7 @@ namespace uLoaderCommon
                     Logging.Logg().Debug(string.Format(@"{0} ...", msg)
                         , Logging.INDEX_MESSAGE.NOT_SET);
                 } else
-                    throw new Exception(string.Format(@"{0} ...", msg);
+                    throw new Exception(string.Format(@"{0} ...", msg));
             } catch (Exception e) {
                 Logging.Logg().Exception(e
                     , string.Format(@"{0} ...", msg)
