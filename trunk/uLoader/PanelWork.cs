@@ -203,85 +203,87 @@ namespace uLoader
             //Параметры (массив) в 1-ом элементе результата
             object par = (obj as object[])[1];            
 
-            switch (state)
-            {
-                case HHandlerQueue.StatesMachine.LIST_GROUP_SOURCES: //Группы источников (источник)
-                    fillWorkItem(INDEX_SRC.SOURCE, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.SOURCE] as string[,]);
-                    fillWorkItem(INDEX_SRC.DEST, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.DEST] as string[,]);
-                    break;
-                case HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SOURCES: //Группа (объект) источников (источник)
-                    //m_arCurrentSrcItems [(int)INDEX_SRC.SOURCE] = par as ITEM_SRC;
-                    fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SRC);
-                    break;
-                case HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SOURCES: //Группа (объект) источников (назначение)
-                    //m_arCurrentSrcItems[(int)INDEX_SRC.DEST] = par as ITEM_SRC;
-                    fillWorkItem(INDEX_SRC.DEST, par as GROUP_SRC);
-                    break;
-                case HHandlerQueue.StatesMachine.TIMER_WORK_UPDATE:
-                    m_iSecondUpdate = (int)par;
-                    startTimerUpdate ();
-                    activeTimerUpdate (true);
-                    break;
-                case HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS_PARS: //Объект с параметрами группы сигналов (источник)
-                    //???
-                    //fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SIGNALS_SRC);
-                    fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SIGNALS_PARS);
-                    break;
-                case HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS: //Объект группы сигналов (источник)
-                    fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SIGNALS_SRC);
-                    break;
-                case HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SIGNALS_PARS: //Объект с параметрами группы сигналов (назначение)
-                    //???
-                    //fillWorkItem(INDEX_SRC.DEST, par as GROUP_SIGNALS_SRC);
-                    fillWorkItem(INDEX_SRC.DEST, par as GROUP_SIGNALS_PARS);
-                    break;
-                case HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SIGNALS: //Объект группы сигналов (назначение)
-                    //???
-                    fillWorkItem(INDEX_SRC.DEST, par as GROUP_SIGNALS_SRC);
-                    break;
-                case HHandlerQueue.StatesMachine.STATE_GROUP_SOURCES: //Состояние группы источников (источник, назначение)
-                    for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
-                        enabledWorkItem(indxSrc, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)indxSrc] as GroupSources.STATE[]);
-                    break;
-                case HHandlerQueue.StatesMachine.STATE_GROUP_SIGNALS: //Состояние группы сигналов  (источник, назначение)
-                    for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc ++ )
-                        enabledWorkItem(indxSrc, PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS, (par as object[])[(int)indxSrc] as object []);
-                    break;
-                case HHandlerQueue.StatesMachine.STATE_CHANGED_GROUP_SOURCES: //Состояние (изменено) группы источников (источник, назначение)
-                    //Немедленно запросить состояния групп источников
-                    changeTimerUpdate (0);
-                    break;
-                case HHandlerQueue.StatesMachine.STATE_CHANGED_GROUP_SIGNALS: //Состояние (изменено) группы сигналов (источник, назначение)
-                    //Немедленно запросить состояния групп сигналов
-                    changeTimerUpdate(0);
-                    break;
-                case HHandlerQueue.StatesMachine.COMMAND_RELAOD_GROUP_SOURCES: //Состояние (выгружена/загружена) группы источников (источник, назначение)
-                    //Немедленно запросить состояния групп источников
-                    changeTimerUpdate (0);
-                    break;
-                case HHandlerQueue.StatesMachine.DATA_SRC_GROUP_SIGNALS:
-                    if (par == null)
-                        m_arLoader[(int)INDEX_SRC.SOURCE].UpdateData ();
-                    else
-                        m_arLoader[(int)INDEX_SRC.SOURCE].UpdateData(par as DataTable);
-                    break;
-                case HHandlerQueue.StatesMachine.DATA_DEST_GROUP_SIGNALS:
-                    if (par == null)
-                        m_arLoader[(int)INDEX_SRC.DEST].UpdateData ();
-                    else
-                        m_arLoader[(int)INDEX_SRC.DEST].UpdateData(par as DataTable);
-                    break;
-                    break;
-                //case HHandlerQueue.StatesMachine.SET_IDCUR_SOURCE_OF_GROUP:
-                //    break;
-                case HHandlerQueue.StatesMachine.GET_GROUP_SIGNALS_DATETIME_PARS:
-                    if (!(par == null))
-                        m_arLoader[(int)INDEX_SRC.SOURCE].FillDatetimePars (par as DATETIME_WORK);
-                    else
-                        ;
-                    break;
-                default:
-                    break;
+            try {
+                switch (state) {
+                    case HHandlerQueue.StatesMachine.LIST_GROUP_SOURCES: //Группы источников (источник)
+                        fillWorkItem(INDEX_SRC.SOURCE, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.SOURCE] as string[,]);
+                        fillWorkItem(INDEX_SRC.DEST, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.DEST] as string[,]);
+                        break;
+                    case HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SOURCES: //Группа (объект) источников (источник)
+                        //m_arCurrentSrcItems [(int)INDEX_SRC.SOURCE] = par as ITEM_SRC;
+                        fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SRC);
+                        break;
+                    case HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SOURCES: //Группа (объект) источников (назначение)
+                        //m_arCurrentSrcItems[(int)INDEX_SRC.DEST] = par as ITEM_SRC;
+                        fillWorkItem(INDEX_SRC.DEST, par as GROUP_SRC);
+                        break;
+                    case HHandlerQueue.StatesMachine.TIMER_WORK_UPDATE:
+                        m_iSecondUpdate = (int)par;
+                        startTimerUpdate ();
+                        activeTimerUpdate (true);
+                        break;
+                    case HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS_PARS: //Объект с параметрами группы сигналов (источник)
+                        //???
+                        //fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SIGNALS_SRC);
+                        fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SIGNALS_PARS);
+                        break;
+                    case HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS: //Объект группы сигналов (источник)
+                        fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SIGNALS_SRC);
+                        break;
+                    case HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SIGNALS_PARS: //Объект с параметрами группы сигналов (назначение)
+                        //???
+                        //fillWorkItem(INDEX_SRC.DEST, par as GROUP_SIGNALS_SRC);
+                        fillWorkItem(INDEX_SRC.DEST, par as GROUP_SIGNALS_PARS);
+                        break;
+                    case HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SIGNALS: //Объект группы сигналов (назначение)
+                        //???
+                        fillWorkItem(INDEX_SRC.DEST, par as GROUP_SIGNALS_SRC);
+                        break;
+                    case HHandlerQueue.StatesMachine.STATE_GROUP_SOURCES: //Состояние группы источников (источник, назначение)
+                        for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
+                            enabledWorkItem(indxSrc, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)indxSrc] as GroupSources.STATE[]);
+                        break;
+                    case HHandlerQueue.StatesMachine.STATE_GROUP_SIGNALS: //Состояние группы сигналов  (источник, назначение)
+                        for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc ++ )
+                            enabledWorkItem(indxSrc, PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS, (par as object[])[(int)indxSrc] as object []);
+                        break;
+                    case HHandlerQueue.StatesMachine.STATE_CHANGED_GROUP_SOURCES: //Состояние (изменено) группы источников (источник, назначение)
+                        //Немедленно запросить состояния групп источников
+                        changeTimerUpdate (0);
+                        break;
+                    case HHandlerQueue.StatesMachine.STATE_CHANGED_GROUP_SIGNALS: //Состояние (изменено) группы сигналов (источник, назначение)
+                        //Немедленно запросить состояния групп сигналов
+                        changeTimerUpdate(0);
+                        break;
+                    case HHandlerQueue.StatesMachine.COMMAND_RELAOD_GROUP_SOURCES: //Состояние (выгружена/загружена) группы источников (источник, назначение)
+                        //Немедленно запросить состояния групп источников
+                        changeTimerUpdate (0);
+                        break;
+                    case HHandlerQueue.StatesMachine.DATA_SRC_GROUP_SIGNALS:
+                        if (par == null)
+                            m_arLoader[(int)INDEX_SRC.SOURCE].UpdateData ();
+                        else
+                            m_arLoader[(int)INDEX_SRC.SOURCE].UpdateData(par as DataTable);
+                        break;
+                    case HHandlerQueue.StatesMachine.DATA_DEST_GROUP_SIGNALS:
+                        if (par == null)
+                            m_arLoader[(int)INDEX_SRC.DEST].UpdateData ();
+                        else
+                            m_arLoader[(int)INDEX_SRC.DEST].UpdateData(par as DataTable);
+                        break;
+                    //case HHandlerQueue.StatesMachine.SET_IDCUR_SOURCE_OF_GROUP:
+                    //    break;
+                    case HHandlerQueue.StatesMachine.GET_GROUP_SIGNALS_DATETIME_PARS:
+                        if (!(par == null))
+                            m_arLoader[(int)INDEX_SRC.SOURCE].FillDatetimePars (par as DATETIME_WORK);
+                        else
+                            ;
+                        break;
+                    default:
+                        break;
+                }
+            } catch (Exception e) {
+                Logging.Logg().Exception(e, string.Format(@"PanelWork::onEvtDataRecievedHost (state={0})", state), Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
 

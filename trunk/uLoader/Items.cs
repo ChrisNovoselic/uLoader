@@ -1588,6 +1588,7 @@ namespace uLoader
             TimeSpan tsToPanel = TimeSpan.Zero;
             HTimeSpan tsToData = HTimeSpan.NotValue
                 , tsToQuery = HTimeSpan.NotValue;
+            int idLocal = -1;
 
             //Проверить длину идентификатора
             if (id.Length > 1)
@@ -1602,7 +1603,8 @@ namespace uLoader
 
                         if (!(tblRec == null))
                             if (tblRec.Rows.Count > 0)
-                                if ((!(tblRec.Columns.IndexOf(@"ID") < 0)) && (!(tblRec.Columns.IndexOf(@"DATETIME") < 0)))
+                                if ((!(tblRec.Columns.IndexOf(@"ID") < 0))
+                                    && (!(tblRec.Columns.IndexOf(@"DATETIME") < 0)))
                                 {
                                     if (m_dictAdding.ContainsKey(@"OFFSET_UTC_TO_DATA") == true)
                                         tsToData = new HTimeSpan(m_dictAdding[@"OFFSET_UTC_TO_DATA"]);
@@ -1618,11 +1620,12 @@ namespace uLoader
 
                                     //Logging.Logg().Debug(@"GroupSources::GetDataToPanel () - получено строк=" + tblRec.Rows.Count + @"...", Logging.INDEX_MESSAGE.NOT_SET);
 
-                                    tblToPanel.Columns.AddRange(new DataColumn[] { new DataColumn (@"NAME_SHR", typeof (string))
-                                                                                    , new DataColumn (@"VALUE", typeof (string)) //new DataColumn (@"VALUE", typeof (decimal))
-                                                                                    , new DataColumn (@"DATETIME", typeof (DateTime)) // new DataColumn (@"DATETIME", typeof (string))
-                                                                                    , new DataColumn (@"COUNT", typeof (string)) //new DataColumn (@"COUNT", typeof (int))
-                                                                                    });
+                                    tblToPanel.Columns.AddRange(new DataColumn[] { new DataColumn (@"ID", typeof (int))
+                                        , new DataColumn (@"NAME_SHR", typeof (string))
+                                        , new DataColumn (@"VALUE", typeof (string)) //new DataColumn (@"VALUE", typeof (decimal))
+                                        , new DataColumn (@"DATETIME", typeof (DateTime)) // new DataColumn (@"DATETIME", typeof (string))
+                                        , new DataColumn (@"COUNT", typeof (string)) //new DataColumn (@"COUNT", typeof (int))
+                                    });
 
                                     //Logging.Logg().Debug(@"GroupSources::GetDataToPanel () - добавлен диапазон столбцов...", Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -1636,16 +1639,18 @@ namespace uLoader
 
                                     //Logging.Logg().Debug(@"GroupSources::GetDataToPanel () - определено наименование поля идентификатора...", Logging.INDEX_MESSAGE.NOT_SET);
 
-                                    foreach (SIGNAL_SRC sgnl in grpSgnls.m_listSgnls)
-                                    {
-                                        arSel = tblRec.Select(@"ID=" + sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf(strNameFieldID)], @"DATETIME DESC");
+                                    foreach (SIGNAL_SRC sgnl in grpSgnls.m_listSgnls) {
+                                        idLocal = int.Parse(sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf(strNameFieldID)]);
+
+                                        arSel = tblRec.Select(@"ID=" + idLocal, @"DATETIME DESC");
                                         if (arSel.Length > 0)
-                                            arObjToRow = new object[] { sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf (@"NAME_SHR")]
+                                            arObjToRow = new object[] { idLocal
+                                                , sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf (@"NAME_SHR")]
                                                 , arSel[0][@"VALUE"]
                                                 , ((DateTime)arSel[0][@"DATETIME"]).Add(tsToPanel)
                                                 , arSel.Length };
                                         else
-                                            arObjToRow = new object[] { sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf(@"NAME_SHR")], string.Empty, DateTime.MinValue, string.Empty };
+                                            arObjToRow = new object[] { idLocal, sgnl.m_arSPars[grpSgnls.m_listSKeys.IndexOf(@"NAME_SHR")], string.Empty, DateTime.MinValue, string.Empty };
 
                                         tblToPanel.Rows.Add(arObjToRow);
                                     }

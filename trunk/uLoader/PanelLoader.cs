@@ -724,14 +724,17 @@ namespace uLoader
             {
                 Control workItem;
                 PanelLoader.KEY_CONTROLS key;
+                int indxRow = -1;
 
                 //Список сигналов группы
                 key = PanelLoader.KEY_CONTROLS.DGV_SIGNALS_OF_GROUP;
                 workItem = GetWorkingItem(key);
 
                 if (!(grpSrc.m_listSgnls == null))
-                    foreach (SIGNAL_SRC sgnl in grpSrc.m_listSgnls)
-                        (workItem as DataGridView).Rows.Add(new object[] { sgnl.m_arSPars[grpSrc.m_listSKeys.IndexOf(@"NAME_SHR")] });
+                    foreach (SIGNAL_SRC sgnl in grpSrc.m_listSgnls) {
+                        indxRow = (workItem as DataGridView).Rows.Add(new object[] { sgnl.m_arSPars[grpSrc.m_listSKeys.IndexOf(@"NAME_SHR")] });
+                        (workItem as DataGridView).Rows[indxRow].Tag = sgnl.m_arSPars[grpSrc.m_listSKeys.IndexOf(@"ID")];
+                    }
                 else
                     // группа сигналов == null
                     Logging.Logg().Warning(@"PanelLoader::FillWorkItem () - список сигналов == null...", Logging.INDEX_MESSAGE.NOT_SET);
@@ -1157,34 +1160,40 @@ namespace uLoader
 
                 Logging.Logg().Debug(@"PanelLoaderSources::UpdateData () - строк для отображения=" + table.Rows.Count + @"...", Logging.INDEX_MESSAGE.NOT_SET);
 
-                if (table.Rows.Count > 0) {
+                if ((Equals(table, null) == false)
+                    && (table.Rows.Count > 0)) {
                     dgv = GetWorkingItem(KEY_CONTROLS.DGV_SIGNALS_OF_GROUP) as DataGridView;
 
                     foreach (DataGridViewRow dgvRow in dgv.Rows) {
-                        arSel = table.Select(@"NAME_SHR='" + dgvRow.Cells[0].Value + @"'");
-                        if (arSel.Length == 1) {
-                            try {
-                                datetimeValue = (DateTime)arSel[0][@"DATETIME"];
+                        try {
+                            //arSel = table.Select(@"NAME_SHR='" + dgvRow.Cells[0].Value + @"'");
+                            arSel = table.Select(@"ID='" + int.Parse(dgvRow.Tag.ToString()) + @"'");
+                            if (arSel.Length == 1) {
+                                try {
+                                    datetimeValue = (DateTime)arSel[0][@"DATETIME"];
 
-                                if ((datetimeMinLastUpdate - datetimeValue).TotalSeconds < 0)
-                                    datetimeMinLastUpdate = (DateTime)arSel[0][@"DATETIME"];
-                                else
-                                    ;
+                                    if ((datetimeMinLastUpdate - datetimeValue).TotalSeconds < 0)
+                                        datetimeMinLastUpdate = (DateTime)arSel[0][@"DATETIME"];
+                                    else
+                                        ;
 
-                                dgvRow.Cells[1].Value = arSel[0][@"VALUE"];
-                                dgvRow.Cells[2].Value = datetimeValue.Equals(DateTime.MinValue) == false ? datetimeValue.ToString(@"dd.MM.yyyy HH:mm:ss.fff") : string.Empty;
-                                dgvRow.Cells[3].Value = arSel[0][@"COUNT"];
-                            } catch (Exception e) {
-                                Logging.Logg().Exception(e, @"PanelLoaderSources::UpdateData () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                                    dgvRow.Cells[1].Value = arSel[0][@"VALUE"];
+                                    dgvRow.Cells[2].Value = datetimeValue.Equals(DateTime.MinValue) == false ? datetimeValue.ToString(@"dd.MM.yyyy HH:mm:ss.fff") : string.Empty;
+                                    dgvRow.Cells[3].Value = arSel[0][@"COUNT"];
+                                } catch (Exception e) {
+                                    Logging.Logg().Exception(e, @"PanelLoaderSources::UpdateData () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                                }
+                            } else {
+                                //throw new Exception(@"PanelWork.PanelLoaderSource::UpdateData () - невозможно определить строку для отображения [NAME_SHR=" + dgvRow.Cells[0].Value + @"]...");
+                                Logging.Logg().Error(string.Format(@"PanelLoaderSources::UpdateData () - не найдена строка для ID={0}, NAME_SHR={1}...", dgvRow.Tag, dgvRow.Cells[0].Value), Logging.INDEX_MESSAGE.NOT_SET);
+
+                                dgvRow.Cells[1].Value =
+                                dgvRow.Cells[2].Value =
+                                dgvRow.Cells[3].Value =
+                                    string.Empty;
                             }
-                        } else {
-                            //throw new Exception(@"PanelWork.PanelLoaderSource::UpdateData () - невозможно определить строку для отображения [NAME_SHR=" + dgvRow.Cells[0].Value + @"]...");
-                            Logging.Logg().Error(@"PanelLoaderSources::UpdateData () - не найдена строка для NAME_SHR=" + dgvRow.Cells[0].Value + @"...", Logging.INDEX_MESSAGE.NOT_SET);
-
-                            dgvRow.Cells[1].Value =
-                            dgvRow.Cells[2].Value =
-                            dgvRow.Cells[3].Value =
-                                string.Empty;
+                        } catch (Exception e) {
+                            Logging.Logg().Exception(e, string.Format(@"PanelLoader::UpdateData () - table.Rows.Count={0}...", table.Rows.Count), Logging.INDEX_MESSAGE.NOT_SET);
                         }
                     }
 
@@ -1421,7 +1430,7 @@ namespace uLoader
                 panelColumns.Controls.Add(ctrl, 0, 8);
                 panelColumns.SetColumnSpan(ctrl, 1); panelColumns.SetRowSpan(ctrl, 8);
                 //Панель для ГроупБокса
-                HPanelCommon panelGroupBox = new PanelCommonULoader(8, 4);
+                HPanelCommon panelGroupBox = new PanelCommonULoader(9, 4);
                 panelGroupBox.Dock = DockStyle.Fill;
                 ctrl.Controls.Add(panelGroupBox);
                 //Календарь
@@ -1429,7 +1438,7 @@ namespace uLoader
                 ctrl.Name = KEY_CONTROLS.CALENDAR_START_DATE.ToString();
                 ctrl.Dock = DockStyle.Fill;
                 panelGroupBox.Controls.Add(ctrl, 0, 0);
-                panelGroupBox.SetColumnSpan(ctrl, 8); panelGroupBox.SetRowSpan(ctrl, 1);
+                panelGroupBox.SetColumnSpan(ctrl, 9); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Начало периода
                 //Начало периода - описание
                 ctrl = new Label();
@@ -1443,8 +1452,9 @@ namespace uLoader
                 ctrl.Name = KEY_CONTROLS.MTBX_START_TIME.ToString();
                 ctrl.Dock = DockStyle.Fill;
                 (ctrl as MaskedTextBox).Mask = @"00:00";
+                (ctrl as MaskedTextBox).TextAlign = HorizontalAlignment.Right;
                 panelGroupBox.Controls.Add(ctrl, 6, 1);
-                panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
+                panelGroupBox.SetColumnSpan(ctrl, 3); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Период
                 //Период - описание
                 ctrl = new Label();
@@ -1458,8 +1468,9 @@ namespace uLoader
                 ctrl.Name = KEY_CONTROLS.MTBX_PERIOD_MAIN.ToString();
                 ctrl.Dock = DockStyle.Fill;
                 (ctrl as MaskedTextBox).Mask = @"00:00";
+                (ctrl as MaskedTextBox).TextAlign = HorizontalAlignment.Right;
                 panelGroupBox.Controls.Add(ctrl, 6, 2);
-                panelGroupBox.SetColumnSpan(ctrl, 2); panelGroupBox.SetRowSpan(ctrl, 1);
+                panelGroupBox.SetColumnSpan(ctrl, 3); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Кнопка - выполнить
                 ctrl = new Button();
                 ctrl.Name = KEY_CONTROLS.BTN_CLEAR.ToString();
@@ -1467,7 +1478,7 @@ namespace uLoader
                 (ctrl as Button).Text = @"Выполнить";
                 ctrl.Dock = DockStyle.Fill;
                 panelGroupBox.Controls.Add(ctrl, 0, 3);
-                panelGroupBox.SetColumnSpan(ctrl, 8); panelGroupBox.SetRowSpan(ctrl, 1);
+                panelGroupBox.SetColumnSpan(ctrl, 9); panelGroupBox.SetRowSpan(ctrl, 1);
 
                 ////ГроупБокс дополнительных настроек для группы сигналов
                 //ctrl = new GroupBox();

@@ -461,13 +461,17 @@ namespace uLoader
         /// <param name="obj">Результат, полученный по запросу</param>
         public override void OnEvtDataRecievedHost(object obj)
         {
-            if (InvokeRequired == true)
-                //if (IsHandleCreated == true)
-                    Invoke(new DelegateObjectFunc(onEvtDataRecievedHost), obj);
-                //else
-                //    throw new Exception(@"::OnEvtDataRecievedHost () - IsHandleCreated==False");
-            else
-                onEvtDataRecievedHost(obj);
+            try {
+                if (InvokeRequired == true)
+                    //if (IsHandleCreated == true)
+                        Invoke(new DelegateObjectFunc(onEvtDataRecievedHost), obj);
+                    //else
+                    //    throw new Exception(@"::OnEvtDataRecievedHost () - IsHandleCreated==False");
+                else
+                    onEvtDataRecievedHost(obj);
+            } catch (Exception e) {
+                Logging.Logg().Exception(e, string.Format(@"FormMain::OnEvtDataRecievedHost () - ..."), Logging.INDEX_MESSAGE.NOT_SET);
+            }
 
             base.OnEvtDataRecievedHost(obj);
         }

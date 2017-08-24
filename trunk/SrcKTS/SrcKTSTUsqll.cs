@@ -12,12 +12,12 @@ namespace SrcKTS
     public class SrcKTSTUsql : HHandlerDbULoaderDatetimeSrc
     {
         public SrcKTSTUsql()
-            : base(@"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(@"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
         {
         }
 
         public SrcKTSTUsql(PlugInULoader iPlugIn)
-            : base(iPlugIn, @"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(iPlugIn, @"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
         {
         }
 
@@ -30,8 +30,8 @@ namespace SrcKTS
 
             protected override SIGNAL createSignal(object[] objs)
             {
-                //ID_MAIN, ID_LOCAL, AVG
-                return new SIGNALIdsql(this, (int)objs[0], /*(int)*/objs[2], bool.Parse((string)objs[3]));
+                //ID_MAIN, ID_LOCAL, AVG, DERIVATIVE
+                return new SIGNALKTSTUsql(this, (int)objs[0], /*(int)*/objs[2], bool.Parse((string)objs[3]), (int)objs[4]);
             }
 
             /// <summary>

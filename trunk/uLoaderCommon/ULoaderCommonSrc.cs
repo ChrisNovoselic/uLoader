@@ -409,6 +409,17 @@ namespace uLoaderCommon
                 }
             }
 
+            public class SIGNALKTSTUsql : SIGNALIdsql
+            {
+                public int Derivative;
+
+                public SIGNALKTSTUsql(GroupSignals parent, int idMain, object idLocal, bool bAVG, int derivative)
+                    : base(parent, idMain, idLocal, bAVG)
+                {
+                    Derivative = derivative;
+                }
+            }
+
             public class SIGNALIdsql : SIGNAL
             {
                 public int m_iIdLocal;

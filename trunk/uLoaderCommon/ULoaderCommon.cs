@@ -238,6 +238,21 @@ namespace uLoaderCommon
         /// </summary>
         MSEC_INTERVAL_TIMER_ACTIVATE = 66
     }
+    //TODO: перенести в общую библиотеку, т.к.
+    /// <summary>
+    /// Перечисление - способы назначения меток времени
+    /// </summary>
+    public enum MODE_DATA_DATETIME
+    {
+        /// <summary>
+        /// Метка для значения за интервал назначается началом интервала
+        /// </summary>
+        Begined
+        /// <summary>
+        /// Метка для значения за интервал назначается окончанием интервала
+        /// </summary>
+        , Ended
+    }
     /// <summary>
     /// Перечисление для типов опроса
     /// </summary>

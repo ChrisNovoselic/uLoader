@@ -13,7 +13,7 @@ namespace SrcKTS
         /// Конструктор - основной (без параметров)
         /// </summary>
         public SrcKTSTUDsql()
-            : base(@"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(@"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.FULL_PERIOD)
         {
 
         }
@@ -22,7 +22,7 @@ namespace SrcKTS
         /// </summary>
         /// <param name="iPlugIn">Объект для обмена сообщенями с основной программой</param>
         public SrcKTSTUDsql(PlugInULoader iPlugIn)
-            : base(iPlugIn, @"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(iPlugIn, @"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.FULL_PERIOD)
         {
         }
         /// <summary>
@@ -49,6 +49,8 @@ namespace SrcKTS
                     , i = -1;
                 string cmd =
                     string.Empty;
+                MODE_DATA_DATETIME modeDateTime = MODE_DATA_DATETIME.Begined;
+
                 //Формировать запрос
                 i = 0;
                 foreach (GroupSignalsKTSTUDsql.SIGNALIdsql s in m_arSignals)
@@ -65,20 +67,20 @@ namespace SrcKTS
 
                 // все поля idVTI, idReq, TimeIdx, TimeRTC, TimeSQL, idState, ValueFl, ValueInt, IsInteger, idUnit
                 m_strQuery += string.Format(@"SELECT res.[idVTI] as [ID], SUM(res.[ValueFl]) as [VALUE]"
-                    + @", res.[DATETIME]"
+                    + @", DATEADD(DAY, {1}, res.[DATETIME]) as [DATETIME]"
                     //+ @", {2} as [UTC_OFFSET]" //DATEDIFF(HOUR, GETDATE(), GETUTCDATE()) as [UTC_OFFSET]
                     + @", COUNT(*) as [COUNT]"
                         + @" FROM ("
                             + @"SELECT [idVTI], [ValueFl]"
                                 + @", DATEADD(MINUTE, ceiling(DATEDIFF(MINUTE, DATEADD(DAY, DATEDIFF(DAY, 0, CAST('{0}' as datetime)), 0), [TimeSQL]) / 60.) * 60, DATEADD(DAY, DATEDIFF(DAY, 0, CAST('{0}' as datetime)), 0)) as [DATETIME]"
                             + @" FROM [VTIdataList]"
-                            + @" WHERE idREQ = {1}"
+                            + @" WHERE idREQ = {2}"
                             + @" GROUP BY [IdResult], [idVTI], [ValueFl]"
                                 + @", DATEADD(MINUTE, ceiling(DATEDIFF(MINUTE, DATEADD(DAY, DATEDIFF(DAY, 0, CAST('{0}' as datetime)), 0), [TimeSQL]) / 60.) * 60, DATEADD(DAY, DATEDIFF(DAY, 0, CAST('{0}' as datetime)), 0))"
                     + @") res"
                     + @" GROUP BY [idVTI], [DATETIME]"
                     + @" ORDER BY [idVTI], [DATETIME];"
-                    , DateTimeBeginFormat, idReq); //, TimeSpan.FromSeconds(m_secOffsetUTCToData).Hours
+                    , DateTimeBeginFormat, modeDateTime == MODE_DATA_DATETIME.Begined ? -1 : modeDateTime == MODE_DATA_DATETIME.Ended ? 0 : 0, idReq);
 
                 m_strQuery += string.Format(@"exec [dbo].ep_AskVTIdata @cmd='{0}'"
                     + @", @idReq={1};", @"Clear", idReq);
@@ -90,8 +92,8 @@ namespace SrcKTS
             /// <returns>Объект созданного сигнала</returns>
             protected override SIGNAL createSignal(object[] objs)
             {
-                //ID_MAIN, ID_LOCAL, AVG
-                return new SIGNALIdsql(this, (int)objs[0], /*(int)*/objs[2], bool.Parse((string)objs[3]));
+                //ID_MAIN, ID_LOCAL, AVG, DERIVATIVE
+                return new SIGNALKTSTUsql(this, (int)objs[0], /*(int)*/objs[2], bool.Parse((string)objs[3]), (int)objs[4]);
             }
             /// <summary>
             /// Возвратить основной идентификатор по косвенному(связанному) идентификатору
@@ -148,9 +150,10 @@ namespace SrcKTS
                         foreach (DataRow r in rowsSgnl) {
                             dtValue = ((DateTime)r[@"DATETIME"]).AddHours(m_tsOffsetUTCToData.Value.Hours); //(int)rowsSgnl[0][@"UTC_OFFSET"]
 
-                            if ((int)rowsSgnl[0][@"COUNT"] == 2)
-                                dblSumValue += (double)r[@"VALUE"];
+                            if ((int)rowsSgnl[0][@"COUNT"] == 2) // должно быть 2 полу-часовых значения
+                                dblSumValue += (double)r[@"VALUE"] / (((sgnl as GroupSignalsSrc.SIGNALKTSTUsql).Derivative == 0) ? 1 : ((sgnl as GroupSignalsSrc.SIGNALKTSTUsql).Derivative == 1) ? 2 : 1);
                             else
+                            // отметить, что за этот час значение не было получено
                                 listNotCompletedDatetimeValues.Add(dtValue);
                         }
 
