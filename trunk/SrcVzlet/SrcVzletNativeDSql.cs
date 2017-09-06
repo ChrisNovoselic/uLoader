@@ -42,8 +42,6 @@ namespace SrcVzlet
                 int idReq = HMath.GetRandomNumber()
                     , i = -1;
                 string cmd = string.Empty;
-                //??? m_secOffsetUTCToServer или m_secOffsetUTCToData
-                long secOffsetUTCToData = m_secOffsetUTCToServer / 1000;
                 //перевод даты для суточного набора
                 if (DateTimeStart != DateTimeBegin)
                 {

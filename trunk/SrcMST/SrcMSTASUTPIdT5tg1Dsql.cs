@@ -13,7 +13,7 @@ using uLoaderCommon;
 
 namespace SrcMST
 {
-   public class SrcMSTASUTPIdT5tg1Dsql : HHandlerDbULoaderMSTIDsql
+    public class SrcMSTASUTPIdT5tg1Dsql : HHandlerDbULoaderMSTIDsql
     {
         private enum MODE_WHERE_DATETIME : short
         {
@@ -54,6 +54,8 @@ namespace SrcMST
 
             if (m_dictAdding.ContainsKey(@"WHERE_DATETIME") == true)
                 _modeWhereDatetime = (MODE_WHERE_DATETIME)Convert.ToInt16(m_dictAdding[@"WHERE_DATETIME"]);
+            else
+                ;
 
             return iRes;
         }
@@ -76,20 +78,14 @@ namespace SrcMST
                 //???, QUALITY
             });
 
-            foreach (GroupSignalsSrc.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
-            {
-                try
-                {
-                    if (sgnl.IsFormula == false)
-                    {
+            foreach (GroupSignalsSrc.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals) {
+                try {
+                    if (sgnl.IsFormula == false) {
                         rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal);
 
-                        if ((rowsSgnl.Length > 0)
-                            //??? если строк > 1
-                            && (((int)rowsSgnl[0][@"CNT"] % 24) == 0))
-                        {// только при кол-ве записей = 24 (все часы)
-
-                            dtValue = (DateTime)rowsSgnl[0][@"DATETIME"] + TimeSpan.FromHours(1); //OFFSET
+                        if ((rowsSgnl.Length > 0) //??? если строк > 1                            
+                            && (((int)rowsSgnl[0][@"CNT"] % 24) == 0)) { // только при кол-ве записей = 24 (все часы)                        
+                            dtValue = (DateTime)rowsSgnl[0][@"DATETIME"] /*+ TimeSpan.FromHours(1)*/; //OFFSET
 
                             dblSumValue = (double)rowsSgnl[0][@"VALUE"];
 
@@ -103,6 +99,7 @@ namespace SrcMST
                                 sgnl.m_idMain
                                 , dtValue
                                 , dblSumValue
+                                //, QUALITY
                             });
                         }
                         else
@@ -136,19 +133,11 @@ namespace SrcMST
                     , strWhereDatetime = string.Empty;
                 int offsetHour = 0;
                 bool bOffsetOutInclude = true;
-                long secOffsetUTCToData = m_secOffsetUTCToServer; //OFFSET
-
-                ////перевод даты для суточного набора
-                //if (DateTimeStart != DateTimeBegin)
-                //    DateTimeBegin = (DateTimeBegin - DateTimeBegin.TimeOfDay)/*.AddDays(PeriodMain.Days)*/;
-                //else
-                //    DateTimeBegin = (DateTimeStart - DateTimeStart.TimeOfDay);
 
                 //if ((_parent as HHandlerDbULoaderSrc).Mode == MODE_WORK.CUR_INTERVAL)
-                //    offsetHour = -1;
+                    offsetHour = -1;
                 //else
                 //    ;
-                ////offsetHour = (int)secUTCOffsetToData / 120;
 
                 foreach (SIGNALIdsql sgnl in m_arSignals)
                     if (sgnl.IsFormula == false)

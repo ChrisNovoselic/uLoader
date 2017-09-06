@@ -75,9 +75,14 @@ namespace uLoaderCommon
                 CURRENT
                     , COUNT_INDEX_DATATABLE_RES
             }
-
+            /// <summary>
+            /// Класс сигнала в составе группы сигналов группы источников(назначение)
+            /// </summary>
             protected class SIGNALDest : GroupSignals.SIGNAL
             {
+                /// <summary>
+                /// Идентификатор(локальный) сигнала в группе сигналов группы источников(источник)
+                /// </summary>
                 public int m_idLink;
 
                 public SIGNALDest(GroupSignals parent, int idMain, int idLink)
@@ -215,14 +220,6 @@ namespace uLoaderCommon
                     {
                         if (!(value == null))
                         {
-                            //if (value.Rows.Count > 0)
-                            //    //Установить значения диапазона даты/времени
-                            //    // т.к. записи в таблице отсортированы по [DATE_TIME]
-                            //    DateTimeRangeRecieved.Set((DateTime)value.Rows[0][@"DATETIME"]
-                            //        , (DateTime)value.Rows[value.Rows.Count - 1][@"DATETIME"]);
-                            //else
-                            //    ;
-
                             //Добавить элемент в очередь
                             m_queueTableRec.Enqueue (value);
                         }
@@ -375,8 +372,10 @@ namespace uLoaderCommon
                 get
                 {
                     string strRes = string.Empty
-                        , strIds = @"[ID=" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id + @":" + ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInULoader).KeySingleton
-                            + @", key=" + (_parent as HHandlerDbULoaderDest).IdGroupSignalsCurrent + @"]";
+                        , strIds = string.Format(@"[ID={0}:{1}, key={2}]"
+                            , ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInBase)._Id
+                            , ((_parent as HHandlerDbULoaderDest)._iPlugin as PlugInULoader).KeySingleton
+                            , (_parent as HHandlerDbULoaderDest).IdGroupSignalsCurrent);
 
                     try
                     {
@@ -436,7 +435,10 @@ namespace uLoaderCommon
             {
                 return new DataTableDuplicate();
             }
-
+            /// <summary>
+            /// Заменить в таблице, переданной в качестве аргумента, значения поля [ID]
+            /// </summary>
+            /// <param name="tablePrev">Таблица в которой происходит замена значений поля [ID]</param>
             public void Convert(DataTable tablePrev)
             {
                 try
@@ -574,7 +576,7 @@ namespace uLoaderCommon
         /// </summary>
         /// <param name="id">Идентификатор группы сигналов</param>
         /// <param name="tableIn">Таблица, содержащая записи для вставки</param>
-        /// <param name="pars">Массив допю/параметров</param>
+        /// <param name="pars">Массив доп./параметров</param>
         /// <returns>Результат постановки в очередьь обработки событий</returns>
         public virtual int Insert(int id, DataTable tableIn, object []pars)
         {
@@ -949,7 +951,7 @@ namespace uLoaderCommon
                 (m_arSignals).ToList ().ForEach(sgnl => { if ((sgnl as SIGNALIDsql).m_idLink == idLink) listRes.Add((sgnl as SIGNALIDsql).m_idTarget); else; });
 
                 if (listRes.Count == 0)
-                    Logging.Logg().Warning(@"GroupSignalsIDDest::getIdTarget (idLink=" + idLink + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                    Logging.Logg().Warning(string.Format(@"{0}::getIdTarget (idLink={1}) - ...", GetType().Name, idLink), Logging.INDEX_MESSAGE.NOT_SET);
                 else
                     ;
 

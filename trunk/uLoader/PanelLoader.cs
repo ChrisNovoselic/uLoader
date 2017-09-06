@@ -260,12 +260,12 @@ namespace uLoader
                     ((DataGridViewDisableButtonCell)(obj as DataGridView).Rows[cnt - 1].Cells[indxCol]).Enabled = false;
                 else
                     ;
-            }            
+            }
             /// <summary>
             /// Найти целочисленный идентфикатор элемента управления
             /// </summary>
             /// <param name="ctrl">Элемент управления</param>
-            /// <returns></returns>
+            /// <returns>Идентфикатор элемента управления</returns>
             protected KEY_CONTROLS getKeyWorkingItem (Control ctrl)
             {
                 KEY_CONTROLS keyRes = KEY_CONTROLS.UNKNOWN;
@@ -719,7 +719,7 @@ namespace uLoader
             /// <summary>
             /// Заполнить рабочий элемент - список сигналов группы
             /// </summary>
-            /// <param name="grpSrs"></param>
+            /// <param name="grpSrs">Группа сигналов (со списком, внезапно, сигналов)</param>
             public virtual void FillWorkItem(GROUP_SIGNALS_SRC grpSrc)
             {
                 Control workItem;
@@ -848,7 +848,7 @@ namespace uLoader
                 string btnCellText = string.Empty; //Текст для кнопки
                 //Изменить доступность кнопки
                 btnCell.Enabled = !(state == GroupSources.STATE.UNAVAILABLE);
-                //Определить текстт на кнопке в соответствии с состоянием
+                //Определить текст на кнопке в соответствии с состоянием
                 if (btnCell.Enabled == true)
                 {//При "доступной" (для нажатия) кнопке
                     switch (state)
@@ -1158,7 +1158,7 @@ namespace uLoader
                 DateTime datetimeValue = DateTime.MinValue
                     , datetimeMinLastUpdate = DateTime.MinValue;
 
-                Logging.Logg().Debug(@"PanelLoaderSources::UpdateData () - строк для отображения=" + table.Rows.Count + @"...", Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Debug(string.Format(@"{0}::UpdateData () - строк для отображения={1}...", this.GetType().Name, table.Rows.Count), Logging.INDEX_MESSAGE.NOT_SET);
 
                 if ((Equals(table, null) == false)
                     && (table.Rows.Count > 0)) {

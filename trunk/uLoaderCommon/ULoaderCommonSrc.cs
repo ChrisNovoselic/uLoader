@@ -381,8 +381,10 @@ namespace uLoaderCommon
                         //m_secOffsetUTCToQuery - m_secOffsetUTCToServer
                         ////Data - (Data - Query) - Server - (Data - Server)
                         //m_secOffsetUTCToData - (m_secOffsetUTCToData - m_secOffsetUTCToQuery) - m_secOffsetUTCToServer - (m_secOffsetUTCToData - m_secOffsetUTCToServer)
-                        //Server - Data + Query
-                        m_secOffsetUTCToServer - m_secOffsetUTCToData + m_secOffsetUTCToQuery
+                        ////Server - Data + Query
+                        //m_secOffsetUTCToServer - m_secOffsetUTCToData + m_secOffsetUTCToQuery
+                        //!!!Query - Data
+                        m_secOffsetUTCToQuery - m_secOffsetUTCToData
                             ;
                 }
             }

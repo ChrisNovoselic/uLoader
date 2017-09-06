@@ -142,13 +142,11 @@ namespace SrcMST
                     , strWhereDatetime = string.Empty;
                 int offsetHour = 0;
                 bool bOffsetOutInclude = true;
-                long secOffsetUTCToData = m_secOffsetUTCToServer; //OFFSET
 
                 if ((_parent as HHandlerDbULoaderSrc).Mode == MODE_WORK.CUR_INTERVAL)
                     offsetHour = -1;
                 else
                     ;
-                offsetHour = (int)secOffsetUTCToData;
 
                 foreach (SIGNALIdsql sgnl in m_arSignals)
                     if (sgnl.IsFormula == false)

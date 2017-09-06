@@ -151,6 +151,8 @@
     <Compile Include="FormMain.Designer.cs">
       <DependentUpon>FormMain.cs</DependentUpon>
     </Compile>
+    <Compile Include="GroupSources.cs" />
+    <Compile Include="GroupSourcesDest.cs" />
     <Compile Include="HHandlerQueue.cs" />
     <Compile Include="Items.cs" />
     <Compile Include="PanelCS.cs">
@@ -196,7 +198,6 @@
   <ItemGroup>
     <None Include="FileINI\setup_bal_teplo_tec5.ini" />
     <None Include="FileINI\setup_biysktmora.ini" />
-    <None Include="FileINI\setup_ktstudsql.ini" />
     <None Include="FileINI\setup_ktstusql.ini" />
     <None Include="FileINI\setup_statistic.ini" />
     <None Include="FileINI\setup_toris_bitec.ini" />

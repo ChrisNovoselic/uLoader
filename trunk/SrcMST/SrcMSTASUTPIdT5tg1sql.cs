@@ -74,6 +74,7 @@ namespace SrcMST
                 new DataColumn (@"ID", typeof (int))
                 , new DataColumn (@"DATETIME", typeof (DateTime))
                 , new DataColumn (@"VALUE", typeof (float))
+                //???, QUALITY
             });
 
             foreach (GroupSignalsMSTIDsql.SIGNALIdsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals) {
@@ -100,7 +101,7 @@ namespace SrcMST
                             dblSumValue = (double)rowsSgnl[0][@"VALUE"];
 
                             // при необходимости найти среднее
-                            if (sgnl.m_bAVG == true)
+                            if (sgnl.IsFormula == false)
                                 dblSumValue /= 60; //cntRec
                             else
                                 ;
@@ -109,6 +110,7 @@ namespace SrcMST
                                 sgnl.m_idMain
                                 , dtValue
                                 , dblSumValue
+                                //, QUALITY
                             });
                         } else
                             ; // неполные данные

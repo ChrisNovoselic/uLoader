@@ -1857,15 +1857,14 @@ namespace uLoaderCommon
 
         public int CreateObject(string nameTypeObj)
         {
-            int iRes = -1;
+            int iRes = -1; // попытки создания объекта библиотеки не предпринималось
 
             foreach (KeyValuePair<int, Type> pair in _types)
-                if (pair.Value.Name == nameTypeObj)
+                if (pair.Value.Name.CompareTo(nameTypeObj) == 0)
                 {
-                    if (createObject(pair.Key) == 1)
-                        iRes = 0;
-                    else
-                        ;
+                    iRes = createObject(pair.Key) == 1
+                        ? 0 //Успех
+                            : -2; // ошибка при создании библиотеки
 
                     break;
                 }
