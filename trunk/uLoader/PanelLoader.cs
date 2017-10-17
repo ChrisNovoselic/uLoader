@@ -8,6 +8,7 @@ using System.Data;
 
 using HClassLibrary;
 using uLoaderCommon;
+using System.Globalization;
 
 namespace uLoader
 {
@@ -317,7 +318,9 @@ namespace uLoader
                 objDepenceded.m_arWorkIntervals[(int)modeWork].m_dtStart = (GetWorkingItem(KEY_CONTROLS.CALENDAR_START_DATE) as DateTimePicker).Value.Date;
                 objDepenceded.m_arWorkIntervals[(int)modeWork].m_dtStart += fromMaskedTextBox(KEY_CONTROLS.MTBX_START_TIME).Value;
                 objDepenceded.m_arWorkIntervals[(int)modeWork].m_tsPeriodMain =
-                    fromMaskedTextBox(KEY_CONTROLS.MTBX_PERIOD_MAIN);
+                    fromMaskedTextBox(KEY_CONTROLS.MTBX_PERIOD_MAIN)
+                    //fromDateTimePicker (KEY_CONTROLS.DTP_PERIOD_MAIN)
+                        ;
                 objDepenceded.m_arWorkIntervals[(int)modeWork].m_tsPeriodLocal =
                     this is PanelLoaderSource ? fromMaskedTextBox(KEY_CONTROLS.MTBX_PERIOD_LOCAL) : HTimeSpan.NotValue;
                 objDepenceded.m_arWorkIntervals[(int)modeWork].m_tsIntervalLocal.Text =
@@ -540,6 +543,7 @@ namespace uLoader
                     DataAskedHost(arPreparePars);
                 //else ;
             }
+
             /// <summary>
             /// Преобразовать значение 'MaskedTextBox'
             /// </summary>
@@ -569,6 +573,21 @@ namespace uLoader
 
                 return tsRes;
             }
+
+            protected HTimeSpan fromDateTimePicker (KEY_CONTROLS key)
+            {
+                HTimeSpan tsRes = HTimeSpan.NotValue;
+
+                DateTimePicker ctrl = GetWorkingItem (key) as DateTimePicker;
+
+                if (Equals (ctrl, null) == false) {
+                    tsRes = HTimeSpan.FromMinutes(ctrl.Value.Day * 24 * 60 + ctrl.Value.Hour * 60 + ctrl.Value.Minute);
+                } else
+                    ;
+
+                return tsRes;
+            }
+
             /// <summary>
             /// Обработчик события - потеря фокусса ввода элемента управления 'KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS'
             /// </summary>
@@ -1217,6 +1236,15 @@ namespace uLoader
             {
                 Control ctrl;
                 HPanelCommon panelColumns = this.Controls[1] as HPanelCommon;
+                string maskPeriod = string.Format (@"00{0}00{1}00"
+                        //, (ctrl as MaskedTextBox).Culture.NumberFormat.NumberDecimalSeparator[0] //??? запятая заменяется пробелом
+                        //, CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator [0] //??? запятая заменяется пробелом
+                        , '.' //??? точка заменяется запятой
+                        , ':')
+                    //@"00.00:00"
+                    , textPeriod = string.Format(@"Период(ДД{0}ЧЧ{1}ММ)"
+                        , CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator [0] // запятая остается
+                        , ':');
 
                 this.SuspendLayout();
 
@@ -1256,7 +1284,7 @@ namespace uLoader
                 //Календарь
                 ctrl = new DateTimePicker();
                 ctrl.Name = KEY_CONTROLS.CALENDAR_START_DATE.ToString();
-                ctrl.Dock = DockStyle.Fill;
+                ctrl.Dock = DockStyle.Fill;                
                 panelGroupBox.Controls.Add(ctrl, 0, 2);
                 panelGroupBox.SetColumnSpan(ctrl, 9); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Начало периода
@@ -1278,26 +1306,29 @@ namespace uLoader
                 //Период
                 //Описание для главного периода
                 ctrl = new Label();
-                (ctrl as Label).Text = @"Период(ДД.ЧЧ:ММ)";
+                (ctrl as Label).Text = textPeriod;
                 ctrl.Dock = DockStyle.Bottom;
                 //ctrl.Anchor = ((AnchorStyles)(AnchorStyles.Bottom | AnchorStyles.Left));
                 panelGroupBox.Controls.Add(ctrl, 0, 4);
                 panelGroupBox.SetColumnSpan(ctrl, 6); panelGroupBox.SetRowSpan(ctrl, 1);
                 //TextBox изменения главного периода
-                ctrl = new MaskedTextBox();
+                ctrl = 
+                    new MaskedTextBox()
+                    //new DateTimePicker ()
+                        ;
                 ctrl.Name = KEY_CONTROLS.MTBX_PERIOD_MAIN.ToString();
                 ctrl.Dock = DockStyle.Bottom;
+                //(ctrl as DateTimePicker).Format = DateTimePickerFormat.Custom;
+                //(ctrl as DateTimePicker).CustomFormat = string.Format("DD{0}HH{1}mm{1}ss", CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator [0], ":");
+                //(ctrl as DateTimePicker).ShowUpDown = true;
                 (ctrl as MaskedTextBox).TextAlign = HorizontalAlignment.Right;
-                (ctrl as MaskedTextBox).Mask =
-                    //string.Format(@"00{0}00:00", (ctrl as MaskedTextBox).Culture.NumberFormat.NumberDecimalSeparator[0])
-                    @"00.00:00"
-                    ;
+                (ctrl as MaskedTextBox).Mask = maskPeriod;                    
                 panelGroupBox.Controls.Add(ctrl, 6, 4);
                 panelGroupBox.SetColumnSpan(ctrl, 3); panelGroupBox.SetRowSpan(ctrl, 1);
 
                 //Описание для локального периода
                 ctrl = new Label();
-                (ctrl as Label).Text = @"Период(ДД.ЧЧ:ММ)";
+                (ctrl as Label).Text = textPeriod;
                 ctrl.Dock = DockStyle.Bottom;
                 //ctrl.Anchor = ((AnchorStyles)(AnchorStyles.Bottom | AnchorStyles.Left));
                 panelGroupBox.Controls.Add(ctrl, 0, 5);
@@ -1307,10 +1338,7 @@ namespace uLoader
                 ctrl.Name = KEY_CONTROLS.MTBX_PERIOD_LOCAL.ToString();
                 ctrl.Dock = DockStyle.Bottom;
                 (ctrl as MaskedTextBox).TextAlign = HorizontalAlignment.Right;
-                (ctrl as MaskedTextBox).Mask =
-                    //string.Format(@"00{0}00:00", (ctrl as MaskedTextBox).Culture.NumberFormat.NumberDecimalSeparator[0])
-                    @"00.00:00"
-                    ;
+                (ctrl as MaskedTextBox).Mask = maskPeriod;
                 panelGroupBox.Controls.Add(ctrl, 6, 5);
                 panelGroupBox.SetColumnSpan(ctrl, 3); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Интервал

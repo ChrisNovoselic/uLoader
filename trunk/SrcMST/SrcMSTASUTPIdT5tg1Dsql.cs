@@ -167,26 +167,38 @@ namespace SrcMST
                 switch ((_parent as SrcMSTASUTPIdT5tg1Dsql)._modeWhereDatetime)
                 {
                     case MODE_WHERE_DATETIME.IN_EX_0_0:
-                        strWhereDatetime = @" [last_changed_at] >= DATEADD(HOUR, " + offsetHour + @", CAST('" + DateTimeBeginFormat + @"' as datetime))"
-                            + @" AND [last_changed_at] < DATEADD(HOUR, " + offsetHour + @", CAST('" + DateTimeEndFormat + @"' as datetime))";
+                        strWhereDatetime = string.Format(@" [last_changed_at] >= DATEADD(HOUR, {0}, CAST('{1}' as datetime))"
+                            + @" AND [last_changed_at] < DATEADD(HOUR, {0}, CAST('{2}' as datetime))"
+                                , offsetHour
+                                , DateTimeBeginFormat
+                                , DateTimeEndFormat
+                            );
                         break;
                     case MODE_WHERE_DATETIME.UNKNOWN:
                     case MODE_WHERE_DATETIME.BETWEEN_1_0:
                     default:
-                        strWhereDatetime = @" [last_changed_at] BETWEEN DATEADD(SECOND, 1, DATEADD(HOUR, " + offsetHour + @", CAST('" + DateTimeBeginFormat + @"' as datetime)))"
-                            + @" AND DATEADD(HOUR, " + offsetHour + @", CAST('" + DateTimeEndFormat + @"' as datetime))";
+                        strWhereDatetime = string.Format(@" [last_changed_at] BETWEEN DATEADD(SECOND, 1, DATEADD(HOUR, {0}, CAST('{1}' as datetime)))"
+                            + @" AND DATEADD(HOUR, {0}, CAST('{2}' as datetime))"
+                                , offsetHour
+                                , DateTimeBeginFormat
+                                , DateTimeEndFormat
+                            );
                         break;
                 }
 
-                m_strQuery = @"SELECT [ID], SUM([VALUE]) as [VALUE], COUNT(*) as [CNT]"
-                        + @", DATEADD(HOUR, " + (bOffsetOutInclude == false ? 1 : 0) + @", DATEADD(HOUR, (DATEDIFF(HOUR, DATEADD(DAY, 0, CAST('" + DateTimeEndFormat + @"' as datetime)), [last_changed_at]) / 60) * 60, DATEADD(DAY, 0, CAST('" + DateTimeEndFormat + @"' as datetime)))) as [DATETIME]"
-                    + @" FROM [dbo].[states_real_his_2]"
-                    + @" WHERE"
-                        + strWhereDatetime
-                        + @" AND [ID] IN (" + strIds + @")"
+                m_strQuery = string.Format(@"SELECT [ID], SUM([VALUE]) as [VALUE], COUNT(*) as [CNT]"
+                        + @", DATEADD(HOUR, {0}, DATEADD(HOUR, (DATEDIFF(HOUR, DATEADD(DAY, 0, CAST('{1}' as datetime)), [last_changed_at]) / 60) * 60, DATEADD(DAY, 0, CAST('{1}' as datetime)))) as [DATETIME]"
+                    + @" FROM [dbo].[{2}]"
+                    + @" WHERE {3}"
+                        + @" AND [ID] IN ({4})"
                     + @" GROUP BY [ID]"
-                        + @", DATEADD(HOUR, (DATEDIFF(HOUR, DATEADD(DAY, 0, CAST('" + DateTimeEndFormat + @"' as datetime)), [last_changed_at]) / 60) * 60, DATEADD(DAY, 0, CAST('" + DateTimeEndFormat + @"' as datetime)))"
-                    ;
+                        + @", DATEADD(HOUR, (DATEDIFF(HOUR, DATEADD(DAY, 0, CAST('{1}' as datetime)), [last_changed_at]) / 60) * 60, DATEADD(DAY, 0, CAST('{1}' as datetime)))"
+                        , (bOffsetOutInclude == false ? 1 : 0)
+                        , DateTimeEndFormat
+                        , @"states_real_his_2"
+                        , strWhereDatetime
+                        , strIds
+                    );
             }
         }
     }

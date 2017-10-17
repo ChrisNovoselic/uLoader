@@ -49,7 +49,6 @@ namespace SrcKTS
                     , i = -1;
                 string cmd =
                     string.Empty;
-                MODE_DATA_DATETIME modeDateTime = MODE_DATA_DATETIME.Begined;
 
                 //Формировать запрос
                 i = 0;
@@ -80,7 +79,7 @@ namespace SrcKTS
                     + @") res"
                     + @" GROUP BY [idVTI], [DATETIME]"
                     + @" ORDER BY [idVTI], [DATETIME];"
-                    , DateTimeBeginFormat, modeDateTime == MODE_DATA_DATETIME.Begined ? -1 : modeDateTime == MODE_DATA_DATETIME.Ended ? 0 : 0, idReq);
+                    , DateTimeBeginFormat, _modeDateTime == MODE_DATA_DATETIME.Begined ? -1 : _modeDateTime == MODE_DATA_DATETIME.Ended ? 0 : 0, idReq);
 
                 m_strQuery += string.Format(@"exec [dbo].ep_AskVTIdata @cmd='{0}'"
                     + @", @idReq={1};", @"Clear", idReq);

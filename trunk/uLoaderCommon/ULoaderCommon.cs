@@ -8,8 +8,14 @@ using HClassLibrary;
 
 namespace uLoaderCommon
 {
+    /// <summary>
+    /// Класс для хранения значения - промежуток времени
+    /// </summary>
     public class HTimeSpan : object
     {
+        /// <summary>
+        /// Признак ошибки при распозновании
+        /// </summary>
         private bool isError
         {
             get
@@ -19,6 +25,10 @@ namespace uLoaderCommon
             }
         }
         
+        /// <summary>
+        /// Конструктор - основной (с параметром)
+        /// </summary>
+        /// <param name="value">Значение для объекта</param>
         public HTimeSpan(string value)
         {
             Text = value;
@@ -26,8 +36,14 @@ namespace uLoaderCommon
 
         private string _prefix;
         private TimeSpan _value;
+        /// <summary>
+        /// Значение объекта
+        /// </summary>
         public TimeSpan Value { get { return _value; } }
 
+        /// <summary>
+        /// Строковое представление для значения объекта
+        /// </summary>
         public string Text
         {
             get { return ToString(); }
@@ -43,6 +59,10 @@ namespace uLoaderCommon
             }
         }
 
+        /// <summary>
+        /// Переобразование в строковое представление
+        /// </summary>
+        /// <returns>Строка - представление значения</returns>
         public override string ToString()
         {
             string strRes = string.Empty;
@@ -87,11 +107,22 @@ namespace uLoaderCommon
             return strRes;
         }
 
+        /// <summary>
+        /// Коструктор - дополнительный (с аргументами)
+        /// </summary>
+        /// <param name="prefix">Указание на коэффициент для значения</param>
+        /// <param name="iValue">Значение для объекта в соотвествии </param>
         private HTimeSpan(string prefix, int iValue)
             : this((iValue < 0 ? @"-" : string.Empty) + prefix + Math.Abs(iValue).ToString ())
         {
         }
 
+        /// <summary>
+        /// Возвратить стандартный интервал времени
+        /// </summary>
+        /// <param name="value">Строковое представление</param>
+        /// <param name="prefix">Префикс в строковом представлении, указывающий на коэффициент для значения</param>
+        /// <returns>Стандартный интервал времени</returns>
         private static TimeSpan parse(string value, out string prefix)
         {
             prefix = string.Empty;
@@ -153,31 +184,59 @@ namespace uLoaderCommon
             return tsRes;
         }
 
+        /// <summary>
+        /// Константа, указывающая на отсутствие значения
+        /// </summary>
         public static HTimeSpan NotValue { get { return HTimeSpan.FromMilliseconds(-1); } }
 
+        /// <summary>
+        /// Возвратить объект из милисекунд
+        /// </summary>
+        /// <param name="msecs">Интервал в милисекундах</param>
+        /// <returns>Интервал времени</returns>
         public static HTimeSpan FromMilliseconds(int msecs)
         {
             return new HTimeSpan(@"ms", msecs);
         }
-        
+
+        /// <summary>
+        /// Возвратить объект из секунд
+        /// </summary>
+        /// <param name="secs">Интервал в секундах</param>
+        /// <returns>Интервал времени</returns>
         public static HTimeSpan FromSeconds(int secs)
         {
             return new HTimeSpan(@"ss", secs);
         }
 
+        /// <summary>
+        /// Возвратить объект из минут
+        /// </summary>
+        /// <param name="mins">Интервал в минутах</param>
+        /// <returns>Интервал времени</returns>
         public static HTimeSpan FromMinutes(int mins)
         {
             return new HTimeSpan(@"mi", mins);
         }
 
+        /// <summary>
+        /// Возвратить объект из часов
+        /// </summary>
+        /// <param name="hours">Интервал в часах</param>
+        /// <returns>Интервал времени</returns>
         public static HTimeSpan FromHours(int hours)
         {
             return new HTimeSpan(@"hh", hours);
         }
 
-        public static HTimeSpan FromDays(int day)
+        /// <summary>
+        /// Возвратить объект из суток
+        /// </summary>
+        /// <param name="days">Интервал в сутках</param>
+        /// <returns>Интервал времени</returns>
+        public static HTimeSpan FromDays(int days)
         {
-            return new HTimeSpan(@"dd", day);
+            return new HTimeSpan(@"dd", days);
         }
 
         public override bool Equals(object obj)

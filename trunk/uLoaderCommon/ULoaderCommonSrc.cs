@@ -904,6 +904,10 @@ namespace uLoaderCommon
         /// </summary>
         protected abstract class GroupSignalsDatetimeSrc : GroupSignalsSrc
         {
+            //TODO: необходимо распространить учет на все библиотеки (пока только для КТС Энергия+)
+            // для АСУ ТП эн./бл.№1 результат запроса '.Ended'
+            protected MODE_DATA_DATETIME _modeDateTime = MODE_DATA_DATETIME.Ended;
+
             private DateTime _datetimeStart;
             /// <summary>
             /// Дата/время главного периода опроса
