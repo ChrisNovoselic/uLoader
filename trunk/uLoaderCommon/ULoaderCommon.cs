@@ -1288,13 +1288,13 @@ namespace uLoaderCommon
         /// Создать объект - группа сигналов
         /// </summary>
         /// <param name="objs">Массив параметров для создания группы сигналов (параметры сигналов)</param>
-        /// <returns></returns>
+        /// <returns>Объект - группа сигналов</returns>
         protected abstract GroupSignals createGroupSignals(int id, object []objs);
         /// <summary>
         /// Проверить требуется ли поставить идентификатор в очередь обработки
         /// </summary>
-        /// <param name="key"></param>
-        /// <returns></returns>
+        /// <param name="key">Идентификатор группы сигналов</param>
+        /// <returns>Признак необходимости добавить группу сигналов в очередь обработки</returns>
         protected abstract bool isPush (int curCount);
         /// <summary>
         /// Добавить в очередь обработки событий группу сигналов
@@ -1344,7 +1344,7 @@ namespace uLoaderCommon
             }
 
             if (msgDebug.Equals (string.Empty) == false)
-                Logging.Logg().Debug(string.Format(@"{0} ...", msgDebug), Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Debug(string.Format(@"{0} ...", msgDebug), Logging.INDEX_MESSAGE.D_001);
             else
                 ;
 
@@ -1420,6 +1420,16 @@ namespace uLoaderCommon
                         {
                             //Удалить объект очереди событий (обработанный)
                             m_queueIdGroupSignals.Dequeue();
+
+                            Logging.Logg ().Debug (string.Format (@"HHandlerDbULoader::dequeue () - [ID={0}:{1}, key={2}] - queue.Count={3}({4})"
+                                    , _iPlugin._Id
+                                    , _iPlugin.KeySingleton
+                                    , IdGroupSignalsCurrent
+                                    , QueueCount
+                                    , m_queueIdGroupSignals.Count (delegate (int i1) {
+                                        return i1 == IdGroupSignalsCurrent;
+                                    }))
+                                , Logging.INDEX_MESSAGE.D_001);
                         }
 
                         lock (m_lockStateGroupSignals)

@@ -180,7 +180,7 @@ namespace uLoaderCommon
                         ;
 
                 //Console.WriteLine(msg);
-                Logging.Logg().Debug(msg + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Debug(msg + @" ...", Logging.INDEX_MESSAGE.D_005);
 
                 return iRes;
             }
@@ -396,7 +396,7 @@ namespace uLoaderCommon
                     Logging.Logg().Debug(string.Format(@"Строк для вставки {0}: {1}..."
                             , strIds
                             , (((!(m_DupTables == null)) && (!(m_DupTables.TableDistinct == null))) ? m_DupTables.TableDistinct.Rows.Count.ToString() : @"не известно"))
-                        , Logging.INDEX_MESSAGE.NOT_SET);
+                        , Logging.INDEX_MESSAGE.D_006);
 
                     return
                         //string.Empty

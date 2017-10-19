@@ -726,18 +726,17 @@ namespace uLoaderCommon
                             else
                                 ;
 
-                            msg = string.Format(@"{0} query={1} ...", msg, _query);
-                            //Console.WriteLine (msg);
-                            //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
-
                             Request(m_dictIdListeners[IdGroupSignalsCurrent][0], _query);
                             break;
                         default:
                             break;
                     }
-
+                    // журналирование обработки состояния для группы сигналов источника
                     Logging.Logg().Debug(string.Format(@"{0} ...", msg)
-                        , Logging.INDEX_MESSAGE.NOT_SET);
+                        , Logging.INDEX_MESSAGE.D_003);
+                    // более детальная информация
+                    Logging.Logg ().Debug (string.Format (@"{0} ...", string.Format (@"{0} query={1} ...", msg, _query))
+                        , Logging.INDEX_MESSAGE.D_004);
                 } else
                     throw new Exception(string.Format(@"{0} ...", msg));
             } catch (Exception e) {

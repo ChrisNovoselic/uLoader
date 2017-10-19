@@ -618,7 +618,8 @@ namespace uLoader
             }
 
             //Console.WriteLine(@"StateManager::add (id=" + id.m_idOwner + @", key=" + id.m_idGroupSgnls + @") - добавить объект; кол-во = " + m_listObjects.Count + @" ...");
-            Logging.Logg().Debug(@"StateManager::add (id=" + id.m_idOwner + @", key=" + id.m_idGroupSgnls + @") - добавить объект; кол-во -> " + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+            Logging.Logg().Debug($@"StateManager::add (id={id.m_idOwner}, key={id.m_idGroupSgnls}) - добавить объект; кол-во -> {m_listObjects.Count} ..."
+                , Logging.INDEX_MESSAGE.A_003);
         }
         /// <summary>
         /// Поставить в очередь событие для добавления нового объекта для контроля
@@ -645,7 +646,11 @@ namespace uLoader
             }
 
             //Console.WriteLine(@"StateManager::remove (id=" + id.m_idOwner + @", key=" + id.m_idGroupSgnls + @") - удалить объект; кол-во = " + m_listObjects.Count + @" ...");
-            Logging.Logg().Debug(@"StateManager::remove (id=" + id.m_idOwner + @", key=" + id.m_idGroupSgnls + @") - удалить объект; кол-во <- " + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+            Logging.Logg().Debug(string.Format(@"StateManager::remove (id={0}, key={1}) - удалить объект; кол-во <- {2} ..."
+                    , id.m_idOwner
+                    , id.m_idGroupSgnls
+                    , m_listObjects.Count)
+                , Logging.INDEX_MESSAGE.A_003);
         }
         /// <summary>
         /// Поставить в очередь событие для удаления объекта из списка контролируемых объектов
@@ -671,7 +676,8 @@ namespace uLoader
             }
 
             //Console.WriteLine(@"StateManager::confirm (id=" + id.m_idOwner + @", key=" + id.m_idGroupSgnls + @") - подтвердить состояние объекта ...");
-            Logging.Logg().Debug(@"StateManager::confirm (id=" + id.m_idOwner + @", key=" + id.m_idGroupSgnls + @") - подтвердить состояние объекта; кол-во = " + m_listObjects.Count + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+            Logging.Logg().Debug($@"StateManager::confirm (id={id.m_idOwner}, key={id.m_idGroupSgnls}) - подтвердить состояние объекта; кол-во = {m_listObjects.Count} ..."
+                , Logging.INDEX_MESSAGE.A_003);
         }
         /// <summary>
         /// Поставить в очередь событие для подтверждения изменения состояния контролируемого объекта

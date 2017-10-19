@@ -1177,7 +1177,8 @@ namespace uLoader
                 DateTime datetimeValue = DateTime.MinValue
                     , datetimeMinLastUpdate = DateTime.MinValue;
 
-                Logging.Logg().Debug(string.Format(@"{0}::UpdateData () - строк для отображения={1}...", this.GetType().Name, table.Rows.Count), Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Debug(string.Format(@"{0}::UpdateData () - строк для отображения={1}...", this.GetType().Name, table.Rows.Count)
+                    , Logging.INDEX_MESSAGE.A_002);
 
                 if ((Equals(table, null) == false)
                     && (table.Rows.Count > 0)) {

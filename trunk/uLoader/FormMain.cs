@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using System.Linq;
 
 using HClassLibrary;
 using uLoaderCommon;
@@ -40,14 +41,76 @@ namespace uLoader
         /// Панель с элементами управления - действия по конфигурации приложения
         /// </summary>
         private PanelConfig m_panelConfig;
-
+        /// <summary>
+        /// Упрощенный(без приведения к типу) доступ к объекту обработки очереди событий 
+        /// </summary>
         private HHandlerQueue Handler { get { return m_handler as HHandlerQueue; } }
 
-        public FormMain() : base (@"IconMainULoader")
+        #region Настройка логгирования
+        private struct LOGGING_MESSAGE
+        {
+            public Logging.INDEX_MESSAGE IndexMessage;
+
+            public bool Allowed;
+
+            public string Description;
+        }
+
+        private enum LOGGING_ID {
+            INIT
+            , TABLE_RES
+            , START_STOP
+            , QUEUE
+            , DEQUEUE_DEST
+            , STATE_SRC
+            , QUERY_SRC
+            , REC_INSERT_DEST
+        }
+
+        private static LOGGING_MESSAGE [] _loggingMessageSetup = new LOGGING_MESSAGE [] // размер должен совпадать с размером перечисления
+        {
+            new LOGGING_MESSAGE() { IndexMessage = Logging.INDEX_MESSAGE.A_001, Allowed = true, Description = "Инициализация гр.источников, гр.сигн." } // INIT
+            , new LOGGING_MESSAGE() { IndexMessage = Logging.INDEX_MESSAGE.A_002, Allowed = false, Description = "Результат запроса(кол-во записей)" } // TABLE_RES
+            , new LOGGING_MESSAGE() { IndexMessage = Logging.INDEX_MESSAGE.A_003, Allowed = true, Description = "Запуск/останов гр. источн., гр.сигн." } // START_STOP
+            , new LOGGING_MESSAGE() { IndexMessage = Logging.INDEX_MESSAGE.D_001, Allowed = false, Description = "Постановка/снятие события в/из очередь(и)" } // QUEUE
+            , new LOGGING_MESSAGE() { IndexMessage = Logging.INDEX_MESSAGE.D_005, Allowed = false, Description = "Снятие события из очереди назначения" } // DEQUEUE_DEST
+            , new LOGGING_MESSAGE() { IndexMessage = Logging.INDEX_MESSAGE.D_003, Allowed = false, Description = "Изменение состояния(STATE_REQUEST) гр.сигн. источн." } // STATE_SRC
+            , new LOGGING_MESSAGE() { IndexMessage = Logging.INDEX_MESSAGE.D_004, Allowed = false, Description = "Содержание запроса источника" } // QUERY_SRC
+            , new LOGGING_MESSAGE() { IndexMessage = Logging.INDEX_MESSAGE.D_006, Allowed = false, Description = "Кол-во записей вставки в гр.сигн. назнач." } // REC_INSERT_DEST
+        };
+
+        private string fGetINIParametersOfID (int id)
+        {
+            return id < _loggingMessageSetup.Length ? _loggingMessageSetup[id].Allowed.ToString () : false.ToString ();
+        }
+
+        private void loggingLinkId ()
+        {
+            Logging.DelegateGetINIParametersOfID = new StringDelegateIntFunc (fGetINIParametersOfID);
+            foreach (LOGGING_ID indx in Enum.GetValues (typeof (LOGGING_ID)))
+                Logging.LinkId (_loggingMessageSetup[(int)indx].IndexMessage, (int)indx);
+            Logging.UpdateMarkDebugLog ();
+        }
+
+        private void toolStripMenuItemFileLogging_CheckedChanged (object sender, EventArgs e)
+        {
+            _loggingMessageSetup [(int)(sender as System.Windows.Forms.ToolStripMenuItem).Tag].Allowed =
+                (sender as System.Windows.Forms.ToolStripMenuItem).Checked;
+            Logging.UpdateMarkDebugLog ();
+        }
+        #endregion
+
+        /// <summary>
+        /// Конструктор - основной (без аргументов)
+        /// </summary>
+        public FormMain ()
+            : base (@"IconMainULoader")
         {
             //Logging.Logg().Debug(string.Format(@"FormMain::ctor() - вХод, IsNormalized={0} ...", HCmd_Arg.IsNormalized), Logging.INDEX_MESSAGE.NOT_SET);
 
-            InitializeComponent();
+            loggingLinkId ();
+
+            InitializeComponent ();
 
             if (HCmd_Arg.IsNormalized == true)
                 m_formWait = FormWait.This;
@@ -163,6 +226,7 @@ namespace uLoader
                     ;
             }
         }
+
         /// <summary>
         /// Обработчик события StatesMachine.INTERACTION_EVENT
         /// </summary>
@@ -243,6 +307,7 @@ namespace uLoader
                     break;
             }            
         }
+
         /// <summary>
         /// Обработка события окончания загрузки главной формы приложения
         /// </summary>
@@ -278,6 +343,7 @@ namespace uLoader
             //??? почемы вызов не в базовом классе
             initFormMainSizing();
         }
+
         /// <summary>
         /// Обработчик события - закрытие формы
         /// </summary>
@@ -294,6 +360,7 @@ namespace uLoader
 
             base.FormMain_Closing(sender, e);
         }
+
         /// <summary>
         /// Обработчик события - закрытие вкладки
         /// </summary>
@@ -316,6 +383,7 @@ namespace uLoader
                     break;
             }
         }
+
         // п.п.меню заблокированы - изменение состояния только программно
         //private void работаToolStripMenuItem_CheckStateChanged(object obj, EventArgs ev)
         //{
@@ -412,6 +480,7 @@ namespace uLoader
                 fAbout.ShowDialog();
             }
         }
+
         /// <summary>
         /// Обработчик события приема сообщений от вкладки (панели) "Работа"
         /// </summary>
@@ -422,6 +491,7 @@ namespace uLoader
             //ev.id - здесь всегда = -1
             m_handler.Push(m_panelWork, ev.par as object[]);
         }
+
         /// <summary>
         /// Обработчик события приема сообщений от вкладки (панели) "Конфигурация"
         /// </summary>
@@ -432,6 +502,7 @@ namespace uLoader
             //ev.id - здесь всегда = -1
             m_handler.Push(m_panelConfig, ev.par as object[]);
         }
+
         /// <summary>
         /// Обработчик события приема сообщений от вкладки (панели) "Конфигурация"
         /// </summary>

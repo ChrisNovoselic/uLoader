@@ -673,6 +673,7 @@ namespace uLoader
             // [1] - идентификатор группы сигналов
             // [2] - идентификатор признака подтверждения/запроса ИЛИ таблица с результатом
             object[] pars = null;
+            Logging.INDEX_MESSAGE indxLogMessage = Logging.INDEX_MESSAGE.NOT_SET;
 
             try {
                 pars =
@@ -693,6 +694,8 @@ namespace uLoader
 
                 switch (id_cmd) {
                     case ID_DATA_ASKED_HOST.INIT_SOURCE: //Получен запрос на парметры инициализации
+                        indxLogMessage = Logging.INDEX_MESSAGE.A_001;
+
                         if ((ID_HEAD_ASKED_HOST)pars[2] == ID_HEAD_ASKED_HOST.GET) {
                             //Отправить данные для инициализации
                             sendInitSource();
@@ -710,6 +713,8 @@ namespace uLoader
 
                     #region Отправить данные для инициализации группы сигналов, команду старт, если получено подтверждение приема/обработки данных инициализации
                     case ID_DATA_ASKED_HOST.INIT_SIGNALS: //Получен запрос на обрабатываемую группу сигналов
+                        indxLogMessage = Logging.INDEX_MESSAGE.A_001;
+
                         if ((ID_HEAD_ASKED_HOST)pars[2] == ID_HEAD_ASKED_HOST.GET) {
                             //Отправить данные для инициализации
                             sendInitGroupSignals(iIDGroupSignals);
@@ -731,6 +736,8 @@ namespace uLoader
 
                     #region Обработать полученные из библиотеки результаты
                     case ID_DATA_ASKED_HOST.TABLE_RES:
+                        indxLogMessage = Logging.INDEX_MESSAGE.A_002;
+
                         if ((!(grpSgnls == null))
                             && ((!(pars[2] == null))
                                 && (pars[2] is DataTable))
@@ -759,6 +766,8 @@ namespace uLoader
 
                     case ID_DATA_ASKED_HOST.START:
                     case ID_DATA_ASKED_HOST.STOP:
+                        indxLogMessage = Logging.INDEX_MESSAGE.A_003;
+
                         try {
                             if ((!(grpSgnls == null))
                                 && (iIDGroupSignals < int.MaxValue)) {
@@ -808,7 +817,11 @@ namespace uLoader
                         break;
                 }
 
-                Logging.Logg().Debug(@"GroupSources::plugIn_OnEvtDataAskedHost (id=" + m_strID + @", key=" + (grpSgnls == null ? @"НЕ_ТРЕБУЕТСЯ" : grpSgnls.m_strID) + @") - " + msgDebugLog + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Debug(string.Format(@"GroupSources::plugIn_OnEvtDataAskedHost (id={0}, key={1}) - {2} ..."
+                        , m_strID
+                        , grpSgnls == null ? @"НЕ_ТРЕБУЕТСЯ" : grpSgnls.m_strID
+                        , msgDebugLog)
+                    , indxLogMessage);
             } catch (Exception e) {
                 Logging.Logg().Exception(e, @"GroupSources::plugIn_OnEvtDataAskedHost (id=" + m_strID + @", key=" + grpSgnls.m_strID + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }

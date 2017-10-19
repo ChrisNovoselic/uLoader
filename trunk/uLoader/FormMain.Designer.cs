@@ -1,4 +1,5 @@
 ﻿using HClassLibrary;
+using System;
 
 namespace uLoader
 {
@@ -35,7 +36,7 @@ namespace uLoader
             this.файлToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.файлКонфигурацияToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.файлКонфигурацияЗагрузитьToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.файлКонфигурацияСохранитьToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.файлКонфигурацияСохранитьToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();            
             this.выходToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.видToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.работаToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -95,6 +96,34 @@ namespace uLoader
             this.файлКонфигурацияСохранитьToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.файлКонфигурацияСохранитьToolStripMenuItem.Text = "Сохранить";
             this.файлКонфигурацияСохранитьToolStripMenuItem.Click += new System.EventHandler(this.файлКонфигурацияСохранитьToolStripMenuItem_Click);
+
+            #region Пункт меню для настройки логгирования
+            System.Windows.Forms.ToolStripMenuItem menuSubItem;
+
+            if (_loggingMessageSetup.Length > 0) {
+                this.файлЛоггированиеToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem ();
+
+                this.файлЛоггированиеToolStripMenuItem.Name = "файлЛоггированиеToolStripMenuItem";
+                this.файлЛоггированиеToolStripMenuItem.Size = new System.Drawing.Size (45, 20);
+                this.файлЛоггированиеToolStripMenuItem.Text = "Логгирование";
+                this.файлЛоггированиеToolStripMenuItem.Enabled = true;
+
+                foreach (LOGGING_ID indx in Enum.GetValues(typeof(LOGGING_ID))) {
+                    menuSubItem = new System.Windows.Forms.ToolStripMenuItem (_loggingMessageSetup[(int)indx].Description);
+                    menuSubItem.Tag = indx;
+                    menuSubItem.CheckOnClick = true;
+                    menuSubItem.Checked = _loggingMessageSetup [(int)indx].Allowed;
+                    menuSubItem.CheckedChanged += toolStripMenuItemFileLogging_CheckedChanged;
+
+                    this.файлЛоггированиеToolStripMenuItem.DropDownItems.Add (menuSubItem);
+                }
+
+                this.файлToolStripMenuItem.DropDownItems.Insert (this.файлToolStripMenuItem.DropDownItems.IndexOf(this.файлКонфигурацияToolStripMenuItem) + 1
+                    , this.файлЛоггированиеToolStripMenuItem);
+            } else
+                ;
+            #endregion
+
             // 
             // выходToolStripMenuItem
             // 
@@ -199,6 +228,7 @@ namespace uLoader
         //private System.Windows.Forms.MenuStrip m_menuStripMain;
         private System.Windows.Forms.ToolStripMenuItem файлToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem файлКонфигурацияToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem файлЛоггированиеToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem файлКонфигурацияЗагрузитьToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem файлКонфигурацияСохранитьToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem выходToolStripMenuItem;
