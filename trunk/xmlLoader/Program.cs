@@ -1,4 +1,6 @@
-﻿using HClassLibrary;
+﻿//using HClassLibrary;
+using ASUTP;
+using ASUTP.Helper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,9 +19,7 @@ namespace xmlLoader
             int iRes = 0;
             FormMain formMain = null;
 
-            Logging.SetMode(@"log=", Logging.LOG_MODE.FILE_EXE);
-
-            try { ProgramBase.Start(); }
+            try { ProgramBase.Start(Logging.LOG_MODE.FILE_EXE, true); }
             catch (Exception e) {
                 MessageBox.Show(null, e.Message + "\nили обратитесь к оператору тех./поддержки по тел. 4444 или по тел. 289-03-37.", "Ошибка инициализации!", MessageBoxButtons.OK, MessageBoxIcon.Stop);
                 iRes = -1;

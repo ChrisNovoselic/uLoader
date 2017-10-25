@@ -1,5 +1,9 @@
-﻿using HClassLibrary;
-using System;
+﻿using System;
+
+////using HClassLibrary;
+
+using ASUTP.Control;
+using ASUTP.Core;
 
 namespace uLoader
 {
@@ -202,7 +206,7 @@ namespace uLoader
             //
             // m_TabCtrl
             //
-            m_TabCtrl = new HClassLibrary.HTabCtrlEx();
+            m_TabCtrl = new HTabCtrlEx();
             this.m_TabCtrl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                 | System.Windows.Forms.AnchorStyles.Left)
                 | System.Windows.Forms.AnchorStyles.Right))

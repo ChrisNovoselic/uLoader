@@ -2,17 +2,19 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using HClassLibrary;
+////using HClassLibrary;
 using System.Data;
 using System.Reflection;
 using System.Diagnostics;
 using System.Threading;
 using System.Globalization;
+using ASUTP;
+using ASUTP.Core;
+using ASUTP.Helper;
 
 namespace xmlLoader
 {
-    public partial class WriterHandlerQueue : HClassLibrary.HHandlerQueue
-    {
+    public partial class WriterHandlerQueue : ASUTP.Helper.HHandlerQueue {
         /// <summary>
         /// Структура для хранения значений настраиваемых параметров
         ///  (из файла конфигурации)
@@ -37,7 +39,7 @@ namespace xmlLoader
         /// Класс для хранения информации о параметрах соединения с БД
         ///  (только для добавления параметра AUTO_START)
         /// </summary>
-        public class ConnectionSettings : HClassLibrary.ConnectionSettings
+        public class ConnectionSettings : ASUTP.Database.ConnectionSettings
         {
             /// <summary>
             /// Перечисление - индексы для известных параметров соединения
@@ -75,7 +77,7 @@ namespace xmlLoader
             /// </summary>
             /// <param name="bAutoStart">Значение для параметра AUTO_START</param>
             /// <param name="connSett">Объект базового класса</param>
-            public ConnectionSettings(bool bAutoStart, HClassLibrary.ConnectionSettings connSett) : base(connSett)
+            public ConnectionSettings(bool bAutoStart, ConnectionSettings connSett) : base(connSett)
             {
                 initialize(bAutoStart);
             }
@@ -359,14 +361,14 @@ namespace xmlLoader
         /// <param name="obj">Объект с идентификатором события, аргументами события (при необходимости)</param>
         private void writerDbHandler_OnDataAskedHost(object obj)
         {
-            INDEX_WAITHANDLE_REASON indxReasonCompleted = (INDEX_WAITHANDLE_REASON)(obj as object[])[0];
+            ASUTP.Helper.HHandler.INDEX_WAITHANDLE_REASON indxReasonCompleted = (ASUTP.Helper.HHandler.INDEX_WAITHANDLE_REASON)(obj as object[])[0];
             int idConnSett = (int)(obj as object[])[1];
             DateTime dtRecieved = (DateTime)(obj as object[])[2];
 
             try {
                 var writerDataSet = (from dataSet in _listDataSet where dataSet.m_dtRecieved == dtRecieved select dataSet).ElementAt(0);
                 writerDataSet.m_dictDatetimeQuered[idConnSett] =
-                    indxReasonCompleted == INDEX_WAITHANDLE_REASON.SUCCESS ? DateTime.UtcNow :
+                    indxReasonCompleted == ASUTP.Helper.HHandler.INDEX_WAITHANDLE_REASON.SUCCESS ? DateTime.UtcNow :
                         indxReasonCompleted == INDEX_WAITHANDLE_REASON.ERROR ? DateTime.MaxValue :
                             DateTime.MinValue;
 
@@ -508,7 +510,7 @@ namespace xmlLoader
             return iRes;
         }
 
-        protected override INDEX_WAITHANDLE_REASON StateErrors(int state, int req, int res)
+        protected override ASUTP.Helper.HHandler.INDEX_WAITHANDLE_REASON StateErrors (int state, int req, int res)
         {
             EvtToFormMain?.Invoke(new object[] {
                 StatesMachine.MESSAGE_TO_STATUSSTRIP

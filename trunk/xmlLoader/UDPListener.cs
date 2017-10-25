@@ -1,6 +1,9 @@
 ﻿#define _NETFRAMEWORK45
 
-using HClassLibrary;
+using ASUTP;
+using ASUTP.Core;
+using ASUTP.PlugIn;
+//using HClassLibrary;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

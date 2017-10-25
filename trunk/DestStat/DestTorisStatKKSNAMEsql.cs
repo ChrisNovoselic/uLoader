@@ -6,8 +6,9 @@ using System.Data;
 using System.Globalization;
 using System.Diagnostics;
 
-using HClassLibrary;
+////using HClassLibrary;
 using uLoaderCommon;
+using ASUTP;
 
 namespace DestStat
 {

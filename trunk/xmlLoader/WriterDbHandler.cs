@@ -2,18 +2,22 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using HClassLibrary;
+////using HClassLibrary;
 using System.Data;
 using System.Reflection;
 using System.Threading;
 using System.ComponentModel;
 using System.Threading.Tasks;
+using ASUTP.Core;
+using ASUTP.Helper;
+using ASUTP.PlugIn;
+using ASUTP;
 
 namespace xmlLoader
 {
     partial class WriterHandlerQueue
     {
-        private class WriterDbHandler : HHandlerDb, IDataHost
+        private class WriterDbHandler : ASUTP.Helper.HHandlerDb, IDataHost
         {
             /// <summary>
             /// Перечисление - 
@@ -205,7 +209,7 @@ namespace xmlLoader
             /// <param name="indx">Индекс в массиве - элементе словаря с идентификаторами соединений</param>
             /// <param name="connSett">Параметры соединения с источником информации</param>
             /// <param name="name">Наименование соединения</param>
-            protected override void register(int id, int indx, HClassLibrary.ConnectionSettings connSett, string name)
+            protected override void register(int id, int indx, ASUTP.Database.ConnectionSettings connSett, string name)
             {
                 bool bReq = true;
 

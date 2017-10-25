@@ -1,14 +1,18 @@
-﻿using System;
+﻿using ASUTP;
+using ASUTP.Core;
+using ASUTP.Helper;
+using ASUTP.PlugIn;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
-using HClassLibrary; //HHandler
+////using HClassLibrary; //HHandler
 using uLoaderCommon;
 
 namespace uLoader
 {
-    partial class HHandlerQueue : HClassLibrary.HHandlerQueue
+    partial class HHandlerQueue : ASUTP.Helper.HHandlerQueue
     {
         /// <summary>
         /// Перечисление - возможные состояния для обработки

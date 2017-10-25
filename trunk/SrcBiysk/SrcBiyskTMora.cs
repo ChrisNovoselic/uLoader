@@ -8,7 +8,7 @@ using System.Data; //DataTable
 using System.Data.Common; //DbConnection
 using System.Threading;
 
-using HClassLibrary;
+//using HClassLibrary;
 using uLoaderCommon;
 
 namespace SrcBiysk

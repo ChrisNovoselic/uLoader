@@ -1,16 +1,18 @@
-﻿using System;
+﻿using ASUTP;
+using ASUTP.Database;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-using HClassLibrary;
+////using HClassLibrary;
 using uLoaderCommon;
 
 namespace uLoader
 {
     partial class FormMain
     {
-        public class FileINI : HClassLibrary.FileINI
+        public class FileINI : ASUTP.Helper.FileINI
         {
             /// <summary>
             /// Перечисление типов групп для панели (группы источников, группы сигналов)

@@ -1,4 +1,6 @@
-﻿using HClassLibrary;
+﻿//using HClassLibrary;
+using ASUTP;
+using ASUTP.Helper;
 using System;
 using System.Net;
 using uLoaderCommon;
@@ -9,7 +11,7 @@ namespace xmlServer
     {
         static void Main(string[] args)
         {
-            Logging.SetMode(@"log=", Logging.LOG_MODE.FILE_EXE);
+            ProgramBase.Start (Logging.LOG_MODE.FILE_EXE, false);
 
             HCmd_Arg cmdArg;
 

@@ -8,7 +8,11 @@ using System.Text;
 using System.Windows.Forms; //Control
 using System.Drawing; //Point
 
-using HClassLibrary;
+////using HClassLibrary;
+using ASUTP.Control;
+using ASUTP.Core;
+using ASUTP;
+using ASUTP.PlugIn;
 
 namespace uLoader
 {

@@ -4,7 +4,11 @@ using System.Linq;
 using System.Data;
 using System.Threading;
 
-using HClassLibrary;
+////using HClassLibrary;
+using ASUTP;
+using ASUTP.PlugIn;
+using ASUTP.Helper;
+using ASUTP.Database;
 
 namespace uLoaderCommon
 {
@@ -337,7 +341,7 @@ namespace uLoaderCommon
     /// <summary>
     /// Класс - базовый для описания целевого объекта для загрузки/вагрузки данных
     /// </summary>
-    public abstract class HHandlerDbULoader : HHandlerDb
+    public abstract class HHandlerDbULoader : ASUTP.Helper.HHandlerDb
     {
         //public HTimeSpan m_tsUTCOffset;
         /// <summary>

@@ -8,8 +8,10 @@ using System.Data;
 using System.Threading;
 using System.ComponentModel;
 
-using HClassLibrary;
+////using HClassLibrary;
 using uLoaderCommon;
+using ASUTP.Database;
+using ASUTP.Helper;
 
 namespace uLoader
 {

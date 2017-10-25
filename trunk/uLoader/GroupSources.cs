@@ -5,8 +5,15 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using HClassLibrary;
+
 using uLoaderCommon;
+using ASUTP.PlugIn;
+using ASUTP.Helper;
+using ASUTP.Core;
+using ASUTP;
+using ASUTP.Database;
+
+////using HClassLibrary;
 
 namespace uLoader
 {
@@ -58,7 +65,7 @@ namespace uLoader
                 string name = Path.GetFileNameWithoutExtension(strDLLName.Split(new char[] { ':' }, StringSplitOptions.None)[0]);
 
                 if (name.Equals(string.Empty) == false) {
-                    plugIn = load(name, out iLoadRes) as PlugInULoader;
+                    plugIn = load(name, ProgramBase.SeparateAppDomain_UnhandledException, out iLoadRes) as PlugInULoader;
 
                     switch (iLoadRes) {
                         case 0:
@@ -97,7 +104,7 @@ namespace uLoader
 
             m_plugIns.LoadPlugIn(this.m_strDLLName, out _iStateDLL);
 
-            if (_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED) {
+            if (_iStateDLL == HPlugIns.STATE_DLL.LOADED) {
                 loader = m_plugIns.Loader;
 
                 if (!(loader == null)) {
@@ -116,18 +123,18 @@ namespace uLoader
                         //_iStateDLL = HClassLibrary.HPlugIns.STATE_DLL.LOADED;                    
                     } else {
                         //Статус "загруженная библиотека" изменяется
-                        _iStateDLL = iLoaderCreateObject == -1 ? HClassLibrary.HPlugIns.STATE_DLL.NOT_LOAD
+                        _iStateDLL = iLoaderCreateObject == -1 ? HPlugIns.STATE_DLL.NOT_LOAD
                             : iLoaderCreateObject == -2 ? HPlugIns.STATE_DLL.TYPE_MISMATCH
-                                : HClassLibrary.HPlugIns.STATE_DLL.NOT_LOAD;
+                                : HPlugIns.STATE_DLL.NOT_LOAD;
 
                         try { throw new Exception(string.Format(@"Внимание!")); } catch (Exception e) { Logging.Logg().Exception(e, string.Format(@"GroupSources::loadPlugIn(ID={0}, SHR_NAME={1}, DLL_NAME={2}) - ошибка при создании объекта библиотеки...", m_strID, m_strShrName, m_strDLLName), Logging.INDEX_MESSAGE.NOT_SET); }
                     }
                 } else
                     ;
             } else
-                _iStateDLL = HClassLibrary.HPlugIns.STATE_DLL.NOT_LOAD;
+                _iStateDLL = HPlugIns.STATE_DLL.NOT_LOAD;
 
-            if (_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
+            if (_iStateDLL == HPlugIns.STATE_DLL.LOADED)
                 foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
                     if (itemGroupSignals.Validated == 0)
                         itemGroupSignals.State = STATE.STOPPED;
@@ -194,7 +201,7 @@ namespace uLoader
 
                 if (stateRes == STATE.UNKNOWN)
                     //все группы сигналов имеют "известное" состояние
-                    if (_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED) {
+                    if (_iStateDLL == HPlugIns.STATE_DLL.LOADED) {
                         stateRes = STATE.STOPPED;
 
                         foreach (GroupSignals grpSgnls in m_listGroupSignals)
@@ -212,11 +219,11 @@ namespace uLoader
             }
         }
 
-        private HClassLibrary.HPlugIns.STATE_DLL _iStateDLL;
+        private HPlugIns.STATE_DLL _iStateDLL;
         /// <summary>
         /// Состояние группы источников
         /// </summary>
-        public HClassLibrary.HPlugIns.STATE_DLL StateDLL
+        public HPlugIns.STATE_DLL StateDLL
         {
             get { return _iStateDLL; }
         }
@@ -463,7 +470,7 @@ namespace uLoader
             int idGrpSgnls = -1;
             GROUP_SIGNALS_PARS grpSgnlsPars;
 
-            if (_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
+            if (_iStateDLL == HPlugIns.STATE_DLL.LOADED)
                 foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
                     if (itemGroupSignals.State == STATE.STARTED) {
                         idGrpSgnls = FormMain.FileINI.GetIDIndex(itemGroupSignals.m_strID);
@@ -897,7 +904,7 @@ namespace uLoader
             int idGrpSgnls = -1;
             GROUP_SIGNALS_PARS grpSgnlsPars;
 
-            if (_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
+            if (_iStateDLL == HPlugIns.STATE_DLL.LOADED)
                 foreach (GroupSignals itemGroupSignals in m_listGroupSignals)
                     if (itemGroupSignals.State == STATE.STOPPED) {
                         idGrpSgnls = FormMain.FileINI.GetIDIndex(itemGroupSignals.m_strID);
@@ -920,7 +927,7 @@ namespace uLoader
         {
             int iRes = 0;
 
-            if ((_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
+            if ((_iStateDLL == HPlugIns.STATE_DLL.LOADED)
                 && (!(State == STATE.UNAVAILABLE)))
                 //Изменить(остановить) состояние ВСЕХ групп сигналов
                 stateChange(STATE.STOPPED);
@@ -943,7 +950,7 @@ namespace uLoader
             int iRes = 0;
             STATE newState = STATE.UNKNOWN;
 
-            if ((_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
+            if ((_iStateDLL == HPlugIns.STATE_DLL.LOADED)
                 && (!(State == STATE.UNAVAILABLE))) {
                 newState = getNewState(State, out iRes);
 
@@ -1154,7 +1161,7 @@ namespace uLoader
         {
             int iRes = 0;
 
-            if ((_iStateDLL == HClassLibrary.HPlugIns.STATE_DLL.LOADED)
+            if ((_iStateDLL == HPlugIns.STATE_DLL.LOADED)
                 && (!(State == STATE.UNAVAILABLE)))
                 //Изменить(остановить) состояние ВСЕХ групп сигналов
                 stateChange(STATE.STOPPED);

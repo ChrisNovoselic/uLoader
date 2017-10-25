@@ -5,8 +5,11 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Data;
 
-using HClassLibrary;
+////using HClassLibrary;
 using uLoaderCommon;
+using ASUTP;
+using ASUTP.Core;
+using ASUTP.PlugIn;
 
 namespace uLoader
 {    

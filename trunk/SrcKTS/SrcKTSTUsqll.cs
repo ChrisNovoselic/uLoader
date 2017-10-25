@@ -4,8 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Data;
 
-using HClassLibrary;
+//using HClassLibrary;
 using uLoaderCommon;
+using ASUTP.Core;
 
 namespace SrcKTS
 {

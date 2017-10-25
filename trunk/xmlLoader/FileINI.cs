@@ -1,4 +1,5 @@
-﻿using HClassLibrary;
+﻿////using HClassLibrary;
+using ASUTP;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,7 +13,7 @@ namespace xmlLoader
 {
     public partial class FormMain
     {
-        public class FileINI : HClassLibrary.FileINI
+        public class FileINI : ASUTP.Helper.FileINI
         {
             public FileINI(string strNameFileINI)
                 : base(strNameFileINI.Equals(string.Empty) == true ? @"Config\setup.ini" : strNameFileINI

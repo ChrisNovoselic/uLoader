@@ -1,9 +1,11 @@
-﻿using HClassLibrary;
+﻿using ASUTP.Helper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+
+////using HClassLibrary;
 
 namespace uLoaderCommon
 {
@@ -79,7 +81,7 @@ namespace uLoaderCommon
         /// <summary>
         /// Класс обработки "своих" команд
         /// </summary>
-        public class HCmd_Arg : HClassLibrary.HCmd_Arg
+        public class HCmd_Arg : ASUTP.Helper.HCmd_Arg
         {
             public static bool IsNormalized = true;
 

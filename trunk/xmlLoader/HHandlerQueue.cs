@@ -2,14 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using HClassLibrary;
+////using HClassLibrary;
 using System.Xml;
 using System.Reflection;
 using System.Diagnostics;
+using ASUTP.Core;
+using ASUTP;
+using ASUTP.Helper;
 
 namespace xmlLoader
 {
-    class HHandlerQueue : HClassLibrary.HHandlerQueue
+    class HHandlerQueue : ASUTP.Helper.HHandlerQueue
     {
         /// <summary>
         /// Перечисление - возможные состояния для обработки

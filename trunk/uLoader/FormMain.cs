@@ -4,8 +4,14 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Linq;
 
-using HClassLibrary;
+////using HClassLibrary;
 using uLoaderCommon;
+using ASUTP;
+using ASUTP.PlugIn;
+using ASUTP.Core;
+using ASUTP.Control;
+using ASUTP.Helper;
+using ASUTP.Forms;
 
 namespace uLoader
 {
@@ -197,7 +203,7 @@ namespace uLoader
                     m_TabCtrl.AddTabPage(m_panelCS
                         , взаимодействиеToolStripMenuItem.Text
                         , (int)INDEX_TAB.INTERACTION
-                        , HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
+                        , HTabCtrlEx.TYPE_TAB.FIXED);
                 } else
                     m_panelCS.Stop();
             } catch (Exception e) {
@@ -333,7 +339,7 @@ namespace uLoader
                 m_TabCtrl.AddTabPage(m_panelWork
                     , работаToolStripMenuItem.Text
                     , (int)INDEX_TAB.WORK
-                    , HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
+                    , HTabCtrlEx.TYPE_TAB.FIXED);
                 //Запомнить "предыдущий" выбор
                 m_TabCtrl.PrevSelectedIndex = 0;
             }
@@ -448,7 +454,7 @@ namespace uLoader
                 m_TabCtrl.AddTabPage(m_panelConfig
                     , strNameMenuItem
                     , (int)INDEX_TAB.CONFIG
-                    , HClassLibrary.HTabCtrlEx.TYPE_TAB.FIXED);
+                    , HTabCtrlEx.TYPE_TAB.FIXED);
             }
             else
             {

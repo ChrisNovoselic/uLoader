@@ -1,5 +1,5 @@
 ﻿using System;
-using HClassLibrary;
+//using HClassLibrary;
 using System.Collections.Generic;
 using System.Xml;
 using System.Data;
@@ -9,10 +9,13 @@ using System.Threading;
 using System.Text;
 using System.Windows.Forms;
 using System.Globalization;
+using ASUTP;
+using ASUTP.Helper;
+using ASUTP.Core;
 
 namespace xmlLoader
 {
-    public class PackageHandlerQueue : HClassLibrary.HHandlerQueue
+    public class PackageHandlerQueue : ASUTP.Helper.HHandlerQueue
     {
         /// <summary>
         /// Структура для хранения значений настраиваемых параметров

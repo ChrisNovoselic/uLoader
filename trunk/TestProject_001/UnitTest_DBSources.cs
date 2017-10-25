@@ -6,7 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using System.ComponentModel;
 
-using HClassLibrary;
+//using HClassLibrary;
 
 namespace TestProject_001
 {

@@ -5,8 +5,9 @@ using System.Text;
 using System.Data;
 using System.Globalization;
 
-using HClassLibrary;
+////using HClassLibrary;
 using uLoaderCommon;
+using ASUTP.Core;
 
 namespace SrcVzlet
 {

@@ -7,7 +7,8 @@ using System.Text;
 
 using System.Windows.Forms;
 
-using HClassLibrary; //DelegateObjectFunc...
+////using HClassLibrary; //DelegateObjectFunc...
+using ASUTP.Control;
 
 namespace uLoader
 {

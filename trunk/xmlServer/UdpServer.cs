@@ -10,7 +10,7 @@ using uLoaderCommon;
 
 namespace xmlServer
 {
-    class HCmd_Arg : HClassLibrary.HCmd_Arg
+    class HCmd_Arg : ASUTP.Helper.HCmd_Arg
     {
         private MAIN_ARG[] _args;
 
