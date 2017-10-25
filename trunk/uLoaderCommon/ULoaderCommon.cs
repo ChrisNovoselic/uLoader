@@ -1686,7 +1686,7 @@ namespace uLoaderCommon
                 m_evtInitSource.Reset ();
                 m_connSett = null;
                 if (! (_iPlugin == null))
-                    (_iPlugin as PlugInULoader).SetMark(_iPlugin.KeySingleton, (int)ID_DATA_ASKED_HOST.INIT_SOURCE, false);
+                    (_iPlugin as PlugInULoader).SetDataHostMark(_iPlugin.KeySingleton, (int)ID_DATA_ASKED_HOST.INIT_SOURCE, false);
                 else
                     ;
 
@@ -1943,40 +1943,10 @@ namespace uLoaderCommon
             return iRes;
         }
 
-        public int KeySingleton { get { return (_objects.Count == 1) ? _objects.Keys.ElementAt(0) : -1; } }
-
-        public void SetMark(int id_obj, int key, bool val)
-        {
-            KeyValuePair<int, int> pair = new KeyValuePair<int, int>(id_obj, key);
-
-            //m_markDataHost.Set(indx, val);
-            if (m_dictDataHostCounter.ContainsKey(pair) == true)
-            {
-                if (val == true)
-                    m_dictDataHostCounter[pair]++;
-                else
-                    if (val == false)
-                        m_dictDataHostCounter[pair]--;
-                    else
-                        ; // недостижимый код
-
-                //Console.WriteLine(@"PlugInULoader::SetMark (id=" + id_obj + @", key=" + key + @", val=" + val + @") - counter=" + m_dictDataHostCounter[pair] + @" ...");
-            }
-            else
-                ;
-        }
-
-        protected bool isMarked(int id_obj, int key)
-        {
-            KeyValuePair<int, int> pair = new KeyValuePair<int, int>(id_obj, key);
-
-            return (m_dictDataHostCounter.ContainsKey(pair) == true)
-                && (m_dictDataHostCounter[pair] % 2 == 1);
-        }
         /// <summary>
         /// Обработчик запросов от клиента
         /// </summary>
-        /// <param name="obj"></param>
+        /// <param name="obj">Аргумент события</param>
         public override void OnEvtDataRecievedHost(object obj)
         {
             EventArgsDataHost ev = obj as EventArgsDataHost; //Переданные значения из-вне
@@ -1988,7 +1958,7 @@ namespace uLoaderCommon
                 case ID_DATA_ASKED_HOST.INIT_SOURCE: //Приняты параметры для инициализации целевого объекта
                     //??? проверка на повторный прием параметров
                     // требуется исключить повторную отпавку сообщения
-                    if (isMarked(ev.id_main, (int)ID_DATA_ASKED_HOST.INIT_SOURCE) == false)
+                    if (isDataHostMarked(ev.id_main, (int)ID_DATA_ASKED_HOST.INIT_SOURCE) == false)
                         if (target.Initialize(ev.par as object[]) == 0)
                             //Подтвердить клиенту  получение параметров
                             DataAskedHost(new object[] { id_obj, ID_DATA_ASKED_HOST.INIT_SOURCE, -1, ID_HEAD_ASKED_HOST.CONFIRM });
@@ -2009,7 +1979,7 @@ namespace uLoaderCommon
                     break;
                 case ID_DATA_ASKED_HOST.START: //Принята команда на запуск группы сигналов
                     //Проверить признак получения целевым объектом параметоров для инициализации
-                    if ((isMarked(ev.id_main, (int)ID_DATA_ASKED_HOST.INIT_SOURCE) == true) && (target.IsInitSource == true))
+                    if ((isDataHostMarked(ev.id_main, (int)ID_DATA_ASKED_HOST.INIT_SOURCE) == true) && (target.IsInitSource == true))
                     //if (m_markDataHost.IsMarked((int)ID_DATA_ASKED_HOST.INIT_SOURCE) == true)
                     {
                         //Инициализация группы сигналов по идентифактору [0]
