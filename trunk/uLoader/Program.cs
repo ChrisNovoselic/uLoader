@@ -23,6 +23,8 @@ namespace uLoader
         {
             int iRes = 0;
 
+            ProgramBase.s_iAppID = 0;
+            Logging.UserId = 0;
             try { ProgramBase.Start(Logging.LOG_MODE.FILE_EXE, true); }
             catch (Exception e)
             {
