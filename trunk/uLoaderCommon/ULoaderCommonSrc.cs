@@ -740,7 +740,7 @@ namespace uLoaderCommon
                     Logging.Logg().Debug(string.Format(@"{0} ...", msg)
                         , Logging.INDEX_MESSAGE.D_003);
                     // более детальная информация
-                    Logging.Logg ().Debug (string.Format (@"{0} ...", string.Format (@"{0} query={1} ...", msg, _query))
+                    Logging.Logg ().Debug (string.Format (@"{0} ...", string.Format (@"{0} query={1} ...", msg, m_dtServer.Equals(DateTime.MinValue) == false ? _query : @"не известно тек./время сервера"))
                         , Logging.INDEX_MESSAGE.D_004);
                 } else
                     throw new Exception(string.Format(@"{0} ...", msg));
