@@ -756,6 +756,7 @@ namespace uLoaderCommon
         protected override int StateResponse(int state, object obj)
         {
             int iRes = 0;
+
             DataTable table = obj as DataTable;
             string msg = string.Empty;
 
@@ -765,7 +766,11 @@ namespace uLoaderCommon
 
                 switch (state) {
                     case (int)StatesMachine.CurrentTime:
-                        m_dtServer = (DateTime)(table as DataTable).Rows[0][0];
+                        if ((table.Rows.Count == 1)
+                            && (table.Columns.Count == 1)) {
+                            m_dtServer = (DateTime)(table as DataTable).Rows [0] [0];
+                        } else
+                            ;
                         break;
                     case (int)StatesMachine.Values:
                         parseValues(table);
