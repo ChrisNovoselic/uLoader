@@ -17,9 +17,27 @@ namespace SrcMST
 {
     public class SrcMSTKKSNAMEtoris : HHandlerDbULoaderDatetimeSrc
     {
-        //private class TorISData : TORISLib.TorISData
-        //{
-        //}
+        private enum ERROR {
+            UNKNOWN = 0
+            , ETORIS_NOTCONFIG
+            , ETORIS_INVALIDITEM
+            , ETORIS_INVALIDATTR
+            , ETORIS_INVALIDTYPE
+            , ETORIS_INVALIDHANDLE
+            , ETORIS_NOTREGISTER
+            , ETORIS_ALREADYADVISED
+            , ETORIS_INVALIDITEMTYPE
+            , ETORIS_SHUTDOWN
+            ,
+        }
+
+        private enum CONNECT_RESULT
+        {
+            SUCCESS = 0
+            , ODIN
+            , DVA
+            , TRI
+        }
 
         enum StatesMachine
         {
@@ -440,14 +458,14 @@ namespace SrcMST
             {
                 iResConnect = m_torIsData.Connect();
 
-                switch (iResConnect) {
-                    case 0:
+                switch ((CONNECT_RESULT)iResConnect) {
+                    case CONNECT_RESULT.SUCCESS:
                         break;
-                    case 1:
+                    case CONNECT_RESULT.ODIN:
                         break;
-                    case 2:
+                    case CONNECT_RESULT.DVA:
                         break;
-                    case 3:
+                    case CONNECT_RESULT.TRI:
                         break;
                     default:
                         break;
@@ -578,18 +596,22 @@ namespace SrcMST
 
                 if (!(err == 0))
                 {
-                    switch (err)
+                    switch ((ERROR)err)
                     {
-                        case 1: strErr = "ETORIS_NOTCONFIG"; break;
-                        case 2: strErr = "ETORIS_INVALIDITEM"; break;
-                        case 3: strErr = "ETORIS_INVALIDATTR"; break;
-                        case 4: strErr = "ETORIS_INVALIDTYPE"; break;
-                        case 5: strErr = "ETORIS_INVALIDHANDLE"; break;
-                        case 6: strErr = "ETORIS_NOTREGISTER"; break;
-                        case 7: strErr = "ETORIS_ALREADYADVISED"; break;
-                        case 8: strErr = "ETORIS_INVALIDITEMTYPE"; break;
-                        case 9: strErr = "ETORIS_SHUTDOWN"; break;
-                        default: strErr = "Неизвестная ошибка " + strErr.ToString(); break;
+                        case ERROR.ETORIS_NOTCONFIG:
+                        case ERROR.ETORIS_INVALIDITEM:
+                        case ERROR.ETORIS_INVALIDATTR:
+                        case ERROR.ETORIS_INVALIDTYPE:
+                        case ERROR.ETORIS_INVALIDHANDLE:
+                        case ERROR.ETORIS_NOTREGISTER:
+                        case ERROR.ETORIS_ALREADYADVISED:
+                        case ERROR.ETORIS_INVALIDITEMTYPE:
+                        case ERROR.ETORIS_SHUTDOWN:
+                            strErr = ((ERROR)err).ToString ();
+                            break;
+                        default:
+                            strErr = "Неизвестная ошибка " + strErr.ToString();
+                            break;
                     }
 
                     Logging.Logg().Error(@"Ошибка подписки на сигнал" + strIds + kks_name + " - " + strErr, Logging.INDEX_MESSAGE.NOT_SET);
