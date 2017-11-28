@@ -88,6 +88,7 @@ namespace xmlLoader
                     , { STATE.Error, new EVENT () { m_Name = @"Ошибка", m_MaxTwinkle = 30, m_clrFore = Color.OrangeRed } }
                     , { STATE.Warning, new EVENT () { m_Name = @"Предупреждение", m_MaxTwinkle = 15, m_clrFore = Color.Yellow } }
                     , { STATE.Action, new EVENT () { m_Name = @"Действие", m_MaxTwinkle = 0 } }
+                    , { STATE.Ready, new EVENT () { m_Name = @"Ожидание", m_MaxTwinkle = 5, m_clrFore = Color.Black } }
                 };
 
                 InitializeComponent();
@@ -254,12 +255,15 @@ namespace xmlLoader
             private void message(string msg)
             {
                 try {
-                    toolStripStatusLabelEventName.Text = m_dictEvent[_state].m_Name;
-                    toolStripStatusLabelEventName.ForeColor = m_dictEvent[_state].m_clrFore;
-                    //toolStripStatusLabelEventName.BackColor = m_dictEvent[_state].m_clrBackground;
+                    if (m_dictEvent.ContainsKey (_state) == true) {
+                        toolStripStatusLabelEventName.Text = m_dictEvent [_state].m_Name;
+                        toolStripStatusLabelEventName.ForeColor = m_dictEvent [_state].m_clrFore;
+                        //toolStripStatusLabelEventName.BackColor = m_dictEvent[_state].m_clrBackground;
 
-                    toolStripStatusLabelEventDateTime.Text = DateTime.Now.ToString();
-                    toolStripStatusLabelEventDesc.Text = msg;
+                        toolStripStatusLabelEventDateTime.Text = DateTime.Now.ToString ();
+                        toolStripStatusLabelEventDesc.Text = msg;
+                    } else
+                        Logging.Logg ().Error (string.Format ("словарь сообщений не содержит ключ=[{0}]", _state.ToString ()), Logging.INDEX_MESSAGE.NOT_SET);
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, string.Format(@"Неизвестный тип сообщения state={0} для message='{1}'", _state.ToString(), msg), Logging.INDEX_MESSAGE.NOT_SET);
                 }
