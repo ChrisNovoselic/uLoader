@@ -1047,15 +1047,15 @@ namespace uLoaderCommon
                         if (((_parent as HHandlerDbULoaderDatetimeSrc).m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] == MODE_CURINTERVAL.CAUSE_PERIOD_DAY)
                             || ((_parent as HHandlerDbULoaderDatetimeSrc).m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] == MODE_CURINTERVAL.CAUSE_PERIOD_HOUR)
                             || ((_parent as HHandlerDbULoaderDatetimeSrc).m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] == MODE_CURINTERVAL.CAUSE_PERIOD_MINUTE))
-                            bRes = ((RowCountRecieved < 0) || (RowCountRecieved == cntRec)) && ((!(EvtActualizeDateTimeBegin == null)) && (EvtActualizeDateTimeBegin() == 1));
+                            bRes = ((RowCountRecieved < 0) || (RowCountRecieved == cntRec)) && (EvtActualizeDateTimeBegin?.Invoke() == 1);
                         else
                             if ((_parent as HHandlerDbULoaderDatetimeSrc).m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE] == MODE_CURINTERVAL.CAUSE_NOT)
-                                bRes = (!(EvtActualizeDateTimeBegin == null)) && (EvtActualizeDateTimeBegin() == 1);
+                                bRes = EvtActualizeDateTimeBegin?.Invoke() == 1;
                             else
                                 ; //throw new Exception (@"Неизвестный режим...")
                         break;
                     case MODE_WORK.COSTUMIZE:
-                        bRes = (!(EvtActualizeDateTimeBegin == null)) && (EvtActualizeDateTimeBegin() == 1);
+                        bRes = EvtActualizeDateTimeBegin?.Invoke() == 1;
                         break;
                     default:
                         ; //throw new Exception (@"Неизвестный режим...")
@@ -1075,7 +1075,7 @@ namespace uLoaderCommon
             public void SetDelegateActualizeDateTimeBegin(IntDelegateFunc fActualize)
             {
                 //Установить обработчик только один раз
-                if (EvtActualizeDateTimeBegin == null)
+                if (Equals(EvtActualizeDateTimeBegin, null) == true)
                 {
                     EvtActualizeDateTimeBegin += fActualize;
                 }
