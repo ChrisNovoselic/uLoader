@@ -16,12 +16,12 @@ namespace SrcBiysk
     public class SrcBiyskTMora : HHandlerDbULoaderDatetimeSrc
     {
         public SrcBiyskTMora()
-            : base(@"yyyyMMdd HHmmss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.HALF_PERIOD)
+            : base(@"yyyyMMdd HHmmss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_HALF_PERIOD)
         {
         }
 
         public SrcBiyskTMora(PlugInULoader iPlugIn)
-            : base(iPlugIn, @"yyyyMMdd HHmmss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.HALF_PERIOD)
+            : base(iPlugIn, @"yyyyMMdd HHmmss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_HALF_PERIOD)
         {
         }
 
@@ -37,13 +37,12 @@ namespace SrcBiysk
                 m_strQuery = string.Empty;
 
                 string strUnion = @" UNION ";
-                long secOffsetUTCToData = m_secOffsetUTCToData; //OFFSET
 
                 //Формировать зпрос
                 foreach (GroupSignalsBiyskTMora.SIGNALBiyskTMoraSrc s in m_arSignals)
                     if (s.IsFormula == false)
                         m_strQuery += @"SELECT " + s.m_idMain + @" as ID, VALUE, QUALITY"
-                                + @", DATETIME + numtodsinterval(" + secOffsetUTCToData + @",'second') as DATETIME"
+                                + @", DATETIME as DATETIME"
                             + @" FROM ARCH_SIGNALS." + s.m_NameTable
                             + @" WHERE"
                             + @" DATETIME >=" + @" to_timestamp('" + DateTimeBeginFormat + @"', 'yyyymmdd hh24missFF9')"

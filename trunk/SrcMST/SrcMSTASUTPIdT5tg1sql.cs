@@ -27,12 +27,12 @@ namespace SrcMST
         private MODE_WHERE_DATETIME _modeWhereDatetime;
 
         public SrcMSTASUTPIDT5tg1sql(PlugInULoader plugIn)
-            : base(plugIn, MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(plugIn, MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
         }
 
         public SrcMSTASUTPIDT5tg1sql()
-            : base(MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
         }
         
@@ -95,8 +95,7 @@ namespace SrcMST
                             //    ;
                             //iHour -= iHourAdding;
 
-                            dtValue = (DateTime)rowsSgnl[0][@"DATETIME"]
-                                + TimeSpan.FromHours(m_tsOffsetUTCToData.Value.Hours) //OFFSET
+                            dtValue = (DateTime)rowsSgnl[0][@"DATETIME"] //OFFSET
                                 ;
 
                             dblSumValue = (double)rowsSgnl[0][@"VALUE"];
@@ -188,7 +187,7 @@ namespace SrcMST
                 m_strQuery = @"SELECT [ID], SUM([VALUE]) as [VALUE], COUNT(*) as [CNT]"
                         + @", DATEADD(HOUR, " + (bOffsetOutInclude == false ? 1 : 0) + @", DATEADD(MINUTE, (DATEDIFF(MINUTE, DATEADD(DAY, 0, CAST('" + DateTimeEndFormat + @"' as datetime)), [last_changed_at]) / 60) * 60, DATEADD(DAY, 0, CAST('" + DateTimeEndFormat + @"' as datetime)))) as [DATETIME]"
                     + @" FROM [dbo].[states_real_his_0]"
-                    + @" WHERE"                            
+                    + @" WHERE"
                         + strWhereDatetime
                         + @" AND [ID] IN (" + strIds + @")"
                     + @" GROUP BY [ID]"

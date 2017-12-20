@@ -20,7 +20,7 @@ namespace SrcBiysk
         {
             _Id = 106;
 
-            registerType(10101, typeof(SrcBiyskTMora));            
+            registerType(10101, typeof(SrcBiyskTMora));
             registerType(10105, typeof(SrcBiyskTMLastora));
             registerType(10106, typeof(SrcBiyskDiscrLastora));
         }

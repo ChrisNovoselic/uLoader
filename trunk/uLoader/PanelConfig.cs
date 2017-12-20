@@ -216,7 +216,7 @@ namespace uLoader
                 ctrl.Dock = DockStyle.Bottom;
                 m_dictControl.Add(INDEX_CONTROL.BUTTON_DLLNAME_GROUPSOURCES, ctrl);
                 //Создание объекта для редактирования параметров соединения
-                ctrl = new DataGridViewConfigItemProp();                
+                ctrl = new DataGridViewConfigItemProp();
                 //foreach (string headerRow in m_arHeaderRowParameterSources) - будут получены из файла конфигурации (PARS)
                 //{
                 //    (ctrl as DataGridView).Rows.Add(string.Empty);
@@ -685,7 +685,7 @@ namespace uLoader
             //Обработанное состояние 
             int state = Int32.Parse((obj as object[])[0].ToString());
             //Параметры (массив) в 1-ом элементе результата
-            object par = (obj as object[])[1];            
+            object par = (obj as object[])[1];
 
             switch (state)
             {

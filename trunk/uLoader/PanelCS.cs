@@ -30,7 +30,7 @@ namespace uLoader
         /// <summary>
         /// Массив дочерних панелей
         /// </summary>
-        private PanelCS[] m_arPanels;        
+        private PanelCS[] m_arPanels;
         /// <summary>
         /// Тип включенной(активной) дочерней панели
         /// </summary>
@@ -146,7 +146,7 @@ namespace uLoader
             //Параметры (массив) в 1-ом элементе результата
             object[] pars = obj as object[];
             //Обработанное состояние (всегда в 'pars[0]')
-            HHandlerQueue.StatesMachine state = (HHandlerQueue.StatesMachine)Int32.Parse(pars[0].ToString());            
+            HHandlerQueue.StatesMachine state = (HHandlerQueue.StatesMachine)Int32.Parse(pars[0].ToString());
 
             int iRes = -1;
 
@@ -156,7 +156,7 @@ namespace uLoader
             {
                 case HHandlerQueue.StatesMachine.GET_INTERACTION_PARAMETERS:
                     if (!(pars[1] == null)) {
-                        m_InteractionParameters = (InteractionParameters)pars[1];                        
+                        m_InteractionParameters = (InteractionParameters)pars[1];
                     } else
                         ;
                     // разрешить продолжение выполнение инициализации '::Start'
@@ -784,7 +784,7 @@ namespace uLoader
                 ListViewItem item = null;
                 string text = string.Empty;
                 PanelWork.STATE state = PanelWork.STATE.Unknown;
-                //int col = -1;                
+                //int col = -1;
 
                 try {
                     //// временно
@@ -958,7 +958,7 @@ namespace uLoader
             /// <summary>
             /// Экземпляр делегата добавления строки в DGV
             /// </summary>
-            private DelegateFunc delegateAddRow;            
+            private DelegateFunc delegateAddRow;
 
             /// <summary>
             /// Делегат для добавления/удаления объекта в listView
@@ -1399,7 +1399,7 @@ namespace uLoader
                 base.Start();
 
                 //Инициализация делегатов
-                delegateAddRow = addRowToDGV;                
+                delegateAddRow = addRowToDGV;
                 delegateReconnect = reconnect;
                 //delegateUpdateRemotePanelWorkState = setLabelStateText;
                 //delegateUpdateListViewClientState = updateListViewClientState;
@@ -1509,11 +1509,11 @@ namespace uLoader
                         dest = cbClients.Text;
 
                         if (com.Equals(Pipes.Pipe.COMMAND.ReConnect.ToString()) == true)//Добавляет аргумент для реконнекта
-                            arg = tbxArgCommand.Text;                            
+                            arg = tbxArgCommand.Text;
                         else
                             ;
                         break;
-                    case Pipes.Pipe.Role.Client:                        
+                    case Pipes.Pipe.Role.Client:
                         break;
                     default:
                         break;
@@ -1629,7 +1629,7 @@ namespace uLoader
 
                 try {
                     if (mes.Ready == true) {
-                        addMessage(mes.Value, mes.IdServer, TypeMes.Input);                                
+                        addMessage(mes.Value, mes.IdServer, TypeMes.Input);
                     } else {
                         //??? пустая команда
                         Logging.Logg().Error(string.Format(@"PanelClientServer.PanelCS::handlerMessageMessage (message={0}, name={1}, type_mes={2}) - пустая команда..."
@@ -1850,7 +1850,7 @@ namespace uLoader
                         m_arNameServers = listNameServers.ToArray();
                     }
                     else
-                        ;                    
+                        ;
                 } catch (Exception e) {
                     Logging.Logg().Exception(e, @"PanelClientServer.InteractionParameters::ctor () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }

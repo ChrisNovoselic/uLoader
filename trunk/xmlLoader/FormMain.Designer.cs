@@ -120,7 +120,7 @@ namespace xmlLoader
             ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestParameter)).BeginInit();
             m_groupBoxDatabase.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_nudnDestDisplayCount)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestDatasetList)).BeginInit();            
+            ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestDatasetList)).BeginInit();
             this.m_menuStripMain.SuspendLayout();
             this.splitContainerMain.Panel1.SuspendLayout();
             this.splitContainerMain.Panel2.SuspendLayout();
@@ -484,7 +484,7 @@ namespace xmlLoader
             this.m_dgvDestList.Location = new System.Drawing.Point(7, 19);
             this.m_dgvDestList.MultiSelect = false;
             this.m_dgvDestList.Name = "m_dgvDestList";
-            this.m_dgvDestList.RowHeadersVisible = false;            
+            this.m_dgvDestList.RowHeadersVisible = false;
             this.m_dgvDestList.Size = new System.Drawing.Size(140, 71);
             this.m_dgvDestList.TabIndex = 1;
             // 
@@ -493,7 +493,7 @@ namespace xmlLoader
             this.ColumnDestListName.Frozen = true;
             this.ColumnDestListName.ReadOnly = true;
             this.ColumnDestListName.HeaderText = "Наим.";
-            this.ColumnDestListName.Name = "ColumnDestListName";            
+            this.ColumnDestListName.Name = "ColumnDestListName";
             // 
             // ColumnDestListState
             // 
@@ -730,7 +730,7 @@ namespace xmlLoader
             this.m_btnDestDatabaseLoad.Size = new System.Drawing.Size(140, 23);
             this.m_btnDestDatabaseLoad.TabIndex = 7;
             this.m_btnDestDatabaseLoad.Text = "Загрузить";
-            this.m_btnDestDatabaseLoad.UseVisualStyleBackColor = true;            
+            this.m_btnDestDatabaseLoad.UseVisualStyleBackColor = true;
             // 
             // m_menuStripMain
             // 
@@ -964,7 +964,7 @@ namespace xmlLoader
             m_groupBoxDatabase.ResumeLayout(false);
             m_groupBoxDatabase.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_nudnDestDisplayCount)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestDatasetList)).EndInit();            
+            ((System.ComponentModel.ISupportInitialize)(this.m_dgvDestDatasetList)).EndInit();
             this.m_menuStripMain.ResumeLayout(false);
             this.m_menuStripMain.PerformLayout();
             this.splitContainerMain.Panel1.ResumeLayout(false);
@@ -1007,7 +1007,7 @@ namespace xmlLoader
         private System.Windows.Forms.Button m_btnLoadPackageHistory;
         private System.Windows.Forms.NumericUpDown m_nudnPackageHistoryAlong;
         private System.Windows.Forms.CheckBox m_cbxSettingPackageHistoryIssue;
-        private DataGridView m_dgvStatistic;        
+        private DataGridView m_dgvStatistic;
         private System.Windows.Forms.SplitContainer splitContainerMainWrite;
         private System.Windows.Forms.DateTimePicker m_dateTimePickerPackageFilterStart;
         private System.Windows.Forms.DateTimePicker m_dateTimePickerPackageFilterEnd;

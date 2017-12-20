@@ -47,11 +47,13 @@ namespace DestTEP32
             /// <returns></returns>
             protected override string getTargetValuesQuery()
             {
-                string strRes = string.Empty
-                    , strRows = string.Empty
+                string strRes = string.Empty;
+
+                string strRows = string.Empty
                     , strRow = string.Empty;
-                int /*iIdToInsert = -1,*/
-                    iOffsetUTCToDataTotalHours = (int)(_parent as DestTEP32sql).m_tsOffsetUTCToData.Value.TotalHours;
+                //int /*iIdToInsert = -1,*/
+                //    iOffsetUTCToDataTotalHours = (int)(_parent as DestTEP32sql).m_tsOffsetUTCToData.Value.TotalHours
+                //    ;
                 DateTime? dtToInsert = null;
                 bool bBreak = false; // признак аварийного завершения цикла
 
@@ -75,9 +77,9 @@ namespace DestTEP32
                     {
                         (getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) as List<int>).ForEach(iIdToInsert => {
                             if (dtToInsert == null)
-                                dtToInsert = ((DateTime)row[@"DATETIME"]).AddHours(iOffsetUTCToDataTotalHours);
+                                dtToInsert = ToDataTime(((DateTime)row[@"DATETIME"]));
                             else
-                                if (dtToInsert.Equals(((DateTime)row[@"DATETIME"]).AddHours(iOffsetUTCToDataTotalHours)) == false) {
+                                if (dtToInsert.Equals(ToDataTime ((DateTime)row[@"DATETIME"])) == false) {
                                     Logging.Logg().Error(@"GroupSignalsTEP32sql::getInsertValuesQuery () - в наборе различные дата/время...", Logging.INDEX_MESSAGE.NOT_SET);
 
                                     bBreak = true;
@@ -148,7 +150,7 @@ namespace DestTEP32
                 DateTime? dtToSelect = null;
                 //    // т.к. записи в таблице отсортированы по [DATE_TIME]
                 //    DateTimeRangeRecieved.Set((DateTime)value.Rows[0][@"DATETIME"]
-                //        , (DateTime)value.Rows[value.Rows.Count - 1][@"DATETIME"]);                
+                //        , (DateTime)value.Rows[value.Rows.Count - 1][@"DATETIME"]);
                 if ((!(TableRecieved == null))
                     && (TableRecieved.Rows.Count > 0)
                     && (TableRecieved.Columns.Contains(@"DATETIME") == true))

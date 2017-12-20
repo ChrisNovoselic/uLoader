@@ -96,7 +96,7 @@ namespace uLoader
                     new DataGridViewTextBoxColumn ()
                     , new DataGridViewButtonColumn ()
                 }
-            );            
+            );
             this.AllowUserToResizeColumns = false;
             this.AllowUserToResizeRows = false;
             this.AllowUserToAddRows = false;

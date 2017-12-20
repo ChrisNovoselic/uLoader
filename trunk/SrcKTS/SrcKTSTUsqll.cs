@@ -13,12 +13,12 @@ namespace SrcKTS
     public class SrcKTSTUsql : HHandlerDbULoaderDatetimeSrc
     {
         public SrcKTSTUsql()
-            : base(@"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(@"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
         }
 
         public SrcKTSTUsql(PlugInULoader iPlugIn)
-            : base(iPlugIn, @"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(iPlugIn, @"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
         }
 
@@ -134,7 +134,7 @@ namespace SrcKTS
                         //cntRec = 0;
                         //??? обработка всех последующих строк, а если строк > 2
                         foreach (DataRow r in rowsSgnl) {
-                            dtValue = ((DateTime)r[@"DATETIME"]).AddHours(m_tsOffsetUTCToData.Value.Hours);
+                            dtValue = ((DateTime)r[@"DATETIME"]);
 
                             if ((int)rowsSgnl[0][@"COUNT"] == 2)
                                 dblSumValue += (double)r[@"VALUE"];

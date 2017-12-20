@@ -16,12 +16,12 @@ namespace SrcMST
     public class SrcMSTASUTPIDT5tg6sql : HHandlerDbULoaderMSTIDsql
     {
         public SrcMSTASUTPIDT5tg6sql(PlugInULoader plugIn)
-            : base(plugIn, MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(plugIn, MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
         }
 
         public SrcMSTASUTPIDT5tg6sql()
-            : base(MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
         }
 
@@ -55,6 +55,7 @@ namespace SrcMST
                     if (rowsSgnl.Length > 0)
                     {
                         dtValue = (DateTime)rowsSgnl[0][@"DATETIME"];
+                        //dtValue = ToUtcTime (dtValue);
 
                         dblValue = (double)rowsSgnl[0][@"VALUE"];
 

@@ -28,12 +28,12 @@ namespace SrcMST
         private MODE_WHERE_DATETIME _modeWhereDatetime;
 
         public SrcMSTASUTPIdT5tg1Dsql(PlugInULoader plugIn)
-            : base(plugIn, MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(plugIn, MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
         }
 
         public SrcMSTASUTPIdT5tg1Dsql()
-            : base(MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
         }
 
@@ -84,8 +84,8 @@ namespace SrcMST
                     if (sgnl.IsFormula == false) {
                         rowsSgnl = table.Select(@"ID=" + sgnl.m_iIdLocal);
 
-                        if ((rowsSgnl.Length > 0) //??? если строк > 1                            
-                            && (((int)rowsSgnl[0][@"CNT"] % 24) == 0)) { // только при кол-ве записей = 24 (все часы)                        
+                        if ((rowsSgnl.Length > 0) //??? если строк > 1
+                            && (((int)rowsSgnl[0][@"CNT"] % 24) == 0)) { // только при кол-ве записей = 24 (все часы)
                             dtValue = (DateTime)rowsSgnl[0][@"DATETIME"] /*+ TimeSpan.FromHours(1)*/; //OFFSET
 
                             dblSumValue = (double)rowsSgnl[0][@"VALUE"];

@@ -204,7 +204,7 @@ namespace uLoader
             //Обработанное состояние 
             HHandlerQueue.StatesMachine state = (HHandlerQueue.StatesMachine)Int32.Parse((obj as object[])[0].ToString());
             //Параметры (массив) в 1-ом элементе результата
-            object par = (obj as object[])[1];            
+            object par = (obj as object[])[1];
 
             try {
                 switch (state) {
@@ -292,7 +292,7 @@ namespace uLoader
 
         public override void Stop()
         {
-            //m_states.Activate(false); m_states.Stop();           
+            //m_states.Activate(false); m_states.Stop();
 
             stopTimerUpdate ();
 
@@ -310,16 +310,16 @@ namespace uLoader
         public override bool Activate(bool active)
         {
             bool bRes = base.Activate(active);
-            //Проверить признак 1-го запуска            
+            //Проверить признак 1-го запуска
             if (IsFirstActivated == true)
             {
                 //Запросить данные
                 DataAskedHost(new object[] { new object [] { (int)HHandlerQueue.StatesMachine.LIST_GROUP_SOURCES /*, без параметров*/ }
                                             //??? временно отключить для отладки...
                                             , new object [] { (int)HHandlerQueue.StatesMachine.TIMER_WORK_UPDATE /*, без параметров*/ }
-                                        });                
+                                        });
             }
-            else                
+            else
                 ;
 
             //Проверить необходимость активации/деактивации
@@ -353,10 +353,10 @@ namespace uLoader
                 , indxDestSel = -1;
             string strSrcIDGrpSignals = string.Empty
                 , strDestIDGrpSignals = string.Empty;
-            List<object[]> listDataAskedHost = new List<object[]>();            
+            List<object[]> listDataAskedHost = new List<object[]>();
 
             ctrl = m_arLoader[(int)INDEX_SRC.SOURCE].GetWorkingItem (PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView;
-            indxSrcSel = ctrl.SelectedRows.Count > 0 ? ctrl.SelectedRows[0].Index : -1;            
+            indxSrcSel = ctrl.SelectedRows.Count > 0 ? ctrl.SelectedRows[0].Index : -1;
             ctrl = m_arLoader[(int)INDEX_SRC.DEST].GetWorkingItem(PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView;
             indxDestSel = ctrl.SelectedRows.Count > 0 ? ctrl.SelectedRows[0].Index : -1;
 

@@ -28,12 +28,12 @@ namespace SrcMST
         private MODE_WHERE_DATETIME _modeWhereDatetime;
 
         public SrcMSTASUTPIdT5tg6Dsql(PlugInULoader plugIn)
-            : base(plugIn, MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(plugIn, MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
         }
 
         public SrcMSTASUTPIdT5tg6Dsql()
-            : base(MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
         }
 
@@ -99,6 +99,7 @@ namespace SrcMST
                                 , iHour
                                 , 0
                                 , 0).AddHours(iHourAdding);
+                            //dtValue = ToUtcTime (dtValue);
 
                             dblSumValue = (double)rowsSgnl[0][@"VALUE"];
 

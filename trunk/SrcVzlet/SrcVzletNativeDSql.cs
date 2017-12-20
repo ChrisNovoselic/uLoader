@@ -14,13 +14,13 @@ namespace SrcVzlet
     public class SrcVzletNativeDSql : HHandlerDbULoaderDatetimeSrc
     {
         public SrcVzletNativeDSql()
-            : base(@"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(@"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
 
         }
 
         public SrcVzletNativeDSql(PlugInULoader iPlugIn)
-            : base(iPlugIn, @"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(iPlugIn, @"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
 
         }
@@ -69,7 +69,7 @@ namespace SrcVzlet
 
                 m_strQuery += @"WHERE ДатаВремя > '"+ DateTimeBegin + "' and ДатаВремя <= '"+ DateTimeBegin.AddSeconds(PeriodMain.TotalSeconds) + "'";
 
-                //DateTimeBegin = DateTimeBegin.AddSeconds(secUTCOffsetToData);                
+                //DateTimeBegin = DateTimeBegin.AddSeconds(secUTCOffsetToData);
             }
 
             protected override GroupSignals.SIGNAL createSignal(object[] objs)
@@ -113,21 +113,17 @@ namespace SrcVzlet
                 foreach (DataRow r in table.Rows)
                 {
 
-                    foreach (GroupSignalsVzletNativeDSql.SIGNALMSTKKSNAMEsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals)
-                    {
-
+                    foreach (GroupSignalsVzletNativeDSql.SIGNALMSTKKSNAMEsql sgnl in m_dictGroupSignals[IdGroupSignalsCurrent].Signals) {
                         dtValue = DateTime.Parse(r["ДатаВремя"].ToString());
 
-                        if (sgnl.IsFormula == false)
-                        {
+                        if (sgnl.IsFormula == false) {
                             // вставить строку
                             tblRes.Rows.Add(new object[] {
-                            sgnl.m_idMain
-                            , dtValue
-                            , double.Parse(r[sgnl.m_kks_name].ToString())
-                        });
-                        }
-                        else
+                                sgnl.m_idMain
+                                , dtValue
+                                , double.Parse(r[sgnl.m_kks_name].ToString())
+                            });
+                        } else
                             // формула
                             continue
                             ;
@@ -137,7 +133,8 @@ namespace SrcVzlet
                 }
 
                 base.parseValues(tblRes);
-            }
+            } else
+                ;
         }
     }
 }

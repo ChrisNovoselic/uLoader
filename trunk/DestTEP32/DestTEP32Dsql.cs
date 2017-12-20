@@ -62,7 +62,7 @@ namespace DestTEP32
                 DateTime? dtToSelect = null;
                 //    // т.к. записи в таблице отсортированы по [DATE_TIME]
                 //    DateTimeRangeRecieved.Set((DateTime)value.Rows[0][@"DATETIME"]
-                //        , (DateTime)value.Rows[value.Rows.Count - 1][@"DATETIME"]);                
+                //        , (DateTime)value.Rows[value.Rows.Count - 1][@"DATETIME"]);
                 if ((!(TableRecieved == null))
                     && (TableRecieved.Rows.Count > 0)
                     && (TableRecieved.Columns.Contains(@"DATETIME") == true))

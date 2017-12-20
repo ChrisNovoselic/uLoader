@@ -466,7 +466,7 @@ namespace xmlLoader
         {
             int iRes = 0;
 
-            PACKAGE package;            
+            PACKAGE package;
 
             try {
                 // добавить текущий пакет
@@ -479,7 +479,7 @@ namespace xmlLoader
                 if (package.m_state == PACKAGE.STATE.PARSED)
                     s_Statistic.Counter(STATISTIC.INDEX_ITEM.COUNT_PACKAGE_PARSED);
                 else
-                    ;                
+                    ;
             } catch (Exception e) {
                 iRes = -1;
 

@@ -12,6 +12,114 @@ using ASUTP.Database;
 
 namespace uLoaderCommon
 {
+    public static class DateTimeExtensions {
+        public static DateTime Round (this DateTime value, TimeSpan unit, MidpointRounding style)
+        {
+            if (!(unit > TimeSpan.Zero))
+                throw new ArgumentOutOfRangeException ("Argument: TimeSpan unit", "Value must be positive");
+            else
+                ;
+
+            Decimal units = (Decimal)value.Ticks / (Decimal)unit.Ticks;
+            Decimal roundedUnits = Math.Round (units, style);
+            long roundedTicks = (long)roundedUnits * unit.Ticks;
+            DateTime instance = new DateTime (roundedTicks);
+
+            return instance;
+        }
+
+        /// <summary>
+        /// Округлить значение даты времени
+        /// </summary>
+        /// <param name="value">Объект, вызвавший метод</param>
+        /// <param name="modeCause">Режим(признак) для определения интервала округления</param>
+        /// <returns>Округленное значение даты/времени</returns>
+        public static DateTime Round (this DateTime value, HHandlerDbULoaderDatetimeSrc.MODE_CURINTERVAL modeCause)
+        {
+            DateTime datetimeRes = DateTime.MinValue;
+
+            //decimal mKoeff = -1;
+            TimeSpan unit = TimeSpan.Zero;
+
+            switch (modeCause) {
+                case HHandlerDbULoaderDatetimeSrc.MODE_CURINTERVAL.CAUSE_PERIOD_MINUTE: //Выравнивание по "минуте"
+                    //mKoeff = 1;
+                    unit = TimeSpan.FromMinutes (1);
+                    break;
+                case HHandlerDbULoaderDatetimeSrc.MODE_CURINTERVAL.CAUSE_PERIOD_HOUR: //Выравнивание по "час"
+                    //mKoeff = 60;
+                    unit = TimeSpan.FromHours (1);
+                    break;
+                case HHandlerDbULoaderDatetimeSrc.MODE_CURINTERVAL.CAUSE_PERIOD_DAY: //Выравнивание по "сутки"
+                    //mKoeff = 24 * 60;
+                    unit = TimeSpan.FromDays (1);
+                    break;
+                case HHandlerDbULoaderDatetimeSrc.MODE_CURINTERVAL.CAUSE_NOT:
+                default:
+                    break;
+            }
+
+            //if (mKoeff > 0)
+            if (unit > TimeSpan.Zero)
+                datetimeRes =
+                    //new DateTime ((long)(Math.Floor ((value.Ticks / 10000000) / (decimal)(mKoeff * 60)) * (mKoeff * 60)) * 10000000)
+                    value.Round(unit, MidpointRounding.AwayFromZero)
+                    ;
+            else
+                datetimeRes = value;
+
+            return datetimeRes;
+        }
+
+        /// <summary>
+        /// Возвратить значение даты/времени без округления, с приращением
+        /// </summary>
+        /// <param name="value">Объект, вызвавший метод</param>
+        /// <param name="increment">Значение приращения</param>
+        /// <returns>Дата/время без округления, с приращением</returns>
+        public static DateTime Start (this DateTime value, TimeSpan increment)
+        {
+            return value.Start (HHandlerDbULoaderDatetimeSrc.MODE_CURINTERVAL.CAUSE_NOT, increment);
+        }
+
+        /// <summary>
+        /// Возвратить значение даты/времени с округлением, с приращением
+        /// </summary>
+        /// <param name="value">Объект, вызвавший метод</param>
+        /// <param name="modeCause">Режим(признак) для определения интервала округления</param>
+        /// <param name="increment">Значение приращения</param>
+        /// <returns>Дата/время с округлением, с приращением</returns>
+        public static DateTime Start (this DateTime value, HHandlerDbULoaderDatetimeSrc.MODE_CURINTERVAL modeCause, TimeSpan increment)
+        {
+            DateTime datetimeRes = DateTime.MinValue;
+
+            TimeSpan round = TimeSpan.Zero;
+
+            datetimeRes = value;
+
+            if (modeCause == HHandlerDbULoaderDatetimeSrc.MODE_CURINTERVAL.CAUSE_PERIOD_DAY)
+                round = TimeSpan.FromDays (1);
+            else if (modeCause == HHandlerDbULoaderDatetimeSrc.MODE_CURINTERVAL.CAUSE_PERIOD_HOUR)
+                round = TimeSpan.FromHours (1);
+            else if (modeCause == HHandlerDbULoaderDatetimeSrc.MODE_CURINTERVAL.CAUSE_PERIOD_MINUTE)
+                round = TimeSpan.FromMinutes (1);
+            else
+                // CAUSE_NOT
+                ;
+
+            if ((!(modeCause == HHandlerDbULoaderDatetimeSrc.MODE_CURINTERVAL.CAUSE_NOT))
+                && (round > TimeSpan.Zero))
+                datetimeRes = datetimeRes.Round (round, MidpointRounding.AwayFromZero);
+            else
+                ;
+
+            datetimeRes = datetimeRes
+                .Add (-increment);
+
+            return datetimeRes;
+        }
+    }
+
     /// <summary>
     /// Класс для хранения значения - промежуток времени
     /// </summary>
@@ -61,6 +169,11 @@ namespace uLoaderCommon
                 else
                     ;
             }
+        }
+
+        public static TimeSpan operator - (HTimeSpan ts1, HTimeSpan ts2)
+        {
+            return ts1.Value - ts2.Value;
         }
 
         /// <summary>
@@ -341,8 +454,7 @@ namespace uLoaderCommon
     /// <summary>
     /// Класс - базовый для описания целевого объекта для загрузки/вагрузки данных
     /// </summary>
-    public abstract class HHandlerDbULoader : ASUTP.Helper.HHandlerDb
-    {
+    public abstract class HHandlerDbULoader : ASUTP.Helper.HHandlerDb {
         //public HTimeSpan m_tsUTCOffset;
         /// <summary>
         /// Ссылка на объект "связи" с клиентом
@@ -351,14 +463,14 @@ namespace uLoaderCommon
         /// <summary>
         /// Разность между часовыми поясами даты/времени сервера и метками даты/времени значений в БД
         /// </summary>
-        public HTimeSpan m_tsOffsetUTCToServer
-            , m_tsOffsetUTCToData
+        private HTimeSpan
+            //m_tsOffsetUTCToServer,
+            m_tsOffsetUTCToData
             , m_tsOffsetUTCToQuery;
         /// <summary>
         /// Класс - базовый для описания группы сигналов
         /// </summary>
-        public abstract class GroupSignals
-        {
+        public abstract class GroupSignals {
             /// <summary>
             /// Сылка на объект владельца текущего объекта
             /// </summary>
@@ -393,7 +505,7 @@ namespace uLoaderCommon
             public virtual void Stop ()
             {
                 foreach (SIGNAL s in m_arSignals)
-                    s.ClearFormula();
+                    s.ClearFormula ();
 
                 State = GroupSignals.STATE.STOP;
                 TableRecieved = null;
@@ -407,12 +519,12 @@ namespace uLoaderCommon
             /// <summary>
             /// Период времени для формирования запроса значений (глобальный)
             /// </summary>
-            public TimeSpan PeriodMain { get { return m_tsPeriodMain; } 
+            public TimeSpan PeriodMain { get { return m_tsPeriodMain; }
                 set { m_tsPeriodMain = value; } }
             /// <summary>
             /// Период времени для формирования запроса значений (локальный)
             /// </summary>
-            public TimeSpan PeriodLocal { get { return m_tsPeriodLocal; } 
+            public TimeSpan PeriodLocal { get { return m_tsPeriodLocal; }
                 set { m_tsPeriodLocal = value; } }
             /// <summary>
             /// Таблица источника/назначения
@@ -427,8 +539,7 @@ namespace uLoaderCommon
             /// <summary>
             /// Класс для объекта СИГНАЛ
             /// </summary>
-            public class SIGNAL
-            {
+            public class SIGNAL {
                 //private GroupSignals _parent;
                 /// <summary>
                 /// Строка с идентификатором формулы и указанием идентификаторов-аргументов
@@ -450,89 +561,78 @@ namespace uLoaderCommon
                 /// Конструктор - основной (с параметром)
                 /// </summary>
                 /// <param name="idMain">Идентификатор сигнала, уникальный в границах приложения</param>
-                public SIGNAL(GroupSignals parent, int idMain, object formula)
+                public SIGNAL (GroupSignals parent, int idMain, object formula)
                 {
                     //_parent = parent;
 
                     this.m_idMain = idMain;
 
-                    setFormula(formula);
+                    setFormula (formula);
                 }
 
-                public bool IsFormula { get { return (m_strFormula.Equals(string.Empty) == false) && (m_fKey.Equals(string.Empty) == false); } }
+                public bool IsFormula { get { return (m_strFormula.Equals (string.Empty) == false) && (m_fKey.Equals (string.Empty) == false); } }
 
-                private void setFormula(object oFormula)
+                private void setFormula (object oFormula)
                 {
                     string formula = string.Empty;
-                    
+
                     m_strFormula =
                     m_fKey =
                          string.Empty;
 
-                    if (oFormula.GetType().Equals(typeof(string)) == true)
-                    {// требуется распознать формула ИЛИ стандартный текстовый идентификатор (например: KKS_NAME, nameTable)
+                    if (oFormula.GetType ().Equals (typeof (string)) == true) {// требуется распознать формула ИЛИ стандартный текстовый идентификатор (например: KKS_NAME, nameTable)
                         formula = oFormula as string;
                         //!!! наличие скобок - открыть, закрыть ПРИЗНАК формулы
-                        if ((!(formula.IndexOf('(') < 0))
-                            && (!(formula.IndexOf(')') < 0)))
-                        {
+                        if ((!(formula.IndexOf ('(') < 0))
+                            && (!(formula.IndexOf (')') < 0))) {
                             m_strFormula = formula as string;
-                            m_fKey = m_strFormula.Substring(0, formula.IndexOf('('));
-                        }
-                        else
+                            m_fKey = m_strFormula.Substring (0, formula.IndexOf ('('));
+                        } else
                             ;
-                    }
-                    else
+                    } else
                         //if (formula.GetType().IsPrimitive == true)
                         //    ;
                         //else
-                            ;
+                        ;
                 }
                 /// <summary>
                 /// Возвратить массив индексов сигналов, являющихся аргументами формулы
                 /// </summary>
                 /// <returns>Массив с индексами сигналов</returns>
-                public int[] GetIndexArgs(out int error)
+                public int [] GetIndexArgs (out int error)
                 {
                     error = 0;
-                    
-                    int[] arRes = null;
+
+                    int [] arRes = null;
 
                     int iStartArgs = -1
                         , indxArg = -1;
-                    string[] indxArgs = null;
+                    string [] indxArgs = null;
                     // индекс символа в строке, где начинается перечисление индексов сигналов
-                    iStartArgs = m_strFormula.IndexOf('(') + 1;
+                    iStartArgs = m_strFormula.IndexOf ('(') + 1;
                     // проверить наличие аргументов
-                    if (iStartArgs > 0)
-                    {
+                    if (iStartArgs > 0) {
                         // получить список индексов аргументов
-                        indxArgs = m_strFormula.Substring(iStartArgs, m_strFormula.Length - iStartArgs - 1).Split(';');
-                        if (indxArgs.Length > 0)
-                        {
+                        indxArgs = m_strFormula.Substring (iStartArgs, m_strFormula.Length - iStartArgs - 1).Split (';');
+                        if (indxArgs.Length > 0) {
                             // выделить память для результата
-                            arRes = new int[indxArgs.Length];
+                            arRes = new int [indxArgs.Length];
 
-                            for (int i = 0; i < indxArgs.Length; i++)
-                            {
-                                if (int.TryParse(indxArgs[i], out indxArg) == true)
-                                    arRes[i] = indxArg;
-                                else
-                                {
+                            for (int i = 0; i < indxArgs.Length; i++) {
+                                if (int.TryParse (indxArgs [i], out indxArg) == true)
+                                    arRes [i] = indxArg;
+                                else {
                                     error = -3;
-                                    arRes[i] = -1;
+                                    arRes [i] = -1;
                                     break;
                                 }
                             }
-                        }
-                        else
+                        } else
                             error = -2; // кол-во аргументов = 0
-                    }
-                    else
-                    {
+                    } else {
                         error = -1; // нет аргументов
 
-                        arRes = new int[] { };
+                        arRes = new int [] { };
                     }
 
                     return arRes;
@@ -541,38 +641,36 @@ namespace uLoaderCommon
                 /// Добавить идентификатор аргумента при вычислении формулы (порядок учитывать)
                 /// </summary>
                 /// <param name="idMain">Идентификатор аргумента</param>
-                public void AddIdArg(int idMain)
+                public void AddIdArg (int idMain)
                 {
                     if (m_listIdArgs == null)
-                        m_listIdArgs = new List<int>();
+                        m_listIdArgs = new List<int> ();
                     else
                         ;
 
-                    m_listIdArgs.Add(idMain);
+                    m_listIdArgs.Add (idMain);
                 }
                 /// <summary>
                 /// Очистить значение и аргументы для формулы (с проверкой наличия формулы)
                 /// </summary>
-                public void ClearFormula()
+                public void ClearFormula ()
                 {
-                    if (IsFormula == true)
-                    {
+                    if (IsFormula == true) {
                         m_strFormula = string.Empty;
                         if (!(m_listIdArgs == null))
-                            m_listIdArgs.Clear();
+                            m_listIdArgs.Clear ();
                         else
                             ;
-                    }
-                    else
+                    } else
                         ;
                 }
             }
 
-            protected SIGNAL[] m_arSignals;
+            protected SIGNAL [] m_arSignals;
             /// <summary>
             /// Массив сигналов в группе
             /// </summary>
-            public SIGNAL[] Signals { get { return m_arSignals; } }
+            public SIGNAL [] Signals { get { return m_arSignals; } }
             /// <summary>
             /// Таблица результата
             /// </summary>
@@ -582,12 +680,12 @@ namespace uLoaderCommon
             /// </summary>
             /// <param name="parent">Объект-владелец (для последующего обращения к его членам-данным)</param>
             /// <param name="pars">Параметры группы сигналов</param>
-            public GroupSignals(HHandlerDbULoader parent, int id, object[] pars)
+            public GroupSignals (HHandlerDbULoader parent, int id, object [] pars)
             {
                 int err = 0;
 
-                int[] indxArgs = null;
-                
+                int [] indxArgs = null;
+
                 //Владелец объекта
                 _parent = parent;
                 //Целочисленный идентификатор
@@ -595,34 +693,28 @@ namespace uLoaderCommon
                 //Значения по умолчанию
                 m_tsPeriodMain =
                 m_tsPeriodLocal =
-                    new TimeSpan((long)((int)uLoaderCommon.DATETIME.SEC_SPANPERIOD_DEFAULT * Math.Pow(10, 7)));
+                    new TimeSpan ((long)((int)uLoaderCommon.DATETIME.SEC_SPANPERIOD_DEFAULT * Math.Pow (10, 7)));
                 m_msecIntervalLocal = (int)uLoaderCommon.DATETIME.MSEC_INTERVAL_DEFAULT;
 
                 //Инициализировать массив сигналов
-                if (pars.Length > 0)
-                {
-                    m_arSignals = new SIGNAL[pars.Length];
+                if (pars.Length > 0) {
+                    m_arSignals = new SIGNAL [pars.Length];
                     // создать сигналы
                     for (int i = 0; i < pars.Length; i++)
-                        m_arSignals[i] = createSignal (pars[i] as object []);
+                        m_arSignals [i] = createSignal (pars [i] as object []);
                     // при наличии формул определить и установить идентификаторы аргументов
                     for (int i = 0; i < m_arSignals.Length; i++)
-                        if (m_arSignals[i].IsFormula == true)
-                        {
-                            indxArgs = m_arSignals[i].GetIndexArgs(out err);
+                        if (m_arSignals [i].IsFormula == true) {
+                            indxArgs = m_arSignals [i].GetIndexArgs (out err);
 
-                            if (err == 0)
-                            {
+                            if (err == 0) {
                                 foreach (int indxArg in indxArgs)
-                                    m_arSignals[i].AddIdArg(m_arSignals[indxArg].m_idMain);
-                            }
-                            else
-                                Logging.Logg().Error(@"GroupSignals::ctor () - ...", Logging.INDEX_MESSAGE.NOT_SET);
-                        }
-                        else
+                                    m_arSignals [i].AddIdArg (m_arSignals [indxArg].m_idMain);
+                            } else
+                                Logging.Logg ().Error (@"GroupSignals::ctor () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                        } else
                             ; // нет формулы
-                }
-                else
+                } else
                     ;
             }
             /// <summary>
@@ -630,21 +722,20 @@ namespace uLoaderCommon
             /// </summary>
             /// <param name="objs">Массив параметров для передачи в конструктор объекта сигнала</param>
             /// <returns>Созданный объект</returns>
-            protected abstract SIGNAL createSignal(object []objs);
+            protected abstract SIGNAL createSignal (object [] objs);
             /// <summary>
             /// Определить нове значение для состояния
             /// </summary>
             /// <param name="mode">Режим работы группы сигналов</param>
             /// <param name="prevState">Предыдущее значение состояния</param>
             /// <returns>Новое состояние</returns>
-            public static STATE NewState(uLoaderCommon.MODE_WORK mode, STATE prevState)
+            public static STATE NewState (uLoaderCommon.MODE_WORK mode, STATE prevState)
             {
                 GroupSignals.STATE stateRes = GroupSignals.STATE.UNKNOWN;
                 //Проверить режим работы
                 if (mode == uLoaderCommon.MODE_WORK.CUR_INTERVAL)
                     // для режима "текущий интервал"
-                    switch (prevState)
-                    {
+                    switch (prevState) {
                         case STATE.ACTIVE:
                         case STATE.UNKNOWN:
                             stateRes = GroupSignals.STATE.TIMER;
@@ -652,39 +743,37 @@ namespace uLoaderCommon
                         default:
                             stateRes = GroupSignals.STATE.SLEEP;
                             break;
-                    }
-                else
+                    } else
                     if (mode == uLoaderCommon.MODE_WORK.COSTUMIZE)
-                        // для режима "выборочно"    
-                        stateRes = GroupSignals.STATE.SLEEP;
-                    else
+                    // для режима "выборочно"    
+                    stateRes = GroupSignals.STATE.SLEEP;
+                else
                         if (mode == uLoaderCommon.MODE_WORK.ON_REQUEST)
-                            // для режима "по требованию"    
-                            stateRes = GroupSignals.STATE.SLEEP;
-                        else
-                            //??? throw new Exception (@"")
-                            ;
+                    // для режима "по требованию"    
+                    stateRes = GroupSignals.STATE.SLEEP;
+                else
+                    //??? throw new Exception (@"")
+                    ;
 
                 return stateRes;
             }
 
-            public class DataTableDuplicate
-            {
+            public class DataTableDuplicate {
                 private enum INDEX_RESULT { UNKNOWN = -1, EQUALE, DISTINCT, COUNT };
-                private DataTable[] _arTables;
+                private DataTable [] _arTables;
 
-                public DataTable TableEquale { get { return _arTables[(int)INDEX_RESULT.EQUALE]; } set { _arTables[(int)INDEX_RESULT.EQUALE] = value; } }
-                public DataTable TableDistinct { get { return _arTables[(int)INDEX_RESULT.DISTINCT]; } set { _arTables[(int)INDEX_RESULT.DISTINCT] = value; } }
+                public DataTable TableEquale { get { return _arTables [(int)INDEX_RESULT.EQUALE]; } set { _arTables [(int)INDEX_RESULT.EQUALE] = value; } }
+                public DataTable TableDistinct { get { return _arTables [(int)INDEX_RESULT.DISTINCT]; } set { _arTables [(int)INDEX_RESULT.DISTINCT] = value; } }
 
-                public DataTableDuplicate()
+                public DataTableDuplicate ()
                 {
-                    _arTables = new DataTable[(int)INDEX_RESULT.COUNT];
+                    _arTables = new DataTable [(int)INDEX_RESULT.COUNT];
                 }
                 /// <summary>
                 /// Признак наличия строк после удаления дублирующих
                 ///  по итогам сравнения предыдущей и текущей таблиц 
                 /// </summary>
-                public bool IsDeterminate { get { return Equals(TableDistinct, null) == false ? TableDistinct.Rows.Count > 0 : false; } }
+                public bool IsDeterminate { get { return Equals (TableDistinct, null) == false ? TableDistinct.Rows.Count > 0 : false; } }
                 /// <summary>
                 /// Очистить "текущую" таблицу от записей,
                 ///  содержащихся в "предыдущей" таблице
@@ -692,34 +781,30 @@ namespace uLoaderCommon
                 /// <param name="tblPrev">"Предыдущая" таблица</param>
                 /// <param name="tblRes">"Текущая" таблица</param>
                 /// <param name="keyFields">Наименования полей в составе ключа по которому происходит сравнение записей</param>
-                public void Clear(DataTable tblPrev, DataTable tblCur, string keyFields = @"ID, DATETIME")
+                public void Clear (DataTable tblPrev, DataTable tblCur, string keyFields = @"ID, DATETIME")
                 {
                     int iDup = 0;
-                    DataRow[] arSel = null;
+                    DataRow [] arSel = null;
 
                     if (!(tblCur == null))
-                        if ((((!(tblCur.Columns.IndexOf(@"ID") < 0)) && (!(tblCur.Columns.IndexOf(@"DATETIME") < 0)))
-                            && (tblCur.Rows.Count > 0)))
-                        {
-                            _arTables[(int)INDEX_RESULT.EQUALE] = tblCur.Clone();
-                            _arTables[(int)INDEX_RESULT.DISTINCT] = tblCur.Copy();
+                        if ((((!(tblCur.Columns.IndexOf (@"ID") < 0)) && (!(tblCur.Columns.IndexOf (@"DATETIME") < 0)))
+                            && (tblCur.Rows.Count > 0))) {
+                            _arTables [(int)INDEX_RESULT.EQUALE] = tblCur.Clone ();
+                            _arTables [(int)INDEX_RESULT.DISTINCT] = tblCur.Copy ();
 
                             if (!(tblPrev == null))
-                                if (!(tblPrev.Columns.IndexOf(@"DATETIME") < 0))
-                                    foreach (DataRow rRes in tblPrev.Rows)
-                                    {
-                                        arSel = _arTables[(int)INDEX_RESULT.DISTINCT].Select(@"ID=" + rRes[@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)rRes[@"DATETIME"]).ToString(@"yyyy/MM/dd HH:mm:ss.fffffff") + @"'");
+                                if (!(tblPrev.Columns.IndexOf (@"DATETIME") < 0))
+                                    foreach (DataRow rRes in tblPrev.Rows) {
+                                        arSel = _arTables [(int)INDEX_RESULT.DISTINCT].Select (@"ID=" + rRes [@"ID"] + @" AND " + @"DATETIME='" + ((DateTime)rRes [@"DATETIME"]).ToString (@"yyyy/MM/dd HH:mm:ss.fffffff") + @"'");
                                         iDup += arSel.Length;
-                                        foreach (DataRow rDel in arSel)
-                                        {
-                                            _arTables[(int)INDEX_RESULT.EQUALE].ImportRow(rDel);
-                                            _arTables[(int)INDEX_RESULT.DISTINCT].Rows.Remove(rDel);
+                                        foreach (DataRow rDel in arSel) {
+                                            _arTables [(int)INDEX_RESULT.EQUALE].ImportRow (rDel);
+                                            _arTables [(int)INDEX_RESULT.DISTINCT].Rows.Remove (rDel);
                                         }
 
-                                        _arTables[(int)INDEX_RESULT.EQUALE].AcceptChanges();
-                                        _arTables[(int)INDEX_RESULT.DISTINCT].AcceptChanges();
-                                    }
-                                else
+                                        _arTables [(int)INDEX_RESULT.EQUALE].AcceptChanges ();
+                                        _arTables [(int)INDEX_RESULT.DISTINCT].AcceptChanges ();
+                                    } else
                                     ;
                             else
                                 ;
@@ -754,8 +839,7 @@ namespace uLoaderCommon
                             //    //(table as DataTable).Rows.Remove(rDel);
                             //    (table as DataTable).Rows.RemoveAt(indx);
                             //table.AcceptChanges();
-                        }
-                        else
+                        } else
                             ; // текущая таблица не имеет требуемую структуру
                     else
                         ; // текущая таблица = null
@@ -765,9 +849,9 @@ namespace uLoaderCommon
                 /// </summary>
                 /// <param name="tblDup">Таблица, содержащая дублирующие записи</param>
                 /// <returns>Таблица без дублирующих записей</returns>
-                public static DataTable Clear(DataTable tblDup)
+                public static DataTable Clear (DataTable tblDup)
                 {
-                    DataTable tblRes = tblDup.Clone();
+                    DataTable tblRes = tblDup.Clone ();
                     ////Вариант №1
                     ////Список индексов строк для удаления
                     //List<int> listIndxToDelete = new List<int>();
@@ -780,11 +864,9 @@ namespace uLoaderCommon
                     //Вариант№2
                     List<DataRow> listRes = null;
 
-                    if ((!(tblDup.Columns.IndexOf(@"ID") < 0))
-                        && (!(tblDup.Columns.IndexOf(@"DATETIME") < 0)))
-                    {
-                        try
-                        {
+                    if ((!(tblDup.Columns.IndexOf (@"ID") < 0))
+                        && (!(tblDup.Columns.IndexOf (@"DATETIME") < 0))) {
+                        try {
                             ////Вариант №1
                             //bQuote = !tblDup.Columns[@"ID"].DataType.IsPrimitive;
 
@@ -816,32 +898,29 @@ namespace uLoaderCommon
                             //}
 
                             //Вариант№2
-                            if (tblDup.Columns[@"ID"].DataType.Equals (typeof (int)) == true)
-                                listRes = tblDup.AsEnumerable().GroupBy(g => new { ID = g.Field<int>(@"ID"), DATETIME = g.Field<DateTime>(@"DATETIME") }).Select(s => s.First()).ToList();
+                            if (tblDup.Columns [@"ID"].DataType.Equals (typeof (int)) == true)
+                                listRes = tblDup.AsEnumerable ().GroupBy (g => new { ID = g.Field<int> (@"ID"), DATETIME = g.Field<DateTime> (@"DATETIME") }).Select (s => s.First ()).ToList ();
                             else
-                                if (tblDup.Columns[@"ID"].DataType.Equals (typeof (string)) == true)
-                                    listRes = tblDup.AsEnumerable().GroupBy(g => new { ID = g.Field<string>(@"ID"), DATETIME = g.Field<DateTime>(@"DATETIME") }).Select(s => s.First()).ToList();
-                                else
-                                    listRes = tblDup.AsEnumerable().GroupBy(g => new { ID = g.Field<object>(@"ID"), DATETIME = g.Field<DateTime>(@"DATETIME") }).Select(s => s.First()).ToList();
+                                if (tblDup.Columns [@"ID"].DataType.Equals (typeof (string)) == true)
+                                listRes = tblDup.AsEnumerable ().GroupBy (g => new { ID = g.Field<string> (@"ID"), DATETIME = g.Field<DateTime> (@"DATETIME") }).Select (s => s.First ()).ToList ();
+                            else
+                                listRes = tblDup.AsEnumerable ().GroupBy (g => new { ID = g.Field<object> (@"ID"), DATETIME = g.Field<DateTime> (@"DATETIME") }).Select (s => s.First ()).ToList ();
                             //Добавить строки в таблицу-результат
                             if (!(listRes == null))
-                                listRes.ForEach(r => tblRes.ImportRow(r));
+                                listRes.ForEach (r => tblRes.ImportRow (r));
                             else
                                 ;
-                        }
-                        catch (Exception e)
-                        {
-                            Logging.Logg().Exception(e, @"HHandlerDbULoader.GroupSignals.DataTableDuplicate::Clear () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                        } catch (Exception e) {
+                            Logging.Logg ().Exception (e, @"HHandlerDbULoader.GroupSignals.DataTableDuplicate::Clear () - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
-                            tblRes.Clear();
+                            tblRes.Clear ();
                         }
-                    }
-                    else
+                    } else
                         // отсутствует необходимое поле "ID"
-                        Logging.Logg().Warning(@"HHandlerDbULoader.GroupSignals.DataTableDuplicate::Clear  () - отсутствует необходимое поле [ID], [DATETIME] ...", Logging.INDEX_MESSAGE.NOT_SET);
+                        Logging.Logg ().Warning (@"HHandlerDbULoader.GroupSignals.DataTableDuplicate::Clear  () - отсутствует необходимое поле [ID], [DATETIME] ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                     //Принять внесенные изменения в таблицу-результат
-                    tblRes.AcceptChanges();
+                    tblRes.AcceptChanges ();
 
                     return tblRes;
                 }
@@ -852,62 +931,63 @@ namespace uLoaderCommon
                 /// <param name="tblPrev">"Предыдущая" таблица</param>
                 /// <param name="tblRes">"Текущая" таблица</param>
                 /// <param name="keyFields">Наименования полей в составе ключа по которому происходит сравнение записей</param>
-                public void Top(DataTable tblPrev, DataTable tblCur, string keyFields = @"ID, DATETIME")
+                public void Top (DataTable tblPrev, DataTable tblCur, string keyFields = @"ID, DATETIME")
                 {
                     int iDup = 0;
-                    DataRow[] arPrev = null;
+                    DataRow [] arPrev = null;
                     //int iIdType = -1; // неизвестный тип поля [ID] таблиц [tblPrev], [tblCur]
 
                     if (!(tblCur == null))
-                        if ((((!(tblCur.Columns.IndexOf(@"ID") < 0)) && (!(tblCur.Columns.IndexOf(@"DATETIME") < 0)))
-                            && (tblCur.Rows.Count > 0)))
-                        {
-                            var listCurDistinct = tblCur.AsEnumerable().GroupBy(g => g[@"ID"]).Select(s => s.Last()).ToList();
+                        if ((((!(tblCur.Columns.IndexOf (@"ID") < 0)) && (!(tblCur.Columns.IndexOf (@"DATETIME") < 0)))
+                            && (tblCur.Rows.Count > 0))) {
+                            var listCurDistinct = tblCur.AsEnumerable ().GroupBy (g => g [@"ID"]).Select (s => s.Last ()).ToList ();
 
-                            _arTables[(int)INDEX_RESULT.DISTINCT] = tblCur.Clone();
-                            _arTables[(int)INDEX_RESULT.EQUALE] = tblCur.Clone();
+                            _arTables [(int)INDEX_RESULT.DISTINCT] = tblCur.Clone ();
+                            _arTables [(int)INDEX_RESULT.EQUALE] = tblCur.Clone ();
 
                             if ((!(tblPrev == null))
-                                && (((!(tblPrev.Columns.IndexOf(@"ID") < 0)) && (!(tblPrev.Columns.IndexOf(@"DATETIME") < 0)))
-                                && (tblPrev.Rows.Count > 0)))
-                            {
+                                && (((!(tblPrev.Columns.IndexOf (@"ID") < 0)) && (!(tblPrev.Columns.IndexOf (@"DATETIME") < 0)))
+                                && (tblPrev.Rows.Count > 0))) {
                                 //iIdType = tblPrev.Columns[tblPrev.Columns.IndexOf(@"ID")].GetType().Ge
 
-                                var listPrevDistinct = tblPrev.AsEnumerable().GroupBy(g => g[@"ID"]).Select(s => s.Last()).ToList();
+                                var listPrevDistinct = tblPrev.AsEnumerable ().GroupBy (g => g [@"ID"]).Select (s => s.Last ()).ToList ();
 
-                                foreach (DataRow rCur in listCurDistinct)
-                                {
-                                    arPrev = listPrevDistinct.Where(r => Convert.ToInt32(r[@"ID"]) == Convert.ToInt32(rCur[@"ID"])).ToArray(); //tblPrev.Select(@"ID=" + rCur[@"ID"]);
+                                foreach (DataRow rCur in listCurDistinct) {
+                                    arPrev = listPrevDistinct.Where (r => Convert.ToInt32 (r [@"ID"]) == Convert.ToInt32 (rCur [@"ID"])).ToArray (); //tblPrev.Select(@"ID=" + rCur[@"ID"]);
                                     if (arPrev.Length > 0)
                                         if (arPrev.Length == 1)
-                                            if (!(DateTime.Compare((DateTime)rCur[@"DATETIME"], (DateTime)arPrev[0][@"DATETIME"]) < 0))
-                                            {// удалить более старую (ИЛИ с одинаковой меткой времени) запись
-                                                _arTables[(int)INDEX_RESULT.DISTINCT].ImportRow(rCur);
-                                                _arTables[(int)INDEX_RESULT.DISTINCT].AcceptChanges();
-                                            }
-                                            else
-                                            {
-                                                _arTables[(int)INDEX_RESULT.EQUALE].ImportRow(rCur);
-                                                _arTables[(int)INDEX_RESULT.EQUALE].AcceptChanges();
-                                            }
-                                        else
+                                            if (!(DateTime.Compare ((DateTime)rCur [@"DATETIME"], (DateTime)arPrev [0] [@"DATETIME"]) < 0)) {// удалить более старую (ИЛИ с одинаковой меткой времени) запись
+                                                _arTables [(int)INDEX_RESULT.DISTINCT].ImportRow (rCur);
+                                                _arTables [(int)INDEX_RESULT.DISTINCT].AcceptChanges ();
+                                            } else {
+                                                _arTables [(int)INDEX_RESULT.EQUALE].ImportRow (rCur);
+                                                _arTables [(int)INDEX_RESULT.EQUALE].AcceptChanges ();
+                                            } else
                                             ; //??? ошибка записей >, чем 1
                                     else
                                         ; // в предыдущей таблице нет сигнала с идентификатором
                                 }
-                            }
-                            else
+                            } else
                                 // предыдущая таблица не существует, не имеет одного из полей [ID], [DATETIME] составного ключа
                                 foreach (DataRow rCur in listCurDistinct)
-                                    _arTables[(int)INDEX_RESULT.DISTINCT].ImportRow(rCur);
+                                    _arTables [(int)INDEX_RESULT.DISTINCT].ImportRow (rCur);
 
-                            _arTables[(int)INDEX_RESULT.DISTINCT].AcceptChanges();
-                        }
-                        else
+                            _arTables [(int)INDEX_RESULT.DISTINCT].AcceptChanges ();
+                        } else
                             ; // текущая таблица не имеет одного из полей составного ключа ИЛИ не имеет ни одной строки
                     else
                         ; // текущая таблица не существует
                 }
+            }
+
+            //public DateTime ToUtcTime (DateTime value)
+            //{
+            //    return _parent.ToUtcTime (value);
+            //}
+
+            public DateTime ToDataTime (DateTime value)
+            {
+                return _parent.ToDataTime (value);
             }
         }
         /// <summary>
@@ -922,17 +1002,17 @@ namespace uLoaderCommon
             get
             {
                 if (!(IdGroupSignalsCurrent < 0))
-                    return m_dictGroupSignals[IdGroupSignalsCurrent].State;
+                    return m_dictGroupSignals [IdGroupSignalsCurrent].State;
                 else
-                    throw new Exception(@"ULoaderCommon::State.get ...");
+                    throw new Exception (@"ULoaderCommon::State.get ...");
             }
-            
+
             set
             {
                 if (!(IdGroupSignalsCurrent < 0))
-                    m_dictGroupSignals[IdGroupSignalsCurrent].State = value;
+                    m_dictGroupSignals [IdGroupSignalsCurrent].State = value;
                 else
-                    throw new Exception(@"ULoaderCommon::State.set ...");
+                    throw new Exception (@"ULoaderCommon::State.set ...");
             }
         }
         /// <summary>
@@ -943,11 +1023,11 @@ namespace uLoaderCommon
             get
             {
                 if (!(IdGroupSignalsCurrent < 0))
-                    return m_dictGroupSignals[IdGroupSignalsCurrent].Mode;
+                    return m_dictGroupSignals [IdGroupSignalsCurrent].Mode;
                 else
-                    throw new Exception(@"ULoaderCommon::Mode.get ...");
+                    throw new Exception (@"ULoaderCommon::Mode.get ...");
             }
-            
+
             /*set { m_dictGroupSignals[IdGroupSignalsCurrent].Mode = value; }*/
         }
         /// <summary>
@@ -958,9 +1038,9 @@ namespace uLoaderCommon
             get
             {
                 if (!(IdGroupSignalsCurrent < 0))
-                    return m_dictGroupSignals[IdGroupSignalsCurrent].PeriodMain;
+                    return m_dictGroupSignals [IdGroupSignalsCurrent].PeriodMain;
                 else
-                    throw new Exception(@"ULoaderCommon::PeriodMain.get ...");
+                    throw new Exception (@"ULoaderCommon::PeriodMain.get ...");
             }
         }
         /// <summary>
@@ -971,9 +1051,9 @@ namespace uLoaderCommon
             get
             {
                 if (!(IdGroupSignalsCurrent < 0))
-                    return m_dictGroupSignals[IdGroupSignalsCurrent].PeriodLocal;
+                    return m_dictGroupSignals [IdGroupSignalsCurrent].PeriodLocal;
                 else
-                    throw new Exception(@"ULoaderCommon::PeriodLocal.get ...");
+                    throw new Exception (@"ULoaderCommon::PeriodLocal.get ...");
             }
         }
         /// <summary>
@@ -984,9 +1064,9 @@ namespace uLoaderCommon
             get
             {
                 if (!(IdGroupSignalsCurrent < 0))
-                    return m_dictGroupSignals[IdGroupSignalsCurrent].MSecIntervalLocal;
+                    return m_dictGroupSignals [IdGroupSignalsCurrent].MSecIntervalLocal;
                 else
-                    throw new Exception(@"ULoaderCommon::MSecIntervalLocal.get ...");
+                    throw new Exception (@"ULoaderCommon::MSecIntervalLocal.get ...");
             }
         }
         /// <summary>
@@ -997,18 +1077,17 @@ namespace uLoaderCommon
             get
             {
                 if (!(IdGroupSignalsCurrent < 0))
-                    return m_dictGroupSignals[IdGroupSignalsCurrent].TableRecieved;
+                    return m_dictGroupSignals [IdGroupSignalsCurrent].TableRecieved;
                 else
-                    throw new Exception(@"ULoaderCommon::TableResults.get ...");
+                    throw new Exception (@"ULoaderCommon::TableResults.get ...");
             }
 
             set
             {
-                if (!(IdGroupSignalsCurrent < 0))
-                {
+                if (!(IdGroupSignalsCurrent < 0)) {
                     int cntPrev = -1;
-                    if (! (m_dictGroupSignals[IdGroupSignalsCurrent].TableRecieved == null))
-                        cntPrev = m_dictGroupSignals[IdGroupSignalsCurrent].TableRecieved.Rows.Count;
+                    if (!(m_dictGroupSignals [IdGroupSignalsCurrent].TableRecieved == null))
+                        cntPrev = m_dictGroupSignals [IdGroupSignalsCurrent].TableRecieved.Rows.Count;
                     else
                         ;
 
@@ -1021,16 +1100,70 @@ namespace uLoaderCommon
                     //Console.WriteLine (msg);
                     //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
 
-                    m_dictGroupSignals[IdGroupSignalsCurrent].TableRecieved = value;
-                }
-                else
-                    throw new Exception(@"ULoaderCommon::TableResults.set ...");
+                    m_dictGroupSignals [IdGroupSignalsCurrent].TableRecieved = value;
+                } else
+                    throw new Exception (@"ULoaderCommon::TableResults.set ...");
             }
         }
         /// <summary>
         /// Дата/время - результат запроса к источнику данных
         /// </summary>
-        protected DateTime m_dtServer;
+        protected struct DATETIME {
+            private DateTime _value;
+
+            public DateTime Value {
+                private get
+                {
+                    return _value;
+                }
+
+                set
+                {
+                    _value = value;
+                }
+            }
+
+            public DateTime Utc
+            {
+                get
+                {
+                    return Value - BaseUTCOffset;
+                }
+            }
+
+            public TimeSpan BaseUTCOffset;
+        }
+
+        protected DATETIME m_datetimeServer;
+
+        protected TimeSpan OffsetDataToQuery
+        {
+            get
+            {
+                return m_tsOffsetUTCToData.Value - m_tsOffsetUTCToQuery.Value;
+            }
+        }
+
+        /// <summary>
+        /// Привести значение даты/времени к UTC
+        /// </summary>
+        /// <param name="value">Объект даты/времени, приводимый к UTC</param>
+        /// <returns>Значение даты/времени, приведенное к UTC</returns>
+        public DateTime ToUtcTime (DateTime value)
+        {
+            return value.Add (-m_tsOffsetUTCToData.Value);
+        }
+
+        /// <summary>
+        /// Привести значение даты/времени к часовому поясу в котором данные хранятся в БД-источнике
+        /// </summary>
+        /// <param name="value">Объект даты/времени, приводимый к необходимому часовому поясу</param>
+        /// <returns>Значение даты/времени, приведенное к необходимому часовому поясу</returns>
+        public DateTime ToDataTime (DateTime value)
+        {
+            return value.Add (m_tsOffsetUTCToData.Value);
+        }
+
         /// <summary>
         /// Параметры соединения с источником данных
         /// </summary>
@@ -1113,7 +1246,7 @@ namespace uLoaderCommon
         public HHandlerDbULoader()
         {
             //Время источника данных "по умолчанию"
-            m_dtServer = DateTime.MinValue;            
+            m_datetimeServer =  new DATETIME () { Value = DateTime.MinValue, BaseUTCOffset = TimeSpan.Zero };
 
             m_iIdGroupSignalsCurrent = -1;
             m_dictGroupSignals = new Dictionary<int, GroupSignals>();
@@ -1189,12 +1322,12 @@ namespace uLoaderCommon
                     else
                         ; //Для инициализации передан только 'ConnectionSettings' (pars[0])
 
-                    //
-                    m_tsOffsetUTCToServer = HTimeSpan.NotValue;
-                    if (m_dictAdding.ContainsKey(@"OFFSET_UTC_TO_SERVER") == true)
-                        m_tsOffsetUTCToServer = new HTimeSpan(m_dictAdding[@"OFFSET_UTC_TO_SERVER"]);
-                    else
-                        ;
+                    //// не используется (должен быть определен автоматически)
+                    //m_tsOffsetUTCToServer = HTimeSpan.NotValue;
+                    //if (m_dictAdding.ContainsKey(@"OFFSET_UTC_TO_SERVER") == true)
+                    //    m_tsOffsetUTCToServer = new HTimeSpan(m_dictAdding[@"OFFSET_UTC_TO_SERVER"]);
+                    //else
+                    //    ;
 
                     m_tsOffsetUTCToData = HTimeSpan.NotValue;
                     if (m_dictAdding.ContainsKey(@"OFFSET_UTC_TO_DATA") == true)
@@ -1469,7 +1602,7 @@ namespace uLoaderCommon
 
                 m_autoResetEvtQueue.Close();
                 //??? предполагается, что для этого объекта 'Reset' уже выполнен
-                IdGroupSignalsCurrent = -1;                
+                IdGroupSignalsCurrent = -1;
             } catch (Exception e) { //System.Threading.SemaphoreFullException
                 Logging.Logg().Exception(e, "HHandlerDbULoader::fThreadQueue () - m_autoResetEvtQueue.Release(1)", Logging.INDEX_MESSAGE.NOT_SET);
             } finally {
@@ -1561,7 +1694,8 @@ namespace uLoaderCommon
 
             startThreadDepended ();
 
-            Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + string.Format(@"ID={0}:{1}", _iPlugin._Id, _iPlugin.KeySingleton) + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);            
+            Logging.Logg().Debug($"HHandlerDbULoader::Start ({ string.Format (@"ID={0}:{1}", _iPlugin._Id, _iPlugin.KeySingleton)} - ..."
+                , Logging.INDEX_MESSAGE.NOT_SET);
         }
 
         public bool IsInitSource { get { lock (m_lockInitSource) { return !(m_connSett == null); } } }
@@ -1683,7 +1817,7 @@ namespace uLoaderCommon
                 //Console.WriteLine(@"HHandlerDbULoader::Stop (" + PlugInId + @") - ...");
                 Logging.Logg().Debug(@"HHandlerDbULoader::Stop (ID={0}:{1}) - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 // остановить поток обработки очереди событий
-                stopThreadQueue();                
+                stopThreadQueue();
                 //??? метод должен вызываться из-вне
                 //Activate (false);
                 // "забыть" парметры соединения
@@ -1876,7 +2010,7 @@ namespace uLoaderCommon
                 else
                     ;
 
-                //m_semaQueue = null;                
+                //m_semaQueue = null;
                 m_autoResetEvtQueue = null;
                 m_queueIdGroupSignals.Clear();
                 m_threadQueue = null;

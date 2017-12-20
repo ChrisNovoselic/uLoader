@@ -499,7 +499,7 @@ namespace uLoader
                         outobj = m_fileINI.GetListItemPropOfGroupSource(itemQueue.Pars.ToArray());
 
                         iRes = 0;
-                        break;                    
+                        break;
                     case StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS:
                         error = false;
                         itemQueue = Peek;
@@ -718,7 +718,7 @@ namespace uLoader
                             ;
 
                         iRes = 0;
-                        break;                    
+                        break;
                     #endregion
 
                     #region SET_IDCUR_SOURCE_OF_GROUP, SET_TEXT_ADDING, SET_GROUP_SIGNALS_PARS

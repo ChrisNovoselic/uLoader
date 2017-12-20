@@ -362,7 +362,7 @@ namespace uLoader
                 iRes = m_listGroupSignalsPars.Count - 1;
             }
             else
-                item = m_listGroupSignalsPars[iRes];            
+                item = m_listGroupSignalsPars[iRes];
 
             item.m_strId = strId; //ID
 

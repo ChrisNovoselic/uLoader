@@ -14,7 +14,7 @@ namespace SrcKTS
         /// Конструктор - основной (без параметров)
         /// </summary>
         public SrcKTSTUDsql()
-            : base(@"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(@"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
 
         }
@@ -23,7 +23,7 @@ namespace SrcKTS
         /// </summary>
         /// <param name="iPlugIn">Объект для обмена сообщенями с основной программой</param>
         public SrcKTSTUDsql(PlugInULoader iPlugIn)
-            : base(iPlugIn, @"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(iPlugIn, @"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
         }
         /// <summary>
@@ -148,7 +148,7 @@ namespace SrcKTS
                         //cntRec = 0;
                         //??? обработка всех последующих строк, а если строк > 2
                         foreach (DataRow r in rowsSgnl) {
-                            dtValue = ((DateTime)r[@"DATETIME"]).AddHours(m_tsOffsetUTCToData.Value.Hours); //(int)rowsSgnl[0][@"UTC_OFFSET"]
+                            dtValue = ((DateTime)r[@"DATETIME"]); //(int)rowsSgnl[0][@"UTC_OFFSET"]
 
                             if ((int)rowsSgnl[0][@"COUNT"] == 2) // должно быть 2 полу-часовых значения
                                 dblSumValue += (double)r[@"VALUE"] / (((sgnl as GroupSignalsSrc.SIGNALKTSTUsql).Derivative == 0) ? 1 : ((sgnl as GroupSignalsSrc.SIGNALKTSTUsql).Derivative == 1) ? 2 : 1);

@@ -13,13 +13,13 @@ namespace SrcVzlet
     public class SrcVzletNativeSql : HHandlerDbULoaderDatetimeSrc //HHandlerDbULoaderStatTMMSTDest
     {
         public SrcVzletNativeSql()
-            : base(@"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(@"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
 
         }
 
         public SrcVzletNativeSql(PlugInULoader iPlugIn)
-            : base(iPlugIn, @"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(iPlugIn, @"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
         }
 
@@ -33,26 +33,27 @@ namespace SrcVzlet
             /// <summary>
             /// Установить содержание для запроса
             /// </summary>
-            protected override void setQuery()
+            protected override void setQuery ()
             {
                 m_strQuery = string.Empty;
                 //long secOffsetUTCToData = m_secOffsetUTCToData; //OFFSET
-                
+
                 //DateTimeBegin = DateTimeBegin.AddSeconds(-1 * secUTCOffsetToData);
 
                 string strIds = "SELECT ДатаВремя, ";
 
                 foreach (SIGNALMSTKKSNAMEsql sgnl in m_arSignals)
                     if (sgnl.IsFormula == false)
-                        strIds += @"" + sgnl.m_kks_name + @",";
+                        strIds += $"{sgnl.m_kks_name},";
                     else
                         ; // формула
                 // удалить "лишнюю" запятую
-                strIds = strIds.Substring(0, strIds.Length - 1);
+                strIds = strIds.Substring (0, strIds.Length - 1);
 
                 m_strQuery = strIds
-                        + @" FROM " + NameTable + " WHERE [ДатаВремя] >='" + DateTimeBegin + @"'"
-                        + @" AND [ДатаВремя] <'" + DateTimeBegin.AddSeconds(PeriodMain.TotalSeconds) + @"'"
+                    + $" FROM {NameTable}"
+                    + $" WHERE [ДатаВремя] >='{DateTimeBegin}'"
+                        + $" AND [ДатаВремя] <'{DateTimeBegin.AddSeconds(PeriodMain.TotalSeconds)}'"
                     ;
             }
 

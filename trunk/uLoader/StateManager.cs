@@ -827,7 +827,7 @@ namespace uLoader
         }
 
         //private static long _lIdCurrentTargetFunc;
-        private static List <OTargetFunc> _listOTargetFunc;        
+        private static List <OTargetFunc> _listOTargetFunc;
         /// <summary>
         /// Целевая функция контроля
         /// </summary>

@@ -105,7 +105,7 @@ namespace uLoader
                 this.SetColumnSpan(panelColumns, 1); this.SetRowSpan(panelColumns, 1);
                 //Группы источников
                 ctrl = new DataGridView ();
-                ctrl.Name = KEY_CONTROLS.DGV_GROUP_SOURCES.ToString ();                
+                ctrl.Name = KEY_CONTROLS.DGV_GROUP_SOURCES.ToString ();
                 (ctrl as DataGridView).Columns.AddRange (
                     new DataGridViewColumn [] {
                         new DataGridViewTextBoxColumn ()
@@ -143,7 +143,7 @@ namespace uLoader
                 panelColumns.SetColumnSpan(ctrl, 4); panelColumns.SetRowSpan(ctrl, 1);
                 //Кнопка для выгрузки/загрузки библиотеки
                 ctrl = new Button();
-                ctrl.Name = KEY_CONTROLS.BUTTON_DLLNAME_GROUPSOURCES.ToString();                
+                ctrl.Name = KEY_CONTROLS.BUTTON_DLLNAME_GROUPSOURCES.ToString();
                 (ctrl as Button).Text = @"<->";
                 ctrl.Enabled = false;
                 (ctrl as Button).Click += new EventHandler(panelLoader_SourceOfGroupDLLReload);
@@ -181,7 +181,7 @@ namespace uLoader
                 this.SetColumnSpan(panelColumns, 1); this.SetRowSpan(panelColumns, 1);
                 //Группы сигналов
                 ctrl = new DataGridView();
-                ctrl.Name = KEY_CONTROLS.DGV_GROUP_SIGNALS.ToString ();                
+                ctrl.Name = KEY_CONTROLS.DGV_GROUP_SIGNALS.ToString ();
                 (ctrl as DataGridView).Columns.AddRange(
                     new DataGridViewColumn[] {
                         new DataGridViewCheckBoxColumn ()
@@ -803,7 +803,7 @@ namespace uLoader
                     if (bAutoUpdateDatetimePars == false)
                         FillDatetimePars (grpSgnlsPars.m_arWorkIntervals[(int)modeWork]);
                     else
-                        ;                    
+                        ;
                 }
                 else
                     // не найдена группа сигналов
@@ -1289,7 +1289,7 @@ namespace uLoader
                 //Календарь
                 ctrl = new DateTimePicker();
                 ctrl.Name = KEY_CONTROLS.CALENDAR_START_DATE.ToString();
-                ctrl.Dock = DockStyle.Fill;                
+                ctrl.Dock = DockStyle.Fill;
                 panelGroupBox.Controls.Add(ctrl, 0, 2);
                 panelGroupBox.SetColumnSpan(ctrl, 9); panelGroupBox.SetRowSpan(ctrl, 1);
                 //Начало периода
@@ -1327,7 +1327,7 @@ namespace uLoader
                 //(ctrl as DateTimePicker).CustomFormat = string.Format("DD{0}HH{1}mm{1}ss", CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator [0], ":");
                 //(ctrl as DateTimePicker).ShowUpDown = true;
                 (ctrl as MaskedTextBox).TextAlign = HorizontalAlignment.Right;
-                (ctrl as MaskedTextBox).Mask = maskPeriod;                    
+                (ctrl as MaskedTextBox).Mask = maskPeriod;
                 panelGroupBox.Controls.Add(ctrl, 6, 4);
                 panelGroupBox.SetColumnSpan(ctrl, 3); panelGroupBox.SetRowSpan(ctrl, 1);
 
@@ -1582,7 +1582,7 @@ namespace uLoader
                     (GetWorkingItem(KEY_CONTROLS.CALENDAR_START_DATE) as DateTimePicker).Value.Date
                     , fromMaskedTextBox (KEY_CONTROLS.MTBX_START_TIME)
                     , fromMaskedTextBox (KEY_CONTROLS.MTBX_PERIOD_MAIN)
-                };                
+                };
 
                 arPreparePars[(int)INDEX_PREPARE_PARS.OBJ] = this;
                 arPreparePars[(int)INDEX_PREPARE_PARS.KEY_EVT] = KEY_EVENT.BTN_CLEAR_CLICK;

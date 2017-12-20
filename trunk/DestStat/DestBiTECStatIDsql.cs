@@ -47,9 +47,10 @@ namespace DestStat
 
             protected override string getTargetValuesQuery()
             {
-                string strRes = string.Empty
-                    , strRow = string.Empty;
-                int iOffsetUTCToDataTotalHours = (int)(_parent as DestBiTECStatIDsql).m_tsOffsetUTCToData.Value.TotalHours;
+                string strRes = string.Empty;
+
+                string strRow = string.Empty;
+               // int iOffsetUTCToDataTotalHours = (int)(_parent as DestBiTECStatIDsql).m_tsOffsetUTCToData.Value.TotalHours;
 
                 strRes = @"INSERT INTO [dbo].[" + (_parent as HHandlerDbULoaderDest).m_strNameTable + @"] ("
                     + @"[ID]"
@@ -67,7 +68,7 @@ namespace DestStat
                     strRow += getIdTarget(Int32.Parse(row[@"ID"].ToString().Trim())) + @",";
                     strRow += m_IdSourceTEC + @",";
                     strRow += ((decimal)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
-                    strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(iOffsetUTCToDataTotalHours).ToString(s_strFormatDbDateTime) + @"',";
+                    strRow += @"'" + ToDataTime(((DateTime)row[@"DATETIME"])).ToString(s_strFormatDbDateTime) + @"',";
                     strRow += row[@"tmdelta"] + @",";
                     strRow += @"GETDATE()";
 

@@ -22,7 +22,7 @@ namespace TestFunc
             ProgramBase.Start(false);
 
             string msg = @"Старт приложения [" + DateTime.Now.ToString(@"dd.MM.yyyy HH:mm:ss.fff" + @"]");
-            Console.WriteLine(msg);            
+            Console.WriteLine(msg);
 
             object objTest = null;
             Type typeTest =
@@ -221,7 +221,7 @@ namespace TestFunc
                             }
 
                             Console.WriteLine();
-                            Console.WriteLine(@"Для продолжения нажмите 'Spacebar'...");                            
+                            Console.WriteLine(@"Для продолжения нажмите 'Spacebar'...");
                         }
                         else
                             ;

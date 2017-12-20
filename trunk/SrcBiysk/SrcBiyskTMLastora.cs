@@ -13,19 +13,19 @@ using uLoaderCommon;
 
 namespace SrcBiysk
 {
-    public class SrcBiyskTMLastora : HHandlerDbULoaderSrc
+    public class SrcBiyskTMLastora : HHandlerDbULoaderDatetimeSrc
     {
         public SrcBiyskTMLastora()
-            : base()
+            : base(@"yyyyMMdd HHmmss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_HALF_PERIOD)
         {
         }
 
         public SrcBiyskTMLastora(PlugInULoader iPlugIn)
-            : base(iPlugIn)
+            : base(iPlugIn, @"yyyyMMdd HHmmss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_HALF_PERIOD)
         {
         }
 
-        private class GroupSignalsBiyskTMLastora : GroupSignalsSrc
+        private class GroupSignalsBiyskTMLastora : GroupSignalsDatetimeSrc
         {
             public GroupSignalsBiyskTMLastora(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
@@ -37,16 +37,16 @@ namespace SrcBiysk
                 m_strQuery = string.Empty;
 
                 string strUnion = @" UNION ALL ";
-                long secOffsetUTCToData = m_secOffsetUTCToData;
+                //long secOffsetUTCToData = m_secOffsetUTCToData;
 
                 //Формировать зпрос
                 foreach (GroupSignalsSrc.SIGNALBiyskTMoraSrc s in m_arSignals)
                     if (s.IsFormula == false)
                         m_strQuery += @"SELECT " + s.m_idMain + @" as ID, VALUE, QUALITY"
-                                + @", DATETIME + numtodsinterval(" + secOffsetUTCToData + @",'second') as DATETIME"
+                                + @", DATETIME as DATETIME"
                             + @" FROM ARCH_SIGNALS." + s.m_NameTable
                             + @" WHERE"
-                            + @" DATETIME > " + @"to_timestamp('" + (_parent as SrcBiyskTMLastora).m_dtServer.AddSeconds(m_secOffsetServerToQuery).AddMinutes(-1).ToString(@"yyyyMMdd HHmmss") + @"', 'yyyymmdd hh24missFF9')" //@" SYSTIMESTAMP - interval '1' minute"
+                            + @" DATETIME > " + @"to_timestamp('" + DateTimeBeginFormat + @"', 'yyyymmdd hh24missFF9')" //@" SYSTIMESTAMP - interval '1' minute"
                             //+ @" ORDER BY DATETIME DESC"
                             + strUnion
                         ;

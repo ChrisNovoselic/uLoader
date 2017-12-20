@@ -52,14 +52,14 @@ namespace SrcMST
 
         public SrcMSTKKSNAMEtoris()
             //??? аргументы лишние, кроме 1-го
-            : base(string.Empty, MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.HALF_PERIOD)
+            : base(string.Empty, MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_HALF_PERIOD)
         {
             initialize();
         }
 
         public SrcMSTKKSNAMEtoris(PlugInULoader iPlugIn)
             //??? аргументы лишние, кроме 1-го
-            : base(iPlugIn, string.Empty, MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.HALF_PERIOD)
+            : base(iPlugIn, string.Empty, MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_HALF_PERIOD)
         {
             initialize();
         }
@@ -622,7 +622,7 @@ namespace SrcMST
 
                 m_dictSignalsAdvised.Add(kks_name, idGrpSgnls);
 
-                //Logging.Logg ().Action (@"Подписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);            
+                //Logging.Logg ().Action (@"Подписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);
 
                 err = m_torIsData.ReadItem(kks_name, ref type, out value, out timestamp, out quality, out status);
                 if (! (err == 0))
@@ -832,8 +832,12 @@ namespace SrcMST
             switch (state)
             {
                 case (int)StatesMachine.Values:
-                    m_dtServer = DateTime.Now;
-                    DateTimeBegin = m_dtServer.AddMilliseconds(-1 * (m_dtServer.Second * 1000 + m_dtServer.Millisecond));
+                    // toris-instance выполняется только на сервере
+                    m_datetimeServer.Value = DateTime.Now;
+                    m_datetimeServer.BaseUTCOffset = DateTime.Now - DateTime.UtcNow;
+                    // округлить до минут
+                    DateTimeBegin = DateTimeBegin.Round (TimeSpan.FromMinutes (1), MidpointRounding.AwayFromZero);
+                    //DateTimeBegin = m_dtServer.AddMilliseconds(-1 * (m_dtServer.Second * 1000 + m_dtServer.Millisecond));
                     //Запрос на выборку данных не требуется
                     ClearValues ();
                     break;

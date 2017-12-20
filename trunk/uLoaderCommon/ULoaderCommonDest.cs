@@ -19,7 +19,7 @@ namespace uLoaderCommon
         
         private const int MAX_QUEUECOUNT_OF_KEY = 16;
 
-        public string m_strNameTable;        
+        public string m_strNameTable;
 
         enum StatesMachine
         {
@@ -258,7 +258,7 @@ namespace uLoaderCommon
             ///// <summary>
             ///// Дата/время начала интервала (минимальное значение), за который получен набор значений для вставки в целевую таблицу
             ///// </summary>
-            //public DateTimeRange DateTimeRangeRecieved;            
+            //public DateTimeRange DateTimeRangeRecieved;
             /// <summary>
             /// Состояние группы сигналов
             /// </summary>
@@ -481,17 +481,21 @@ namespace uLoaderCommon
         protected override int StateRequest(int state)
         {
             int iRes = 0;
+
             string query = string.Empty
                 , msg = string.Empty;
+            StatesMachine stateMachine = StatesMachine.Unknown;
 
             try {
                 msg = string.Format("HHandlerDbULoaderDest::StateRequest (state={3}) - [ID={0}:{1}, key={2}] - "
                     , _iPlugin._Id, _iPlugin.KeySingleton, IdGroupSignalsCurrent, (StatesMachine)state);
 
                 if (!(IdGroupSignalsCurrent < 0)) {
-                    switch ((StatesMachine)state) {
+                    stateMachine = (StatesMachine)state;
+
+                    switch (stateMachine) {
                         case StatesMachine.CurrentTime:
-                            GetCurrentTimeRequest (DbInterface.DB_TSQL_INTERFACE_TYPE.MSSQL, m_dictIdListeners [IdGroupSignalsCurrent] [0]);
+                            query = GetCurrentTimeQuery (DbInterface.DB_TSQL_INTERFACE_TYPE.MSSQL);
                             break;
                         case StatesMachine.Values:
                             query = (m_dictGroupSignals [IdGroupSignalsCurrent] as GroupSignalsDest).ExistsValuesQuery;
@@ -503,13 +507,16 @@ namespace uLoaderCommon
                             break;
                     }
 
+                    iRes = string.IsNullOrEmpty (query) == true ? 0 : 1;
+
+                    Request (m_dictIdListeners [IdGroupSignalsCurrent] [0], query);
+
+                    // детальная информация по запросу
+                    Logging.Logg ().Debug (string.Format (@"{0} ...", string.Format (@"{0} query={1} ...", msg, m_datetimeServer.Equals (DateTime.MinValue) == false ? query : @"не известно тек./время сервера"))
+                        , Logging.INDEX_MESSAGE.D_004);
+
                     if (isLastState (state) == true)
                         (m_dictGroupSignals [IdGroupSignalsCurrent] as GroupSignalsDest).Dequeue ();
-                    else
-                        ;
-
-                    if (query.Equals (string.Empty) == false)
-                        Request (m_dictIdListeners [IdGroupSignalsCurrent] [0], query);
                     else
                         ;
                 } else
@@ -540,10 +547,11 @@ namespace uLoaderCommon
                     case StatesMachine.CurrentTime:
                         if ((table.Rows.Count == 1)
                             && (table.Columns.Count == 1)) {
-                            m_dtServer = (DateTime)table.Rows [0][0];
+                            m_datetimeServer.Value = (DateTime)table.Rows [0] [0];
                             //msg = string.Format(@"{0} DATETIME={1} ...", msg, m_dtServer.ToString(@"dd.MM.yyyy HH.mm.ss.fff"));
                             //Logging.Logg().Debug(msg, Logging.INDEX_MESSAGE.NOT_SET);
                             //Console.WriteLine (msg);
+                            m_datetimeServer.BaseUTCOffset = (DateTime)table.Rows [0] [0] - (DateTime)table.Rows [0] [1];
                         } else
                             ;
                         (obj as DataTable).Columns.Clear();
@@ -602,7 +610,7 @@ namespace uLoaderCommon
                     && (m_dictGroupSignals[id].IsStarted == true))
                 {
                     //0 - режим работы, 1 - иднтификатор источника значений, 2 - идентификатор ТЭЦ (при наличии)
-                    (m_dictGroupSignals[id] as GroupSignalsDest).InitSource(pars[0], pars[1], pars[2]);             
+                    (m_dictGroupSignals[id] as GroupSignalsDest).InitSource(pars[0], pars[1], pars[2]);
                     m_dictGroupSignals[id].TableRecieved = tableIn.Copy();
 
                     keyQueueCount = push(id);
@@ -850,7 +858,7 @@ namespace uLoaderCommon
                                 Logging.Logg ().Error ($"Отсутствуют необходимые столбцы: {string.Join(",", TableDistinct.Columns.OfType<DataColumn>().Select(col => col.ColumnName).ToArray ())}..."
                                     , Logging.INDEX_MESSAGE.NOT_SET);
                         } else
-                            Logging.Logg ().Error ($"Отсутствует структура в исходной/целевой таблицы, кл-во_столбцов={TableDistinct.Columns.Count})...", Logging.INDEX_MESSAGE.NOT_SET);                        
+                            Logging.Logg ().Error ($"Отсутствует структура в исходной/целевой таблицы, кл-во_столбцов={TableDistinct.Columns.Count})...", Logging.INDEX_MESSAGE.NOT_SET);
                     } else
                         ;
                 }

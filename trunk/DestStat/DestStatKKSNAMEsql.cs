@@ -35,10 +35,12 @@ namespace DestStat
 
             protected override string getTargetValuesQuery()
             {
-                string strRes = string.Empty
-                    , strRow = string.Empty;
+                string strRes = string.Empty;
+
+                string strRow = string.Empty;
                 int idSrvTM = (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).GetIdSrvTM(m_IdSourceConnSett)
-                    , iOffsetUTCToDataTotalHours = (int)(_parent as DestStatKKSNAMEsql).m_tsOffsetUTCToData.Value.TotalHours;
+                    //, iOffsetUTCToDataTotalHours = (int)(_parent as DestStatKKSNAMEsql).m_tsOffsetUTCToData.Value.TotalHours
+                    ;
 
                 //Logging.Logg().Debug(@"GroupSignalsStatKKSNAMEsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -62,7 +64,7 @@ namespace DestStat
                         strRow += @"'" + row[@"KKSNAME_MST"] + @"'" + @",";
                         strRow += m_IdSourceTEC + @",";
                         strRow += ((double)row[@"VALUE"]).ToString("F3", CultureInfo.InvariantCulture) + @",";
-                        strRow += @"'" + ((DateTime)row[@"DATETIME"]).AddHours(iOffsetUTCToDataTotalHours).ToString(s_strFormatDbDateTime) + @"',";
+                        strRow += @"'" + ToDataTime(((DateTime)row[@"DATETIME"])).ToString(s_strFormatDbDateTime) + @"',";
                         strRow += "0" + @",";
                         //strRow += row[@"tmdelta"] + @",";
                         strRow += @"GETDATE()" + @",";

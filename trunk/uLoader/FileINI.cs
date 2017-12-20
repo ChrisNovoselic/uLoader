@@ -21,7 +21,7 @@ namespace uLoader
             {
                 SRC, SIGNAL
                     , COUNT_INDEX_TYPE_GROUP
-            };            
+            };
             /// <summary>
             /// Индексы для ключей - источники
             /// </summary>
@@ -63,7 +63,7 @@ namespace uLoader
                 : base(nameFile, true)
             {
                 string sec = string.Empty;
-                Dictionary<string, string> dictSecValues = null;                
+                Dictionary<string, string> dictSecValues = null;
 
                 //Получить наименования частей секций
                 SEC_SRC_TYPES = GetMainValueOfKey(@"SEC_SRC_TYPES").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.VALUES]);
@@ -72,11 +72,11 @@ namespace uLoader
                 KEY_FORMULA = GetMainValueOfKey(@"KEY_FORMULA");
                 //Получить ключ для чтения параметров в секции
                 KEY_PARS = GetMainValueOfKey(@"KEY_PARS");
-                //Получить период для обновления информации на панели "Работа"                
+                //Получить период для обновления информации на панели "Работа"
                 if (Int32.TryParse (GetMainValueOfKey(@"PANEL_WORK_UPDATE"), out m_iSecPanelWorkUpdate) == true)
-                    Logging.Logg().Debug(@"FileINI::ctor () - PANEL_WORK_UPDATE = " + m_iSecPanelWorkUpdate, Logging.INDEX_MESSAGE.NOT_SET);                
+                    Logging.Logg().Debug(@"FileINI::ctor () - PANEL_WORK_UPDATE = " + m_iSecPanelWorkUpdate, Logging.INDEX_MESSAGE.NOT_SET);
                 else
-                    Logging.Logg().Error(@"FileINI::FileINI () - Параметр PANEL_WORK_UPDATE не удалось инициализировать ...", Logging.INDEX_MESSAGE.NOT_SET);                
+                    Logging.Logg().Error(@"FileINI::FileINI () - Параметр PANEL_WORK_UPDATE не удалось инициализировать ...", Logging.INDEX_MESSAGE.NOT_SET);
                 //Инициализировать словарь с формулами
                 fillDictFormula();
 
@@ -182,7 +182,7 @@ namespace uLoader
                     if (dictValues.ContainsKey(key) == true)
                     {
                         //Добавить группу...
-                        addGroupValues(indxNewSrc, typeNewGroup, dictValues[key], secTarget + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + key);                        
+                        addGroupValues(indxNewSrc, typeNewGroup, dictValues[key], secTarget + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + key);
                     }
                     else
                         break;
@@ -356,7 +356,7 @@ namespace uLoader
                 switch (indxTypeGroup)
                 {
                     case INDEX_TYPE_GROUP.SRC: //Добавить группу источников
-                        itemSrc = addGroupSources((int)indxSrc, secGroup);                        
+                        itemSrc = addGroupSources((int)indxSrc, secGroup);
                         break;
                     case INDEX_TYPE_GROUP.SIGNAL: //Добавить группу сигналов
                         itemSrc = addGroupSignals((int)indxSrc);
@@ -630,7 +630,7 @@ namespace uLoader
             {
                 string[,] arStrRes = null;
                 int i = -1;
-                ITEM_SRC itemSrc = getItemSrc (pars);                
+                ITEM_SRC itemSrc = getItemSrc (pars);
 
                 if (! ((itemSrc as GROUP_SIGNALS_SRC).m_listSgnls == null))
                 {
@@ -888,7 +888,7 @@ namespace uLoader
                         grpSrc.SetAdding(val.Split(new char[] { s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL] }));
                         SetSecValueOfKey(SEC_SRC_TYPES[(int)type] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
                             , par
-                            , val);                        
+                            , val);
                     }
                     else
                     {

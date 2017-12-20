@@ -114,13 +114,13 @@ namespace uLoader
                     if (iLoaderCreateObject == 0) {
                         //Статус "загруженная библиотека" сохраняется
                         //Взаимная "привязка" для обмена сообщениями
-                        _iIdTypePlugInObjectLoaded = loader.KeySingleton; //plugInRes.GetKeyType(strTypeName);                    
+                        _iIdTypePlugInObjectLoaded = loader.KeySingleton; //plugInRes.GetKeyType(strTypeName);
                         // библиотека - объект класса
                         loader.EvtDataAskedHost += new DelegateObjectFunc(plugIn_OnEvtDataAskedHost);
                         // объект класса - библиотека
                         EvtDataAskedHostPlugIn += loader.OnEvtDataRecievedHost;
                         ////??? - повторная установка значения
-                        //_iStateDLL = HClassLibrary.HPlugIns.STATE_DLL.LOADED;                    
+                        //_iStateDLL = HClassLibrary.HPlugIns.STATE_DLL.LOADED;
                     } else {
                         //Статус "загруженная библиотека" изменяется
                         _iStateDLL = iLoaderCreateObject == -1 ? HPlugIns.STATE_DLL.NOT_LOAD
@@ -1093,8 +1093,8 @@ namespace uLoader
                                     else
                                         ;
 
-                                    tsToPanel = tsToData == HTimeSpan.NotValue ? TimeSpan.Zero : -tsToData.Value;
-                                    //tsToPanel += tsToQuery == HTimeSpan.NotValue ? TimeSpan.Zero : -tsToQuery.Value;
+                                    tsToPanel = tsToData == HTimeSpan.NotValue ? TimeSpan.Zero : tsToData.Value;
+                                    //tsToPanel += tsToQuery == HTimeSpan.NotValue ? TimeSpan.Zero : tsToQuery.Value;
 
                                     //Logging.Logg().Debug(@"GroupSources::GetDataToPanel () - получено строк=" + tblRec.Rows.Count + @"...", Logging.INDEX_MESSAGE.NOT_SET);
 

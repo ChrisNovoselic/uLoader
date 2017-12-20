@@ -23,7 +23,7 @@ namespace uLoader
         SOURCE,
         DEST
             , COUNT_INDEX_SRC
-    };    
+    };
 
     public partial class FormMain : uLoaderCommon.FormMainBase
     {
@@ -144,7 +144,7 @@ namespace uLoader
             работаToolStripMenuItem.CheckOnClick =
             конфигурацияToolStripMenuItem.CheckOnClick =
             взаимодействиеToolStripMenuItem.CheckOnClick=
-                 true;            
+                 true;
             // п.п.меню заблокированы - изменение состояния только программно
             //взаимодействиеToolStripMenuItem.CheckStateChanged += new EventHandler(взаимодействиеToolStripMenuItem_CheckStateChanged);
             //работаToolStripMenuItem.CheckStateChanged += new EventHandler(работаToolStripMenuItem_CheckStateChanged);

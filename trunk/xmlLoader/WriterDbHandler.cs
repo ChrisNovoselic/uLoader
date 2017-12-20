@@ -100,7 +100,7 @@ namespace xmlLoader
 
                 _cancelRequest = new CancellationTokenSource();
 
-                Task.Run(() => fThreadRequest(dataSetWriter), _cancelRequest.Token);                
+                Task.Run(() => fThreadRequest(dataSetWriter), _cancelRequest.Token);
             }
             /// <summary>
             /// Потоковая функция - выполнить запросы к источникам данных в ~ соответствии со сформированной очередью
@@ -304,7 +304,7 @@ namespace xmlLoader
                             break;
                     }
                 } else
-                    ;                
+                    ;
 
                 return iRes;
             }

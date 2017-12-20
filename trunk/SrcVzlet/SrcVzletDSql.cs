@@ -14,13 +14,13 @@ namespace SrcVzlet
     class SrcVzletDsql : HHandlerDbULoaderDatetimeSrc
     {
         public SrcVzletDsql()
-            : base(@"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(@"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
 
         }
 
         public SrcVzletDsql(PlugInULoader iPlugIn)
-            : base(iPlugIn, @"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.FULL_PERIOD)
+            : base(iPlugIn, @"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
         }
 
@@ -138,7 +138,7 @@ namespace SrcVzlet
                             //if (int.Parse(r["COUNT"].ToString()) > countRow) {//???проверка кол-ва строк
                                 try {
                                     dtValue = DateTime.Parse(r["DATETIME"].ToString());
-                                    dtValue += m_tsOffsetUTCToData.Value; //OFFSET
+                                    //dtValue = ToUtcTime (dtValue); //OFFSET
 
                                     if (sgnl.IsFormula == false) {
                                         dblValue = double.Parse(r["VALUE"].ToString());

@@ -40,7 +40,7 @@ namespace uLoader
             this.файлToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.файлКонфигурацияToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.файлКонфигурацияЗагрузитьToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.файлКонфигурацияСохранитьToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();            
+            this.файлКонфигурацияСохранитьToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.выходToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.видToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.работаToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();

@@ -27,7 +27,7 @@ namespace TestFunc
                 List<VariableValue> variables = new List<VariableValue>();
 
                 foreach (VariableValue arg in args)
-                    variables.Add(arg);                
+                    variables.Add(arg);
 
                 // Do it !
                 double res = ToolsHelper.Calculator.Calculate(compiledExpression, variables);

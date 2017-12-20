@@ -321,78 +321,78 @@ namespace uLoaderCommon
         /// </summary>
         protected abstract class GroupSignalsSrc : GroupSignals
         {
-            /// <summary>
-            /// Смещение даты/времени сервера (операционная система)
-            /// </summary>
-            protected long m_secOffsetUTCToServer
-            {
-                get {
-                    return (_parent as HHandlerDbULoaderSrc).m_tsOffsetUTCToServer == HTimeSpan.NotValue ?
-                        0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsOffsetUTCToServer.Value.TotalSeconds;
-                }
-            }
-            /// <summary>
-            /// Смещение меток даты/времени хранимых в источнике значений
-            /// </summary>
-            protected long m_secOffsetUTCToData
-            {
-                get {
-                    return (_parent as HHandlerDbULoaderSrc).m_tsOffsetUTCToData == HTimeSpan.NotValue ?
-                        0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsOffsetUTCToData.Value.TotalSeconds;
-                }
-            }
-            /// <summary>
-            /// Часовой пояс запрашиваемых данных
-            /// </summary>
-            protected long m_secOffsetUTCToQuery
-            {
-                get
-                {
-                    return (_parent as HHandlerDbULoaderSrc).m_tsOffsetUTCToQuery == HTimeSpan.NotValue ?
-                        0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsOffsetUTCToQuery.Value.TotalSeconds;
-                }
-            }
-            /// <summary>
-            /// Смещение даты/времени запрашиваемых данных от даты/времени сервера(операцтонная система)
-            /// </summary>
-            protected long m_secOffsetServerToQuery
-            {
-                get
-                {
-                    //int iRes = 0;
+            ///// <summary>
+            ///// Смещение даты/времени сервера (операционная система)
+            ///// </summary>
+            //protected long m_secOffsetUTCToServer
+            //{
+            //    get {
+            //        return (_parent as HHandlerDbULoaderSrc).m_tsOffsetUTCToServer == HTimeSpan.NotValue ?
+            //            0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsOffsetUTCToServer.Value.TotalSeconds;
+            //    }
+            //}
+            ///// <summary>
+            ///// Смещение меток даты/времени хранимых в источнике значений
+            ///// </summary>
+            //protected long m_secOffsetUTCToData
+            //{
+            //    get {
+            //        return (_parent as HHandlerDbULoaderSrc).m_tsOffsetUTCToData == HTimeSpan.NotValue ?
+            //            0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsOffsetUTCToData.Value.TotalSeconds;
+            //    }
+            //}
+            ///// <summary>
+            ///// Часовой пояс запрашиваемых данных
+            ///// </summary>
+            //protected long m_secOffsetUTCToQuery
+            //{
+            //    get
+            //    {
+            //        return (_parent as HHandlerDbULoaderSrc).m_tsOffsetUTCToQuery == HTimeSpan.NotValue ?
+            //            0 : (int)(_parent as HHandlerDbULoaderSrc).m_tsOffsetUTCToQuery.Value.TotalSeconds;
+            //    }
+            //}
+            ///// <summary>
+            ///// Смещение даты/времени запрашиваемых данных от даты/времени сервера(операцтонная система)
+            ///// </summary>
+            //protected long m_secOffsetServerToQuery
+            //{
+            //    get
+            //    {
+            //        //int iRes = 0;
 
-                    //if ((!((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer == HTimeSpan.NotValue))
-                    //    && (!((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData == HTimeSpan.NotValue)))
-                    //    iRes = (int)((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer.Value.TotalHours
-                    //        - (_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData.Value.TotalHours);
-                    //else
-                    //    if (!((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer == HTimeSpan.NotValue))
-                    //        iRes = (int)(_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer.Value.TotalHours;
-                    //    else
-                    //        if (!((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData == HTimeSpan.NotValue))
-                    //            iRes = -1 * (int)(_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData.Value.TotalHours;
-                    //        else
-                    //            ;
+            //        //if ((!((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer == HTimeSpan.NotValue))
+            //        //    && (!((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData == HTimeSpan.NotValue)))
+            //        //    iRes = (int)((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer.Value.TotalHours
+            //        //        - (_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData.Value.TotalHours);
+            //        //else
+            //        //    if (!((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer == HTimeSpan.NotValue))
+            //        //        iRes = (int)(_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToServer.Value.TotalHours;
+            //        //    else
+            //        //        if (!((_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData == HTimeSpan.NotValue))
+            //        //            iRes = -1 * (int)(_parent as HHandlerDbULoaderSrc).m_tsUTCOffsetToData.Value.TotalHours;
+            //        //        else
+            //        //            ;
 
-                    return
-                        //iRes
-                        //// Server - (Data - (Data - Query)) = -7 - (-7 + (-7 - (-3)))
-                        //m_secOffsetUTCToServer - (m_secOffsetUTCToData + (m_secOffsetUTCToData - m_secOffsetUTCToQuery))
-                        //// Server - (Data - (Data - Query)) = -7 - (-7 - (-7 - (-3)))
-                        //m_secOffsetUTCToData - (m_secOffsetUTCToQuery - m_secOffsetUTCToData) - m_secOffsetUTCToServer
-                        //// Server - Query = (-7 - (-3))
-                        //m_secOffsetUTCToServer - m_secOffsetUTCToQuery
-                        //// (Data - (Data - Query)) - Server = Query - Server = (-3 - (-7))
-                        //m_secOffsetUTCToQuery - m_secOffsetUTCToServer
-                        ////Data - (Data - Query) - Server - (Data - Server)
-                        //m_secOffsetUTCToData - (m_secOffsetUTCToData - m_secOffsetUTCToQuery) - m_secOffsetUTCToServer - (m_secOffsetUTCToData - m_secOffsetUTCToServer)
-                        ////Server - Data + Query
-                        //m_secOffsetUTCToServer - m_secOffsetUTCToData + m_secOffsetUTCToQuery
-                        //!!!Query - Data
-                        m_secOffsetUTCToQuery - m_secOffsetUTCToData
-                            ;
-                }
-            }
+            //        return
+            //            //iRes
+            //            //// Server - (Data - (Data - Query)) = -7 - (-7 + (-7 - (-3)))
+            //            //m_secOffsetUTCToServer - (m_secOffsetUTCToData + (m_secOffsetUTCToData - m_secOffsetUTCToQuery))
+            //            //// Server - (Data - (Data - Query)) = -7 - (-7 - (-7 - (-3)))
+            //            //m_secOffsetUTCToData - (m_secOffsetUTCToQuery - m_secOffsetUTCToData) - m_secOffsetUTCToServer
+            //            //// Server - Query = (-7 - (-3))
+            //            //m_secOffsetUTCToServer - m_secOffsetUTCToQuery
+            //            //// (Data - (Data - Query)) - Server = Query - Server = (-3 - (-7))
+            //            //m_secOffsetUTCToQuery - m_secOffsetUTCToServer
+            //            ////Data - (Data - Query) - Server - (Data - Server)
+            //            //m_secOffsetUTCToData - (m_secOffsetUTCToData - m_secOffsetUTCToQuery) - m_secOffsetUTCToServer - (m_secOffsetUTCToData - m_secOffsetUTCToServer)
+            //            ////Server - Data + Query
+            //            //m_secOffsetUTCToServer - m_secOffsetUTCToData + m_secOffsetUTCToQuery
+            //            //!!!Query - Data
+            //            m_secOffsetUTCToQuery - m_secOffsetUTCToData
+            //                ;
+            //    }
+            //}
 
             protected class SIGNALBiyskTMoraSrc : SIGNAL
             {
@@ -699,12 +699,14 @@ namespace uLoaderCommon
 
             RowCountRecieved = table.Rows.Count;
 
-            if (TableRecieved == null)
-            {
+            if (Equals(TableRecieved, null) == true)
                 TableRecieved = new DataTable();
-            }
             else
                 ;
+
+            table.Rows.Cast<DataRow>().ToList().ForEach(row => {
+                row ["DATETIME"] = ToUtcTime ((DateTime)row ["DATETIME"]);
+            });
 
             TableRecieved = GroupSignals.DataTableDuplicate.Clear(table);
         }
@@ -712,7 +714,9 @@ namespace uLoaderCommon
         protected override int StateRequest(int state)
         {
             int iRes = 0;
-            string msg = string.Empty;
+
+            string msg = string.Empty
+                , query = string.Empty;
 
             try {
                 msg = string.Format("HHandlerDbULoaderSrc::StateRequest (state={3}) - [ID={0}:{1}, key={2}] - "
@@ -723,7 +727,9 @@ namespace uLoaderCommon
                     && (m_dictIdListeners[IdGroupSignalsCurrent].Length > 0)) {
                     switch (state) {
                         case (int)StatesMachine.CurrentTime:
-                            GetCurrentTimeRequest(DbTSQLInterface.getTypeDB(m_connSett.port), m_dictIdListeners[IdGroupSignalsCurrent][0]);
+                            query = GetCurrentTimeQuery (DbTSQLInterface.getTypeDB (m_connSett.port));
+                            //GetCurrentTimeRequest(DbTSQLInterface.getTypeDB(m_connSett.port), m_dictIdListeners[IdGroupSignalsCurrent][0]);
+                            Request (m_dictIdListeners [IdGroupSignalsCurrent] [0], query);
                             break;
                         case (int)StatesMachine.Values:
                             if (RowCountRecieved == -1)
@@ -731,16 +737,19 @@ namespace uLoaderCommon
                             else
                                 ;
 
-                            Request(m_dictIdListeners[IdGroupSignalsCurrent][0], _query);
+                            query = _query;
                             break;
                         default:
                             break;
                     }
+
+                    Request (m_dictIdListeners [IdGroupSignalsCurrent] [0], query);
+
                     // журналирование обработки состояния для группы сигналов источника
                     Logging.Logg().Debug(string.Format(@"{0} ...", msg)
                         , Logging.INDEX_MESSAGE.D_003);
                     // более детальная информация
-                    Logging.Logg ().Debug (string.Format (@"{0} ...", string.Format (@"{0} query={1} ...", msg, m_dtServer.Equals(DateTime.MinValue) == false ? _query : @"не известно тек./время сервера"))
+                    Logging.Logg ().Debug (string.Format (@"{0} ...", string.Format (@"{0} query={1} ...", msg, m_datetimeServer.Equals(DateTime.MinValue) == false ? query : @"не известно тек./время сервера"))
                         , Logging.INDEX_MESSAGE.D_004);
                 } else
                     throw new Exception(string.Format(@"{0} ...", msg));
@@ -767,8 +776,10 @@ namespace uLoaderCommon
                 switch (state) {
                     case (int)StatesMachine.CurrentTime:
                         if ((table.Rows.Count == 1)
-                            && (table.Columns.Count == 1)) {
-                            m_dtServer = (DateTime)(table as DataTable).Rows [0] [0];
+                            && (table.Columns.Count == 2)) {
+                            m_datetimeServer.Value = (DateTime)(table as DataTable).Rows [0] [0];
+                            // смещение ОТ УТЦ ДО времени сервера
+                            m_datetimeServer.BaseUTCOffset = (DateTime)(table as DataTable).Rows [0] [0] - (DateTime)(table as DataTable).Rows [0] [1];
                         } else
                             ;
                         break;
@@ -887,7 +898,7 @@ namespace uLoaderCommon
             , CAUSE_PERIOD_HOUR
             , CAUSE_PERIOD_DAY /*округление до ПЕРИОД, ожидание полного набора записей за ПЕРИОД*/
             , CAUSE_NOT /*текущее время сервера*/
-                , HALF_PERIOD, FULL_PERIOD /*Шаг при изменении даты/времени очередного опроса*/
+                , NEXTSTEP_HALF_PERIOD, NEXTSTEP_FULL_PERIOD /*Шаг при изменении даты/времени очередного опроса*/
         };
         public MODE_CURINTERVAL[] m_modeCurIntervals;
 
@@ -966,31 +977,34 @@ namespace uLoaderCommon
                 get
                 {
                     string strRes = string.Empty;
-                    long msec = -1L
-                        , msecDiff = -1L;
 
-                    msec = m_secOffsetServerToQuery * 1000;
-                    if (Math.Abs(msec) > 1)
-                        msecDiff = msec;
-                    else
-                        msecDiff = 0L;
+                    //long msec = -1L
+                    //    , msecDiff = -1L;
 
-                    switch (Mode)
-                    {
-                        case MODE_WORK.CUR_INTERVAL:
-                            msec = (long)(_parent as HHandlerDbULoaderDatetimeSrc).m_tsCurIntervalOffset.Value.TotalMilliseconds;
-                            if (Math.Abs(msec) > 1)
-                                msecDiff += msec;
-                            else
-                                ;
-                            break;
-                        case MODE_WORK.COSTUMIZE:
-                            break;
-                        default:
-                            break;
-                    }
+                    //msec = m_secOffsetServerToQuery * 1000;
+                    //if (Math.Abs(msec) > 1)
+                    //    msecDiff = msec;
+                    //else
+                    //    msecDiff = 0L;
 
-                    strRes = DateTimeBegin.AddMilliseconds(1 * msecDiff).ToString((_parent as HHandlerDbULoaderDatetimeSrc).m_strDateTimeDBFormat, CultureInfo.InvariantCulture);
+                    //switch (Mode)
+                    //{
+                    //    case MODE_WORK.CUR_INTERVAL:
+                    //        msec = (long)(_parent as HHandlerDbULoaderDatetimeSrc).m_tsCurIntervalOffset.Value.TotalMilliseconds;
+                    //        if (Math.Abs(msec) > 1)
+                    //            msecDiff += msec;
+                    //        else
+                    //            ;
+                    //        break;
+                    //    case MODE_WORK.COSTUMIZE:
+                    //        break;
+                    //    default:
+                    //        break;
+                    //}
+
+                    strRes = DateTimeBegin
+                        //.AddMilliseconds(1 * msecDiff)
+                        .ToString((_parent as HHandlerDbULoaderDatetimeSrc).m_strDateTimeDBFormat, CultureInfo.InvariantCulture);
 
                     return strRes;
                 }
@@ -1004,33 +1018,37 @@ namespace uLoaderCommon
                 get
                 {
                     string strRes = string.Empty;
-                    long msec = -1L
-                        , msecDiff = -1L;
-                    //int pday = 1;
 
-                    msec = (long)m_secOffsetServerToQuery * 1000;
-                    if (Math.Abs(msec) > 1)
-                        msecDiff = msec;
-                    else
-                        msecDiff = 0L;
+                    //long msec = -1L
+                    //    , msecDiff = -1L;
+                    ////int pday = 1;
 
-                    switch (Mode)
-                    {
-                        case MODE_WORK.CUR_INTERVAL:
-                            msec = (long)(_parent as HHandlerDbULoaderDatetimeSrc).m_tsCurIntervalOffset.Value.TotalMilliseconds;
-                            if (Math.Abs(msec) > 1)
-                                msecDiff += msec;
-                            else
-                                ;
-                            break;
-                        case MODE_WORK.COSTUMIZE:
-                        default:
-                            break;
-                    }
+                    //msec = (long)m_secOffsetServerToQuery * 1000;
+                    //if (Math.Abs(msec) > 1)
+                    //    msecDiff = msec;
+                    //else
+                    //    msecDiff = 0L;
+
+                    //switch (Mode)
+                    //{
+                    //    case MODE_WORK.CUR_INTERVAL:
+                    //        msec = (long)(_parent as HHandlerDbULoaderDatetimeSrc).m_tsCurIntervalOffset.Value.TotalMilliseconds;
+                    //        if (Math.Abs(msec) > 1)
+                    //            msecDiff += msec;
+                    //        else
+                    //            ;
+                    //        break;
+                    //    case MODE_WORK.COSTUMIZE:
+                    //    default:
+                    //        break;
+                    //}
+
                     //if (PeriodMain.Days == pday)
                     //    strRes = DateTimeStart.ToString((_parent as HHandlerDbULoaderDatetimeSrc).m_strDateTimeDBFormat, CultureInfo.InvariantCulture);
                     //else
-                        strRes = DateTimeBegin.AddMilliseconds(1 * msecDiff).AddMilliseconds((long)(PeriodMain.TotalMilliseconds)).ToString((_parent as HHandlerDbULoaderDatetimeSrc).m_strDateTimeDBFormat, CultureInfo.InvariantCulture);
+                        strRes = DateTimeBegin
+                            //.AddMilliseconds(1 * msecDiff)
+                            .AddMilliseconds((long)(PeriodMain.TotalMilliseconds)).ToString((_parent as HHandlerDbULoaderDatetimeSrc).m_strDateTimeDBFormat, CultureInfo.InvariantCulture);
                     //Console.WriteLine(@"DateTimeBegin=" + DateTimeBeginFormat + @"; DateTimeEndFormat=" + strRes);
 
                     return strRes;
@@ -1164,6 +1182,7 @@ namespace uLoaderCommon
         //            throw new Exception(@"ULoaderCommon::CountMSecInterval.set ...");
         //    }
         //}
+
         /// <summary>
         /// Дата/время начала опроса для текущей (обрабатываемой) группы
         /// </summary>
@@ -1187,6 +1206,7 @@ namespace uLoaderCommon
                     throw new Exception(@"ULoaderCommon::DateTimeStart.set ...");
             }
         }
+
         /// <summary>
         /// Дата/время начала опроса для текущей (обрабатываемой) группы
         /// </summary>
@@ -1210,54 +1230,33 @@ namespace uLoaderCommon
                     throw new Exception(@"ULoaderCommon::DateTimeBegin.set ...");
             }
         }
-        /// <summary>
-        /// Округлить значение даты времени
-        /// </summary>
-        private void causeToPeriod()
+
+        private TimeSpan StepIncrement
         {
-            decimal mKoeff = -1;
+            get
+            {
+                int denum = 1; //??? по умолчанию 'FULL_PERIOD'
 
-            switch (m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.CAUSE]) {
-                case MODE_CURINTERVAL.CAUSE_PERIOD_MINUTE: //Выравнивание по "минуте"
-                    mKoeff = 1;
-                    break;
-                case MODE_CURINTERVAL.CAUSE_PERIOD_HOUR: //Выравнивание по "час"
-                    mKoeff = 1 * 60;
-                    break;
-                case MODE_CURINTERVAL.CAUSE_PERIOD_DAY: //Выравнивание по "сутки"
-                    mKoeff = 24 * 60;
-                    break;
-                case MODE_CURINTERVAL.CAUSE_NOT:
-                default:
-                    break;
+                if (m_modeCurIntervals [(int)INDEX_MODE_CURINTERVAL.NEXTSTEP] == HHandlerDbULoaderDatetimeSrc.MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
+                // использовать полный период
+                    denum = 1;
+                else if (m_modeCurIntervals [(int)INDEX_MODE_CURINTERVAL.NEXTSTEP] == HHandlerDbULoaderDatetimeSrc.MODE_CURINTERVAL.NEXTSTEP_HALF_PERIOD)
+                // использовать полу/период
+                    denum = 2;
+                else
+                    ;
+
+                return TimeSpan.FromMilliseconds (PeriodLocal.TotalMilliseconds / denum);
             }
-
-            if (mKoeff > 0)
-                DateTimeBegin =
-                    new DateTime((long)(Math.Floor((DateTimeBegin.Ticks / 10000000) / (decimal)(mKoeff * 60)) * (mKoeff * 60)) * 10000000);
-            else
-                ;
         }
+        
         /// <summary>
         /// Актулизировать дату/время начала опроса
         /// </summary>
         /// <returns>Признак изменения даты/времени начала опроса</returns>
         protected virtual int actualizeDateTimeBegin()
-        {   
-            int iRes = 0
-                , denum = 0
-                //, pday = 1
-                ;
-
-            if (m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.NEXTSTEP] == MODE_CURINTERVAL.FULL_PERIOD)
-                // использовать полный период
-                denum = 1;
-            else
-                if (m_modeCurIntervals[(int)INDEX_MODE_CURINTERVAL.NEXTSTEP] == MODE_CURINTERVAL.HALF_PERIOD)
-                    // использовать полу/период
-                    denum = 2;
-                else
-                    ;
+        {
+            int iRes = 0;
 
             if (Mode == MODE_WORK.CUR_INTERVAL)
                 ////"сутки"
@@ -1272,9 +1271,8 @@ namespace uLoaderCommon
                     //Проверить признак 1-го запуска (в режиме CUR_INTERVAL)
                     if (DateTimeBegin == DateTime.MinValue) {
                         DateTimeBegin =
-                            m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds / denum);
-
-                        causeToPeriod();
+                            m_datetimeServer.Utc.Start (m_modeCurIntervals [(int)INDEX_MODE_CURINTERVAL.CAUSE], StepIncrement)
+                                .Add (OffsetDataToQuery);
 
                         //Установить признак перехода
                         iRes = 1;
@@ -1284,7 +1282,8 @@ namespace uLoaderCommon
                             case MODE_CURINTERVAL.CAUSE_PERIOD_HOUR:
                             case MODE_CURINTERVAL.CAUSE_PERIOD_MINUTE:
                             //Проверить необходимость изменения даты/времени
-                                if ((m_dtServer - DateTimeBegin.AddSeconds(PeriodLocal.TotalSeconds)).TotalMilliseconds > MSecIntervalLocal) {
+                                if ((DateTimeBegin
+                                        - DateTimeBegin.AddSeconds(PeriodLocal.TotalSeconds)).TotalMilliseconds > MSecIntervalLocal) {
                                     DateTimeBegin = DateTimeBegin.AddSeconds(PeriodLocal.TotalSeconds);
                                     //CountMSecInterval++;
                                     //Установить признак перехода
@@ -1294,7 +1293,9 @@ namespace uLoaderCommon
                                     ;
                                 break;
                             case MODE_CURINTERVAL.CAUSE_NOT:
-                                DateTimeBegin = m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds / denum);
+                                DateTimeBegin =
+                                    m_datetimeServer.Utc.Start (StepIncrement)
+                                        .Add (OffsetDataToQuery);
                                 //Установить признак перехода
                                 iRes = 1;
                                 break;
@@ -1306,16 +1307,19 @@ namespace uLoaderCommon
                 if (Mode == MODE_WORK.COSTUMIZE) {
                     //Проверить признак 1-го запуска (в режиме COSTUMIZE)
                     if (DateTimeBegin == DateTime.MinValue) {
-                        //Проверить указано ли дата/время начала опроса
+                        //Проверить указана ли дата/время начала опроса
                         if (DateTimeStart == DateTime.MinValue)
                             //Не указано - опросить ближайший к текущей дате/времени период
-                            DateTimeStart = m_dtServer.AddMilliseconds(-1 * PeriodLocal.TotalMilliseconds);
+                            DateTimeStart =
+                                m_datetimeServer.Utc.Start(
+                                    m_modeCurIntervals [(int)INDEX_MODE_CURINTERVAL.CAUSE]
+                                    , StepIncrement)
+                                    .Add(OffsetDataToQuery);
                         else
-                            ;
+                            DateTimeStart =
+                                DateTimeStart.Round(PeriodLocal, MidpointRounding.AwayFromZero);
 
                         DateTimeBegin = DateTimeStart;
-
-                        causeToPeriod();
                     } else
                         //Повторный опрос
                         DateTimeBegin = DateTimeBegin.AddMilliseconds(PeriodMain.TotalMilliseconds);
@@ -1326,11 +1330,12 @@ namespace uLoaderCommon
                     throw new Exception(@"HHandlerDbULoaderDatetimeSrc::actualizeDateTimeStart () - неизвестный режим ...");
 
             Logging.Logg().Debug(@"HHandlerDbULoader::actualizeDateTimeStart () - "
-                                + string.Format(@"[ID={0}:{1}, key={2}]", _iPlugin._Id, _iPlugin.KeySingleton, IdGroupSignalsCurrent)
-                                + @", m_dtServer=" + m_dtServer.ToString(@"dd.MM.yyyy HH:mm.ss.fff")
-                                + @", DateTimeBegin=" + DateTimeBegin.ToString(@"dd.MM.yyyy HH:mm.ss.fff")
-                                + @", iRes=" + iRes
-                                + @"...", Logging.INDEX_MESSAGE.NOT_SET);
+                    + string.Format(@"[ID={0}:{1}, key={2}]", _iPlugin._Id, _iPlugin.KeySingleton, IdGroupSignalsCurrent)
+                    + $", m_dtServer(UTC)={m_datetimeServer.Utc.ToString(@"dd.MM.yyyy HH:mm.ss.fff")}"
+                    + $", DateTimeBegin={DateTimeBegin.ToString(@"dd.MM.yyyy HH:mm.ss.fff")}"
+                    + $", iRes={iRes}"
+                    + @"..."
+                , Logging.INDEX_MESSAGE.NOT_SET);
 
             return iRes;
         }
@@ -1431,7 +1436,7 @@ namespace uLoaderCommon
     //                switch (Mode)
     //                {
     //                    case MODE_WORK.CUR_INTERVAL:
-    //                        msecDiff = 0;                          
+    //                        msecDiff = 0;
     //                        break;
     //                    case MODE_WORK.COSTUMIZE:
     //                        msecDiff = (int)PeriodLocal.TotalMilliseconds;

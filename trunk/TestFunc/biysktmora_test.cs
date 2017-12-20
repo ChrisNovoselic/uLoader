@@ -47,7 +47,7 @@ namespace TestFunc
                     , new object [] { 20063, @"Sgnl7", @"TAG_000063" }
                     , new object [] { 20064, @"Sgnl8", @"TAG_000064" }
                 }
-            );            
+            );
 
             return iRes;
         }

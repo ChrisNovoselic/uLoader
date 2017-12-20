@@ -90,7 +90,7 @@ namespace xmlLoader
 
                         itemQueue = Peek;
 
-                        EvtToFormMain?.Invoke(new object[] { state, itemQueue.Pars[0], itemQueue.Pars[1] });                        
+                        EvtToFormMain?.Invoke(new object[] { state, itemQueue.Pars[0], itemQueue.Pars[1] });
                         break;
                     case StatesMachine.XML_PACKAGE_VERSION: // версия(строка) шаблон XML-пакета
                         iRes = 0;
