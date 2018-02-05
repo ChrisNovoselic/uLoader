@@ -1774,7 +1774,7 @@ namespace uLoaderCommon
                 }
 
                 //Console.WriteLine(@"HHandlerDbULoader::Start (" + string.Format(@"ID={0}:{1}, key={2}", _iPlugin._Id, _iPlugin.KeySingleton, id) + @") - iNeedStarted=" + iNeedStarted + @" ...");
-                Logging.Logg().Debug(@"HHandlerDbULoader::Start (" + string.Format(@"ID={0}:{1}, key={2}", _iPlugin._Id, _iPlugin.KeySingleton, id) + @") - iNeedStarted=" + iNeedStarted + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Debug($@"HHandlerDbULoader::Start (ID={_iPlugin._Id}:{_iPlugin.KeySingleton}, key={id}) - iNeedStarted={iNeedStarted} ...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 //Проврить признак необходимости запуска "родительского" объекта
                 if (iNeedStarted == 1)

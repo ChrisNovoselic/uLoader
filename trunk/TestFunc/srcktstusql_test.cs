@@ -7,6 +7,7 @@ using System.Text;
 using uLoaderCommon;
 
 using SrcKTS;
+using ASUTP.Database;
 
 namespace TestFunc
 {
@@ -27,6 +28,7 @@ namespace TestFunc
                                 new ConnectionSettings (
                                     @"KTS-Teplo-1"
                                     , @"10.105.2.157"
+                                    , string.Empty
                                     , 1433
                                     , @"e6work"
                                     , @"eng6"

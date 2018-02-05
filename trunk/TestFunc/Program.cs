@@ -12,6 +12,9 @@ using ELW.Library.Math;
 using ELW.Library.Math.Exceptions;
 using ELW.Library.Math.Expressions;
 using ELW.Library.Math.Tools;
+using ASUTP.Core;
+using ASUTP;
+using ASUTP.Helper;
 
 namespace TestFunc
 {
@@ -19,7 +22,7 @@ namespace TestFunc
     {
         static void Main(string[] args)
         {
-            ProgramBase.Start(false);
+            ProgramBase.Start(Logging.LOG_MODE.FILE_EXE, false);
 
             string msg = @"Старт приложения [" + DateTime.Now.ToString(@"dd.MM.yyyy HH:mm:ss.fff" + @"]");
             Console.WriteLine(msg);

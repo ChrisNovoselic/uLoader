@@ -8,6 +8,7 @@ using System.Threading;
 using uLoaderCommon;
 
 using SrcBiysk;
+using ASUTP.Database;
 
 namespace TestFunc
 {
@@ -28,6 +29,7 @@ namespace TestFunc
                                 new ConnectionSettings (
                                     @"OraSOTIASSO-ORD"
                                     , @"10.220.2.5"
+                                    , string.Empty
                                     , 1521
                                     , @"ORCL"
                                     , @"arch_viewer"
