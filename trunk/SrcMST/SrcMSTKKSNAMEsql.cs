@@ -16,12 +16,12 @@ namespace SrcMST
     public class SrcMSTKKSNAMEsql : HHandlerDbULoaderDatetimeSrc
     {
         public SrcMSTKKSNAMEsql()
-            : base(@"yyyy/MM/dd HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_HALF_PERIOD)
+            : base(UCHET.Trice, @"yyyy/MM/dd HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_HALF_PERIOD)
         {
         }
 
         public SrcMSTKKSNAMEsql(PlugInULoader iPlugIn)
-            : base(iPlugIn, @"yyyy/MM/dd HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_HALF_PERIOD)
+            : base(iPlugIn, UCHET.Trice, @"yyyy/MM/dd HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_HALF_PERIOD)
         {
         }
 

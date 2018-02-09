@@ -39,7 +39,7 @@ namespace uLoader
                                         , GROUP_BOX_GROUP_SIGNALS
                                         , RBUTTON_CUR_DATETIME
                                         , RBUTTON_COSTUMIZE
-                                        , CALENDAR_START_DATE, MTBX_START_TIME, MTBX_PERIOD_MAIN, MTBX_PERIOD_LOCAL, TBX_INTERVAL
+                                        , CALENDAR_START_DATE, MTBX_START_TIME, MTBX_PERIOD_MAIN, MTBX_INTERVAL_CUSTOMIZE, TBX_INTERVAL_REQUERY
                                         , BTN_CLEAR
                                         //, TBX_GROUPSIGNALS_ADDING
                                         , DGV_SIGNALS_OF_GROUP
@@ -59,6 +59,14 @@ namespace uLoader
                 container.Add(this);
 
                 InitializeComponent();
+            }
+
+            public FormMain.INDEX_SRC Index
+            {
+                get
+                {
+                    return this is PanelLoaderDest ? FormMain.INDEX_SRC.DEST : FormMain.INDEX_SRC.SOURCE;
+                }
             }
         }
 
@@ -266,6 +274,7 @@ namespace uLoader
                 else
                     ;
             }
+            
             /// <summary>
             /// Найти целочисленный идентфикатор элемента управления
             /// </summary>
@@ -292,7 +301,7 @@ namespace uLoader
 
                 return keyRes;
             }
-            
+
             private object[] getPrepareGroupSignalChangedPars(DataGridView obj, int indxRow)
             {
                 object[] arObjRes = new object[(int)INDEX_PREPARE_PARS.COUNT_INDEX_PREPARE_PARS];
@@ -325,10 +334,10 @@ namespace uLoader
                     fromMaskedTextBox(KEY_CONTROLS.MTBX_PERIOD_MAIN)
                     //fromDateTimePicker (KEY_CONTROLS.DTP_PERIOD_MAIN)
                         ;
-                objDepenceded.m_arWorkIntervals[(int)modeWork].m_tsPeriodLocal =
-                    this is PanelLoaderSource ? fromMaskedTextBox(KEY_CONTROLS.MTBX_PERIOD_LOCAL) : HTimeSpan.NotValue;
-                objDepenceded.m_arWorkIntervals[(int)modeWork].m_tsIntervalLocal.Text =
-                    this is PanelLoaderSource ? (GetWorkingItem(KEY_CONTROLS.TBX_INTERVAL) as TextBox).Text : @"-ms1";
+                objDepenceded.m_arWorkIntervals[(int)modeWork].m_tsIntervalCustomize =
+                    this is PanelLoaderSource ? fromMaskedTextBox(KEY_CONTROLS.MTBX_INTERVAL_CUSTOMIZE) : HTimeSpan.Zero;
+                objDepenceded.m_arWorkIntervals[(int)modeWork].m_tsRequery.Text =
+                    this is PanelLoaderSource ? (GetWorkingItem(KEY_CONTROLS.TBX_INTERVAL_REQUERY) as TextBox).Text : HTimeSpan.PREFIX_ZERO;
 
                 arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJ] = KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS; // обязательно для switch
                 arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] = getGroupId(KEY_CONTROLS.DGV_GROUP_SOURCES);
@@ -340,6 +349,7 @@ namespace uLoader
 
                 return arObjRes;
             }
+            
             /// <summary>
             /// Подготовить параметры для передачи "родительской" панели
             ///  для последующего на их основе формирования события
@@ -392,6 +402,7 @@ namespace uLoader
 
                 return arObjRes;
             }
+            
             /// <summary>
             /// Обработчик события "нажатие кнопкой по ячеке объекта"
             /// </summary>
@@ -460,6 +471,7 @@ namespace uLoader
                     else
                         ;
             }
+            
             /// <summary>
             /// Обработчик события "изменение выбора"
             /// </summary>
@@ -502,6 +514,7 @@ namespace uLoader
                 else
                     ; //Нет выбранных строк
             }
+            
             /// <summary>
             /// Обработчик события - изменение значения
             /// </summary>
@@ -525,6 +538,7 @@ namespace uLoader
                 else
                     ;
             }
+            
             /// <summary>
             /// Обработчик события - нажатие на кнопку "Выгрузить/загрузить ДЛЛ"
             /// </summary>
@@ -555,7 +569,7 @@ namespace uLoader
             /// <returns>Преобразованное значение</returns>
             protected HTimeSpan fromMaskedTextBox (KEY_CONTROLS key)
             {
-                HTimeSpan tsRes = HTimeSpan.NotValue;
+                HTimeSpan tsRes = HTimeSpan.Zero;
                 string []vals;
                 //(ctrl as MaskedTextBox).Culture.NumberFormat.NumberDecimalSeparator
                 MaskedTextBox ctrl = GetWorkingItem(key) as MaskedTextBox;
@@ -580,7 +594,7 @@ namespace uLoader
 
             protected HTimeSpan fromDateTimePicker (KEY_CONTROLS key)
             {
-                HTimeSpan tsRes = HTimeSpan.NotValue;
+                HTimeSpan tsRes = HTimeSpan.Zero;
 
                 DateTimePicker ctrl = GetWorkingItem (key) as DateTimePicker;
 
@@ -640,10 +654,12 @@ namespace uLoader
                 else
                     ;
             }
+            
             /// <summary>
             /// Словарь идентификаторв, отображаемых элементов
             /// </summary>
             private Dictionary<KEY_CONTROLS, string[]> m_dictGroupIds;
+            
             /// <summary>
             /// Заполнить рабочий элемент - список групп источников, сигналов
             /// </summary>
@@ -680,6 +696,7 @@ namespace uLoader
                 else
                     ;
             }
+            
             /// <summary>
             /// Заполнить рабочий элемент - список источников 
             /// </summary>
@@ -739,6 +756,7 @@ namespace uLoader
                 else
                     ;
             }
+            
             /// <summary>
             /// Заполнить рабочий элемент - список сигналов группы
             /// </summary>
@@ -762,6 +780,7 @@ namespace uLoader
                     // группа сигналов == null
                     Logging.Logg().Warning(@"PanelLoader::FillWorkItem () - список сигналов == null...", Logging.INDEX_MESSAGE.NOT_SET);
             }
+            
             /// <summary>
             /// Заполнить рабочий элемент - список групп 
             ///  + параметры режима опроса
@@ -839,21 +858,22 @@ namespace uLoader
                 if (this is PanelLoaderSource)
                 {
                     //??? Отобразить период опроса (локальный)
-                    key = PanelLoader.KEY_CONTROLS.MTBX_PERIOD_LOCAL;
+                    key = PanelLoader.KEY_CONTROLS.MTBX_INTERVAL_CUSTOMIZE;
                     workItem = GetWorkingItem(key);
                     (workItem as MaskedTextBox).Text = pars.m_tsPeriodMain.Value.Days.ToString(@"00")
-                        + pars.m_tsPeriodLocal.Value.Hours.ToString(@"00")
-                        + pars.m_tsPeriodLocal.Value.Minutes.ToString(@"00")
+                        + pars.m_tsIntervalCustomize.Value.Hours.ToString(@"00")
+                        + pars.m_tsIntervalCustomize.Value.Minutes.ToString(@"00")
                         ;
 
                     //Отобразить шаг опроса для режима 'COSTUMIZE'
-                    key = PanelLoader.KEY_CONTROLS.TBX_INTERVAL;
+                    key = PanelLoader.KEY_CONTROLS.TBX_INTERVAL_REQUERY;
                     workItem = GetWorkingItem(key);
-                    (workItem as TextBox).Text = pars.m_tsIntervalLocal.ToString();
+                    (workItem as TextBox).Text = pars.m_tsRequery.ToString();
                 }
                 else
                     ; //Не 'Source'
             }
+
             /// <summary>
             /// Обновить состояние кнопки управления группой (источников, сигналов)
             /// </summary>
@@ -894,6 +914,7 @@ namespace uLoader
                 // когда кнопка доступна(включена), а группа остановлена = True
                 return bRes;
             }
+
             /// <summary>
             /// Включить элементы управления в соответствии с состоянием объектов
             ///  , которые они обозначают
@@ -952,6 +973,7 @@ namespace uLoader
 
                 return iRes;
             }
+
             /// <summary>
             /// Включить элементы управления в соответствии с состоянием объектов (и-или параметров группы сигналов)
             /// </summary>
@@ -1003,6 +1025,7 @@ namespace uLoader
 
                 return iRes;
             }            
+            
             /// <summary>
             /// Получить объект - дочерний элемент интерфейса
             /// </summary>
@@ -1042,6 +1065,7 @@ namespace uLoader
                 else
                     throw new Exception(@"PanelLoader::GetWorkingItemValue () - функция предназначена только для обработки объектов 'DataGridView'...");
             }
+            
             /// <summary>
             /// Возратить выбранное значение строки в 'DataGridView'
             /// </summary>
@@ -1056,6 +1080,7 @@ namespace uLoader
                 else
                     throw new Exception(@"PanelLoader::GetWorkingItemValue () - функция предназначена только для обработки объектов 'DataGridView'...");
             }
+
             /// <summary>
             /// Возратить значение указанной строки в 'DataGridView'
             /// </summary>
@@ -1071,6 +1096,7 @@ namespace uLoader
                 else
                     throw new Exception(@"PanelLoader::GetWorkingItemValue () - функция предназначена только для обработки объектов 'DataGridView'...");
             }
+
             /// <summary>
             /// Очистить все элементы управления на панели
             /// </summary>
@@ -1110,6 +1136,7 @@ namespace uLoader
 
                 return iRes;
             }
+
             /// <summary>
             /// Очистить элемент управления на панели с указанным ключом
             /// </summary
@@ -1153,6 +1180,7 @@ namespace uLoader
                 
                 base.Stop();
             }
+
             /// <summary>
             /// Очистить представление
             /// </summary>
@@ -1167,6 +1195,7 @@ namespace uLoader
             }
 
             //public abstract int UpdateData(DataTable table);
+
             /// <summary>
             /// Отобразить полученные данные в представлении
             /// </summary>
@@ -1340,7 +1369,7 @@ namespace uLoader
                 panelGroupBox.SetColumnSpan(ctrl, 6); panelGroupBox.SetRowSpan(ctrl, 1);
                 //TextBox изменения локального периода
                 ctrl = new MaskedTextBox();
-                ctrl.Name = KEY_CONTROLS.MTBX_PERIOD_LOCAL.ToString();
+                ctrl.Name = KEY_CONTROLS.MTBX_INTERVAL_CUSTOMIZE.ToString();
                 ctrl.Dock = DockStyle.Bottom;
                 (ctrl as MaskedTextBox).TextAlign = HorizontalAlignment.Right;
                 (ctrl as MaskedTextBox).Mask = maskPeriod;
@@ -1355,7 +1384,7 @@ namespace uLoader
                 panelGroupBox.SetColumnSpan(ctrl, 6); panelGroupBox.SetRowSpan(ctrl, 1);
                 //TextBox изменения интервала
                 ctrl = new /*Masked*/TextBox();
-                ctrl.Name = KEY_CONTROLS.TBX_INTERVAL.ToString();
+                ctrl.Name = KEY_CONTROLS.TBX_INTERVAL_REQUERY.ToString();
                 ctrl.Dock = DockStyle.Bottom;
                 (ctrl as TextBox).TextAlign = HorizontalAlignment.Right;
                 //(ctrl as MaskedTextBox).Mask = @"00:00";
@@ -1408,7 +1437,7 @@ namespace uLoader
 
                     //key = KEY_CONTROLS.MTBX_PERIOD_MAIN; ctrl = Controls.Find(key.ToString(), true)[0];
                     //ctrl.Enabled = !bCostumizeEnabled;
-                    key = KEY_CONTROLS.MTBX_PERIOD_LOCAL; ctrl = Controls.Find(key.ToString(), true)[0];
+                    key = KEY_CONTROLS.MTBX_INTERVAL_CUSTOMIZE; ctrl = Controls.Find(key.ToString(), true)[0];
                     ctrl.Enabled = bCostumizeEnabled;
                     //key = KEY_CONTROLS.TBX_INTERVAL; ctrl = Controls.Find(key.ToString(), true)[0];
                     //ctrl.Enabled = !bCostumizeEnabled;

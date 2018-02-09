@@ -37,11 +37,18 @@ namespace TestFunc
                 //typeof(ClassDataTableDistinct)
                 ////Вариант №4
                 //typeof(ClassQueueRemoveAt)
-                //Вариант №4
-                typeof(ClassFormulaParsing)
+                ////Вариант №4
+                //typeof(ClassFormulaParsing)
+                //Вариант №5
+                typeof (HandlerUnRegister)
                 ;
 
-            try { objTest = Activator.CreateInstance(typeTest, @"a1+a2", new VariableValue[] { new VariableValue(1F, @"a1"), new VariableValue(2F, @"a2") }); }
+            try {
+                objTest = Activator.CreateInstance (typeTest
+                    //// для вар. №4
+                    //, @"a1+a2", new VariableValue[] { new VariableValue(1F, @"a1"), new VariableValue(2F, @"a2") }
+                    );
+            }
             catch (Exception e)
             {
                 msg = e.Message;

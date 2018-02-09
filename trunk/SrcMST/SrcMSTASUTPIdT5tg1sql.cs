@@ -16,16 +16,6 @@ namespace SrcMST
 {
     public class SrcMSTASUTPIDT5tg1sql : HHandlerDbULoaderMSTIDsql
     {
-        private enum MODE_WHERE_DATETIME : short { UNKNOWN = -1
-            , BETWEEN_0_0, BETWEEN_1_0, BETWEEN_0_1 // использовать 'BETWEEN' - ВКЛючить значения для левой, правой границам
-            , IN_IN_0_0, IN_IN_1_0, IN_IN_0_1 // принудительное указание ВКЛючения значений для левой, правой границам
-            , EX_EX_0_0, EX_EX_1_0, EX_EX_0_1 // принудительное указание ИСКЛючения значений для левой, правой границам
-            , IN_EX_0_0, IN_EX_1_0, IN_EX_0_1 // принудительное указание ВКЛючения значений для левой, ИСКЛючения значений для правой границам
-                , COUNT
-        }
-
-        private MODE_WHERE_DATETIME _modeWhereDatetime;
-
         public SrcMSTASUTPIDT5tg1sql(PlugInULoader plugIn)
             : base(plugIn, MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
@@ -53,9 +43,14 @@ namespace SrcMST
             int iRes = base.Initialize(id, pars);
 
             if (m_dictAdding.ContainsKey(@"WHERE_DATETIME") == true)
-                _modeWhereDatetime = (MODE_WHERE_DATETIME)Convert.ToInt16(m_dictAdding[@"WHERE_DATETIME"]);
+                _modeWhereDatetime = (MODE_WHERE_DATETIME)Enum.Parse (typeof (MODE_WHERE_DATETIME), m_dictAdding [@"WHERE_DATETIME"]);
             else
                 ;
+
+            if (m_dictAdding.ContainsKey (@"TABLE_STATES") == true)
+                _modeTableStates = (MODE_TABLE_STATES)Enum.Parse (typeof (MODE_TABLE_STATES), m_dictAdding [@"TABLE_STATES"]);
+            else
+                _modeTableStates = MODE_TABLE_STATES.MINUTE;
 
             return iRes;
         }
@@ -85,8 +80,8 @@ namespace SrcMST
 
                         if ((rowsSgnl.Length > 0)
                             //??? если строк > 1
-                            && (((int)rowsSgnl[0][@"CNT"] % 60) == 0)) {
-                        // только при кол-ве записей = 60 (все минуты часа)
+                            && (((int)rowsSgnl[0][@"CNT"] % DataRowCountFlush) == 0)) {
+                            // только при кол-ве записей = 60 (все минуты часа)
                             //iHourAdding = 0;
                             //iHour = (int)rowsSgnl[0][@"HOUR"];
                             //if (iHour > 23)
@@ -95,14 +90,13 @@ namespace SrcMST
                             //    ;
                             //iHour -= iHourAdding;
 
-                            dtValue = (DateTime)rowsSgnl[0][@"DATETIME"] //OFFSET
-                                ;
+                            dtValue = (DateTime)rowsSgnl [0] [@"DATETIME"]; //??? OFFSET
 
                             dblSumValue = (double)rowsSgnl[0][@"VALUE"];
 
                             // при необходимости найти среднее
                             if (sgnl.IsFormula == false)
-                                dblSumValue /= 60; //cntRec
+                                dblSumValue /= DataRowCountFlush; //cntRec
                             else
                                 ;
                             // вставить строку
@@ -137,13 +131,7 @@ namespace SrcMST
                 m_strQuery = string.Empty;
                 string strIds = string.Empty
                     , strWhereDatetime = string.Empty;
-                int offsetHour = 0;
-                bool bOffsetOutInclude = true;
-
-                //if ((_parent as HHandlerDbULoaderSrc).Mode == MODE_WORK.CUR_INTERVAL)
-                //    offsetHour = -1;
-                //else
-                //    ;
+                string [] comparison = new string [2];
 
                 foreach (SIGNALIdsql sgnl in m_arSignals)
                     if (sgnl.IsFormula == false)
@@ -151,48 +139,69 @@ namespace SrcMST
                     else
                         ; // формула
                 // удалить "лишнюю" запятую
-                strIds = strIds.Substring(0, strIds.Length - 1);
+                strIds = strIds.Substring (0, strIds.Length - 1);
 
-                switch ((_parent as SrcMSTASUTPIDT5tg1sql)._modeWhereDatetime)
-                {
-                    case MODE_WHERE_DATETIME.IN_EX_0_0:
-                    case MODE_WHERE_DATETIME.IN_EX_1_0:
-                    case MODE_WHERE_DATETIME.IN_EX_0_1:
-                    case MODE_WHERE_DATETIME.EX_EX_0_0:
-                    case MODE_WHERE_DATETIME.EX_EX_1_0:
-                    case MODE_WHERE_DATETIME.EX_EX_0_1:
-                        bOffsetOutInclude = false;
-                        break;
-                    case MODE_WHERE_DATETIME.UNKNOWN:
-                    case MODE_WHERE_DATETIME.BETWEEN_1_0:
-                    default:
-                        // оставить значение 'true'
-                        break;
-                }
                 // определить содержание 'where'
-                switch ((_parent as SrcMSTASUTPIDT5tg1sql)._modeWhereDatetime)
-                {
-                    case MODE_WHERE_DATETIME.IN_EX_0_0:
-                        strWhereDatetime = @" [last_changed_at] >= DATEADD(HOUR, " + offsetHour + @", CAST('" + DateTimeBeginFormat + @"' as datetime))"
-                            + @" AND [last_changed_at] < DATEADD(HOUR, " + offsetHour + @", CAST('" + DateTimeEndFormat + @"' as datetime))";
+                switch ((_parent as SrcMSTASUTPIDT5tg1sql)._modeWhereDatetime) {
+                    case MODE_WHERE_DATETIME.BETWEEN_N_N:
+                    //case MODE_WHERE_DATETIME.EX_EX_Y_Y:
+                    case MODE_WHERE_DATETIME.IN_EX_N_Y:
+                        comparison [0] = ">";
+                        comparison [1] = "<";
+                        break;
+                    case MODE_WHERE_DATETIME.BETWEEN_N_Y:
+                    case MODE_WHERE_DATETIME.EX_EX_Y_N:
+                    case MODE_WHERE_DATETIME.IN_EX_N_N:
+                        comparison [0] = ">";
+                        comparison [1] = "<=";
+                        break;
+                    case MODE_WHERE_DATETIME.BETWEEN_Y_N:
+                    case MODE_WHERE_DATETIME.EX_EX_N_Y:
+                        //case MODE_WHERE_DATETIME.IN_EX_Y_Y:
+                        comparison [0] = ">=";
+                        comparison [1] = "<";
                         break;
                     case MODE_WHERE_DATETIME.UNKNOWN:
-                    case MODE_WHERE_DATETIME.BETWEEN_1_0:
+                    //case MODE_WHERE_DATETIME.BETWEEN_Y_Y:
+                    case MODE_WHERE_DATETIME.IN_EX_Y_N:
+                    //case MODE_WHERE_DATETIME.EX_IN_N_Y:
+                    //case MODE_WHERE_DATETIME.IN_IN_Y_Y:
+                    case MODE_WHERE_DATETIME.EX_EX_N_N:
                     default:
-                        strWhereDatetime = @" [last_changed_at] BETWEEN DATEADD(SECOND, 1, DATEADD(HOUR, " + offsetHour + @", CAST('" + DateTimeBeginFormat + @"' as datetime)))"
-                            + @" AND DATEADD(HOUR, " + offsetHour + @", CAST('" + DateTimeEndFormat + @"' as datetime))";
                         break;
                 }
 
-                m_strQuery = @"SELECT [ID], SUM([VALUE]) as [VALUE], COUNT(*) as [CNT]"
-                        + @", DATEADD(HOUR, " + (bOffsetOutInclude == false ? 1 : 0) + @", DATEADD(MINUTE, (DATEDIFF(MINUTE, DATEADD(DAY, 0, CAST('" + DateTimeEndFormat + @"' as datetime)), [last_changed_at]) / 60) * 60, DATEADD(DAY, 0, CAST('" + DateTimeEndFormat + @"' as datetime)))) as [DATETIME]"
-                    + @" FROM [dbo].[states_real_his_0]"
-                    + @" WHERE"
-                        + strWhereDatetime
-                        + @" AND [ID] IN (" + strIds + @")"
+                if ((string.IsNullOrEmpty (comparison [0]) == false)
+                    && (string.IsNullOrEmpty (comparison [1]) == false))
+                    strWhereDatetime = string.Format (@" [last_changed_at] {3} DATEADD(HOUR, {0}, CAST('{1}' as datetime))"
+                        + @" AND [last_changed_at] {4} DATEADD(HOUR, {0}, CAST('{2}' as datetime))"
+                            , 0
+                            , DateTimeBeginFormat
+                            , DateTimeEndFormat
+                            , comparison [0]
+                            , comparison [1]
+                        );
+                else
+                    strWhereDatetime = string.Format (@" BETWEEN DATEADD(HOUR, {0}, CAST('{1}' as datetime))"
+                        + @" AND DATEADD(HOUR, {0}, CAST('{2}' as datetime))"
+                            , 0
+                            , DateTimeBeginFormat
+                            , DateTimeEndFormat
+                        );
+
+                m_strQuery = string.Format (@"SELECT [ID], SUM([VALUE]) as [VALUE], COUNT(*) as [CNT]"
+                        + @", DATEADD(HOUR, {0}, DATEADD(HOUR, (DATEDIFF(HOUR, DATEADD(DAY, 0, CAST('{1}' as datetime)), [last_changed_at]) / 60) * 60, DATEADD(DAY, 0, CAST('{1}' as datetime)))) as [DATETIME]"
+                    + @" FROM [dbo].[{2}]"
+                    + @" WHERE {3}"
+                        + @" AND [ID] IN ({4})"
                     + @" GROUP BY [ID]"
-                        + @", DATEADD(MINUTE, (DATEDIFF(MINUTE, DATEADD(DAY, 0, CAST('" + DateTimeEndFormat + @"' as datetime)), [last_changed_at]) / 60) * 60, DATEADD(DAY, 0, CAST('" + DateTimeEndFormat + @"' as datetime)))"
-                    ;
+                        + @", DATEADD(HOUR, (DATEDIFF(HOUR, DATEADD(DAY, 0, CAST('{1}' as datetime)), [last_changed_at]) / 60) * 60, DATEADD(DAY, 0, CAST('{1}' as datetime)))"
+                        , 0
+                        , DateTimeEndFormat
+                        , (_parent as SrcMSTASUTPIDT5tg1sql).NameTableSource
+                        , strWhereDatetime
+                        , strIds
+                    );
             }
         }
     }

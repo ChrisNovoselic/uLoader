@@ -124,6 +124,7 @@
   <ItemGroup>
     <Compile Include="biysktmora_test.cs" />
     <Compile Include="ClassDataTableDistinct.cs" />
+    <Compile Include="HandlerUnRegister.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="srcktstusql_test.cs" />

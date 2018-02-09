@@ -13,12 +13,12 @@ namespace SrcKTS
     public class SrcKTSTUsql : HHandlerDbULoaderDatetimeSrc
     {
         public SrcKTSTUsql()
-            : base(@"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
+            : base(UCHET.Repos, @"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
         }
 
         public SrcKTSTUsql(PlugInULoader iPlugIn)
-            : base(iPlugIn, @"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
+            : base(iPlugIn, UCHET.Repos, @"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_HOUR, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
         }
 

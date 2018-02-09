@@ -16,12 +16,12 @@ namespace SrcBiysk
     public class SrcBiyskTMora : HHandlerDbULoaderDatetimeSrc
     {
         public SrcBiyskTMora()
-            : base(@"yyyyMMdd HHmmss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_HALF_PERIOD)
+            : base(UCHET.Repos, @"yyyyMMdd HHmmss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_HALF_PERIOD)
         {
         }
 
         public SrcBiyskTMora(PlugInULoader iPlugIn)
-            : base(iPlugIn, @"yyyyMMdd HHmmss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_HALF_PERIOD)
+            : base(iPlugIn, UCHET.Repos, @"yyyyMMdd HHmmss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_HALF_PERIOD)
         {
         }
 

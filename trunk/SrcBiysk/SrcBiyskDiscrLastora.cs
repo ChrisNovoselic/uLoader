@@ -8,12 +8,12 @@ namespace SrcBiysk
     public class SrcBiyskDiscrLastora : HHandlerDbULoaderSrc
     {
         public SrcBiyskDiscrLastora()
-            : base()
+            : base(UCHET.Repos)
         {
         }
 
         public SrcBiyskDiscrLastora(PlugInULoader iPlugIn)
-            : base(iPlugIn)
+            : base(iPlugIn, UCHET.Repos)
         {
         }
 

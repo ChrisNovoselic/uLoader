@@ -497,7 +497,7 @@ namespace uLoader
 
             private string IndexConfig
             {
-                get { return ((INDEX_SRC)(Parent as PanelConfig).Controls.IndexOf(this)).ToString(); }
+                get { return ((FormMain.INDEX_SRC)(Parent as PanelConfig).Controls.IndexOf(this)).ToString(); }
             }
 
             /// <summary>
@@ -634,9 +634,9 @@ namespace uLoader
         {
             int iRes = 0;
 
-            s_arMarkChanged = new HMark [(int)INDEX_SRC.COUNT_INDEX_SRC];
-            s_arMarkChanged [(int)INDEX_SRC.SOURCE] = new HMark (0);
-            s_arMarkChanged[(int)INDEX_SRC.DEST] = new HMark(0);
+            s_arMarkChanged = new HMark [(int)FormMain.INDEX_SRC.COUNT_INDEX_SRC];
+            s_arMarkChanged [(int)FormMain.INDEX_SRC.SOURCE] = new HMark (0);
+            s_arMarkChanged[(int)FormMain.INDEX_SRC.DEST] = new HMark(0);
 
             return iRes;
         } 
@@ -646,11 +646,11 @@ namespace uLoader
         /// <param name="indxConfig">Индекс панели конфигурации</param>
         /// <param name="indxPanel">Индекс группы элементов (элементов) на панели конфигурации</param>
         /// <param name="rows">Массив строк для заполнения</param>
-        private void fillConfigItem(INDEX_SRC indxConfig, PanelSources.INDEX_PANEL indxPanel, string[,] rows)
+        private void fillConfigItem(FormMain.INDEX_SRC indxConfig, PanelSources.INDEX_PANEL indxPanel, string[,] rows)
         {
             (this.Controls[(int)indxConfig] as PanelSources).FillConfigItem(indxPanel, rows);
         }
-        //private void fillConfigItem(INDEX_SRC indxConfig, PanelSources.INDEX_PANEL indxPanel, string[,] rows)
+        //private void fillConfigItem(FormMain.INDEX_SRC. indxConfig, PanelSources.INDEX_PANEL indxPanel, string[,] rows)
         //{
         //    (this.Controls[(int)indxConfig] as PanelSources).FillConfigItem(indxPanel, rows);
         //}
@@ -660,7 +660,7 @@ namespace uLoader
         /// <param name="indxConfig">Индекс панели конфигурации</param>
         /// <param name="indxPanel">Индекс группы элементов (элементов) на панели конфигурации</param>
         /// <param name="rows">Массив строк для заполнения</param>
-        private void fillConfigItemPars(INDEX_SRC indxConfig, PanelSources.INDEX_PANEL indxPanel, string[] rows)
+        private void fillConfigItemPars(FormMain.INDEX_SRC indxConfig, PanelSources.INDEX_PANEL indxPanel, string[] rows)
         {
             (this.Controls[(int)indxConfig] as PanelSources).FillConfigItemPars(indxPanel, rows);
         }
@@ -671,7 +671,7 @@ namespace uLoader
         /// <param name="indxConfig">Индекс панели конфигурации</param>
         /// <param name="indxPanel">Индекс группы элементов (элементов) на панели конфигурации</param>
         /// <param name="rows">Массив строк для заполнения</param>
-        private void fillConfigItemProp(INDEX_SRC indxConfig, PanelSources.INDEX_PANEL indxPanel, string[] rows)
+        private void fillConfigItemProp(FormMain.INDEX_SRC indxConfig, PanelSources.INDEX_PANEL indxPanel, string[] rows)
         {
             (this.Controls[(int)indxConfig] as PanelSources).FillConfigItemProp(indxPanel, rows);
         }
@@ -690,48 +690,48 @@ namespace uLoader
             switch (state)
             {
                 case (int)HHandlerQueue.StatesMachine.LIST_GROUP_SOURCES: //Заполнить на панели (источник, назаначение) - группы источников
-                    fillConfigItem(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.SOURCE] as string[,]);
-                    fillConfigItem(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.DEST] as string[,]);
+                    fillConfigItem(FormMain.INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.GROUP_SOURCES, (par as object[])[(int)FormMain.INDEX_SRC.SOURCE] as string[,]);
+                    fillConfigItem(FormMain.INDEX_SRC.DEST, PanelSources.INDEX_PANEL.GROUP_SOURCES, (par as object[])[(int)FormMain.INDEX_SRC.DEST] as string[,]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_ITEMS: //Заполнить на панели (источник, назаначение) - элементы в группе источников
-                    fillConfigItem(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[,]) as string[,]);
+                    fillConfigItem(FormMain.INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[,]) as string[,]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_PARS: //Заполнить на панели источник - наименования параметров элементов в группе источников
-                    fillConfigItemPars(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
+                    fillConfigItemPars(FormMain.INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SOURCE_PROP: //Заполнить на панели источник - параметры элементов в группе источников
-                    fillConfigItemProp(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
+                    fillConfigItemProp(FormMain.INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_GROUP_SIGNALS: //Заполнить на панели источник - группы сигналов
-                    fillConfigItem(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.GROUP_SIGNALS, (par as object[])[(int)INDEX_SRC.SOURCE] as string[,]);
-                    fillConfigItem(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.GROUP_SIGNALS, (par as object[])[(int)INDEX_SRC.DEST] as string[,]);
+                    fillConfigItem(FormMain.INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.GROUP_SIGNALS, (par as object[])[(int)FormMain.INDEX_SRC.SOURCE] as string[,]);
+                    fillConfigItem(FormMain.INDEX_SRC.DEST, PanelSources.INDEX_PANEL.GROUP_SIGNALS, (par as object[])[(int)FormMain.INDEX_SRC.DEST] as string[,]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_ITEMS: //Заполнить на панели источник - элементы в группе сигналов
-                    fillConfigItem(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[,]) as string[,]);
+                    fillConfigItem(FormMain.INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[,]) as string[,]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_PARS: //Заполнить на панели источник - наименования параметров элементов в группе сигналов
-                    fillConfigItemPars(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
+                    fillConfigItemPars(FormMain.INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_SRC_GROUP_SIGNAL_PROP: //Заполнить на панели источник - параметры элементов в группе сигналов
-                    fillConfigItemProp(INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
+                    fillConfigItemProp(FormMain.INDEX_SRC.SOURCE, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_ITEMS: //Заполнить на панели (назаначение) - элементы в группе источников
-                    fillConfigItem(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[,]) as string[,]);
+                    fillConfigItem(FormMain.INDEX_SRC.DEST, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[,]) as string[,]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_PARS: //Заполнить на панели назначение - наименования параметров элементов в группе источников
-                    fillConfigItemPars(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
+                    fillConfigItemPars(FormMain.INDEX_SRC.DEST, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SOURCE_PROP: //Заполнить на панели назначение - параметры элементов в группе источников
-                    fillConfigItemProp(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
+                    fillConfigItemProp(FormMain.INDEX_SRC.DEST, PanelSources.INDEX_PANEL.SOURCES_OF_GROUP, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_ITEMS: //Заполнить на панели назначение - элементы в группе сигналов
-                    fillConfigItem(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[,]) as string[,]);
+                    fillConfigItem(FormMain.INDEX_SRC.DEST, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[,]) as string[,]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_PARS: //Заполнить на панели назначение - наименования параметров элементов в группе сигналов
-                    fillConfigItemPars(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
+                    fillConfigItemPars(FormMain.INDEX_SRC.DEST, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
                     break;
                 case (int)HHandlerQueue.StatesMachine.LIST_DEST_GROUP_SIGNAL_PROP: //Заполнить на панели назначение - параметры элементов в группе сигналов
-                    fillConfigItemProp(INDEX_SRC.DEST, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
+                    fillConfigItemProp(FormMain.INDEX_SRC.DEST, PanelSources.INDEX_PANEL.SIGNALS_OF_GROUP, (par as object[]) as string[]);
                     break;
                 default:
                     break;
@@ -769,14 +769,14 @@ namespace uLoader
             //Событие для постановки в очередь обработки событий
             HHandlerQueue.StatesMachine state = HHandlerQueue.StatesMachine.UNKNOWN;
             //Определить панель-инициатор сообщения
-            INDEX_SRC indxConfig = (INDEX_SRC)this.Controls.GetChildIndex(pars[(int)PanelSources.INDEX_PREPARE_PARS.OBJ] as PanelSources);
+            FormMain.INDEX_SRC indxConfig = (FormMain.INDEX_SRC)this.Controls.GetChildIndex(pars[(int)PanelSources.INDEX_PREPARE_PARS.OBJ] as PanelSources);
 
             switch ((KEY_EVENT)pars[(int)PanelSources.INDEX_PREPARE_PARS.KEY_EVT])
             {
                 case KEY_EVENT.SELECTION_CHANGED:
                     switch (indxConfig)
                     {
-                        case INDEX_SRC.SOURCE:
+                        case FormMain.INDEX_SRC.SOURCE:
                             switch ((PanelSources.INDEX_PANEL)pars[(int)PanelSources.INDEX_PREPARE_PARS.KEY_OBJ])
                             {
                                 case PanelSources.INDEX_PANEL.GROUP_SOURCES:
@@ -849,7 +849,7 @@ namespace uLoader
                                     break;
                             }
                             break;
-                        case INDEX_SRC.DEST:
+                        case FormMain.INDEX_SRC.DEST:
                             switch ((PanelSources.INDEX_PANEL)pars[(int)PanelSources.INDEX_PREPARE_PARS.KEY_OBJ])
                             {
                                 case PanelSources.INDEX_PANEL.GROUP_SOURCES:
@@ -929,9 +929,9 @@ namespace uLoader
                 case KEY_EVENT.CELL_CLICK:
                     switch (indxConfig)
                     {
-                        case INDEX_SRC.SOURCE:
+                        case FormMain.INDEX_SRC.SOURCE:
                             break;
-                        case INDEX_SRC.DEST:
+                        case FormMain.INDEX_SRC.DEST:
                             break;
                         default:
                             break;
@@ -989,9 +989,9 @@ namespace uLoader
             this.SuspendLayout();
 
             this.Controls.Add(new PanelSources(), 0, 0);
-            //(this.Controls[(int)INDEX_SRC.SOURCE] as PanelCommon). ;
+            //(this.Controls[(int)FormMain.INDEX_SRC.SOURCE] as PanelCommon). ;
             this.Controls.Add(new PanelSources(), 0, 1);
-            //(this.Controls[(int)INDEX_SRC.DEST] as PanelCommon). ;
+            //(this.Controls[(int)FormMain.INDEX_SRC.DEST] as PanelCommon). ;
 
             //Применение размещения элементов
             this.ResumeLayout(false);

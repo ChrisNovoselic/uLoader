@@ -14,7 +14,7 @@ namespace SrcKTS
         /// Конструктор - основной (без параметров)
         /// </summary>
         public SrcKTSTUDsql()
-            : base(@"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
+            : base(UCHET.Repos, @"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
 
         }
@@ -23,7 +23,7 @@ namespace SrcKTS
         /// </summary>
         /// <param name="iPlugIn">Объект для обмена сообщенями с основной программой</param>
         public SrcKTSTUDsql(PlugInULoader iPlugIn)
-            : base(iPlugIn, @"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
+            : base(iPlugIn, UCHET.Repos, @"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
         }
         /// <summary>

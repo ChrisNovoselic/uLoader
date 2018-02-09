@@ -111,12 +111,12 @@ namespace uLoader
             //Прочитать и "разобрать" файл конфигурации
             m_fileINI = new FormMain.FileINI(strNameFileINI);
 
-            m_listGroupSources = new List<GroupSources> [(int)INDEX_SRC.COUNT_INDEX_SRC];
+            m_listGroupSources = new List<GroupSources> [(int)FormMain.INDEX_SRC.COUNT_INDEX_SRC];
             //Заполнить данными (группами источников) списки элементов массива
             // панель - источник
-            setListGroupSources(INDEX_SRC.SOURCE, m_fileINI.AllObjectsSrcGroupSources, m_fileINI.AllObjectsSrcGroupSignals);
+            setListGroupSources(FormMain.INDEX_SRC.SOURCE, m_fileINI.AllObjectsSrcGroupSources, m_fileINI.AllObjectsSrcGroupSignals);
             // панель - назначение
-            setListGroupSources(INDEX_SRC.DEST, m_fileINI.AllObjectsDestGroupSources, m_fileINI.AllObjectsDestGroupSignals);
+            setListGroupSources(FormMain.INDEX_SRC.DEST, m_fileINI.AllObjectsDestGroupSources, m_fileINI.AllObjectsDestGroupSignals);
 
             m_stateManager = new StateManager(m_fileINI.GetMainValueOfKey(@"STATE_MANAGER"));
         }
@@ -130,7 +130,7 @@ namespace uLoader
             object []pars = ev.par as object [];
 
             // массив параметров
-            // id_main - индекс типа группы источников (INDEX_SRC)
+            // id_main - индекс типа группы источников (FormMain.INDEX_SRC.)
             // id_detail - индекс группы источников (идентификатор)
             //  'par' различается в ~ от типа объекта в 'pars[0]'
             // для 'GroupSourcesSrc, GroupSourcesDest' - длина=3 (набор исходный): [0] - индекс группы сигналов, [1] - команда, [2 | при необходимости] - 'ID_HEAD_ASKED_HOST'
@@ -167,17 +167,17 @@ namespace uLoader
 #if _STATE_MANAGER
                                     update(ev.id_main, ev.id_detail, indx);
                                     // если группа сигналов группы источников принадлежит к источникам информации
-                                    if ((INDEX_SRC)ev.id_main == INDEX_SRC.SOURCE)
+                                    if ((FormMain.INDEX_SRC.)ev.id_main == FormMain.INDEX_SRC.SOURCE)
                                         // проверить кол-во строк в таблице результата
                                         // в случае отсутствия строк, требуется обновить связанные с ней группы сигналов в группах источников назначения
                                         // т.к. самостоятельно такие группы сигналов не обновляются, что м. привести к периодической выгрузке/загрузке библиотеки
                                         if ((int)pars[2] == 0)
                                             // искать группы сигналов в группах источников назначения, связанные с указанной в аргументе
-                                            foreach (GroupSourcesDest grp in m_listGroupSources[(int)INDEX_SRC.DEST]) {
+                                            foreach (GroupSourcesDest grp in m_listGroupSources[(int)FormMain.INDEX_SRC.DEST]) {
                                                 // найти в группе источников назначения такие группы сигналов, которые связаны с указанной в аргументе группой сигналов
                                                 listLinkedIndexGroupSignals = grp.GetListLinkedIndexGroupSignals(ev.id_detail, indx);
 
-                                                listLinkedIndexGroupSignals.ForEach(indxGrpSgnls => { update(INDEX_SRC.DEST, FormMain.FileINI.GetIDIndex(grp.m_strID), indxGrpSgnls); });
+                                                listLinkedIndexGroupSignals.ForEach(indxGrpSgnls => { update(FormMain.INDEX_SRC.DEST, FormMain.FileINI.GetIDIndex(grp.m_strID), indxGrpSgnls); });
                                             }
                                         else
                                             ;
@@ -220,7 +220,7 @@ namespace uLoader
                     grpSrcDest = pars[0] as GroupSourcesDest;
                     indx = ev.id_detail; // индекс "чужой-связанной" группы источников
 
-                    foreach (GroupSources grpSrcSource in m_listGroupSources[(int)INDEX_SRC.SOURCE]) // можно использовать 'ev.id_main'
+                    foreach (GroupSources grpSrcSource in m_listGroupSources[(int)FormMain.INDEX_SRC.SOURCE]) // можно использовать 'ev.id_main'
                         if (FormMain.FileINI.GetIDIndex(grpSrcSource.m_strID) == indx) //indxNeededGroupSources
                         {
                             if (id_cmd == ID_DATA_ASKED_HOST.START)
@@ -249,7 +249,7 @@ namespace uLoader
         /// <param name="arGroupSources">Массив с информацией о группах с источниками</param>
         /// <param name="arGroupSignals">Массив с информацией о группах с сигналами</param>
         /// <returns>Признак выполнения функции</returns>
-        private int setListGroupSources(INDEX_SRC indxSrc, GROUP_SRC[] arGroupSources, GROUP_SIGNALS_SRC[] arGroupSignals)
+        private int setListGroupSources(FormMain.INDEX_SRC indxSrc, GROUP_SRC[] arGroupSources, GROUP_SIGNALS_SRC[] arGroupSignals)
         {
             int iRes = 0;
 
@@ -259,7 +259,7 @@ namespace uLoader
                 ;
 
             Type typeObjGroupSources = typeof(GroupSources);
-            if (indxSrc == INDEX_SRC.DEST)
+            if (indxSrc == FormMain.INDEX_SRC.DEST)
                 typeObjGroupSources = typeof (GroupSourcesDest);
             else
                 ;
@@ -285,7 +285,7 @@ namespace uLoader
                 //grpSrc = new GroupSources(itemSrc, listGroupSignals);
                 //Вариант №2
                 grpSrc = Activator.CreateInstance(typeObjGroupSources, new object[] { itemSrc, listGroupSignals }) as GroupSources;
-                //if (indxSrc == INDEX_SRC.DEST)
+                //if (indxSrc == FormMain.INDEX_SRC.DEST)
                     grpSrc.EvtDataAskedHostQueue += new DelegateObjectFunc(onEvtDataAskedHostQueue_GroupSources);
                 //else ;
 
@@ -298,14 +298,14 @@ namespace uLoader
 
         public void AutoStart ()
         {
-            for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc ++)
+            for (FormMain.INDEX_SRC indxSrc = FormMain.INDEX_SRC.SOURCE; indxSrc < FormMain.INDEX_SRC.COUNT_INDEX_SRC; indxSrc ++)
                 foreach (GroupSources grpSources in m_listGroupSources[(int)indxSrc])
                     grpSources.AutoStart ();
         }
 
         public void AutoStop()
         {
-            for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
+            for (FormMain.INDEX_SRC indxSrc = FormMain.INDEX_SRC.SOURCE; indxSrc < FormMain.INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
                 foreach (GroupSources grpSources in m_listGroupSources[(int)indxSrc])
                     grpSources.AutoStop();
         }
@@ -634,8 +634,8 @@ namespace uLoader
                     #region STATE_GROUP_SOURCES, STATE_GROUP_SIGNALS
                     case StatesMachine.STATE_GROUP_SOURCES:
                         error = false;
-                        outobj = new object[(int)INDEX_SRC.COUNT_INDEX_SRC];
-                        for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
+                        outobj = new object[(int)FormMain.INDEX_SRC.COUNT_INDEX_SRC];
+                        for (FormMain.INDEX_SRC indxSrc = FormMain.INDEX_SRC.SOURCE; indxSrc < FormMain.INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
                         {
                             (outobj as object[])[(int)indxSrc] = new GroupSources.STATE[m_listGroupSources[(int)indxSrc].Count];
 
@@ -649,8 +649,8 @@ namespace uLoader
                         error = false;
                         itemQueue = Peek;
                         //??? 0-й параметр индекс "выбранноой" группы сигналов
-                        outobj = new object[(int)INDEX_SRC.COUNT_INDEX_SRC];
-                        for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
+                        outobj = new object[(int)FormMain.INDEX_SRC.COUNT_INDEX_SRC];
+                        for (FormMain.INDEX_SRC indxSrc = FormMain.INDEX_SRC.SOURCE; indxSrc < FormMain.INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
                             if (!((int)itemQueue.Pars[(int)indxSrc] < 0))
                                 (outobj as object[])[(int)indxSrc] = m_listGroupSources[(int)indxSrc][(int)itemQueue.Pars[(int)indxSrc]].GetArgGroupSignals ();
                             else
@@ -665,13 +665,13 @@ namespace uLoader
                         error = false;
                         itemQueue = Peek;
 
-                        iRes = m_listGroupSources[(int)((INDEX_SRC)itemQueue.Pars[0])][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].StateChange();
+                        iRes = m_listGroupSources[(int)((FormMain.INDEX_SRC)itemQueue.Pars[0])][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].StateChange();
                         break;
                     case StatesMachine.STATE_CHANGED_GROUP_SIGNALS:
                         error = false;
                         itemQueue = Peek;
 
-                        iRes = m_listGroupSources[(int)((INDEX_SRC)itemQueue.Pars[0])][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].StateChange((string)itemQueue.Pars[2]);
+                        iRes = m_listGroupSources[(int)((FormMain.INDEX_SRC)itemQueue.Pars[0])][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].StateChange((string)itemQueue.Pars[2]);
                         break;
                     #endregion
 
@@ -680,7 +680,7 @@ namespace uLoader
                         error = false;
                         itemQueue = Peek;
 
-                        iRes = m_listGroupSources[(int)((INDEX_SRC)itemQueue.Pars[0])][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].Reload(itemQueue.Pars.Length > 2 ? (bool)itemQueue.Pars[2] : false);
+                        iRes = m_listGroupSources[(int)((FormMain.INDEX_SRC)itemQueue.Pars[0])][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].Reload(itemQueue.Pars.Length > 2 ? (bool)itemQueue.Pars[2] : false);
                         break;
                     #endregion
 
@@ -707,9 +707,9 @@ namespace uLoader
                         error = false;
                         itemQueue = Peek;
 
-                        INDEX_SRC indxGroupSrc = state == StatesMachine.DATA_SRC_GROUP_SIGNALS ? INDEX_SRC.SOURCE :
-                            state == StatesMachine.DATA_DEST_GROUP_SIGNALS ? INDEX_SRC.DEST :
-                                INDEX_SRC.COUNT_INDEX_SRC;
+                        FormMain.INDEX_SRC indxGroupSrc = state == StatesMachine.DATA_SRC_GROUP_SIGNALS ? FormMain.INDEX_SRC.SOURCE :
+                            state == StatesMachine.DATA_DEST_GROUP_SIGNALS ? FormMain.INDEX_SRC.DEST :
+                                FormMain.INDEX_SRC.COUNT_INDEX_SRC;
                         //??? зачем проверка индекса группы источников, как это значение м.б. отрицательным (в элементе управления не выделена ни одна строка!!!)
                         // см. 'PanelWork::fTimerUpdate ()' - из-за того, что при старте /minimize элемент управления не отображается и в нем не назначается выделенная строка
                         if (!((int)itemQueue.Pars[0] < 0))
@@ -727,7 +727,7 @@ namespace uLoader
                         itemQueue = Peek;
 
                         m_listGroupSources[(int)itemQueue.Pars[0]][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].m_IDCurrentConnSett = (string)itemQueue.Pars[2];
-                        m_fileINI.UpdateParameter((int)itemQueue.Pars[0], (string)itemQueue.Pars[1], @"SCUR", (string)itemQueue.Pars[2]);
+                        m_fileINI.UpdateParameter((FormMain.INDEX_SRC)itemQueue.Pars[0], (string)itemQueue.Pars[1], @"SCUR", (string)itemQueue.Pars[2]);
 
                         iRes = 0;
                         break;
@@ -736,7 +736,7 @@ namespace uLoader
                         itemQueue = Peek;
 
                         (m_listGroupSources[(int)itemQueue.Pars[0]][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])] as GroupSources).SetAdding(((string)itemQueue.Pars[2]).Split(new char[] { FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.PAIR_VAL] }));
-                        m_fileINI.UpdateParameter((int)itemQueue.Pars[0], (string)itemQueue.Pars[1], @"ADDING", (string)itemQueue.Pars[2]);
+                        m_fileINI.UpdateParameter((FormMain.INDEX_SRC)itemQueue.Pars[0], (string)itemQueue.Pars[1], @"ADDING", (string)itemQueue.Pars[2]);
 
                         iRes = 0;
                         break;
@@ -748,7 +748,7 @@ namespace uLoader
                         GroupSources grpSrcs = (m_listGroupSources[(int)itemQueue.Pars[0]][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])] as GroupSources);
                         indxGroupSgnls = grpSrcs.SetGroupSignalsPars(/*(string)itemQueue.Pars[2],*/ itemQueue.Pars[2] as GROUP_SIGNALS_PARS);
                         //indxGroupSgnls = grpSrcs.getIndexGroupSignalsPars((string)itemQueue.Pars[2]);
-                        m_fileINI.UpdateParameter((int)itemQueue.Pars[0], (string)itemQueue.Pars[1], indxGroupSgnls, itemQueue.Pars[2] as GROUP_SIGNALS_PARS);
+                        m_fileINI.UpdateParameter((FormMain.INDEX_SRC)itemQueue.Pars[0], (string)itemQueue.Pars[1], indxGroupSgnls, itemQueue.Pars[2] as GROUP_SIGNALS_PARS);
 
                         iRes = 0;
                         break;
@@ -759,7 +759,7 @@ namespace uLoader
                         error = false;
                         itemQueue = Peek;
 
-                        GROUP_SIGNALS_SRC_PARS grpSgnlsPars = m_listGroupSources[(int)INDEX_SRC.SOURCE][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].GetGroupSignalsPars((string)itemQueue.Pars[2]);
+                        GROUP_SIGNALS_SRC_PARS grpSgnlsPars = m_listGroupSources[(int)FormMain.INDEX_SRC.SOURCE][FormMain.FileINI.GetIDIndex((string)itemQueue.Pars[1])].GetGroupSignalsPars((string)itemQueue.Pars[2]);
                         outobj = grpSgnlsPars.m_arWorkIntervals[(int)itemQueue.Pars[3]];
 
                         iRes = 0;

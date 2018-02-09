@@ -13,13 +13,13 @@ namespace SrcVzlet
     public class SrcVzletNativeSql : HHandlerDbULoaderDatetimeSrc //HHandlerDbULoaderStatTMMSTDest
     {
         public SrcVzletNativeSql()
-            : base(@"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
+            : base(UCHET.Trice, @"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
 
         }
 
         public SrcVzletNativeSql(PlugInULoader iPlugIn)
-            : base(iPlugIn, @"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
+            : base(iPlugIn, UCHET.Trice, @"dd/MM/yyyy HH:mm:ss", MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
         }
 

@@ -402,6 +402,7 @@ namespace uLoader
         /// Событие для обмена данными с библиотекой
         /// </summary>
         private event DelegateObjectFunc EvtDataAskedHostPlugIn;
+        
         /// <summary>
         /// Коструктор (с параметрами)
         /// </summary>
@@ -505,6 +506,7 @@ namespace uLoader
 
             return iRes;
         }
+        
         /// <summary>
         /// Передать сообщение библиотеке
         /// </summary>
@@ -539,6 +541,7 @@ namespace uLoader
 
             return iRes;
         }
+        
         /// <summary>
         /// Отправить DLL сообщение о "новом" (START, STOP) состоянии группы сигналов
         /// </summary>
@@ -603,8 +606,8 @@ namespace uLoader
                                 mode
                                 , grpSgnlsPars.m_arWorkIntervals[(int)mode].m_dtStart
                                 , TimeSpan.FromSeconds(tsPeriodMain.TotalSeconds)
-                                , TimeSpan.FromSeconds(grpSgnlsPars.m_arWorkIntervals [(int)mode].m_tsPeriodLocal.Value.TotalSeconds)
-                                , (int)grpSgnlsPars.m_arWorkIntervals [(int)mode].m_tsIntervalLocal.Value.TotalMilliseconds
+                                , TimeSpan.FromSeconds(grpSgnlsPars.m_arWorkIntervals [(int)mode].m_tsIntervalCustomize.Value.TotalSeconds)
+                                , TimeSpan.FromMilliseconds(grpSgnlsPars.m_arWorkIntervals [(int)mode].m_tsRequery.Value.TotalMilliseconds)
                                 , srlzFormula
                                 , grpSgnlsPars.m_TableName
                             }
@@ -664,7 +667,8 @@ namespace uLoader
             return iRes;
         }
 
-        private INDEX_SRC Index { get { return this is GroupSourcesDest ? INDEX_SRC.DEST : INDEX_SRC.SOURCE; } }
+        public FormMain.INDEX_SRC Index { get { return this is GroupSourcesDest ? FormMain.INDEX_SRC.DEST : FormMain.INDEX_SRC.SOURCE; } }
+        
         /// <summary>
         /// Обработка сообщений "от" библиотеки
         /// </summary>
@@ -833,6 +837,7 @@ namespace uLoader
                 Logging.Logg().Exception(e, @"GroupSources::plugIn_OnEvtDataAskedHost (id=" + m_strID + @", key=" + grpSgnls.m_strID + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
+        
         /// <summary>
         /// Возвратить параметры группы сигналов по целочисленному идентификатору
         /// </summary>
@@ -852,6 +857,7 @@ namespace uLoader
 
             return grpSgnlsRes;
         }
+        
         /// <summary>
         /// Возвратить группу сигналов по целочисленному идентификатору
         /// </summary>
@@ -871,6 +877,7 @@ namespace uLoader
 
             return grpRes;
         }
+        
         /// <summary>
         /// Возвратить "новое" состояние в ~ предыдущего состояния
         /// </summary>
@@ -919,6 +926,7 @@ namespace uLoader
             else
                 ;
         }
+        
         /// <summary>
         /// Выгрузить/загрузить библиотеку (объект класса)
         /// </summary>
@@ -941,6 +949,7 @@ namespace uLoader
 
             return iRes;
         }
+        
         /// <summary>
         /// Остановить/запустить все группы сигналов
         /// </summary>
@@ -988,6 +997,7 @@ namespace uLoader
 
             return iRes;
         }
+        
         /// <summary>
         /// Остановить/запустить группу сигналов
         /// </summary>
@@ -998,6 +1008,7 @@ namespace uLoader
         {
             return StateChange(FormMain.FileINI.GetIDIndex(strId), prevState);
         }
+        
         /// <summary>
         /// Изменитьсостояние ВСЕХ групп сигналов
         /// </summary>
@@ -1013,6 +1024,7 @@ namespace uLoader
                 else
                     ; //Группа сигналов уже имеет указанное состояние ИЛИ не может изменить состояние на указанное
         }
+        
         /// <summary>
         /// Изменить состояние группы сигналов
         /// </summary>
@@ -1050,6 +1062,7 @@ namespace uLoader
             m_evtGroupSgnlsState.WaitOne();
             //Console.WriteLine(@"GroupSources::stateChange (iId=" + iId + @", newState=" + newState.ToString() + @") - m_evtGroupSgnlsState.WaitOne() ...");
         }
+        
         /// <summary>
         /// Получить данные (результаты запроса в ~ режима) 'DataTable' по указанной группе сигналов
         /// </summary>
@@ -1066,8 +1079,8 @@ namespace uLoader
             DataRow[] arSel;
             object[] arObjToRow = null;
             TimeSpan tsToPanel = TimeSpan.Zero;
-            HTimeSpan tsToData = HTimeSpan.NotValue
-                , tsToQuery = HTimeSpan.NotValue;
+            HTimeSpan tsToData = HTimeSpan.Zero
+                , tsToQuery = HTimeSpan.Zero;
             bool bIdLocalCalculated = false; // признак необходимости вычисления локального идентификатора строки (вычислений для Source - нет, для Dest - есть)
             int id_local = -1
                 , id = -1;
@@ -1093,8 +1106,8 @@ namespace uLoader
                                     else
                                         ;
 
-                                    tsToPanel = tsToData == HTimeSpan.NotValue ? TimeSpan.Zero : tsToData.Value;
-                                    //tsToPanel += tsToQuery == HTimeSpan.NotValue ? TimeSpan.Zero : tsToQuery.Value;
+                                    tsToPanel = tsToData == HTimeSpan.Zero ? TimeSpan.Zero : tsToData.Value;
+                                    //tsToPanel += tsToQuery == HTimeSpan.Zero ? TimeSpan.Zero : tsToQuery.Value;
 
                                     //Logging.Logg().Debug(@"GroupSources::GetDataToPanel () - получено строк=" + tblRec.Rows.Count + @"...", Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -1153,6 +1166,7 @@ namespace uLoader
 
             return tblToPanel;
         }
+        
         /// <summary>
         /// Остановить группу источников
         /// </summary>
@@ -1174,6 +1188,7 @@ namespace uLoader
 
             return iRes;
         }
+        
         /// <summary>
         /// Добавить обработчик событий от присоединенной библиотеки
         /// </summary>
@@ -1187,6 +1202,7 @@ namespace uLoader
                 Logging.Logg().Exception(e, @"GroupSources::AddDelegatePlugInOnEvtDataAskedHost (IdTypePlugInObject=" + _iIdTypePlugInObjectLoaded + @") - ошибка обращения к объекту ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
+        
         /// <summary>
         /// Удалить обработчик событий от присоединенной библиотеки
         /// </summary>
@@ -1203,6 +1219,7 @@ namespace uLoader
                 Logging.Logg().Exception(e, @"GroupSources::RemoveDelegatePlugInOnEvtDataAskedHost (IdTypePlugInObject=" + _iIdTypePlugInObjectLoaded + @") - ошибка обращения к объекту ...", Logging.INDEX_MESSAGE.NOT_SET);
             }
         }
+        
         /// <summary>
         /// Получить признак наличия группы сигналов среди списка присоединенных групп сигналов
         /// </summary>

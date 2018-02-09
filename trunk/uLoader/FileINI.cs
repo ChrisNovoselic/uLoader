@@ -12,6 +12,15 @@ namespace uLoader
 {
     partial class FormMain
     {
+        /// <summary>
+        /// Перечисление для индексирования 'SEC_SRC_TYPES' (источник, назначение)
+        /// </summary>
+        public enum INDEX_SRC {
+            SOURCE,
+            DEST
+                , COUNT_INDEX_SRC
+        };
+
         public class FileINI : ASUTP.Helper.FileINI
         {
             /// <summary>
@@ -81,8 +90,8 @@ namespace uLoader
                 fillDictFormula();
 
                 //Создать все объекты, списки для значений из файла конфигурации
-                m_arListGroupValues = new SRC [(int)INDEX_SRC.COUNT_INDEX_SRC];
-                for (INDEX_SRC i = INDEX_SRC.SOURCE; i < INDEX_SRC.COUNT_INDEX_SRC; i++)
+                m_arListGroupValues = new SRC [(int)FormMain.INDEX_SRC.COUNT_INDEX_SRC];
+                for (FormMain.INDEX_SRC i = INDEX_SRC.SOURCE; i < INDEX_SRC.COUNT_INDEX_SRC; i++)
                     m_arListGroupValues[(int)i] = new SRC();
                 foreach (SRC src in m_arListGroupValues)
                 {
@@ -90,8 +99,8 @@ namespace uLoader
                     src.m_listGroupSgnlsSrc = new List<GROUP_SIGNALS_SRC>();
                 }
 
-                if (SEC_SRC_TYPES.Length == (int)INDEX_SRC.COUNT_INDEX_SRC)
-                    for (INDEX_SRC i = INDEX_SRC.SOURCE; i < INDEX_SRC.COUNT_INDEX_SRC; i++)
+                if (SEC_SRC_TYPES.Length == (int)FormMain.INDEX_SRC.COUNT_INDEX_SRC)
+                    for (FormMain.INDEX_SRC i = INDEX_SRC.SOURCE; i < INDEX_SRC.COUNT_INDEX_SRC; i++)
                     {
                         //Получить наименование секции для группы источников (в ~ от 'i')
                         sec = SEC_SRC_TYPES[(int)i];
@@ -193,17 +202,17 @@ namespace uLoader
                 return iRes;
             }
 
-            private int parseWorkInterval(string val, ref DATETIME_WORK dtWorkRes)
-            {
-                int iRes = 0;
+            //private int parseWorkInterval(string val, ref DATETIME_WORK dtWorkRes)
+            //{
+            //    int iRes = 0;
 
-                dtWorkRes.m_dtStart = DateTime.Now;
-                dtWorkRes.m_tsPeriodMain = HTimeSpan.FromSeconds (60);
-                dtWorkRes.m_tsPeriodLocal = HTimeSpan.FromSeconds(60);
-                dtWorkRes.m_tsIntervalLocal = HTimeSpan.NotValue;
+            //    dtWorkRes.m_dtStart = DateTime.Now;
+            //    dtWorkRes.m_tsPeriodMain = HTimeSpan.FromSeconds (60);
+            //    dtWorkRes.m_tsIntervalCustomize = HTimeSpan.FromSeconds(60);
+            //    dtWorkRes.m_tsRequery = HTimeSpan.Zero;
 
-                return iRes;
-            }
+            //    return iRes;
+            //}
 
             /// <summary>
             /// Возвратить объект добавленной группы источников
@@ -317,7 +326,7 @@ namespace uLoader
             /// <param name="type">Тип группы</param>
             /// <param name="secGroup">Наименование для секции со значениями параметров группы</param>
             /// <returns>Результат выполнения</returns>
-            private int addGroupValues (INDEX_SRC indxSrc, Type type, string shrName, string secGroup)
+            private int addGroupValues (FormMain.INDEX_SRC indxSrc, Type type, string shrName, string secGroup)
             {
                 int iRes = 0; //Результат выполнения
                 //Индекс типа элемента группы (источник, сигнал)
@@ -474,7 +483,7 @@ namespace uLoader
                 return iRes;
             }
 
-            private string[,] GetListGroupSources(INDEX_SRC indx)
+            private string[,] GetListGroupSources(FormMain.INDEX_SRC indx)
             {
                 string[,] arStrRes = null;
                 int i = -1;
@@ -494,7 +503,7 @@ namespace uLoader
                 return arStrRes;
             }
 
-            private GROUP_SRC getObjectSrcGroupSources(INDEX_SRC indxPanel, string id)
+            private GROUP_SRC getObjectSrcGroupSources(FormMain.INDEX_SRC indxPanel, string id)
             {
                 foreach (GROUP_SRC grpSrc in m_arListGroupValues[(int)indxPanel].m_listGroupSrc)
                     if (grpSrc.m_strID.Equals(id) == true)
@@ -505,7 +514,7 @@ namespace uLoader
                 return null;
             }
 
-            private GROUP_SIGNALS_SRC getObjectSrcGroupSignals(INDEX_SRC indxPanel, string id)
+            private GROUP_SIGNALS_SRC getObjectSrcGroupSignals(FormMain.INDEX_SRC indxPanel, string id)
             {
                 foreach (GROUP_SIGNALS_SRC grpSgnls in m_arListGroupValues[(int)indxPanel].m_listGroupSgnlsSrc)
                     if (grpSgnls.m_strID.Equals(id) == true)
@@ -516,36 +525,36 @@ namespace uLoader
                 return null;
             }
 
-            public GROUP_SRC[] AllObjectsSrcGroupSources { get { return m_arListGroupValues[(int)INDEX_SRC.SOURCE].m_listGroupSrc.ToArray(); } }
+            public GROUP_SRC[] AllObjectsSrcGroupSources { get { return m_arListGroupValues[(int)FormMain.INDEX_SRC.SOURCE].m_listGroupSrc.ToArray(); } }
             public GROUP_SRC GetObjectSrcGroupSources(string id)
             {
-                return getObjectSrcGroupSources(INDEX_SRC.SOURCE, id);
+                return getObjectSrcGroupSources(FormMain.INDEX_SRC.SOURCE, id);
             }
 
-            public GROUP_SIGNALS_SRC[] AllObjectsSrcGroupSignals { get { return m_arListGroupValues[(int)INDEX_SRC.SOURCE].m_listGroupSgnlsSrc.ToArray(); } }
+            public GROUP_SIGNALS_SRC[] AllObjectsSrcGroupSignals { get { return m_arListGroupValues[(int)FormMain.INDEX_SRC.SOURCE].m_listGroupSgnlsSrc.ToArray(); } }
             public GROUP_SIGNALS_SRC GetObjectSrcGroupSignals(string id)
             {
-                return getObjectSrcGroupSignals(INDEX_SRC.SOURCE, id);
+                return getObjectSrcGroupSignals(FormMain.INDEX_SRC.SOURCE, id);
             }
 
 
-            public GROUP_SRC[] AllObjectsDestGroupSources { get { return m_arListGroupValues[(int)INDEX_SRC.DEST].m_listGroupSrc.ToArray(); } }
+            public GROUP_SRC[] AllObjectsDestGroupSources { get { return m_arListGroupValues[(int)FormMain.INDEX_SRC.DEST].m_listGroupSrc.ToArray(); } }
             public GROUP_SRC GetObjectDestGroupSources(string id)
             {
-                return getObjectSrcGroupSources(INDEX_SRC.DEST, id);
+                return getObjectSrcGroupSources(FormMain.INDEX_SRC.DEST, id);
             }
 
-            public GROUP_SIGNALS_SRC[] AllObjectsDestGroupSignals { get { return m_arListGroupValues[(int)INDEX_SRC.DEST].m_listGroupSgnlsSrc.ToArray(); } }
+            public GROUP_SIGNALS_SRC[] AllObjectsDestGroupSignals { get { return m_arListGroupValues[(int)FormMain.INDEX_SRC.DEST].m_listGroupSgnlsSrc.ToArray(); } }
             public GROUP_SIGNALS_SRC GetObjectDestGroupSignals(string id)
             {
-                return getObjectSrcGroupSignals(INDEX_SRC.DEST, id);
+                return getObjectSrcGroupSignals(FormMain.INDEX_SRC.DEST, id);
             }
             
-            public string[,] ListSrcGroupSources { get { return GetListGroupSources(INDEX_SRC.SOURCE); } }
+            public string[,] ListSrcGroupSources { get { return GetListGroupSources(FormMain.INDEX_SRC.SOURCE); } }
 
-            public string[,] ListDestGroupSources { get { return GetListGroupSources(INDEX_SRC.DEST); } }
+            public string[,] ListDestGroupSources { get { return GetListGroupSources(FormMain.INDEX_SRC.DEST); } }
 
-            private string[,] GetListGroupSignals(INDEX_SRC indx)
+            private string[,] GetListGroupSignals(FormMain.INDEX_SRC indx)
             {
                 string[,] arStrRes = null;
                 int i = -1;
@@ -565,9 +574,9 @@ namespace uLoader
                 return arStrRes;
             }
 
-            public string[,] ListSrcGroupSignals { get { return GetListGroupSignals(INDEX_SRC.SOURCE); } }
+            public string[,] ListSrcGroupSignals { get { return GetListGroupSignals(FormMain.INDEX_SRC.SOURCE); } }
 
-            public string[,] ListDestGroupSignals { get { return GetListGroupSignals(INDEX_SRC.DEST); } }
+            public string[,] ListDestGroupSignals { get { return GetListGroupSignals(FormMain.INDEX_SRC.DEST); } }
 
             public string [,] GetListItemsOfGroupSource (object []pars)
             {
@@ -689,7 +698,7 @@ namespace uLoader
 
             public GROUP_SIGNALS_PARS GetObjectGroupSignalsPars(object[] pars)
             {
-                GROUP_SRC itemSrc = getItemSrc((INDEX_SRC)pars[0], pars[1] as string) as GROUP_SRC;
+                GROUP_SRC itemSrc = getItemSrc((FormMain.INDEX_SRC)pars[0], pars[1] as string) as GROUP_SRC;
                 GROUP_SIGNALS_PARS grpSgnlsRes = null;
 
                 //???
@@ -713,11 +722,11 @@ namespace uLoader
                 switch (pars.Length)
                 {
                     case 2:
-                        return getItemSrc((INDEX_SRC)pars[0], pars[1] as string);
+                        return getItemSrc((FormMain.INDEX_SRC)pars[0], pars[1] as string);
                         //break;
                     case 3:
                     case 4: //'GetListItemPropOfGroupSource', 4-ый параметр не используется...
-                        return getItemSrc((INDEX_SRC)pars[0], (int)pars[1], (string)pars[2]);
+                        return getItemSrc((FormMain.INDEX_SRC)pars[0], (int)pars[1], (string)pars[2]);
                         //break;
                     default:
                         throw new Exception(@"FileINI::getItemSrc () - неизвестное количество параметров ...");
@@ -778,7 +787,7 @@ namespace uLoader
             /// <param name="groupType">Тип группы</param>
             /// <param name="indxSel">Индекс выбранной группы</param>
             /// <returns>Объект описания элемента группы</returns>
-            private ITEM_SRC getItemSrc(INDEX_SRC indxSrc, int groupType, string idSel)
+            private ITEM_SRC getItemSrc(FormMain.INDEX_SRC indxSrc, int groupType, string idSel)
             {
                 ITEM_SRC itemSrcRes = null;
 
@@ -801,7 +810,7 @@ namespace uLoader
             /// <summary>
             /// Определить тип группы по строковому идентификатору
             /// </summary>
-            /// <param name="strId"></param>
+            /// <param name="strId">Строковый идентификатор</param>
             /// <returns>Тип группы (0 - группы источников, 2 - группы сигналов)</returns>
             private int getTypeGroup(string strId)
             {
@@ -828,7 +837,7 @@ namespace uLoader
             /// <param name="indxSrc">Индекс панели</param>
             /// <param name="id">Строковый идентификатор объекта</param>
             /// <returns>Объект описания элемента группы</returns>
-            private ITEM_SRC getItemSrc(INDEX_SRC indxSrc, string id)
+            private ITEM_SRC getItemSrc(FormMain.INDEX_SRC indxSrc, string id)
             {
                 ITEM_SRC itemSrcRes = null; //Результат
                 //Получить объект с 
@@ -868,7 +877,7 @@ namespace uLoader
                 return itemSrcRes;
             }
 
-            public void UpdateParameter(int type, string strIdGroup, string par, string val)
+            public void UpdateParameter(FormMain.INDEX_SRC type, string strIdGroup, string par, string val)
             {
                 Logging.Logg().Debug(@"FileINI::UpdateParameter (ID=" + strIdGroup + @", par=" + par + @") - ...", Logging.INDEX_MESSAGE.NOT_SET);
 
@@ -925,76 +934,23 @@ namespace uLoader
                     }
             }
 
-            private string makeValueGroupSignalsPars(int type, string strIdGroup, int indxGrpSgnls, GROUP_SIGNALS_PARS parValues)
+            public void UpdateParameter(FormMain.INDEX_SRC type, string strIdGroup, int indxGrpSgnls, GROUP_SIGNALS_PARS parValues)
             {
-                string strRes = string.Empty;
-                int indxPar = -1;
+                string parNames = string.Empty;
+                List<string> listParPrevValues
+                    , listParCurValues;
 
-                //Получить ниаменования параметров для групп сигналов
-                List<string> pars = GetSecValueOfKey(SEC_SRC_TYPES[(int)type] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
-                        , KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + @"PARS").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]).ToList<string>()
-                    , listParValues = GetSecValueOfKey(SEC_SRC_TYPES[(int)type] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
-                        , KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + indxGrpSgnls).Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]).ToList<string>(); ;
+                parNames = $"{KEY_TREE_SGNLS [(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS]}{indxGrpSgnls}";
 
-                indxPar = 0;
-                foreach (string par in pars)
-                {
-                    switch (par)
-                    {
-                        case @"ID":
-                        case @"ID_GS":
-                            //Не устанавливается с помощью GUI
-                            break;
-                        case @"AUTO_START":
-                            ////Вариант №1, 2
-                            //listParValues[indxPar] = parValues.m_iAutoStart.ToString ();
+                listParPrevValues = GetSecValueOfKey ($"{SEC_SRC_TYPES [(int)type]}{s_chSecDelimeters [(int)INDEX_DELIMETER.SEC_PART_TARGET]}{strIdGroup}", parNames)
+                    .Split (s_chSecDelimeters [(int)INDEX_DELIMETER.PAIR_VAL])
+                    .ToList<string> ();
+                listParCurValues = parValues.ValuesToFileINI ();
 
-                            //Вариант №3
-                            int iAutoStart = Int32.Parse(listParValues[indxPar]);
-                            if (parValues.m_iAutoStart == 2)
-                                //Признак изменения значения                                
-                                listParValues[indxPar] = ((iAutoStart == 0) ? 1 : 0).ToString();
-                            else
-                                ; //Не изменять
-
-                            //Console.WriteLine(@"MainForm.FileINI::makeValueGroupSignalsPars () - iAutoStart=" + listParValues[indxPar] + @"...");
-                            break;
-                        case @"TOOLS_ENABLED": //Не устанавливается с помощью GUI
-                            break;
-                        case @"CURINTERVAL_PERIODMAIN":
-                            if ((type == (int)INDEX_SRC.SOURCE)
-                                && ((parValues as GROUP_SIGNALS_SRC_PARS).m_mode == MODE_WORK.CUR_INTERVAL))
-                                //Только для источника
-                                listParValues[indxPar] = parValues.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodMain.Text;
-                            else
-                                ;
-                            break;
-                        case @"CURINTERVAL_PERIODLOCAL":
-                            if ((type == (int)INDEX_SRC.SOURCE)
-                                && ((parValues as GROUP_SIGNALS_SRC_PARS).m_mode == MODE_WORK.CUR_INTERVAL))
-                                //Только для источника
-                                listParValues[indxPar] = parValues.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsIntervalLocal.ToString ();
-                            else
-                                ;
-                            break;
-                        default:
-                            throw new Exception(@"FormMain.FileINI::getValueGroupSignalsPars () - ...");
-                    }
-
-                    indxPar ++;
-                }
-
-                strRes = string.Join(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL].ToString(), listParValues.ToArray());
-
-                return strRes;
-            }
-
-            public void UpdateParameter(int type, string strIdGroup, int indxGrpSgnls, GROUP_SIGNALS_PARS parValues)
-            {
-                UpdateParameter(type
+                UpdateParameter (type
                     , strIdGroup
                     , KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + indxGrpSgnls
-                    , makeValueGroupSignalsPars(type, strIdGroup, indxGrpSgnls, parValues));
+                    , string.Join (s_chSecDelimeters [(int)INDEX_DELIMETER.PAIR_VAL].ToString (), listParCurValues.Intersect (listParPrevValues).ToArray ()));
             }
         }
     }

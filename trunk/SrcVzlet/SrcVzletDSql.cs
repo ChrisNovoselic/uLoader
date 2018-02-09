@@ -14,13 +14,13 @@ namespace SrcVzlet
     class SrcVzletDsql : HHandlerDbULoaderDatetimeSrc
     {
         public SrcVzletDsql()
-            : base(@"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
+            : base(UCHET.Trice, @"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
 
         }
 
         public SrcVzletDsql(PlugInULoader iPlugIn)
-            : base(iPlugIn, @"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
+            : base(iPlugIn, UCHET.Trice, @"yyyyMMdd HH:mm:ss", MODE_CURINTERVAL.CAUSE_PERIOD_DAY, MODE_CURINTERVAL.NEXTSTEP_FULL_PERIOD)
         {
         }
 

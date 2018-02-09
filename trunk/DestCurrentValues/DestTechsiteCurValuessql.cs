@@ -50,7 +50,7 @@ namespace DestCurrentValues
                 int idSrvTM = (_parent as HHandlerDbULoaderStatTMKKSNAMEDest).GetIdSrvTM(m_IdSourceConnSett)
                     //, iOffsetUTCToDataTotalHours = (int)(_parent as DestTechsiteCurValuessql).m_tsOffsetUTCToData.Value.TotalHours
                     ;
-                //HTimeSpan tsUTCOffset = _parent.m_tsUTCOffset == HTimeSpan.NotValue ? new HTimeSpan(@"ss0") : _parent.m_tsUTCOffset; //??? OFFSET
+                //HTimeSpan tsUTCOffset = _parent.m_tsUTCOffset == HTimeSpan.Zero ? new HTimeSpan(@"ss0") : _parent.m_tsUTCOffset; //??? OFFSET
 
                 //Logging.Logg().Debug(@"GroupSignalsStatKKSNAMEsql::getInsertValuesQuery () - Type of results DateTable column[VALUE]=" + tblRes.Columns[@"Value"].DataType.AssemblyQualifiedName + @" ...", Logging.INDEX_MESSAGE.NOT_SET);
 

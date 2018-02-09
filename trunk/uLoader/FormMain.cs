@@ -15,16 +15,6 @@ using ASUTP.Forms;
 
 namespace uLoader
 {
-    /// <summary>
-    /// Перечисление для индексирования 'SEC_SRC_TYPES' (источник, назначение)
-    /// </summary>
-    enum INDEX_SRC
-    {
-        SOURCE,
-        DEST
-            , COUNT_INDEX_SRC
-    };
-
     public partial class FormMain : uLoaderCommon.FormMainBase
     {
         /// <summary>

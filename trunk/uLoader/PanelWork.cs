@@ -83,7 +83,7 @@ namespace uLoader
         /// <param name="indxWork">Индекс панели конфигурации</param>
         /// <param name="indxPanel">Индекс группы элементов (элементов) на панели конфигурации</param>
         /// <param name="rows">Массив строк для заполнения</param>
-        private void fillWorkItem(INDEX_SRC indxWork, PanelLoader.KEY_CONTROLS key, string[,] rows)
+        private void fillWorkItem(FormMain.INDEX_SRC indxWork, PanelLoader.KEY_CONTROLS key, string[,] rows)
         {
             m_arLoader[(int)indxWork].FillWorkItem(key, rows);
         }
@@ -92,7 +92,7 @@ namespace uLoader
         /// </summary>
         /// <param name="indxWork">Индекс панели</param>
         /// <param name="grpSrc">Объект с данными для заполнения</param>
-        private void fillWorkItem(INDEX_SRC indxWork, GROUP_SRC grpSrc)
+        private void fillWorkItem(FormMain.INDEX_SRC indxWork, GROUP_SRC grpSrc)
         {
             m_arLoader[(int)indxWork].FillWorkItem(grpSrc);
         }
@@ -101,7 +101,7 @@ namespace uLoader
         /// </summary>
         /// <param name="indxWork">Индекс панели</param>
         /// <param name="grpSrc">Объект с данными для заполнения</param>
-        private void fillWorkItem(INDEX_SRC indxWork, GROUP_SIGNALS_SRC grpSrc)
+        private void fillWorkItem(FormMain.INDEX_SRC indxWork, GROUP_SIGNALS_SRC grpSrc)
         {
             m_arLoader[(int)indxWork].FillWorkItem(grpSrc);
         }
@@ -110,7 +110,7 @@ namespace uLoader
         /// </summary>
         /// <param name="indxWork">Индекс панели</param>
         /// <param name="grpSrc">Объект с данными для заполнения</param>
-        private void fillWorkItem(INDEX_SRC indxWork, GROUP_SIGNALS_PARS grpSrc)
+        private void fillWorkItem(FormMain.INDEX_SRC indxWork, GROUP_SIGNALS_PARS grpSrc)
         {
             m_arLoader[(int)indxWork].FillWorkItem(grpSrc);
         }
@@ -120,7 +120,7 @@ namespace uLoader
         /// <param name="indxWork">Индекс панели</param>
         /// <param name="key">Ключ элемента интерфейса</param>
         /// <param name="states">Массив состояний объектов</param>
-        private void enabledWorkItem(INDEX_SRC indxWork, PanelLoader.KEY_CONTROLS key, GroupSources.STATE[] states)
+        private void enabledWorkItem(FormMain.INDEX_SRC indxWork, PanelLoader.KEY_CONTROLS key, GroupSources.STATE[] states)
         {
             m_arLoader[(int)indxWork].EnabledWorkItem(key, states);
         }
@@ -130,7 +130,7 @@ namespace uLoader
         /// <param name="indxWork">Индекс панели</param>
         /// <param name="key">Ключ элемента интерфейса</param>
         /// <param name="args">Массив аргументов для каждой из групп сигналов (STATE, bEnableTools)</param>
-        private void enabledWorkItem(INDEX_SRC indxWork, PanelLoader.KEY_CONTROLS key, object [] args)
+        private void enabledWorkItem(FormMain.INDEX_SRC indxWork, PanelLoader.KEY_CONTROLS key, object [] args)
         {
             m_arLoader[(int)indxWork].EnabledWorkItem(key, args);
         }        
@@ -209,16 +209,16 @@ namespace uLoader
             try {
                 switch (state) {
                     case HHandlerQueue.StatesMachine.LIST_GROUP_SOURCES: //Группы источников (источник)
-                        fillWorkItem(INDEX_SRC.SOURCE, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.SOURCE] as string[,]);
-                        fillWorkItem(INDEX_SRC.DEST, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)INDEX_SRC.DEST] as string[,]);
+                        fillWorkItem(FormMain.INDEX_SRC.SOURCE, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)FormMain.INDEX_SRC.SOURCE] as string[,]);
+                        fillWorkItem(FormMain.INDEX_SRC.DEST, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)FormMain.INDEX_SRC.DEST] as string[,]);
                         break;
                     case HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SOURCES: //Группа (объект) источников (источник)
-                        //m_arCurrentSrcItems [(int)INDEX_SRC.SOURCE] = par as ITEM_SRC;
-                        fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SRC);
+                        //m_arCurrentSrcItems [(int)FormMain.INDEX_SRC.SOURCE] = par as ITEM_SRC;
+                        fillWorkItem(FormMain.INDEX_SRC.SOURCE, par as GROUP_SRC);
                         break;
                     case HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SOURCES: //Группа (объект) источников (назначение)
-                        //m_arCurrentSrcItems[(int)INDEX_SRC.DEST] = par as ITEM_SRC;
-                        fillWorkItem(INDEX_SRC.DEST, par as GROUP_SRC);
+                        //m_arCurrentSrcItems[(int)FormMain.INDEX_SRC.DEST] = par as ITEM_SRC;
+                        fillWorkItem(FormMain.INDEX_SRC.DEST, par as GROUP_SRC);
                         break;
                     case HHandlerQueue.StatesMachine.TIMER_WORK_UPDATE:
                         m_iSecondUpdate = (int)par;
@@ -227,27 +227,27 @@ namespace uLoader
                         break;
                     case HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS_PARS: //Объект с параметрами группы сигналов (источник)
                         //???
-                        //fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SIGNALS_SRC);
-                        fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SIGNALS_PARS);
+                        //fillWorkItem(FormMain.INDEX_SRC.SOURCE, par as GROUP_SIGNALS_SRC);
+                        fillWorkItem(FormMain.INDEX_SRC.SOURCE, par as GROUP_SIGNALS_PARS);
                         break;
                     case HHandlerQueue.StatesMachine.OBJ_SRC_GROUP_SIGNALS: //Объект группы сигналов (источник)
-                        fillWorkItem(INDEX_SRC.SOURCE, par as GROUP_SIGNALS_SRC);
+                        fillWorkItem(FormMain.INDEX_SRC.SOURCE, par as GROUP_SIGNALS_SRC);
                         break;
                     case HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SIGNALS_PARS: //Объект с параметрами группы сигналов (назначение)
                         //???
-                        //fillWorkItem(INDEX_SRC.DEST, par as GROUP_SIGNALS_SRC);
-                        fillWorkItem(INDEX_SRC.DEST, par as GROUP_SIGNALS_PARS);
+                        //fillWorkItem(FormMain.INDEX_SRC.DEST, par as GROUP_SIGNALS_SRC);
+                        fillWorkItem(FormMain.INDEX_SRC.DEST, par as GROUP_SIGNALS_PARS);
                         break;
                     case HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SIGNALS: //Объект группы сигналов (назначение)
                         //???
-                        fillWorkItem(INDEX_SRC.DEST, par as GROUP_SIGNALS_SRC);
+                        fillWorkItem(FormMain.INDEX_SRC.DEST, par as GROUP_SIGNALS_SRC);
                         break;
                     case HHandlerQueue.StatesMachine.STATE_GROUP_SOURCES: //Состояние группы источников (источник, назначение)
-                        for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
+                        for (FormMain.INDEX_SRC indxSrc = FormMain.INDEX_SRC.SOURCE; indxSrc < FormMain.INDEX_SRC.COUNT_INDEX_SRC; indxSrc++)
                             enabledWorkItem(indxSrc, PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES, (par as object[])[(int)indxSrc] as GroupSources.STATE[]);
                         break;
                     case HHandlerQueue.StatesMachine.STATE_GROUP_SIGNALS: //Состояние группы сигналов  (источник, назначение)
-                        for (INDEX_SRC indxSrc = INDEX_SRC.SOURCE; indxSrc < INDEX_SRC.COUNT_INDEX_SRC; indxSrc ++ )
+                        for (FormMain.INDEX_SRC indxSrc = FormMain.INDEX_SRC.SOURCE; indxSrc < FormMain.INDEX_SRC.COUNT_INDEX_SRC; indxSrc ++ )
                             enabledWorkItem(indxSrc, PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS, (par as object[])[(int)indxSrc] as object []);
                         break;
                     case HHandlerQueue.StatesMachine.STATE_CHANGED_GROUP_SOURCES: //Состояние (изменено) группы источников (источник, назначение)
@@ -264,21 +264,21 @@ namespace uLoader
                         break;
                     case HHandlerQueue.StatesMachine.DATA_SRC_GROUP_SIGNALS:
                         if (par == null)
-                            m_arLoader[(int)INDEX_SRC.SOURCE].UpdateData ();
+                            m_arLoader[(int)FormMain.INDEX_SRC.SOURCE].UpdateData ();
                         else
-                            m_arLoader[(int)INDEX_SRC.SOURCE].UpdateData(par as DataTable);
+                            m_arLoader[(int)FormMain.INDEX_SRC.SOURCE].UpdateData(par as DataTable);
                         break;
                     case HHandlerQueue.StatesMachine.DATA_DEST_GROUP_SIGNALS:
                         if (par == null)
-                            m_arLoader[(int)INDEX_SRC.DEST].UpdateData ();
+                            m_arLoader[(int)FormMain.INDEX_SRC.DEST].UpdateData ();
                         else
-                            m_arLoader[(int)INDEX_SRC.DEST].UpdateData(par as DataTable);
+                            m_arLoader[(int)FormMain.INDEX_SRC.DEST].UpdateData(par as DataTable);
                         break;
                     //case HHandlerQueue.StatesMachine.SET_IDCUR_SOURCE_OF_GROUP:
                     //    break;
                     case HHandlerQueue.StatesMachine.GET_GROUP_SIGNALS_DATETIME_PARS:
                         if (!(par == null))
-                            m_arLoader[(int)INDEX_SRC.SOURCE].FillDatetimePars (par as DATETIME_WORK);
+                            m_arLoader[(int)FormMain.INDEX_SRC.SOURCE].FillDatetimePars (par as DATETIME_WORK);
                         else
                             ;
                         break;
@@ -355,15 +355,15 @@ namespace uLoader
                 , strDestIDGrpSignals = string.Empty;
             List<object[]> listDataAskedHost = new List<object[]>();
 
-            ctrl = m_arLoader[(int)INDEX_SRC.SOURCE].GetWorkingItem (PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView;
+            ctrl = m_arLoader[(int)FormMain.INDEX_SRC.SOURCE].GetWorkingItem (PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView;
             indxSrcSel = ctrl.SelectedRows.Count > 0 ? ctrl.SelectedRows[0].Index : -1;
-            ctrl = m_arLoader[(int)INDEX_SRC.DEST].GetWorkingItem(PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView;
+            ctrl = m_arLoader[(int)FormMain.INDEX_SRC.DEST].GetWorkingItem(PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES) as DataGridView;
             indxDestSel = ctrl.SelectedRows.Count > 0 ? ctrl.SelectedRows[0].Index : -1;
 
-            ctrl = m_arLoader[(int)INDEX_SRC.SOURCE].GetWorkingItem(PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView;
-            strSrcIDGrpSignals = ctrl.SelectedRows.Count > 0 ? m_arLoader[(int)INDEX_SRC.SOURCE].GetWorkingItemId(PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS) : string.Empty;
-            ctrl = m_arLoader[(int)INDEX_SRC.DEST].GetWorkingItem(PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView;
-            strDestIDGrpSignals = ctrl.SelectedRows.Count > 0 ? m_arLoader[(int)INDEX_SRC.DEST].GetWorkingItemId (PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS) : string.Empty;
+            ctrl = m_arLoader[(int)FormMain.INDEX_SRC.SOURCE].GetWorkingItem(PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView;
+            strSrcIDGrpSignals = ctrl.SelectedRows.Count > 0 ? m_arLoader[(int)FormMain.INDEX_SRC.SOURCE].GetWorkingItemId(PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS) : string.Empty;
+            ctrl = m_arLoader[(int)FormMain.INDEX_SRC.DEST].GetWorkingItem(PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView;
+            strDestIDGrpSignals = ctrl.SelectedRows.Count > 0 ? m_arLoader[(int)FormMain.INDEX_SRC.DEST].GetWorkingItemId (PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS) : string.Empty;
 
             //1-ое событие (состояние групп источников)
             listDataAskedHost.Add(new object[] { (int)HHandlerQueue.StatesMachine.STATE_GROUP_SOURCES /*, без параметров*/ });
@@ -405,14 +405,14 @@ namespace uLoader
             //Событие для постановки в очередь обработки событий
             HHandlerQueue.StatesMachine state = HHandlerQueue.StatesMachine.UNKNOWN;
             //Определить панель-инициатор сообщения
-            INDEX_SRC indxWork = (INDEX_SRC)this.Controls.GetChildIndex(pars[(int)PanelLoader.INDEX_PREPARE_PARS.OBJ] as PanelLoader);
+            FormMain.INDEX_SRC indxWork = (FormMain.INDEX_SRC)(pars[(int)PanelLoader.INDEX_PREPARE_PARS.OBJ] as PanelLoader).Index;
 
             switch ((KEY_EVENT)pars[(int)PanelLoader.INDEX_PREPARE_PARS.KEY_EVT])
             {
                 case KEY_EVENT.SELECTION_CHANGED:
                     switch (indxWork)
                     {
-                        case INDEX_SRC.SOURCE:
+                        case FormMain.INDEX_SRC.SOURCE:
                             switch ((PanelLoader.KEY_CONTROLS)pars[(int)PanelLoader.INDEX_PREPARE_PARS.KEY_OBJ])
                             {
                                 case PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES:
@@ -486,13 +486,19 @@ namespace uLoader
                                     break;
                             }
                             break;
-                        case INDEX_SRC.DEST:
+
+                        #region INDEX_SRC.DEST
+                        case FormMain.INDEX_SRC.DEST:
                             switch ((PanelLoader.KEY_CONTROLS)pars[(int)PanelLoader.INDEX_PREPARE_PARS.KEY_OBJ])
                             {
+                                #region DGV_GROUP_SOURCES
                                 case PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES:
                                     state = HHandlerQueue.StatesMachine.OBJ_DEST_GROUP_SOURCES;
                                     arObjToDataHost = new object[] { new object[] { (int)state, pars[(int)PanelLoader.INDEX_PREPARE_PARS.ID_OBJ_SEL] } };
                                     break;
+                                #endregion
+
+                                #region DGV_GROUP_SIGNALS
                                 case PanelLoader.KEY_CONTROLS.DGV_GROUP_SIGNALS:
                                     //state = ;
                                     arObjToDataHost = new object[] {
@@ -509,6 +515,9 @@ namespace uLoader
                                         }
                                     };
                                     break;
+                                #endregion
+
+                                #region CBX_SOURCE_OF_GROUP
                                 case PanelLoader.KEY_CONTROLS.CBX_SOURCE_OF_GROUP:
                                     state = HHandlerQueue.StatesMachine.SET_IDCUR_SOURCE_OF_GROUP;
                                     arObjToDataHost = new object[] {
@@ -520,6 +529,9 @@ namespace uLoader
                                         }
                                     };
                                     break;
+                                #endregion
+
+                                #region TBX_GROUPSOURCES_ADDING
                                 case PanelLoader.KEY_CONTROLS.TBX_GROUPSOURCES_ADDING:
                                 //case PanelLoader.KEY_CONTROLS.TBX_GROUPSIGNALS_ADDING:
                                     state = HHandlerQueue.StatesMachine.SET_TEXT_ADDING;
@@ -532,6 +544,9 @@ namespace uLoader
                                         }
                                     };
                                     break;
+                                #endregion
+
+                                #region GROUP_BOX_GROUP_SIGNALS
                                 case PanelLoader.KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS:
                                     state = HHandlerQueue.StatesMachine.SET_GROUP_SIGNALS_PARS;
                                     arObjToDataHost = new object[] {
@@ -543,10 +558,14 @@ namespace uLoader
                                         }
                                     };
                                     break;
+                                #endregion
+
                                 default:
                                     break;
                             }
                             break;
+                        #endregion
+
                         default:
                             break;
                     }
@@ -554,7 +573,7 @@ namespace uLoader
                 case KEY_EVENT.CELL_CLICK:
                     switch (indxWork)
                     {
-                        case INDEX_SRC.SOURCE:
+                        case FormMain.INDEX_SRC.SOURCE:
                             switch ((PanelLoader.KEY_CONTROLS)pars[(int)PanelLoader.INDEX_PREPARE_PARS.KEY_OBJ])
                             {
                                 case PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES:
@@ -567,7 +586,7 @@ namespace uLoader
                                     break;
                             }
                             break;
-                        case INDEX_SRC.DEST:
+                        case FormMain.INDEX_SRC.DEST:
                             switch ((PanelLoader.KEY_CONTROLS)pars[(int)PanelLoader.INDEX_PREPARE_PARS.KEY_OBJ])
                             {
                                 case PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES:
@@ -596,8 +615,8 @@ namespace uLoader
                 case KEY_EVENT.BTN_DLL_RELOAD:
                     switch (indxWork)
                     {
-                        case INDEX_SRC.SOURCE:
-                        case INDEX_SRC.DEST:
+                        case FormMain.INDEX_SRC.SOURCE:
+                        case FormMain.INDEX_SRC.DEST:
                             //state = ;
                             arObjToDataHost = new object[] {
                                 new object []
@@ -616,10 +635,10 @@ namespace uLoader
                 case KEY_EVENT.BTN_CLEAR_CLICK:
                     switch (indxWork)
                     {
-                        case INDEX_SRC.SOURCE: //для SOURCE удаление НЕвозможно
+                        case FormMain.INDEX_SRC.SOURCE: //для SOURCE удаление НЕвозможно
                             ;
                             break;
-                        case INDEX_SRC.DEST:
+                        case FormMain.INDEX_SRC.DEST:
                             switch ((PanelLoader.KEY_CONTROLS)pars[(int)PanelLoader.INDEX_PREPARE_PARS.KEY_OBJ])
                             {
                                 case PanelLoader.KEY_CONTROLS.DGV_GROUP_SOURCES: // для DEST группы источников удаление НЕвозможно
@@ -699,15 +718,15 @@ namespace uLoader
             initializeLayoutStyle ();
             //Создать панели (тсточник, назначение)
             Type typeLoader = typeof (PanelLoader);
-            m_arLoader = new PanelLoader[(int)INDEX_SRC.COUNT_INDEX_SRC];
-            for (int i = (int)INDEX_SRC.SOURCE; i < (int)INDEX_SRC.COUNT_INDEX_SRC; i++)
+            m_arLoader = new PanelLoader[(int)FormMain.INDEX_SRC.COUNT_INDEX_SRC];
+            for (int i = (int)FormMain.INDEX_SRC.SOURCE; i < (int)FormMain.INDEX_SRC.COUNT_INDEX_SRC; i++)
             {
                 switch (i)
                 {
-                    case (int)INDEX_SRC.SOURCE:
+                    case (int)FormMain.INDEX_SRC.SOURCE:
                         typeLoader = typeof(PanelLoaderSource);
                         break;
-                    case (int)INDEX_SRC.DEST:
+                    case (int)FormMain.INDEX_SRC.DEST:
                         typeLoader = typeof(PanelLoaderDest);
                         break;
                     default:

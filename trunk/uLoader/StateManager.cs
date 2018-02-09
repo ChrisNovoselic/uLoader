@@ -27,13 +27,13 @@ namespace uLoader
             /// <summary>
             /// Интервал в милисекундах для проверки меток времени обновления
             /// </summary>
-            public static HTimeSpan s_tsTimerFuncUpdate = HTimeSpan.NotValue;
+            public static HTimeSpan s_tsTimerFuncUpdate = HTimeSpan.Zero;
 
             private static int MIN_MSEC_WAIT_CONFIRMED = 46006;
             /// <summary>
             /// Интервал времени, в течении которого состояние объекта считать актуальным
             /// </summary>
-            public static HTimeSpan s_tsWaitConfirmed = HTimeSpan.NotValue;
+            public static HTimeSpan s_tsWaitConfirmed = HTimeSpan.Zero;
 
             public static int MAX_HISTORY_INFOCRASHED = 6
                 , MAX_COUNT_CRASHED_TO_RELOAD_GROUPSOURCES = 1;
@@ -186,7 +186,7 @@ namespace uLoader
             public ID(object[] ids)
             {
                 //if (ids[0].GetType().IsEnum == true)
-                    m_typeOwner = (INDEX_SRC)ids[0];
+                    m_typeOwner = (FormMain.INDEX_SRC.)ids[0];
                 //else
                 //    throw new InvalidEnumArgumentException(@"HHandlerQueue.ID::ctor () - ...");
                 m_idOwner = (int)ids[1];
@@ -483,7 +483,7 @@ namespace uLoader
                 return GetKey(id.m_typeOwner, id.m_idOwner);
             }
 
-            public static KeyValuePair<INDEX_SRC, int> GetKey(INDEX_SRC indx, int id)
+            public static KeyValuePair<INDEX_SRC, int> GetKey(FormMain.INDEX_SRC. indx, int id)
             {
                 return new KeyValuePair<INDEX_SRC, int>(indx, id);
             }
@@ -791,7 +791,7 @@ namespace uLoader
         /// </summary>
         /// <param name="type">Тип группы источников</param>
         /// <param name="idOwner">Идентификатор (индекс) группы источников</param>
-        private void pushCommandReloadGroupSources(INDEX_SRC type, int idOwner, bool bAbort)
+        private void pushCommandReloadGroupSources(FormMain.INDEX_SRC. type, int idOwner, bool bAbort)
         {
             GroupSources grpSrc = null;
             ID id;

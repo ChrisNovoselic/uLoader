@@ -136,7 +136,12 @@ namespace uLoaderCommon
                     || (! (_prefix.Length == 2));
             }
         }
-        
+
+        public HTimeSpan ()
+        {
+            Text = PREFIX_ZERO;
+        }
+
         /// <summary>
         /// Конструктор - основной (с параметром)
         /// </summary>
@@ -207,6 +212,9 @@ namespace uLoaderCommon
                     case @"dd":
                         iValue = (int)_value.TotalDays;
                         break;
+                    case PREFIX_ZERO:
+                        iValue = 0;
+                        break;
                     default:
                         break;
                 }
@@ -216,7 +224,7 @@ namespace uLoaderCommon
                 else
                     ;
 
-                strRes += _prefix + iValue.ToString();
+                strRes += string.Format("{0}{1}", _prefix, !(iValue == 0) ? iValue.ToString() : string.Empty);
             }
             else
                 ;
@@ -233,6 +241,8 @@ namespace uLoaderCommon
             : this((iValue < 0 ? @"-" : string.Empty) + prefix + Math.Abs(iValue).ToString ())
         {
         }
+
+        public const string PREFIX_ZERO = "zr";
 
         /// <summary>
         /// Возвратить стандартный интервал времени
@@ -251,60 +261,56 @@ namespace uLoaderCommon
 
             if (value.Length > 0)
             {
-                ch = value[0];
-                iSign = iSign = (ch.Equals('+') == true) ? 1 : (ch.Equals('-') == true) ? -1 : 0;
+                if (value.Equals (PREFIX_ZERO) == true) {
+                    prefix = value; // PREFIX_ZERO
+                } else {
+                    ch = value[0];
+                    iSign = iSign = (ch.Equals('+') == true) ? 1 : (ch.Equals('-') == true) ? -1 : 0;
+
+                    if (value.Length > (Math.Abs (iSign) + 2))
+                    {
+                        prefix = value.Substring (Math.Abs (iSign), 2);
+                        iValue = Int32.Parse (value.Substring (Math.Abs (iSign) + 2));
+
+                        switch (prefix) {
+                            case @"ms":
+                                tsRes = TimeSpan.FromMilliseconds (iValue);
+                                break;
+                            case @"ss":
+                                tsRes = TimeSpan.FromSeconds (iValue);
+                                break;
+                            case @"mi":
+                                tsRes = TimeSpan.FromMinutes (iValue);
+                                break;
+                            case @"hh":
+                                tsRes = TimeSpan.FromHours (iValue);
+                                break;
+                            case @"dd":
+                                tsRes = TimeSpan.FromDays (iValue);
+                                break;
+                            case PREFIX_ZERO:
+                                tsRes = TimeSpan.Zero;
+                                break;
+                            default: // признак ошибки
+                                tsRes = TimeSpan.MinValue;
+                                break;
+                        }
+
+                        if (iSign < 0)
+                            tsRes = TimeSpan.Zero - tsRes;
+                        else
+                            ;
+                    } else
+                    // признак ошибки
+                        tsRes = TimeSpan.MinValue;
+                }
             }
             else
-                // признак ошибки
+            // признак ошибки
                 tsRes = TimeSpan.MinValue;
-
-            if (tsRes == TimeSpan.Zero)
-                if (value.Length > (Math.Abs(iSign) + 2))
-                {
-                    prefix = value.Substring(Math.Abs(iSign), 2);
-                    iValue = Int32.Parse(value.Substring(Math.Abs(iSign) + 2));
-
-                    switch (prefix)
-                    {
-                        case @"ms":
-                            tsRes = TimeSpan.FromMilliseconds(iValue);
-                            break;
-                        case @"ss":
-                            tsRes = TimeSpan.FromSeconds(iValue);
-                            break;
-                        case @"mi":
-                            tsRes = TimeSpan.FromMinutes(iValue);
-                            break;
-                        case @"hh":
-                            tsRes = TimeSpan.FromHours(iValue);
-                            break;
-                        case @"dd":
-                            tsRes = TimeSpan.FromDays(iValue);
-                            break;
-                        default:
-                            // признак ошибки
-                            tsRes = TimeSpan.MinValue;
-                            break;
-                    }
-
-                    if (iSign < 0)
-                        tsRes = TimeSpan.Zero - tsRes;
-                    else
-                        ;
-                }
-                else
-                    // признак ошибки
-                    tsRes = TimeSpan.MinValue;
-            else
-                ;
 
             return tsRes;
         }
-
-        /// <summary>
-        /// Константа, указывающая на отсутствие значения
-        /// </summary>
-        public static HTimeSpan NotValue { get { return HTimeSpan.FromMilliseconds(-1); } }
 
         /// <summary>
         /// Возвратить объект из милисекунд
@@ -314,6 +320,17 @@ namespace uLoaderCommon
         public static HTimeSpan FromMilliseconds(int msecs)
         {
             return new HTimeSpan(@"ms", msecs);
+        }
+
+        /// <summary>
+        /// Константа, указывающая на отсутствие значения
+        /// </summary>
+        public static HTimeSpan Zero
+        {
+            get
+            {
+                return new HTimeSpan ();
+            }
         }
 
         /// <summary>
@@ -511,31 +528,23 @@ namespace uLoaderCommon
                 TableRecieved = null;
             }
 
-            private uLoaderCommon.MODE_WORK m_mode;
-            public uLoaderCommon.MODE_WORK Mode { get { return m_mode; } set { m_mode = value; } }
-
-            private TimeSpan m_tsPeriodMain
-                , m_tsPeriodLocal;
+            public uLoaderCommon.MODE_WORK Mode { get; set; }
+            /// <summary>
+            /// Период времени для формирования запроса значений (базовый-локальный)
+            /// </summary>
+            public TimeSpan PeriodMain { get; set; }
             /// <summary>
             /// Период времени для формирования запроса значений (глобальный)
             /// </summary>
-            public TimeSpan PeriodMain { get { return m_tsPeriodMain; }
-                set { m_tsPeriodMain = value; } }
+            public TimeSpan IntervalCustomize { get; set; }
             /// <summary>
-            /// Период времени для формирования запроса значений (локальный)
+            /// Интервал (милисекунды) между опросами значений
             /// </summary>
-            public TimeSpan PeriodLocal { get { return m_tsPeriodLocal; }
-                set { m_tsPeriodLocal = value; } }
+            public TimeSpan PeriodRequery { get; set; }
             /// <summary>
             /// Таблица источника/назначения
             /// </summary>
             public string NameTable { get; set; }
-            private long m_msecIntervalLocal;
-            /// <summary>
-            /// Интервал (милисекунды) между опросами значений
-            /// </summary>
-            public long MSecIntervalLocal { get { return m_msecIntervalLocal; } set { m_msecIntervalLocal = value; } }
-
             /// <summary>
             /// Класс для объекта СИГНАЛ
             /// </summary>
@@ -691,10 +700,10 @@ namespace uLoaderCommon
                 //Целочисленный идентификатор
                 m_Id = id;
                 //Значения по умолчанию
-                m_tsPeriodMain =
-                m_tsPeriodLocal =
-                    new TimeSpan ((long)((int)uLoaderCommon.DATETIME.SEC_SPANPERIOD_DEFAULT * Math.Pow (10, 7)));
-                m_msecIntervalLocal = (int)uLoaderCommon.DATETIME.MSEC_INTERVAL_DEFAULT;
+                IntervalCustomize =
+                PeriodMain =
+                    TimeSpan.FromSeconds ((long)((int)uLoaderCommon.DATETIME.SEC_SPANPERIOD_DEFAULT * Math.Pow (10, 7)));
+                PeriodRequery = TimeSpan.FromMilliseconds ((int)uLoaderCommon.DATETIME.MSEC_INTERVAL_DEFAULT);
 
                 //Инициализировать массив сигналов
                 if (pars.Length > 0) {
@@ -1033,12 +1042,12 @@ namespace uLoaderCommon
         /// <summary>
         /// Период времени опроса текущей (обрабатываемой) группы сигналов
         /// </summary>
-        protected TimeSpan PeriodMain
+        protected TimeSpan IntervalCustomize
         {
             get
             {
                 if (!(IdGroupSignalsCurrent < 0))
-                    return m_dictGroupSignals [IdGroupSignalsCurrent].PeriodMain;
+                    return m_dictGroupSignals [IdGroupSignalsCurrent].IntervalCustomize;
                 else
                     throw new Exception (@"ULoaderCommon::PeriodMain.get ...");
             }
@@ -1046,12 +1055,12 @@ namespace uLoaderCommon
         /// <summary>
         /// Период времени опроса текущей (обрабатываемой) группы сигналов
         /// </summary>
-        protected TimeSpan PeriodLocal
+        protected TimeSpan PeriodMain
         {
             get
             {
                 if (!(IdGroupSignalsCurrent < 0))
-                    return m_dictGroupSignals [IdGroupSignalsCurrent].PeriodLocal;
+                    return m_dictGroupSignals [IdGroupSignalsCurrent].PeriodMain;
                 else
                     throw new Exception (@"ULoaderCommon::PeriodLocal.get ...");
             }
@@ -1059,12 +1068,12 @@ namespace uLoaderCommon
         /// <summary>
         /// Интервал (милисекунды) между опросами значений обрабатываемой группы сигналов
         /// </summary>
-        protected long MSecIntervalLocal
+        protected long MSecPeriodRequery
         {
             get
             {
                 if (!(IdGroupSignalsCurrent < 0))
-                    return m_dictGroupSignals [IdGroupSignalsCurrent].MSecIntervalLocal;
+                    return (long)m_dictGroupSignals [IdGroupSignalsCurrent].PeriodRequery.TotalMilliseconds;
                 else
                     throw new Exception (@"ULoaderCommon::MSecIntervalLocal.get ...");
             }
@@ -1140,7 +1149,8 @@ namespace uLoaderCommon
         {
             get
             {
-                return m_tsOffsetUTCToData.Value - m_tsOffsetUTCToQuery.Value;
+                return (m_tsOffsetUTCToData == HTimeSpan.Zero ? TimeSpan.Zero : m_tsOffsetUTCToData.Value)
+                    - (m_tsOffsetUTCToQuery == HTimeSpan.Zero ? TimeSpan.Zero : m_tsOffsetUTCToQuery.Value);
             }
         }
 
@@ -1323,19 +1333,19 @@ namespace uLoaderCommon
                         ; //Для инициализации передан только 'ConnectionSettings' (pars[0])
 
                     //// не используется (должен быть определен автоматически)
-                    //m_tsOffsetUTCToServer = HTimeSpan.NotValue;
+                    //m_tsOffsetUTCToServer = HTimeSpan.Zero;
                     //if (m_dictAdding.ContainsKey(@"OFFSET_UTC_TO_SERVER") == true)
                     //    m_tsOffsetUTCToServer = new HTimeSpan(m_dictAdding[@"OFFSET_UTC_TO_SERVER"]);
                     //else
                     //    ;
 
-                    m_tsOffsetUTCToData = HTimeSpan.NotValue;
+                    m_tsOffsetUTCToData = HTimeSpan.Zero;
                     if (m_dictAdding.ContainsKey(@"OFFSET_UTC_TO_DATA") == true)
                         m_tsOffsetUTCToData = new HTimeSpan(m_dictAdding[@"OFFSET_UTC_TO_DATA"]);
                     else
                         ;
 
-                    m_tsOffsetUTCToQuery = HTimeSpan.NotValue;
+                    m_tsOffsetUTCToQuery = HTimeSpan.Zero;
                     if (m_dictAdding.ContainsKey(@"OFFSET_UTC_TO_QUERY") == true)
                         m_tsOffsetUTCToQuery = new HTimeSpan(m_dictAdding[@"OFFSET_UTC_TO_QUERY"]);
                     else
@@ -1402,8 +1412,8 @@ namespace uLoaderCommon
                                     //else
                                     //    ;
                                     m_dictGroupSignals[id].PeriodMain = (TimeSpan)pars[2];
-                                    m_dictGroupSignals[id].PeriodLocal = (TimeSpan)pars[3];
-                                    m_dictGroupSignals[id].MSecIntervalLocal = (int)pars[4];
+                                    m_dictGroupSignals[id].IntervalCustomize = (TimeSpan)pars[3];
+                                    m_dictGroupSignals[id].PeriodRequery = (TimeSpan)pars [4];
                                     if(pars.Length>=7)
                                         m_dictGroupSignals[id].NameTable = (string)pars[6];
                                     // инициализация расчетных формул

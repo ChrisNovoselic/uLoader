@@ -52,21 +52,21 @@ namespace SrcMST
 
         public SrcMSTKKSNAMEtoris()
             //??? аргументы лишние, кроме 1-го
-            : base(string.Empty, MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_HALF_PERIOD)
+            : base(UCHET.Trice, string.Empty, MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_HALF_PERIOD)
         {
             initialize();
         }
 
         public SrcMSTKKSNAMEtoris(PlugInULoader iPlugIn)
             //??? аргументы лишние, кроме 1-го
-            : base(iPlugIn, string.Empty, MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_HALF_PERIOD)
+            : base(iPlugIn, UCHET.Trice, string.Empty, MODE_CURINTERVAL.CAUSE_NOT, MODE_CURINTERVAL.NEXTSTEP_HALF_PERIOD)
         {
             initialize();
         }
 
         private void initialize()
         {
-            try {                
+            try {
                 m_torIsData = (TorISData)System.Runtime.InteropServices.Marshal.GetActiveObject("TorIS.TorISData");
             } catch (Exception e) {
                 try {
@@ -89,9 +89,8 @@ namespace SrcMST
 
             DataTable m_TablePrevValue;
 
-            static int s_repeatPrevValue_interval = 22;
-            static int s_repeatPrevValue_interval_offset = 4;
-
+            static int SEC_TO_REPEAT_BY_ZERO = 22
+                , SEC_TO_REPEAT_BY_ZERO_OFFSET = 4;
 
             public GroupSignalsMSTKKSNAMEtoris(HHandlerDbULoader parent, int id, object[] pars)
                 : base(parent, id, pars)
@@ -208,16 +207,16 @@ namespace SrcMST
                 get
                 {
                     DataTable table = base.TableRecieved;
-                    
-                    if (table != null)
-                        foreach (DataRow r in m_TablePrevValue.Rows)//Перебор таблицы с последними значениями сигналов
-                        {
-                            if (Convert.ToDateTime(r[2]) <= DateTime.UtcNow.AddSeconds(-s_repeatPrevValue_interval))
-                                if (!(RepeatSignal == null)) RepeatSignal(this, new RepeatSignalEventArgs("zero_count"
-                                        , new object()
-                                    ));
-                                else ;
-                        }
+
+                    if (Equals(table, null) == false)
+                        //Перебор таблицы с последними значениями сигналов
+                        foreach (DataRow r in m_TablePrevValue.Rows)
+                            if (((DateTime.UtcNow - (DateTime)r [2]).TotalSeconds < SEC_TO_REPEAT_BY_ZERO))
+                                RepeatSignal?.Invoke (this, new RepeatSignalEventArgs ("zero_count", new object ()));
+                            else
+                                ;
+                    else
+                        ;
 
                     return base.TableRecieved;
                 }
@@ -225,7 +224,8 @@ namespace SrcMST
                 set
                 {
                     //Требуется добавить идентификаторы 'id_main'
-                    if ((!(value == null)) && (!(value.Columns.IndexOf(@"ID") < 0)))
+                    if ((!(value == null))
+                        && (!(value.Columns.IndexOf(@"ID") < 0)))
                     {
                         DataTable tblVal = value.Copy();
                         tblVal.Columns.Add(@"KKSNAME_MST", typeof(string));
@@ -258,13 +258,12 @@ namespace SrcMST
                     {
                         foreach (DataRow r in m_TablePrevValue.Rows)
                         {
-                            if ((DateTime)r[2] <= DateTime.UtcNow.AddSeconds(-(s_repeatPrevValue_interval + s_repeatPrevValue_interval_offset)) & (DateTime)r[2] != DateTime.MinValue)//если метка времени последнего значения меньше текущего времени со смещением в период обновления
-                            {
-                                if (!(RepeatSignal == null)) RepeatSignal(this, new RepeatSignalEventArgs(r[0].ToString()
-                                        , r[1]
-                                    ));
-                                else ;
-                            }
+                            if ((((DateTime)r [2]).Equals (DateTime.MinValue) == false)
+                                && ((DateTime.UtcNow  - (DateTime)r [2]).TotalSeconds < (SEC_TO_REPEAT_BY_ZERO + SEC_TO_REPEAT_BY_ZERO_OFFSET)))
+                            //если метка времени последнего значения меньше текущего времени со смещением в период обновления
+                                RepeatSignal?.Invoke (this, new RepeatSignalEventArgs (r [0].ToString (), r [1]));
+                            else
+                                ;
                         }
                     }
                     catch (Exception e)
@@ -280,22 +279,21 @@ namespace SrcMST
                         {
                             foreach (DataRow r in m_TablePrevValue.Rows)
                             {
-                                if (r[0].ToString().Trim() == kksname)
-                                {
-                                    r[1] = value;
+                                if (r [0].ToString ().Trim () == kksname) {
+                                    r [1] = value;
                                     if (status == -1991)
-                                        r[2] = Convert.ToDateTime(r[2]).AddSeconds(s_repeatPrevValue_interval);
+                                        r [2] = Convert.ToDateTime (r [2]).AddSeconds (SEC_TO_REPEAT_BY_ZERO);
                                     else
-                                        r[2] = dtVal;
-                                }
-                                if ((DateTime)r[2] <= DateTime.UtcNow.AddSeconds(-(s_repeatPrevValue_interval + s_repeatPrevValue_interval_offset)) & (DateTime)r[2] != DateTime.MinValue)//если метка времени последнего значения меньше текущего времени со смещением в период обновления
-                                {
-                                    if (!(RepeatSignal == null)) RepeatSignal(this, new RepeatSignalEventArgs(r[0].ToString()
-                                            , r[1]
-                                        ));
-                                    else
-                                        ;
-                                }
+                                        r [2] = dtVal;
+                                } else
+                                    ;
+
+                                if ((((DateTime)r [2]).Equals (DateTime.MinValue) == false)
+                                    && ((DateTime.UtcNow  - (DateTime)r [2]).TotalSeconds < (SEC_TO_REPEAT_BY_ZERO + SEC_TO_REPEAT_BY_ZERO_OFFSET)))
+                                //если метка времени последнего значения меньше текущего времени со смещением в период обновления
+                                    RepeatSignal?.Invoke (this, new RepeatSignalEventArgs (r [0].ToString (), r [1]));
+                                else
+                                    ;
                             }
                         }
                         catch (Exception e)
@@ -313,7 +311,6 @@ namespace SrcMST
                         m_tableTorIs.Rows.Add(new object[] { kksname, value, dtVal });
                     }
 
-
                     //Console.WriteLine(@"Получено значение для сигнала:" + kksname + @"(" + value + @", " + dtVal.ToString(@"dd.MM.yyyy HH:mm:ss.fff") + @")");
                 }
             }
@@ -326,7 +323,7 @@ namespace SrcMST
                 {
                     iPrev = m_tableTorIs.Rows.Count;
                     string strSel =
-                        @"DATETIME<'" + DateTimeBegin.AddSeconds(-(PeriodLocal.TotalSeconds + 15)).ToUniversalTime().ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"' OR DATETIME>='" + DateTimeBegin.AddSeconds(PeriodLocal.TotalSeconds + 5).ToUniversalTime().ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
+                        @"DATETIME<'" + DateTimeBegin.AddSeconds(-(PeriodMain.TotalSeconds + 15)).ToUniversalTime().ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"' OR DATETIME>='" + DateTimeBegin.AddSeconds(PeriodMain.TotalSeconds + 5).ToUniversalTime().ToString(@"yyyy/MM/dd HH:mm:ss.fff") + @"'"
                         //@"DATETIME BETWEEN '" + m_dtStart.ToString(@"yyyy/MM/dd HH:mm:ss") + @"' AND '" + m_dtStart.AddSeconds(m_tmSpanPeriod.Seconds).ToString(@"yyyy/MM/dd HH:mm:ss") + @"'"
                         ;
 
@@ -363,9 +360,7 @@ namespace SrcMST
                         ;
 
                     //m_tableTorIs = returnTable(m_tableTorIs);
-                    
-                    
-                                          
+
                     iCur = m_tableTorIs.Rows.Count;
                 }
 
