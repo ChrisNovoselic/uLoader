@@ -302,9 +302,15 @@ namespace uLoader
                 return keyRes;
             }
 
-            private object[] getPrepareGroupSignalChangedPars(DataGridView obj, int indxRow)
+            /// <summary>
+            /// Подготовить значения параметров в качестве аргументов нового события
+            /// </summary>
+            /// <param name="obj">Объект со списком групп сигналов</param>
+            /// <returns>Массив значений параметров</returns>
+            protected object[] getPrepareGroupSignalChangedPars(DataGridView obj)
             {
                 object[] arObjRes = new object[(int)INDEX_PREPARE_PARS.COUNT_INDEX_PREPARE_PARS];
+                int indxRow = obj.SelectedRows [0].Index;
 
                 MODE_WORK modeWork = MODE_WORK.UNKNOWN;
                 GROUP_SIGNALS_PARS objDepenceded;
@@ -421,7 +427,7 @@ namespace uLoader
                     if (key == KEY_CONTROLS.DGV_GROUP_SIGNALS)
                     {//Только для группы сигналов
                         DataGridView dgv = GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView;
-                        arPreparePars = getPrepareGroupSignalChangedPars(dgv, dgv.SelectedRows[0].Index);
+                        arPreparePars = getPrepareGroupSignalChangedPars(dgv);
 
                         ////Вариант №1
                         //int iAutoStart = (arPreparePars[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] as GROUP_SIGNALS_PARS).m_iAutoStart;
@@ -616,7 +622,7 @@ namespace uLoader
                 object[] arPreparePars = null;
 
                 DataGridView dgv = GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView;
-                arPreparePars = getPrepareGroupSignalChangedPars(dgv, dgv.SelectedRows[0].Index);
+                arPreparePars = getPrepareGroupSignalChangedPars(dgv);
 
                 DataAskedHost(arPreparePars);
             }
@@ -857,7 +863,7 @@ namespace uLoader
 
                 if (this is PanelLoaderSource)
                 {
-                    //??? Отобразить период опроса (локальный)
+                    //??? Отобразить период опроса
                     key = PanelLoader.KEY_CONTROLS.MTBX_INTERVAL_CUSTOMIZE;
                     workItem = GetWorkingItem(key);
                     (workItem as MaskedTextBox).Text = pars.m_tsPeriodMain.Value.Days.ToString(@"00")
@@ -865,7 +871,7 @@ namespace uLoader
                         + pars.m_tsIntervalCustomize.Value.Minutes.ToString(@"00")
                         ;
 
-                    //Отобразить шаг опроса для режима 'COSTUMIZE'
+                    //Отобразить шаг опроса (??? для режима 'COSTUMIZE')
                     key = PanelLoader.KEY_CONTROLS.TBX_INTERVAL_REQUERY;
                     workItem = GetWorkingItem(key);
                     (workItem as TextBox).Text = pars.m_tsRequery.ToString();
@@ -1404,6 +1410,7 @@ namespace uLoader
             private void panelLoaderSource_ModeGroupSignals_CheckedChanged(object obj, EventArgs ev)
             {
                 RadioButton rBtn = obj as RadioButton;
+                object [] arObjRes;
                 Control ctrl;
                 KEY_CONTROLS key = KEY_CONTROLS.UNKNOWN;
                 MODE_WORK modeWork = MODE_WORK.UNKNOWN;
@@ -1442,7 +1449,7 @@ namespace uLoader
                     //key = KEY_CONTROLS.TBX_INTERVAL; ctrl = Controls.Find(key.ToString(), true)[0];
                     //ctrl.Enabled = !bCostumizeEnabled;
 
-                    object[] arObjRes = new object[(int)INDEX_PREPARE_PARS.COUNT_INDEX_PREPARE_PARS];
+                    arObjRes = new object[(int)INDEX_PREPARE_PARS.COUNT_INDEX_PREPARE_PARS];
                     arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJ] = getKeyWorkingItem(rBtn); // обязательно для switch
                     arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] = getGroupId(KEY_CONTROLS.DGV_GROUP_SOURCES);
                     arObjRes[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] = new object[] { getGroupId(KEY_CONTROLS.DGV_GROUP_SIGNALS) //Уточнить идентификатор для группы сигналов
@@ -1454,9 +1461,13 @@ namespace uLoader
                     //Отправить запрос на обновление параметров  группы сигналов "родительской" панели (для ретрансляции)
                     DataAskedHost(arObjRes);
                 }
-                else
-                    ; //Не "отмеченные" - игнорировать
-            }            
+                else {
+                    DataGridView dgv = GetWorkingItem (KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView;
+                    arObjRes = getPrepareGroupSignalChangedPars (dgv);
+
+                    DataAskedHost (arObjRes);
+                }
+            }
         }
         /// <summary>
         /// Класс для описания элемента управления - панель с группами источников (назначения), группами сигналов (назначения)

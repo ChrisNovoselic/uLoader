@@ -16,7 +16,15 @@ namespace TestFunc
                 Event?.Invoke ();
             }
 
-            public void UnRegister (Type type)
+            public virtual void UnRegister (Type type)
+            {
+                //TODO:
+            }
+        }
+
+        private class AA : A
+        {
+            public override void UnRegister (Type type)
             {
                 //TODO:
             }
@@ -40,6 +48,8 @@ namespace TestFunc
         public HandlerUnRegister ()
         {
             A a = new A();
+            AA aa = new AA ();
+
             B b = new B ();
             C c = new C ();
 
