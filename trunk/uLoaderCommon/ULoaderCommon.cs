@@ -363,6 +363,35 @@ namespace uLoaderCommon
             return new HTimeSpan(@"hh", hours);
         }
 
+        public static HTimeSpan FromMaskedText (string maskedText, System.Globalization.CultureInfo cultureInfo)
+        {
+            HTimeSpan tsRes = HTimeSpan.Zero;
+            string [] vals;
+
+            vals = maskedText.Split (new char [] { cultureInfo.NumberFormat.NumberDecimalSeparator [0], ':' });
+
+            switch (vals.Length) {
+                case 1:
+                    tsRes = new HTimeSpan (vals [0]);//00:00??dd1 or hh24
+                    break;
+                case 2:
+                    tsRes = HTimeSpan.FromMinutes (Int32.Parse (vals [0]) * 60 + Int32.Parse (vals [1]));//00:00??dd1 or hh24
+                    break;
+                case 3:
+                    tsRes = HTimeSpan.FromMinutes (Int32.Parse (vals [0]) * 24 * 60 + Int32.Parse (vals [1]) * 60 + Int32.Parse (vals [2]));//00:00??dd1 or hh24
+                    break;
+            }
+
+            return tsRes;
+        }
+
+        public string ToMaskedText (System.Globalization.CultureInfo cultureInfo)
+        {
+            return Value.Days.ToString (@"00")
+                + Value.Hours.ToString (@"00")
+                + Value.Minutes.ToString (@"00");
+        }
+
         /// <summary>
         /// Возвратить объект из суток
         /// </summary>
@@ -446,6 +475,12 @@ namespace uLoaderCommon
         /// </summary>
         , Ended
     }
+
+    [AttributeUsage (AttributeTargets.Field)]
+    public class StateAttribute : Attribute
+    {
+        public bool Changed;
+    }
     /// <summary>
     /// Перечисление для типов опроса
     /// </summary>
@@ -460,12 +495,10 @@ namespace uLoaderCommon
         /// по текущему интервалу
         /// </summary>
         CUR_INTERVAL,
-        //CUR_INTERVAL_CAUSEPERIOD,
-        //CUR_INTERVAL_CAUSENOT,
         /// <summary>
         /// выборочно (история)
         /// </summary>
-        COSTUMIZE,
+        CUSTOMIZE,
             COUNT_MODE_WORK
     }
     /// <summary>
@@ -753,7 +786,7 @@ namespace uLoaderCommon
                             stateRes = GroupSignals.STATE.SLEEP;
                             break;
                     } else
-                    if (mode == uLoaderCommon.MODE_WORK.COSTUMIZE)
+                    if (mode == uLoaderCommon.MODE_WORK.CUSTOMIZE)
                     // для режима "выборочно"    
                     stateRes = GroupSignals.STATE.SLEEP;
                 else
@@ -1766,7 +1799,7 @@ namespace uLoaderCommon
                     case MODE_WORK.CUR_INTERVAL:
                         initState = GroupSignals.STATE.TIMER;
                         break;
-                    case MODE_WORK.COSTUMIZE:
+                    case MODE_WORK.CUSTOMIZE:
                     case MODE_WORK.ON_REQUEST: // для состояния 'UNKNOWN' (для группы сигналов назначения)
                         initState = GroupSignals.STATE.SLEEP;
                         break;
@@ -2118,7 +2151,7 @@ namespace uLoaderCommon
                 case ID_DATA_ASKED_HOST.INIT_SIGNALS: //Приняты параметры инициализации группы сигналов
                     ID_HEAD_ASKED_HOST idHead = ID_HEAD_ASKED_HOST.CONFIRM;
                     //Инициализация группы сигналов по идентифактору [0]
-                    if (target.Initialize((int)(ev.par as object[])[0], (ev.par as object[])[1] as object[]) == 0)                        
+                    if (target.Initialize((int)(ev.par as object[])[0], (ev.par as object[])[1] as object[]) == 0)
                         ;
                     else
                         ; //??? сообщить об ошибке idHead = ID_HEAD_ASKED_HOST.ERROR

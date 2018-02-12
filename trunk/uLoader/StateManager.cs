@@ -100,7 +100,7 @@ namespace uLoader
                         arPars = ini.Split(FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.PAIR_VAL]);
 
                         foreach (string key_val in arPars)
-                            for (INDEX_PARAMETER par = (INDEX_PARAMETER.UNKNOWN + 1); par < INDEX_PARAMETER.COUNT; par++)                            
+                            for (INDEX_PARAMETER par = (INDEX_PARAMETER.UNKNOWN + 1); par < INDEX_PARAMETER.COUNT; par++)
                                 if (key_val.IndexOf(par.ToString()) == 0) {
                                     values = key_val.Split(FileINI.s_chSecDelimeters[(int)FileINI.INDEX_DELIMETER.VALUE]);
 
@@ -583,7 +583,7 @@ namespace uLoader
                 List<int> listRes = new List<int> ();
 
                 foreach (KeyValuePair<int, ListInfoCrashed> pair in this)
-                    if (pair.Value.IsCrashed == true)                        
+                    if (pair.Value.IsCrashed == true)
                         listRes.Add(pair.Key);
                     else
                         ;

@@ -126,6 +126,8 @@ namespace SrcMST
                 m_strQuery = string.Empty;
                 string strIds = string.Empty
                     , strWhereDatetime = string.Empty;
+                int iOffsetUchetWhere = 0 // сохранение значений параметров группы сигналов при переключении режима сбора данных
+                    , iOffsetStampSelect = 0; // смещение для результирующей метки времени
                 string [] comparison = new string[2];
 
                 foreach (SIGNALIdsql sgnl in m_arSignals)
@@ -168,7 +170,7 @@ namespace SrcMST
                     && (string.IsNullOrEmpty (comparison [1]) == false))
                     strWhereDatetime = string.Format (@" [last_changed_at] {3} DATEADD(HOUR, {0}, CAST('{1}' as datetime))"
                         + @" AND [last_changed_at] {4} DATEADD(HOUR, {0}, CAST('{2}' as datetime))"
-                            , 0 // смещение при опросе для систем учета с мгновенными значениями
+                            , iOffsetUchetWhere // смещение при опросе для систем учета с мгновенными значениями
                             , DateTimeBeginFormat
                             , DateTimeEndFormat
                             , comparison[0]
@@ -177,7 +179,7 @@ namespace SrcMST
                 else
                     strWhereDatetime = string.Format (@" BETWEEN DATEADD(HOUR, {0}, CAST('{1}' as datetime))"
                         + @" AND DATEADD(HOUR, {0}, CAST('{2}' as datetime))"
-                            , 0
+                            , iOffsetUchetWhere
                             , DateTimeBeginFormat
                             , DateTimeEndFormat
                         );
@@ -189,7 +191,7 @@ namespace SrcMST
                         + @" AND [ID] IN ({4})"
                     + @" GROUP BY [ID]"
                         + @", DATEADD(HOUR, (DATEDIFF(HOUR, DATEADD(DAY, 0, CAST('{1}' as datetime)), [last_changed_at]) / 60) * 60, DATEADD(DAY, 0, CAST('{1}' as datetime)))"
-                        , 0 // смещение для результирующей метки времени
+                        , iOffsetStampSelect // смещение для результирующей метки времени
                         , DateTimeEndFormat
                         , (_parent as SrcMSTASUTPIdT5tg1Dsql).NameTableSource
                         , strWhereDatetime

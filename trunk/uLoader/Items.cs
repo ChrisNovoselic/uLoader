@@ -64,77 +64,8 @@ namespace uLoader
     /// <summary>
     /// Класс для параметров группы сигналов
     /// </summary>
-    public class GROUP_SIGNALS_PARS
+    public abstract class GROUP_SIGNALS_PARS
     {
-        public List<string> ValuesToFileINI ()
-        {
-            List <string> listRes;
-            string value;
-
-            ////Получить ниаменования параметров для групп сигналов
-            //List<string> pars = GetSecValueOfKey (SEC_SRC_TYPES [(int)type] + s_chSecDelimeters [(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
-            //        , KEY_TREE_SGNLS [(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + s_chSecDelimeters [(int)INDEX_DELIMETER.SEC_PART_TARGET] + @"PARS").Split (s_chSecDelimeters [(int)INDEX_DELIMETER.PAIR_VAL]).ToList<string> ()
-            //    , listParValues = GetSecValueOfKey (SEC_SRC_TYPES [(int)type] + s_chSecDelimeters [(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
-            //        , KEY_TREE_SGNLS [(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + indxGrpSgnls).Split (s_chSecDelimeters [(int)INDEX_DELIMETER.PAIR_VAL]).ToList<string> ();
-
-            listRes = new List<string> (Enum.GetValues (typeof (INDEX_GROUP_SIGNALS_PARAMETER)).Length);
-
-            foreach (INDEX_GROUP_SIGNALS_PARAMETER par in Enum.GetValues(typeof(INDEX_GROUP_SIGNALS_PARAMETER))) {
-                value = string.Empty;
-
-                switch (par) {
-                    //case INDEX_GROUP_SIGNALS_PARAMETER.ID:
-                    //case INDEX_GROUP_SIGNALS_PARAMETER.ID_GS:
-                    case 0:
-                        //Не устанавливается с помощью GUI
-                        value = m_strId;
-                        break;
-                    case INDEX_GROUP_SIGNALS_PARAMETER.AUTO_START:
-                        ////Вариант №1, 2
-                        //listParValues[indxPar] = parValues.m_iAutoStart.ToString ();
-
-                        //Вариант №3
-                        if (!(m_iAutoStart == 2))
-                        //Признак изменения значения
-                            value = ((m_iAutoStart == 0) ? 1 : 0).ToString ();
-                        else
-                        //Не изменять
-                            ;
-
-                        //Console.WriteLine(@"MainForm.FileINI::makeValueGroupSignalsPars () - iAutoStart=" + listParValues[indxPar] + @"...");
-                        break;
-                    case INDEX_GROUP_SIGNALS_PARAMETER.TOOLS_ENABLED:
-                        //Не устанавливается с помощью GUI
-                        value = m_bToolsEnabled.ToString();
-                        break;
-                    case INDEX_GROUP_SIGNALS_PARAMETER.CURINTERVAL_PERIODMAIN:
-                        if ((Index == FormMain.INDEX_SRC.SOURCE)
-                            && ((this as GROUP_SIGNALS_SRC_PARS).m_mode == MODE_WORK.CUR_INTERVAL))
-                        //Только для источника
-                            value = m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodMain.Text;
-                        else
-                            ;
-                        break;
-                    case INDEX_GROUP_SIGNALS_PARAMETER.CURINTERVAL_PERIODLOCAL:
-                        if ((Index == FormMain.INDEX_SRC.SOURCE)
-                            && ((this as GROUP_SIGNALS_SRC_PARS).m_mode == MODE_WORK.CUR_INTERVAL))
-                        //Только для источника
-                            value = m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_tsRequery.ToString ();
-                        else
-                            ;
-                        break;
-                    default:
-                        break;
-                }
-
-                if (string.IsNullOrEmpty (value) == false)
-                    listRes.Insert ((int)par, value);
-                else
-                    throw new Exception ($"GROUP_SIGNALS_PARS::ValuesToFileINI () - Id={m_strId}, Name={m_strShrName} значение параметра <{par}> не может быть установлено...");
-            }
-
-            return listRes;
-        }
         /// <summary>
         /// Строковый идентификатор группы сигналов
         /// </summary>
@@ -169,18 +100,106 @@ namespace uLoader
             m_iAutoStart = -1;
             m_bToolsEnabled = false;
             m_arWorkIntervals = new DATETIME_WORK[(int)MODE_WORK.COUNT_MODE_WORK];
-            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE] = new DATETIME_WORK();
+            m_arWorkIntervals[(int)MODE_WORK.CUSTOMIZE] = new DATETIME_WORK();
 
             //Дата/время начала опроса (режим: выборочно)
-            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart = DateTime.Now;
+            m_arWorkIntervals[(int)MODE_WORK.CUSTOMIZE].m_dtStart = DateTime.Now;
             // округлить по прошедшему часу
-            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.AddHours(-1);
+            m_arWorkIntervals[(int)MODE_WORK.CUSTOMIZE].m_dtStart.AddHours(-1);
             // округлить по 0-ой минуте
-            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.AddMinutes(-1 * m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.Minute);
-            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.AddMilliseconds(-1 * m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.Second * 1000 + m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart.Millisecond);
-            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriodMain = HTimeSpan.FromHours(1);
-            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsIntervalCustomize = HTimeSpan.FromHours (1);
-            m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsRequery = HTimeSpan.FromMilliseconds((int)DATETIME.MSEC_INTERVAL_DEFAULT);
+            m_arWorkIntervals[(int)MODE_WORK.CUSTOMIZE].m_dtStart.AddMinutes(-1 * m_arWorkIntervals[(int)MODE_WORK.CUSTOMIZE].m_dtStart.Minute);
+            m_arWorkIntervals[(int)MODE_WORK.CUSTOMIZE].m_dtStart.AddMilliseconds(-1 * m_arWorkIntervals[(int)MODE_WORK.CUSTOMIZE].m_dtStart.Second * 1000 + m_arWorkIntervals[(int)MODE_WORK.CUSTOMIZE].m_dtStart.Millisecond);
+            m_arWorkIntervals[(int)MODE_WORK.CUSTOMIZE].m_tsPeriodMain = HTimeSpan.FromHours(1);
+            m_arWorkIntervals[(int)MODE_WORK.CUSTOMIZE].m_tsIntervalCustomize = HTimeSpan.FromHours (1);
+            m_arWorkIntervals[(int)MODE_WORK.CUSTOMIZE].m_tsRequery = HTimeSpan.FromMilliseconds((int)DATETIME.MSEC_INTERVAL_DEFAULT);
+        }
+
+        public bool IsUpdateParameterRequired
+        {
+            get
+            {
+                return ((Index == FormMain.INDEX_SRC.SOURCE)
+                    && ((this as GROUP_SIGNALS_SRC_PARS).m_mode == MODE_WORK.CUR_INTERVAL))
+                    || (Index == FormMain.INDEX_SRC.DEST);
+            }
+        }
+
+        public List<string> ValuesToFileINI ()
+        {
+            List<string> listRes;
+            string value;
+            bool bValueRequired = false;
+
+            ////Получить ниаменования параметров для групп сигналов
+            //List<string> pars = GetSecValueOfKey (SEC_SRC_TYPES [(int)type] + s_chSecDelimeters [(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
+            //        , KEY_TREE_SGNLS [(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + s_chSecDelimeters [(int)INDEX_DELIMETER.SEC_PART_TARGET] + @"PARS").Split (s_chSecDelimeters [(int)INDEX_DELIMETER.PAIR_VAL]).ToList<string> ()
+            //    , listParValues = GetSecValueOfKey (SEC_SRC_TYPES [(int)type] + s_chSecDelimeters [(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
+            //        , KEY_TREE_SGNLS [(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + indxGrpSgnls).Split (s_chSecDelimeters [(int)INDEX_DELIMETER.PAIR_VAL]).ToList<string> ();
+
+            listRes = new List<string> (Enum.GetValues (typeof (INDEX_GROUP_SIGNALS_PARAMETER)).Length);
+
+            foreach (INDEX_GROUP_SIGNALS_PARAMETER par in Enum.GetValues (typeof (INDEX_GROUP_SIGNALS_PARAMETER))) {
+                value = string.Empty;
+                bValueRequired = true;
+
+                switch (par) {
+                    //case INDEX_GROUP_SIGNALS_PARAMETER.ID:
+                    //case INDEX_GROUP_SIGNALS_PARAMETER.ID_GS:
+                    case 0:
+                        //Не устанавливается с помощью GUI
+                        value = m_strId;
+                        break;
+                    case INDEX_GROUP_SIGNALS_PARAMETER.AUTO_START:
+                        ////Вариант №1, 2
+                        //listParValues[indxPar] = parValues.m_iAutoStart.ToString ();
+
+                        //Вариант №3
+                        if (!(m_iAutoStart == 2))
+                            //Признак изменения значения
+                            value = ((m_iAutoStart == 0) ? 1 : 0).ToString ();
+                        else
+                            //Не изменять
+                            ;
+
+                        //Console.WriteLine(@"MainForm.FileINI::makeValueGroupSignalsPars () - iAutoStart=" + listParValues[indxPar] + @"...");
+                        break;
+                    case INDEX_GROUP_SIGNALS_PARAMETER.TOOLS_ENABLED:
+                        //Не устанавливается с помощью GUI
+                        value = m_bToolsEnabled.ToString ();
+                        break;
+                    case INDEX_GROUP_SIGNALS_PARAMETER.CURINTERVAL_PERIODMAIN:
+                        bValueRequired = (Index == FormMain.INDEX_SRC.SOURCE)
+                            && ((this as GROUP_SIGNALS_SRC_PARS).m_mode == MODE_WORK.CUR_INTERVAL);
+                        if (bValueRequired == true)
+                            //Только для источника
+                            value = m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodMain.Text;
+                        else
+                            ;
+                        break;
+                    case INDEX_GROUP_SIGNALS_PARAMETER.CURINTERVAL_PERIODLOCAL:
+                        bValueRequired = (Index == FormMain.INDEX_SRC.SOURCE)
+                            && ((this as GROUP_SIGNALS_SRC_PARS).m_mode == MODE_WORK.CUR_INTERVAL);
+                        if (bValueRequired == true)
+                            //Только для источника
+                            value = m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_tsRequery.ToString ();
+                        else
+                            ;
+                        break;
+                    default:
+                        break;
+                }
+
+                if (bValueRequired == true)
+                    if (string.IsNullOrEmpty (value) == false)
+                        listRes.Insert ((int)par, value);
+                    else
+                        throw new Exception ($"GROUP_SIGNALS_PARS::ValuesToFileINI () - Id={m_strId}, Name={m_strShrName} значение параметра <{par}> не может быть установлено...");
+                else
+                    // значение не требуется
+                    ;
+            }
+
+            return listRes;
         }
     }
     /// <summary>
@@ -191,6 +210,7 @@ namespace uLoader
         /// <summary>
         /// Признак текущего режима работы
         /// </summary>
+        [State (Changed = true)]
         public MODE_WORK m_mode;
         /// <summary>
         /// Конструктор - основной (без параметров)
@@ -426,7 +446,7 @@ namespace uLoader
             //Объект с параметрами группы сигналов
             GROUP_SIGNALS_PARS item;
             //Строковый идентификатор группы сигналов
-            string strId = vals[pars.IndexOf(@"ID")];
+            string strId = vals[pars.IndexOf(INDEX_GROUP_SIGNALS_PARAMETER.ID.ToString ())];
             //Тип группы сигналов (для источника, для назаначения)
             Type typeGrpSgnls = Type.Missing as Type;
 
@@ -444,25 +464,32 @@ namespace uLoader
 
             item.m_strId = strId; //ID
 
-            item.m_iAutoStart = Int32.Parse(vals[pars.IndexOf(@"AUTO_START")]); //AUTO_START
-            item.m_bToolsEnabled = bool.Parse(vals[pars.IndexOf(@"TOOLS_ENABLED")]); //TOOLS_ENABLED
-            if(pars.IndexOf(@"TABLE")>0)
-                item.m_TableName = vals[pars.IndexOf(@"TABLE")]; //AUTO_START
+            //AUTO_START
+            iRes = Int32.TryParse (vals [pars.IndexOf (INDEX_GROUP_SIGNALS_PARAMETER.AUTO_START.ToString())], out item.m_iAutoStart) == true ? 0 : -1;
+            if (iRes == 0) {
+                //TOOLS_ENABLED
+                item.m_bToolsEnabled = bool.Parse(vals[pars.IndexOf(INDEX_GROUP_SIGNALS_PARAMETER.TOOLS_ENABLED.ToString ())]);
+                if (pars.IndexOf (@"TABLE") > 0)
+                    item.m_TableName = vals[pars.IndexOf(@"TABLE")];
 
-            if (item is GROUP_SIGNALS_SRC_PARS)
-            {
-                item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodMain =
-                item.m_arWorkIntervals [(int)MODE_WORK.COSTUMIZE].m_tsPeriodMain =
-                item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsIntervalCustomize =
-                item.m_arWorkIntervals [(int)MODE_WORK.COSTUMIZE].m_tsIntervalCustomize =
-                    new HTimeSpan(vals[pars.IndexOf(@"CURINTERVAL_PERIODMAIN")]); //CURINTERVAL_PERIODMAIN
-                item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsRequery = new HTimeSpan(vals[pars.IndexOf(@"CURINTERVAL_PERIODLOCAL")]); //CURINTERVAL_PERIODLOCAL
-            }
-            else
-                if (item is GROUP_SIGNALS_DEST_PARS)
-                    (item as GROUP_SIGNALS_DEST_PARS).m_idGrpSrcs = vals[pars.IndexOf(@"ID_GS")];
+                if (item is GROUP_SIGNALS_SRC_PARS)
+                {
+                    //CURINTERVAL_PERIODMAIN, CURINTERVAL_PERIODLOCAL
+                    item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodMain =
+                    item.m_arWorkIntervals [(int)MODE_WORK.CUSTOMIZE].m_tsPeriodMain =
+                    item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsIntervalCustomize =
+                    item.m_arWorkIntervals [(int)MODE_WORK.CUSTOMIZE].m_tsIntervalCustomize =
+                        new HTimeSpan(vals[pars.IndexOf(INDEX_GROUP_SIGNALS_PARAMETER.CURINTERVAL_PERIODMAIN.ToString ())]);
+                    item.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsRequery =
+                        new HTimeSpan(vals[pars.IndexOf(INDEX_GROUP_SIGNALS_PARAMETER.CURINTERVAL_PERIODLOCAL.ToString ())]);
+                }
                 else
-                    ;
+                    if (item is GROUP_SIGNALS_DEST_PARS)
+                        (item as GROUP_SIGNALS_DEST_PARS).m_idGrpSrcs = vals[pars.IndexOf(INDEX_GROUP_SIGNALS_PARAMETER.ID_GS.ToString ())];
+                    else
+                        ;
+            } else
+                ASUTP.Logging.Logg().Error("GROUP_SRC::SetGroupSignalsPars () - ", ASUTP.Logging.INDEX_MESSAGE.NOT_SET);
 
             return iRes;
         }
@@ -479,14 +506,24 @@ namespace uLoader
 
             if (pars is GROUP_SIGNALS_SRC_PARS)
             {
-                MODE_WORK mode =
-                (m_listGroupSignalsPars[iRes] as GROUP_SIGNALS_SRC_PARS).m_mode =
-                    (pars as GROUP_SIGNALS_SRC_PARS).m_mode;
+                MODE_WORK mode
+                    , amode;
 
-                m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)mode].m_dtStart =
+                mode =
+                (m_listGroupSignalsPars [iRes] as GROUP_SIGNALS_SRC_PARS).m_mode =
+                    (pars as GROUP_SIGNALS_SRC_PARS).m_mode;
+                amode = mode == MODE_WORK.CUR_INTERVAL ? MODE_WORK.CUSTOMIZE
+                    : mode == MODE_WORK.CUSTOMIZE ? MODE_WORK.CUR_INTERVAL
+                        : MODE_WORK.UNKNOWN;
+
+                m_listGroupSignalsPars [iRes].m_arWorkIntervals[(int)mode].m_dtStart =
                     pars.m_arWorkIntervals[(int)mode].m_dtStart;
-                m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)mode].m_tsPeriodMain =
-                    pars.m_arWorkIntervals[(int)mode].m_tsPeriodMain;
+                if (!((m_listGroupSignalsPars [iRes].m_arWorkIntervals [(int)mode].m_tsPeriodMain - pars.m_arWorkIntervals [(int)mode].m_tsPeriodMain).TotalSeconds > 0))
+                    // устанавливаемое значение всегда равно или больше
+                    m_listGroupSignalsPars [iRes].m_arWorkIntervals [(int)mode].m_tsPeriodMain =
+                        pars.m_arWorkIntervals [(int)mode].m_tsPeriodMain;
+                else
+                    ASUTP.Logging.Logg ().Error ($"GROUP_SRC::SetGroupSignalsPars ()- ModeWork={mode}, новое значение для PeriodMain меньше текущего...", ASUTP.Logging.INDEX_MESSAGE.NOT_SET);
                 m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)mode].m_tsIntervalCustomize =
                     pars.m_arWorkIntervals[(int)mode].m_tsIntervalCustomize;
 
@@ -498,10 +535,10 @@ namespace uLoader
             else
                 if (pars is GROUP_SIGNALS_DEST_PARS)
                 {
-                    m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart =
-                        pars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_dtStart;
-                    m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriodMain =
-                        pars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriodMain;
+                    m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)MODE_WORK.CUSTOMIZE].m_dtStart =
+                        pars.m_arWorkIntervals[(int)MODE_WORK.CUSTOMIZE].m_dtStart;
+                    m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)MODE_WORK.CUSTOMIZE].m_tsPeriodMain =
+                        pars.m_arWorkIntervals[(int)MODE_WORK.CUSTOMIZE].m_tsPeriodMain;
                     //m_listGroupSignalsPars[iRes].m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriodLocal =
                     //    pars.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriodLocal;
                 }

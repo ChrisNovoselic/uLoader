@@ -37,8 +37,8 @@ namespace uLoader
                                         , DGV_GROUP_SOURCES, LABEL_DLLNAME_GROUPSOURCES, BUTTON_DLLNAME_GROUPSOURCES, CBX_SOURCE_OF_GROUP, TBX_GROUPSOURCES_ADDING
                                         , DGV_GROUP_SIGNALS
                                         , GROUP_BOX_GROUP_SIGNALS
-                                        , RBUTTON_CUR_DATETIME
-                                        , RBUTTON_COSTUMIZE
+                                        , RBUTTON_CUR_INTERVAL
+                                        , RBUTTON_CUSTOMIZE
                                         , CALENDAR_START_DATE, MTBX_START_TIME, MTBX_PERIOD_MAIN, MTBX_INTERVAL_CUSTOMIZE, TBX_INTERVAL_REQUERY
                                         , BTN_CLEAR
                                         //, TBX_GROUPSIGNALS_ADDING
@@ -274,7 +274,7 @@ namespace uLoader
                 else
                     ;
             }
-            
+
             /// <summary>
             /// Найти целочисленный идентфикатор элемента управления
             /// </summary>
@@ -306,8 +306,9 @@ namespace uLoader
             /// Подготовить значения параметров в качестве аргументов нового события
             /// </summary>
             /// <param name="obj">Объект со списком групп сигналов</param>
+            /// <param name="bModeChanged">Признак смены режима группы сигналов (только для Source)</param>
             /// <returns>Массив значений параметров</returns>
-            protected object[] getPrepareGroupSignalChangedPars(DataGridView obj)
+            protected object [] getPrepareGroupSignalChangedPars(DataGridView obj, MODE_WORK mWork)
             {
                 object[] arObjRes = new object[(int)INDEX_PREPARE_PARS.COUNT_INDEX_PREPARE_PARS];
                 int indxRow = obj.SelectedRows [0].Index;
@@ -318,16 +319,29 @@ namespace uLoader
                 {
                     objDepenceded = new GROUP_SIGNALS_SRC_PARS();
 
-                    modeWork = (GetWorkingItem(KEY_CONTROLS.RBUTTON_CUR_DATETIME) as RadioButton).Checked == true ? MODE_WORK.CUR_INTERVAL :
-                        (GetWorkingItem(KEY_CONTROLS.RBUTTON_COSTUMIZE) as RadioButton).Checked == true ? MODE_WORK.COSTUMIZE : MODE_WORK.UNKNOWN;
+                    if (mWork == MODE_WORK.UNKNOWN)
+                        modeWork = (GetWorkingItem (KEY_CONTROLS.RBUTTON_CUR_INTERVAL) as RadioButton).Checked == true ? MODE_WORK.CUR_INTERVAL
+                            : (GetWorkingItem (KEY_CONTROLS.RBUTTON_CUSTOMIZE) as RadioButton).Checked == true ? MODE_WORK.CUSTOMIZE
+                                : MODE_WORK.UNKNOWN;
+                    else
+                        modeWork = mWork;
                     (objDepenceded as GROUP_SIGNALS_SRC_PARS).m_mode = modeWork;
+
+                    //if (bModeChanged == true)
+                    //    if ((objDepenceded as GROUP_SIGNALS_SRC_PARS).m_mode == MODE_WORK.CUR_INTERVAL)
+                    //    // для предотвращения сохранения значений в INI-файле
+                    //        (objDepenceded as GROUP_SIGNALS_SRC_PARS).m_mode = MODE_WORK.COSTUMIZE;
+                    //    else
+                    //        ;
+                    //else
+                    //    ;
                 }
                 else
                     if (this is PanelLoaderDest)
                     {
                         objDepenceded = new GROUP_SIGNALS_DEST_PARS();
 
-                        modeWork = MODE_WORK.COSTUMIZE;
+                        modeWork = MODE_WORK.CUSTOMIZE;
                     }
                     else
                         throw new Exception(@"PanelLoader::getPrepareGroupSignalChangedPars () - неизвестный тип панели ...");
@@ -383,7 +397,7 @@ namespace uLoader
                 else
                     ;
 
-                if ((KEY_CONTROLS)arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJ] == KEY_CONTROLS.DGV_GROUP_SOURCES)                    
+                if ((KEY_CONTROLS)arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJ] == KEY_CONTROLS.DGV_GROUP_SOURCES)
                     arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] =
                         //(obj as DataGridView).Rows[indxRow].Cells[0].Value
                         m_dictGroupIds[KEY_CONTROLS.DGV_GROUP_SOURCES][indxRow]
@@ -410,7 +424,7 @@ namespace uLoader
             }
             
             /// <summary>
-            /// Обработчик события "нажатие кнопкой по ячеке объекта"
+            /// Обработчик события "нажатие кнопкой по ячейке объекта"
             /// </summary>
             /// <param name="obj">Объект, инициировавший событие</param>
             /// <param name="ev">Аргумент для сопровождения события</param>
@@ -427,7 +441,8 @@ namespace uLoader
                     if (key == KEY_CONTROLS.DGV_GROUP_SIGNALS)
                     {//Только для группы сигналов
                         DataGridView dgv = GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView;
-                        arPreparePars = getPrepareGroupSignalChangedPars(dgv);
+                        //??? признак изменения режима работы группы сигналов
+                        arPreparePars = getPrepareGroupSignalChangedPars(dgv, MODE_WORK.UNKNOWN);
 
                         ////Вариант №1
                         //int iAutoStart = (arPreparePars[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] as GROUP_SIGNALS_PARS).m_iAutoStart;
@@ -575,27 +590,9 @@ namespace uLoader
             /// <returns>Преобразованное значение</returns>
             protected HTimeSpan fromMaskedTextBox (KEY_CONTROLS key)
             {
-                HTimeSpan tsRes = HTimeSpan.Zero;
-                string []vals;
-                //(ctrl as MaskedTextBox).Culture.NumberFormat.NumberDecimalSeparator
                 MaskedTextBox ctrl = GetWorkingItem(key) as MaskedTextBox;
 
-                vals = ctrl.Text.Split(new char[] { ctrl.Culture.NumberFormat.NumberDecimalSeparator[0], ':' });
-
-                switch (vals.Length)
-                {
-                    case 1:
-                        tsRes = new HTimeSpan(vals[0]);//00:00??dd1 or hh24
-                        break;
-                    case 2:
-                        tsRes = HTimeSpan.FromMinutes(Int32.Parse(vals[0]) * 60 + Int32.Parse(vals[1]));//00:00??dd1 or hh24
-                        break;
-                    case 3:
-                        tsRes = HTimeSpan.FromMinutes(Int32.Parse(vals[0]) * 24 * 60 + Int32.Parse(vals[1]) * 60 + Int32.Parse(vals[2]));//00:00??dd1 or hh24
-                        break;
-                }
-
-                return tsRes;
+                return HTimeSpan.FromMaskedText(GetWorkingItem (key).Text, ctrl.Culture);
             }
 
             protected HTimeSpan fromDateTimePicker (KEY_CONTROLS key)
@@ -622,7 +619,8 @@ namespace uLoader
                 object[] arPreparePars = null;
 
                 DataGridView dgv = GetWorkingItem(KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView;
-                arPreparePars = getPrepareGroupSignalChangedPars(dgv);
+                //??? признак изменения режима работы группы сигналов
+                arPreparePars = getPrepareGroupSignalChangedPars(dgv, MODE_WORK.UNKNOWN);
 
                 DataAskedHost(arPreparePars);
             }
@@ -730,7 +728,7 @@ namespace uLoader
                     //Вставить значения с индексами: (int)DGV_GROUP_SIGNALS_COL_INDEX.AUTO_START, (int)DGV_GROUP_SIGNALS_COL_INDEX.SHR_NAME
                     (workItem as DataGridView).Rows.Add(new object[] { grpSrc.m_listGroupSignalsPars [j].m_iAutoStart == 1, grpSrc.m_listGroupSignalsPars [j].m_strShrName });
                 }
-                //Список источников группы источников                
+                //Список источников группы источников
                 key = PanelLoader.KEY_CONTROLS.CBX_SOURCE_OF_GROUP;
                 workItem = GetWorkingItem(key);
                 if (m_dictGroupIds.ContainsKey(key) == false)
@@ -810,10 +808,10 @@ namespace uLoader
                         switch (modeWork)
                         {
                             case MODE_WORK.CUR_INTERVAL:
-                                key = PanelLoader.KEY_CONTROLS.RBUTTON_CUR_DATETIME;
+                                key = PanelLoader.KEY_CONTROLS.RBUTTON_CUR_INTERVAL;
                                 break;
-                            case MODE_WORK.COSTUMIZE:
-                                key = PanelLoader.KEY_CONTROLS.RBUTTON_COSTUMIZE;
+                            case MODE_WORK.CUSTOMIZE:
+                                key = PanelLoader.KEY_CONTROLS.RBUTTON_CUSTOMIZE;
                                 break;
                             default:
                                 throw new Exception(@"PanelWork::fillWorkItem () - ...");
@@ -823,7 +821,7 @@ namespace uLoader
                         (workItem as RadioButton).Checked = true;
                     }
                     else
-                        modeWork = MODE_WORK.COSTUMIZE;
+                        modeWork = MODE_WORK.CUSTOMIZE;
 
                     if (bAutoUpdateDatetimePars == false)
                         FillDatetimePars (grpSgnlsPars.m_arWorkIntervals[(int)modeWork]);
@@ -855,21 +853,14 @@ namespace uLoader
                 //??? Отобразить период опроса (основной)
                 key = PanelLoader.KEY_CONTROLS.MTBX_PERIOD_MAIN;
                 workItem = GetWorkingItem(key);
-                (workItem as MaskedTextBox).Text = pars.m_tsPeriodMain.Value.Days.ToString(@"00")
-                    + pars.m_tsPeriodMain.Value.Hours.ToString(@"00")
-                    + pars.m_tsPeriodMain.Value.Minutes.ToString(@"00")
-                    //+ @":" + grpSgnlsPars.m_arWorkIntervals[(int)MODE_WORK.CUR_INTERVAL].m_tsPeriod.Seconds
-                    ;
+                (workItem as MaskedTextBox).Text = pars.m_tsPeriodMain.ToMaskedText((workItem as MaskedTextBox).Culture);
 
                 if (this is PanelLoaderSource)
                 {
                     //??? Отобразить период опроса
                     key = PanelLoader.KEY_CONTROLS.MTBX_INTERVAL_CUSTOMIZE;
                     workItem = GetWorkingItem(key);
-                    (workItem as MaskedTextBox).Text = pars.m_tsPeriodMain.Value.Days.ToString(@"00")
-                        + pars.m_tsIntervalCustomize.Value.Hours.ToString(@"00")
-                        + pars.m_tsIntervalCustomize.Value.Minutes.ToString(@"00")
-                        ;
+                    (workItem as MaskedTextBox).Text = pars.m_tsIntervalCustomize.ToMaskedText ((workItem as MaskedTextBox).Culture);
 
                     //Отобразить шаг опроса (??? для режима 'COSTUMIZE')
                     key = PanelLoader.KEY_CONTROLS.TBX_INTERVAL_REQUERY;
@@ -1269,6 +1260,8 @@ namespace uLoader
         {
             public PanelLoaderSource ()
             {
+                _currentModeWork = MODE_WORK.UNKNOWN;
+
                 InitializeComponent ();
             }
 
@@ -1307,7 +1300,7 @@ namespace uLoader
                 //Текущая дата/время
                 //РадиоБуттон (тек. дата/время)
                 ctrl = new RadioButton();
-                ctrl.Name = KEY_CONTROLS.RBUTTON_CUR_DATETIME.ToString();
+                ctrl.Name = KEY_CONTROLS.RBUTTON_CUR_INTERVAL.ToString();
                 (ctrl as RadioButton).Text = @"Текущие дата/время";
                 (ctrl as RadioButton).CheckedChanged += new EventHandler(panelLoaderSource_ModeGroupSignals_CheckedChanged);
                 ctrl.Dock = DockStyle.Fill;
@@ -1315,7 +1308,7 @@ namespace uLoader
                 panelGroupBox.SetColumnSpan(ctrl, 8); panelGroupBox.SetRowSpan(ctrl, 1);
                 //РадиоБуттон (выборочно)
                 ctrl = new RadioButton();
-                ctrl.Name = KEY_CONTROLS.RBUTTON_COSTUMIZE.ToString();
+                ctrl.Name = KEY_CONTROLS.RBUTTON_CUSTOMIZE.ToString();
                 (ctrl as RadioButton).Text = @"Выборочно";
                 (ctrl as RadioButton).CheckedChanged += new EventHandler(panelLoaderSource_ModeGroupSignals_CheckedChanged);
                 ctrl.Dock = DockStyle.Fill;
@@ -1401,6 +1394,45 @@ namespace uLoader
                 this.PerformLayout ();
             }
 
+            private MODE_WORK _currentModeWork;
+            private MODE_WORK CurrentModeWork
+            {
+                get
+                {
+                    return _currentModeWork;
+                }
+
+                set
+                {
+                    object [] arObjRes;
+
+                    if ((!(_currentModeWork == MODE_WORK.UNKNOWN))
+                        && (value == MODE_WORK.CUR_INTERVAL))
+                    // требуется сохранить (!!! не в файле конфигурации) значения для сменяемого 'CUSTOMIZE' режима
+                        DataAskedHost (getPrepareGroupSignalChangedPars (GetWorkingItem (KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView, MODE_WORK.CUSTOMIZE));
+                    else
+                        ;
+
+                    _currentModeWork = value;
+
+                    arObjRes = new object [(int)INDEX_PREPARE_PARS.COUNT_INDEX_PREPARE_PARS];
+                    arObjRes [(int)INDEX_PREPARE_PARS.KEY_OBJ] = value == MODE_WORK.CUR_INTERVAL ? KEY_CONTROLS.RBUTTON_CUR_INTERVAL
+                        : value == MODE_WORK.CUSTOMIZE ? KEY_CONTROLS.RBUTTON_CUSTOMIZE
+                            : KEY_CONTROLS.UNKNOWN; // обязательно для switch
+                    arObjRes [(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] = getGroupId (KEY_CONTROLS.DGV_GROUP_SOURCES);
+                    //Уточнить идентификатор для группы сигналов
+                    arObjRes [(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] = new object [] { getGroupId(KEY_CONTROLS.DGV_GROUP_SIGNALS)
+                        , value // для устанавливаемого режима
+                    };
+
+                    arObjRes [(int)INDEX_PREPARE_PARS.OBJ] = this;
+                    arObjRes [(int)INDEX_PREPARE_PARS.KEY_EVT] = KEY_EVENT.SELECTION_CHANGED;
+
+                    //Отправить запрос на обновление параметров  группы сигналов "родительской" панели (для ретрансляции)
+                    DataAskedHost (arObjRes);
+                }
+            }
+
             /// <summary>
             /// Включение/отключение элементов управлении на панели параметров опроса
             ///  при изменении режима опроса
@@ -1410,62 +1442,34 @@ namespace uLoader
             private void panelLoaderSource_ModeGroupSignals_CheckedChanged(object obj, EventArgs ev)
             {
                 RadioButton rBtn = obj as RadioButton;
-                object [] arObjRes;
+                
                 Control ctrl;
-                KEY_CONTROLS key = KEY_CONTROLS.UNKNOWN;
-                MODE_WORK modeWork = MODE_WORK.UNKNOWN;
+                KEY_CONTROLS [] controlKeys = { KEY_CONTROLS.CALENDAR_START_DATE
+                    , KEY_CONTROLS.MTBX_START_TIME
+                    //, KEY_CONTROLS.MTBX_PERIOD_MAIN назначить противоположное значение
+                    , KEY_CONTROLS.MTBX_INTERVAL_CUSTOMIZE
+                    //, KEY_CONTROLS.TBX_INTERVAL_REQUERY назначить противоположное значение
+                    ,
+                };
+
+                //Признак состояния группы элементов
+                bool bCostumizeEnabled = false;
 
                 //Реагировать только на 'RadioButton' в состоянии 'Checked'
                 if (rBtn.Checked == true)
                 {
                     //Определить состояние группы элементов (COSTUMIZE)
-                    bool bCostumizeEnabled =
-                        rBtn.Name.Equals(KEY_CONTROLS.RBUTTON_COSTUMIZE.ToString())
-                        //false
-                        ;
+                    bCostumizeEnabled =
+                        rBtn.Name.Equals (KEY_CONTROLS.RBUTTON_CUSTOMIZE.ToString ());
 
-                    modeWork = bCostumizeEnabled == true ? MODE_WORK.COSTUMIZE : MODE_WORK.CUR_INTERVAL;
+                    foreach (KEY_CONTROLS key in controlKeys) {
+                        ctrl = Controls.Find (key.ToString (), true) [0];
+                        ctrl.Enabled = bCostumizeEnabled;
+                    }
 
-                    //if (rBtn.Name.Equals (KEY_CONTROLS.RBUTTON_CUR_DATETIME.ToString ()) == true)
-                    //{
-                    //}
-                    //else
-                    //    if (rBtn.Name.Equals (KEY_CONTROLS.RBUTTON_COSTUMIZE.ToString ()) == true)
-                    //    {
-                    //         bCostumizeEnabled = true;
-                    //    }
-                    //    else
-                    //        ;
-
-                    key = KEY_CONTROLS.CALENDAR_START_DATE; ctrl = Controls.Find(key.ToString(), true)[0];
-                    ctrl.Enabled = bCostumizeEnabled;
-                    key = KEY_CONTROLS.MTBX_START_TIME; ctrl = Controls.Find(key.ToString(), true)[0];
-                    ctrl.Enabled = bCostumizeEnabled;
-
-                    //key = KEY_CONTROLS.MTBX_PERIOD_MAIN; ctrl = Controls.Find(key.ToString(), true)[0];
-                    //ctrl.Enabled = !bCostumizeEnabled;
-                    key = KEY_CONTROLS.MTBX_INTERVAL_CUSTOMIZE; ctrl = Controls.Find(key.ToString(), true)[0];
-                    ctrl.Enabled = bCostumizeEnabled;
-                    //key = KEY_CONTROLS.TBX_INTERVAL; ctrl = Controls.Find(key.ToString(), true)[0];
-                    //ctrl.Enabled = !bCostumizeEnabled;
-
-                    arObjRes = new object[(int)INDEX_PREPARE_PARS.COUNT_INDEX_PREPARE_PARS];
-                    arObjRes[(int)INDEX_PREPARE_PARS.KEY_OBJ] = getKeyWorkingItem(rBtn); // обязательно для switch
-                    arObjRes[(int)INDEX_PREPARE_PARS.ID_OBJ_SEL] = getGroupId(KEY_CONTROLS.DGV_GROUP_SOURCES);
-                    arObjRes[(int)INDEX_PREPARE_PARS.DEPENDENCED_DATA] = new object[] { getGroupId(KEY_CONTROLS.DGV_GROUP_SIGNALS) //Уточнить идентификатор для группы сигналов
-                        , modeWork }; // для выбранного режима
-
-                    arObjRes[(int)INDEX_PREPARE_PARS.OBJ] = this;
-                    arObjRes[(int)INDEX_PREPARE_PARS.KEY_EVT] = KEY_EVENT.SELECTION_CHANGED;
-
-                    //Отправить запрос на обновление параметров  группы сигналов "родительской" панели (для ретрансляции)
-                    DataAskedHost(arObjRes);
+                    CurrentModeWork = bCostumizeEnabled == true ? MODE_WORK.CUSTOMIZE : MODE_WORK.CUR_INTERVAL;
                 }
                 else {
-                    DataGridView dgv = GetWorkingItem (KEY_CONTROLS.DGV_GROUP_SIGNALS) as DataGridView;
-                    arObjRes = getPrepareGroupSignalChangedPars (dgv);
-
-                    DataAskedHost (arObjRes);
                 }
             }
         }

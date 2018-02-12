@@ -914,8 +914,14 @@ namespace uLoader
                             List<string> pars = GetSecValueOfKey(secGroup, KEY_TREE_SGNLS[(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + s_chSecDelimeters[(int)INDEX_DELIMETER.SEC_PART_TARGET] + @"PARS").Split(s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL]).ToList<string>();
                             try
                             {
-                                grpSrc.SetGroupSignalsPars(pars, val.Split(new char[] { s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL] }));
-                            }
+                                if (grpSrc.SetGroupSignalsPars(pars, val.Split(new char[] { s_chSecDelimeters[(int)INDEX_DELIMETER.PAIR_VAL] })) == 0)
+                                // сохранить значения в файле конфигурации
+                                    SetSecValueOfKey (secGroup
+                                        , par
+                                        , val);
+                                else
+                                    ;
+                        }
                             catch (Exception e)
                             {
                                 Logging.Logg().Exception(e
@@ -925,9 +931,6 @@ namespace uLoader
                                         + @") - ..."
                                     , Logging.INDEX_MESSAGE.NOT_SET);
                             }
-                            SetSecValueOfKey(secGroup
-                                , par
-                                , val);
                         }
                         else
                             ;

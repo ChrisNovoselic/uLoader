@@ -113,7 +113,7 @@ namespace xmlServer
             Console.WriteLine(string.Format(@"Создание объекта [IP={0}, порт={1}, период={2}, шаблон={3}]..."
                 , ip.ToString()
                 , PORT
-                , tsIntervalSeries.ToString()                
+                , tsIntervalSeries.ToString()
                 , xmlPath
             ));
 

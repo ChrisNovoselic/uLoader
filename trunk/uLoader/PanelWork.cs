@@ -469,8 +469,8 @@ namespace uLoader
                                         }
                                     };
                                     break;
-                                case PanelLoader.KEY_CONTROLS.RBUTTON_CUR_DATETIME:
-                                case PanelLoader.KEY_CONTROLS.RBUTTON_COSTUMIZE:
+                                case PanelLoader.KEY_CONTROLS.RBUTTON_CUR_INTERVAL:
+                                case PanelLoader.KEY_CONTROLS.RBUTTON_CUSTOMIZE:
                                     state = HHandlerQueue.StatesMachine.GET_GROUP_SIGNALS_DATETIME_PARS;
                                     arObjToDataHost = new object[] {
                                         new object[] {

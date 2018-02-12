@@ -271,7 +271,7 @@ namespace TestFunc
                 Data.Initialize(0
                     , new object[]
                     {
-                        uLoaderCommon.MODE_WORK.COSTUMIZE
+                        uLoaderCommon.MODE_WORK.CUSTOMIZE
                         , DateTime.MinValue
                         , TimeSpan.FromSeconds (181) //TimeSpan.Zero
                         , 60 * 1000

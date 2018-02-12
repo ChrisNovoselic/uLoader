@@ -1110,7 +1110,7 @@ namespace uLoaderCommon
                             else
                                 ; //throw new Exception (@"Неизвестный режим...")
                         break;
-                    case MODE_WORK.COSTUMIZE:
+                    case MODE_WORK.CUSTOMIZE:
                         bRes = EvtActualizeDateTimeBegin?.Invoke() == 1;
                         break;
                     default:
@@ -1161,7 +1161,7 @@ namespace uLoaderCommon
                         {//Считать переданные параметры - параметрами группы сигналов
                             lock (m_lockStateGroupSignals)
                             {
-                                if (m_dictGroupSignals[id].Mode == MODE_WORK.COSTUMIZE)
+                                if (m_dictGroupSignals[id].Mode == MODE_WORK.CUSTOMIZE)
                                     if ((!(((DateTime)pars[1] == null)))
                                         && (!(((DateTime)pars[1] == DateTime.MinValue))))
                                     {
@@ -1341,7 +1341,7 @@ namespace uLoaderCommon
                         }
                 //}
             else
-                if (Mode == MODE_WORK.COSTUMIZE) {
+                if (Mode == MODE_WORK.CUSTOMIZE) {
                     //Проверить признак 1-го запуска (в режиме COSTUMIZE)
                     if (DateTimeBegin == DateTime.MinValue) {
                         //Проверить указана ли дата/время начала опроса

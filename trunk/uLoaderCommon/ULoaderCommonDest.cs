@@ -167,7 +167,7 @@ namespace uLoaderCommon
                 // опросить целевую таблицу на наличие значений
                 // т.к. в режиме 'MODE_WORK.COSTUMIZE' интервалы времени не пересекаются
                 // , и записи предыдущей таблицы становятся не актуальными
-                if (m_modeSource == MODE_WORK.COSTUMIZE)
+                if (m_modeSource == MODE_WORK.CUSTOMIZE)
                     Clear();
                 else
                     ;

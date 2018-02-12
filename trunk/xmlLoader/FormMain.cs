@@ -653,7 +653,7 @@ namespace xmlLoader
                     break;
                 case HHandlerQueue.StatesMachine.LIST_DEST:
                     BeginInvoke(new DelegateObjectFunc(fillDestList), (obj as object[])[1]);
-                    // запуск, активация обработчика очереди событий при записи значений в БД                    
+                    // запуск, активация обработчика очереди событий при записи значений в БД
                     m_handlerWriter.Push(null, new object [] {
                         new object[] {
                             new object [] {
@@ -666,7 +666,7 @@ namespace xmlLoader
                     BeginInvoke(new DelegateObjectFunc(fillDestDetail), (obj as object[])[1]);
                     break;
                 case HHandlerQueue.StatesMachine.LOGGING_SET:
-                    foreach (LOGGING_ID id in Enum.GetValues(typeof(LOGGING_ID)))                        
+                    foreach (LOGGING_ID id in Enum.GetValues(typeof(LOGGING_ID)))
                         m_markLogging.Set((int)id, ((obj as object[])[1] as bool[])[(int)id]);
 
                     Logging.UpdateMarkDebugLog();
