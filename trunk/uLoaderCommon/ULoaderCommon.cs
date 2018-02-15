@@ -476,7 +476,7 @@ namespace uLoaderCommon
         , Ended
     }
 
-    [AttributeUsage (AttributeTargets.Field)]
+    [AttributeUsage (AttributeTargets.Property)]
     public class StateAttribute : Attribute
     {
         public bool Changed;

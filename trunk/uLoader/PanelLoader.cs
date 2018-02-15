@@ -347,6 +347,7 @@ namespace uLoader
                         throw new Exception(@"PanelLoader::getPrepareGroupSignalChangedPars () - неизвестный тип панели ...");
 
                 objDepenceded.m_iAutoStart = ((bool)((obj.Rows[indxRow].Cells[(int)DGV_GROUP_SIGNALS_COL_INDEX.AUTO_START]).Value) == true) ? 1 : 0;
+                objDepenceded.m_bToolsEnabled = GetWorkingItem (KEY_CONTROLS.GROUP_BOX_GROUP_SIGNALS).Enabled;
 
                 objDepenceded.m_arWorkIntervals[(int)modeWork].m_dtStart = (GetWorkingItem(KEY_CONTROLS.CALENDAR_START_DATE) as DateTimePicker).Value.Date;
                 objDepenceded.m_arWorkIntervals[(int)modeWork].m_dtStart += fromMaskedTextBox(KEY_CONTROLS.MTBX_START_TIME).Value;
@@ -1098,38 +1099,24 @@ namespace uLoader
             /// Очистить все элементы управления на панели
             /// </summary>
             /// <returns>Признак выполнения функции (0 - успех)</returns>
-            private int clearValues ()
+            protected virtual int clearValues ()
             {
                 int iRes = 0;
 
-                iRes = clearValues(KEY_CONTROLS.DGV_GROUP_SIGNALS);
-                // перед выполнением очередной операции проверить результат выполнения предыдущей
-                if (iRes == 0)
-                {
-                    iRes = clearValues(KEY_CONTROLS.CBX_SOURCE_OF_GROUP);
+                List<KEY_CONTROLS> listKeyControls = new List<KEY_CONTROLS> () {
+                    KEY_CONTROLS.DGV_GROUP_SIGNALS
+                    , KEY_CONTROLS.CBX_SOURCE_OF_GROUP
+                    , KEY_CONTROLS.DGV_SIGNALS_OF_GROUP
+                    , KEY_CONTROLS.TBX_GROUPSOURCES_ADDING
+                    ,
+                };
 
+                foreach (KEY_CONTROLS key in listKeyControls)
+                    // перед выполнением очередной операции проверить результат выполнения предыдущей
                     if (iRes == 0)
-                    {
-                        iRes = clearValues(KEY_CONTROLS.DGV_SIGNALS_OF_GROUP);
-
-                        if (iRes == 0)
-                        {
-                            iRes = clearValues(KEY_CONTROLS.TBX_GROUPSOURCES_ADDING);
-                            
-                            //if (iRes == 0)
-                            //    if (this is PanelLoaderDest)
-                            //        iRes = clearValues(KEY_CONTROLS.TBX_GROUPSIGNALS_ADDING);
-                            //    else ;
-                            //else ;
-                        }
-                        else
-                            ;
-                    }
+                        iRes = clearValues (key);
                     else
-                        ;
-                }
-                else
-                    ;
+                        break;
 
                 return iRes;
             }
@@ -1431,6 +1418,17 @@ namespace uLoader
                     //Отправить запрос на обновление параметров  группы сигналов "родительской" панели (для ретрансляции)
                     DataAskedHost (arObjRes);
                 }
+            }
+
+            /// <summary>
+            /// Очистить все элементы управления на панели
+            /// </summary>
+            /// <returns>Признак выполнения функции (0 - успех)</returns>
+            protected override int clearValues ()
+            {
+                _currentModeWork = MODE_WORK.UNKNOWN;
+
+                return base.clearValues();
             }
 
             /// <summary>
