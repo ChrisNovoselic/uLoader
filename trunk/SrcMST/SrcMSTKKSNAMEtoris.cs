@@ -831,7 +831,7 @@ namespace SrcMST
                     m_datetimeServer.Value = DateTime.Now;
                     m_datetimeServer.BaseUTCOffset = DateTime.Now - DateTime.UtcNow;
                     // округлить до минут
-                    DateTimeBegin = DateTimeBegin.Round (TimeSpan.FromMinutes (1), MidpointRounding.AwayFromZero);
+                    SetDatetimeBegin(DateTimeBegin.Round (TimeSpan.FromMinutes (1), MidpointRounding.AwayFromZero));
                     //DateTimeBegin = m_dtServer.AddMilliseconds(-1 * (m_dtServer.Second * 1000 + m_dtServer.Millisecond));
                     //Запрос на выборку данных не требуется
                     ClearValues ();

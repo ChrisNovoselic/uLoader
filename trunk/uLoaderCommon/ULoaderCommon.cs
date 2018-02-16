@@ -12,7 +12,8 @@ using ASUTP.Database;
 
 namespace uLoaderCommon
 {
-    public static class DateTimeExtensions {
+    public static class DateTimeExtensions
+    {
         public static DateTime Round (this DateTime value, TimeSpan unit, MidpointRounding style)
         {
             if (!(unit > TimeSpan.Zero))
@@ -117,6 +118,11 @@ namespace uLoaderCommon
                 .Add (-increment);
 
             return datetimeRes;
+        }
+
+        public static DateTime AddPeriodMain (this DateTime src, TimeSpan tsPeriodMain)
+        {
+            return src.Add (tsPeriodMain);
         }
     }
 
@@ -520,7 +526,8 @@ namespace uLoaderCommon
         /// <summary>
         /// Класс - базовый для описания группы сигналов
         /// </summary>
-        public abstract class GroupSignals {
+        public abstract class GroupSignals
+        {
             /// <summary>
             /// Сылка на объект владельца текущего объекта
             /// </summary>

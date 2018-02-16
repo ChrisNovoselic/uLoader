@@ -129,80 +129,30 @@ namespace SrcMST
             protected override void setQuery()
             {
                 m_strQuery = string.Empty;
-                string strIds = string.Empty
-                    , strWhereDatetime = string.Empty;
-                int iOffsetUchetWhere = 0 // сохранение значений параметров группы сигналов при переключении режима сбора данных
-                    , iOffsetStampSelect = 0; // смещение для результирующей метки времени
-                string [] comparison = new string [2];
+
+                string strIds = string.Empty;
 
                 foreach (SIGNALIdsql sgnl in m_arSignals)
                     if (sgnl.IsFormula == false)
                         strIds += sgnl.m_iIdLocal + @",";
                     else
-                        ; // формула
+                    // формула
+                        ;
                 // удалить "лишнюю" запятую
                 strIds = strIds.Substring (0, strIds.Length - 1);
 
-                // определить содержание 'where'
-                switch ((_parent as SrcMSTASUTPIDT5tg1sql)._modeWhereDatetime) {
-                    case MODE_WHERE_DATETIME.BETWEEN_N_N:
-                    //case MODE_WHERE_DATETIME.EX_EX_Y_Y:
-                    case MODE_WHERE_DATETIME.IN_EX_N_Y:
-                        comparison [0] = ">";
-                        comparison [1] = "<";
-                        break;
-                    case MODE_WHERE_DATETIME.BETWEEN_N_Y:
-                    case MODE_WHERE_DATETIME.EX_EX_Y_N:
-                    case MODE_WHERE_DATETIME.IN_EX_N_N:
-                        comparison [0] = ">";
-                        comparison [1] = "<=";
-                        break;
-                    case MODE_WHERE_DATETIME.BETWEEN_Y_N:
-                    case MODE_WHERE_DATETIME.EX_EX_N_Y:
-                        //case MODE_WHERE_DATETIME.IN_EX_Y_Y:
-                        comparison [0] = ">=";
-                        comparison [1] = "<";
-                        break;
-                    case MODE_WHERE_DATETIME.UNKNOWN:
-                    //case MODE_WHERE_DATETIME.BETWEEN_Y_Y:
-                    case MODE_WHERE_DATETIME.IN_EX_Y_N:
-                    //case MODE_WHERE_DATETIME.EX_IN_N_Y:
-                    //case MODE_WHERE_DATETIME.IN_IN_Y_Y:
-                    case MODE_WHERE_DATETIME.EX_EX_N_N:
-                    default:
-                        break;
-                }
-
-                if ((string.IsNullOrEmpty (comparison [0]) == false)
-                    && (string.IsNullOrEmpty (comparison [1]) == false))
-                    strWhereDatetime = string.Format (@" [last_changed_at] {3} DATEADD(HOUR, {0}, CAST('{1}' as datetime))"
-                        + @" AND [last_changed_at] {4} DATEADD(HOUR, {0}, CAST('{2}' as datetime))"
-                            , iOffsetUchetWhere
-                            , DateTimeBeginFormat
-                            , DateTimeEndFormat
-                            , comparison [0]
-                            , comparison [1]
-                        );
-                else
-                    strWhereDatetime = string.Format (@" BETWEEN DATEADD(HOUR, {0}, CAST('{1}' as datetime))"
-                        + @" AND DATEADD(HOUR, {0}, CAST('{2}' as datetime))"
-                            , iOffsetUchetWhere
-                            , DateTimeBeginFormat
-                            , DateTimeEndFormat
-                        );
-
                 m_strQuery = string.Format (@"SELECT [ID], SUM([VALUE]) as [VALUE], COUNT(*) as [CNT]"
-                        + @", DATEADD(HOUR, {0}, DATEADD(HOUR, (DATEDIFF(HOUR, DATEADD(DAY, 0, CAST('{1}' as datetime)), [last_changed_at]) / 60) * 60, DATEADD(DAY, 0, CAST('{1}' as datetime)))) as [DATETIME]"
-                    + @" FROM [dbo].[{2}]"
-                    + @" WHERE {3}"
-                        + @" AND [ID] IN ({4})"
+                        + @", DATEADD({4}, (DATEDIFF({4}, CAST('{0}' as datetime), [last_changed_at]) / 60) * 60, CAST('{0}' as datetime)) as [DATETIME]"
+                    + @" FROM [dbo].[{1}]"
+                    + @" WHERE {2}"
+                        + @" AND [ID] IN ({3})"
                     + @" GROUP BY [ID]"
-                        + @", DATEADD(HOUR, (DATEDIFF(HOUR, DATEADD(DAY, 0, CAST('{1}' as datetime)), [last_changed_at]) / 60) * 60, DATEADD(DAY, 0, CAST('{1}' as datetime)))"
-                        , iOffsetStampSelect
+                        + @", DATEADD({4}, (DATEDIFF({4}, CAST('{0}' as datetime), [last_changed_at]) / 60) * 60, CAST('{0}' as datetime))"
                         , DateTimeEndFormat
                         , (_parent as SrcMSTASUTPIDT5tg1sql).NameTableSource
-                        , strWhereDatetime
+                        , WhereDatetime
                         , strIds
+                        , (_parent as SrcMSTASUTPIDT5tg1sql).NameDatePart
                     );
             }
         }
