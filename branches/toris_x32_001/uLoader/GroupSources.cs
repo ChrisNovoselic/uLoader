@@ -630,7 +630,7 @@ namespace uLoader
                                     , DateTime.MinValue
                                     , TimeSpan.Zero
                                     , TimeSpan.Zero
-                                    , -1 //TotalMilliseconds
+                                    , TimeSpan.Zero
                                     , srlzFormula
                                     ,
                                 }

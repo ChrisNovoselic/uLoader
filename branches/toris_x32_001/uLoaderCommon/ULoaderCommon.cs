@@ -1320,7 +1320,7 @@ namespace uLoaderCommon
         /// <summary>
         /// Конструктор - дополнительный для создания объекта при динамическом подключении библиотеки к приложению
         /// </summary>
-        /// <param name="iPlugIn"></param>
+        /// <param name="iPlugIn">Ссылка на объект связи с клиентом</param>
         public HHandlerDbULoader(PlugInULoader iPlugIn)
             : this()
         {
@@ -1416,55 +1416,59 @@ namespace uLoaderCommon
             {
                 lock (m_lockStateGroupSignals)
                 {
-                    if (m_dictGroupSignals.Keys.Contains(id) == false)
-                    {//Считать переданные параметры - параметрами сигналов
-                        m_dictGroupSignals.Add(id, createGroupSignals (id, pars));
+                    try {
+                        if (m_dictGroupSignals.Keys.Contains(id) == false)
+                        {//Считать переданные параметры - параметрами сигналов
+                            m_dictGroupSignals.Add(id, createGroupSignals (id, pars));
 
-                        //Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - добавить группу сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
-                    }
-                    else
-                        //Сигналы д.б. инициализированы
-                        if (m_dictGroupSignals[id].Signals == null)
-                            iRes = -1;
+                            //Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - добавить группу сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+                        }
                         else
-                            if (pars[0].GetType().IsArray == true)
-                            {
-                                //Считать переданные параметры - параметрами сигналов
-                                m_dictGroupSignals[id] = createGroupSignals(id, pars);
-
-                                Logging.Logg().Debug(string.Format(@"HHandlerDbULoader::Initialize () - ПЕРЕсоздать группу сигналов [ID={0}:{1}, key={2}]..."
-                                        , _iPlugin._Id, _iPlugin.KeySingleton, id)
-                                    , Logging.INDEX_MESSAGE.NOT_SET);
-                            }
+                            //Сигналы д.б. инициализированы
+                            if (m_dictGroupSignals[id].Signals == null)
+                                iRes = -1;
                             else
-                            {//Считать переданные параметры - параметрами группы сигналов
-                                //lock (m_lockStateGroupSignals)
-                                //{
-                                    m_dictGroupSignals[id].Mode = (uLoaderCommon.MODE_WORK)pars[0];
-                                    m_dictGroupSignals[id].State = GroupSignals.STATE.STOP;
-                                    //Переопределено в 'HHandlerDbULoaderDatetimeSrc'
-                                    //if (m_dictGroupSignals[id].Mode == MODE_WORK.COSTUMIZE)
-                                    //    if ((!(((DateTime)pars[1] == null)))
-                                    //        && (!(((DateTime)pars[1] == DateTime.MinValue))))
-                                    //        m_dictGroupSignals[id]. = (DateTime)pars[1];
-                                    //    else
-                                    //        ;
-                                    //else
-                                    //    ;
-                                    m_dictGroupSignals[id].PeriodMain = (TimeSpan)pars[2];
-                                    m_dictGroupSignals[id].IntervalCustomize = (TimeSpan)pars[3];
-                                    m_dictGroupSignals[id].PeriodRequery = (TimeSpan)pars [4];
-                                    if(pars.Length>=7)
-                                        m_dictGroupSignals[id].NameTable = (string)pars[6];
-                                    // инициализация расчетных формул
-                                    // только для Source
-                                    //}
+                                if (pars[0].GetType().IsArray == true)
+                                {
+                                    //Считать переданные параметры - параметрами сигналов
+                                    m_dictGroupSignals[id] = createGroupSignals(id, pars);
 
-                        //Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+                                    Logging.Logg().Debug(string.Format(@"HHandlerDbULoader::Initialize () - ПЕРЕсоздать группу сигналов [ID={0}:{1}, key={2}]..."
+                                            , _iPlugin._Id, _iPlugin.KeySingleton, id)
+                                        , Logging.INDEX_MESSAGE.NOT_SET);
+                                }
+                                else
+                                {//Считать переданные параметры - параметрами группы сигналов
+                                    //lock (m_lockStateGroupSignals)
+                                    //{
+                                        m_dictGroupSignals[id].Mode = (uLoaderCommon.MODE_WORK)pars[0];
+                                        m_dictGroupSignals[id].State = GroupSignals.STATE.STOP;
+                                        //Переопределено в 'HHandlerDbULoaderDatetimeSrc'
+                                        //if (m_dictGroupSignals[id].Mode == MODE_WORK.COSTUMIZE)
+                                        //    if ((!(((DateTime)pars[1] == null)))
+                                        //        && (!(((DateTime)pars[1] == DateTime.MinValue))))
+                                        //        m_dictGroupSignals[id]. = (DateTime)pars[1];
+                                        //    else
+                                        //        ;
+                                        //else
+                                        //    ;
+                                        m_dictGroupSignals[id].PeriodMain = (TimeSpan)pars[2];
+                                        m_dictGroupSignals[id].IntervalCustomize = (TimeSpan)pars[3];
+                                        m_dictGroupSignals[id].PeriodRequery = (TimeSpan)pars [4];
+                                        if(pars.Length>=7)
+                                            m_dictGroupSignals[id].NameTable = (string)pars[6];
+                                        // инициализация расчетных формул
+                                        // только для Source
+                                        //}
+
+                            //Logging.Logg().Debug(@"HHandlerDbULoader::Initialize () - параметры группы сигналов [" + PlugInId + @", key=" + id + @"]...", Logging.INDEX_MESSAGE.NOT_SET);
+                        }
+                    } catch (Exception e) {
+                        Logging.Logg ().Exception (e, @"HHandlerDbULoader::Initialize () - внутри 'lock'...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
                 }
             } catch (Exception e) {
-                Logging.Logg().Exception(e, @"HHandlerDbULoader::Initialize () - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                Logging.Logg().Exception(e, @"HHandlerDbULoader::Initialize () - вне 'lock'...", Logging.INDEX_MESSAGE.NOT_SET);
 
                 iRes = -1;
             }

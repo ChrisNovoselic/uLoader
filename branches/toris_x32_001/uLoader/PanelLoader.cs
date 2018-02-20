@@ -339,7 +339,8 @@ namespace uLoader
                 else
                     if (this is PanelLoaderDest)
                     {
-                        objDepenceded = new GROUP_SIGNALS_DEST_PARS();
+                        // для назначения установить родительскую группу источников
+                        objDepenceded = new GROUP_SIGNALS_DEST_PARS(getGroupId (KEY_CONTROLS.DGV_GROUP_SOURCES));
 
                         modeWork = MODE_WORK.CUSTOMIZE;
                     }

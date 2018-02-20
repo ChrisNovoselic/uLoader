@@ -128,90 +128,17 @@ namespace uLoader
             }
         }
 
-        public List<string> ValuesToFileINI ()
-        {
-            List<string> listRes;
-            string value;
-            bool bValueRequired = false;
+        public abstract List<string> ValuesToFileINI (List<string> listParPrevValues);
 
-            ////Получить ниаменования параметров для групп сигналов
-            //List<string> pars = GetSecValueOfKey (SEC_SRC_TYPES [(int)type] + s_chSecDelimeters [(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
-            //        , KEY_TREE_SGNLS [(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + s_chSecDelimeters [(int)INDEX_DELIMETER.SEC_PART_TARGET] + @"PARS").Split (s_chSecDelimeters [(int)INDEX_DELIMETER.PAIR_VAL]).ToList<string> ()
-            //    , listParValues = GetSecValueOfKey (SEC_SRC_TYPES [(int)type] + s_chSecDelimeters [(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
-            //        , KEY_TREE_SGNLS [(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + indxGrpSgnls).Split (s_chSecDelimeters [(int)INDEX_DELIMETER.PAIR_VAL]).ToList<string> ();
+        public abstract /*virtual*/ void SetPars (GROUP_SIGNALS_PARS src)
+        //{
+        //    m_iAutoStart = src.m_iAutoStart == 2
+        //        ? m_iAutoStart == 1 ? 0 : 1 // изменить на противоположный
+        //            : m_iAutoStart;
 
-            listRes = new List<string> (Enum.GetValues (typeof (INDEX_GROUP_SIGNALS_PARAMETER)).Length);
-
-            foreach (INDEX_GROUP_SIGNALS_PARAMETER par in Enum.GetValues (typeof (INDEX_GROUP_SIGNALS_PARAMETER))) {
-                value = string.Empty;
-                bValueRequired = true;
-
-                switch (par) {
-                    //case INDEX_GROUP_SIGNALS_PARAMETER.ID:
-                    //case INDEX_GROUP_SIGNALS_PARAMETER.ID_GS:
-                    case 0:
-                        //Не устанавливается с помощью GUI
-                        value = m_strId;
-                        break;
-                    case INDEX_GROUP_SIGNALS_PARAMETER.AUTO_START:
-                        ////Вариант №1, 2
-                        //listParValues[indxPar] = parValues.m_iAutoStart.ToString ();
-
-                        //Вариант №3
-                        if (!(m_iAutoStart == 2))
-                            //Признак изменения значения
-                            value = ((m_iAutoStart == 0) ? 0 : 1).ToString ();
-                        else
-                        //Не изменять
-                            ;
-
-                        //Console.WriteLine(@"MainForm.FileINI::makeValueGroupSignalsPars () - iAutoStart=" + listParValues[indxPar] + @"...");
-                        break;
-                    case INDEX_GROUP_SIGNALS_PARAMETER.TOOLS_ENABLED:
-                        //Не устанавливается с помощью GUI
-                        value = m_bToolsEnabled.ToString ();
-                        break;
-                    case INDEX_GROUP_SIGNALS_PARAMETER.CURINTERVAL_PERIODMAIN:
-                        bValueRequired = (Index == FormMain.INDEX_SRC.SOURCE)
-                            && ((this as GROUP_SIGNALS_SRC_PARS).m_mode == MODE_WORK.CUR_INTERVAL);
-                        if (bValueRequired == true)
-                        //Только для источника
-                            value = m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodMain.Text;
-                        else
-                            ;
-                        break;
-                    case INDEX_GROUP_SIGNALS_PARAMETER.CURINTERVAL_PERIODLOCAL:
-                        bValueRequired = (Index == FormMain.INDEX_SRC.SOURCE)
-                            && ((this as GROUP_SIGNALS_SRC_PARS).m_mode == MODE_WORK.CUR_INTERVAL);
-                        if (bValueRequired == true)
-                        //Только для источника
-                            value = m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_tsRequery.ToString ();
-                        else
-                            ;
-                        break;
-                    default:
-                        break;
-                }
-
-                if (bValueRequired == true)
-                    if (string.IsNullOrEmpty (value) == false)
-                        if ((int)par == listRes.Count)
-                            listRes.Add (value);
-                        else
-                            ;
-                    else
-                        ASUTP.Logging.Logg().Exception(new InvalidDataException ("'value' is null or empty")
-                            , $"GROUP_SIGNALS_PARS::ValuesToFileINI () - Id={m_strId}, Name={m_strShrName} значение параметра <{par}> не может быть установлено..."
-                            , ASUTP.Logging.INDEX_MESSAGE.NOT_SET);
-                else
-                // значение не требуется
-                    ;
-            }
-
-            return listRes;
-        }
-
-        public abstract void SetPars (GROUP_SIGNALS_PARS src);
+        //    src.m_iAutoStart = m_iAutoStart;
+        //}
+        ;
     }
     
     /// <summary>
@@ -261,6 +188,9 @@ namespace uLoader
         {
             if (src.Index == FormMain.INDEX_SRC.SOURCE)
             {
+                ////??? изменяется 'm_iAutoStart'
+                //base.SetPars (src);
+
                 MODE_WORK mode
                     , amode;
 
@@ -293,6 +223,69 @@ namespace uLoader
             else
                 ;
         }
+
+        public override List<string> ValuesToFileINI (List<string> listParPrevValues)
+        {
+            List<string> listRes;
+            string value;
+
+            ////Получить ниаменования параметров для групп сигналов
+            //List<string> pars = GetSecValueOfKey (SEC_SRC_TYPES [(int)type] + s_chSecDelimeters [(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
+            //        , KEY_TREE_SGNLS [(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + s_chSecDelimeters [(int)INDEX_DELIMETER.SEC_PART_TARGET] + @"PARS").Split (s_chSecDelimeters [(int)INDEX_DELIMETER.PAIR_VAL]).ToList<string> ()
+            //    , listParValues = GetSecValueOfKey (SEC_SRC_TYPES [(int)type] + s_chSecDelimeters [(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
+            //        , KEY_TREE_SGNLS [(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + indxGrpSgnls).Split (s_chSecDelimeters [(int)INDEX_DELIMETER.PAIR_VAL]).ToList<string> ();
+
+            listRes = new List<string> (Enum.GetValues (typeof (INDEX_GROUP_SIGNALS_PARAMETER)).Length);
+
+            foreach (INDEX_GROUP_SIGNALS_PARAMETER par in Enum.GetValues (typeof (INDEX_GROUP_SIGNALS_PARAMETER))) {
+                value = string.Empty;
+
+                switch (par) {
+                    //case INDEX_GROUP_SIGNALS_PARAMETER.ID:
+                    //case INDEX_GROUP_SIGNALS_PARAMETER.ID_GS:
+                    case 0:
+                        if (listRes.Count == 0)
+                            value = m_strId;
+                        else
+                            ;
+                        break;
+                    case INDEX_GROUP_SIGNALS_PARAMETER.AUTO_START:
+                        ////Вариант №1, 2
+                        //listParValues[indxPar] = parValues.m_iAutoStart.ToString ();
+
+                        //Вариант №3
+                        if (!(m_iAutoStart == 2))
+                            //Признак изменения значения
+                            value = ((m_iAutoStart == 0) ? 0 : 1).ToString ();
+                        else
+                            //??? Не изменять
+                            value = int.Parse (listParPrevValues [(int)par]) == 0 ? 1.ToString () : 0.ToString ();
+
+                        //Console.WriteLine(@"MainForm.FileINI::makeValueGroupSignalsPars () - iAutoStart=" + listParValues[indxPar] + @"...");
+                        break;
+                    case INDEX_GROUP_SIGNALS_PARAMETER.TOOLS_ENABLED:
+                        //Не устанавливается с помощью GUI
+                        value = listParPrevValues [(int)par];
+                        break;
+                    case INDEX_GROUP_SIGNALS_PARAMETER.CURINTERVAL_PERIODMAIN:
+                        value = m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_tsPeriodMain.Text;
+                        break;
+                    case INDEX_GROUP_SIGNALS_PARAMETER.CURINTERVAL_PERIODLOCAL:
+                        value = m_arWorkIntervals [(int)MODE_WORK.CUR_INTERVAL].m_tsRequery.ToString ();
+                        break;
+                    default:
+                        break;
+                }
+
+                if (string.IsNullOrEmpty (value) == false)
+                    listRes.Add (value);
+                else
+                //??? пустые пропускать
+                    ;
+            }
+
+            return listRes;
+        }
     }
 
     /// <summary>
@@ -314,8 +307,17 @@ namespace uLoader
         {
         }
 
+        public GROUP_SIGNALS_DEST_PARS (string idGrpSrcs)
+            : base ()
+        {
+            m_idGrpSrcs = idGrpSrcs;
+        }
+
         public override void SetPars (GROUP_SIGNALS_PARS src)
         {
+            ////??? изменяется 'm_iAutoStart'
+            //base.SetPars (src);
+
             //!!! только единственный режим работы
             m_arWorkIntervals [(int)MODE_WORK.CUSTOMIZE].m_dtStart =
                 src.m_arWorkIntervals [(int)MODE_WORK.CUSTOMIZE].m_dtStart;
@@ -323,6 +325,69 @@ namespace uLoader
                 src.m_arWorkIntervals [(int)MODE_WORK.CUSTOMIZE].m_tsPeriodMain;
             //m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriodLocal =
             //    src.m_arWorkIntervals[(int)MODE_WORK.COSTUMIZE].m_tsPeriodLocal;
+        }
+
+        public override List<string> ValuesToFileINI (List<string> listParPrevValues)
+        {
+            List<string> listRes;
+            string value;
+
+            ////Получить ниаменования параметров для групп сигналов
+            //List<string> pars = GetSecValueOfKey (SEC_SRC_TYPES [(int)type] + s_chSecDelimeters [(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
+            //        , KEY_TREE_SGNLS [(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + s_chSecDelimeters [(int)INDEX_DELIMETER.SEC_PART_TARGET] + @"PARS").Split (s_chSecDelimeters [(int)INDEX_DELIMETER.PAIR_VAL]).ToList<string> ()
+            //    , listParValues = GetSecValueOfKey (SEC_SRC_TYPES [(int)type] + s_chSecDelimeters [(int)INDEX_DELIMETER.SEC_PART_TARGET] + strIdGroup
+            //        , KEY_TREE_SGNLS [(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS] + indxGrpSgnls).Split (s_chSecDelimeters [(int)INDEX_DELIMETER.PAIR_VAL]).ToList<string> ();
+
+            listRes = new List<string> (Enum.GetValues (typeof (INDEX_GROUP_SIGNALS_PARAMETER)).Length);
+
+            foreach (INDEX_GROUP_SIGNALS_PARAMETER par in Enum.GetValues (typeof (INDEX_GROUP_SIGNALS_PARAMETER))) {
+                value = string.Empty;
+
+                switch (par) {
+                    //case INDEX_GROUP_SIGNALS_PARAMETER.ID:
+                    //case INDEX_GROUP_SIGNALS_PARAMETER.ID_GS:
+                    case 0:
+                        if (listRes.Count == 0)
+                            value = m_strId;
+                        else
+                            value = m_idGrpSrcs;
+                        break;
+                    case INDEX_GROUP_SIGNALS_PARAMETER.AUTO_START:
+                        ////Вариант №1, 2
+                        //listParValues[indxPar] = parValues.m_iAutoStart.ToString ();
+
+                        //Вариант №3
+                        if (!(m_iAutoStart == 2))
+                        //Признак изменения значения
+                            value = ((m_iAutoStart == 0) ? 0 : 1).ToString ();
+                        else
+                        //??? Не изменять
+                            value = int.Parse (listParPrevValues [(int)par + 1]) == 0 ? 1.ToString () : 0.ToString ();
+
+                        //Console.WriteLine(@"MainForm.FileINI::makeValueGroupSignalsPars () - iAutoStart=" + listParValues[indxPar] + @"...");
+                        break;
+                    case INDEX_GROUP_SIGNALS_PARAMETER.TOOLS_ENABLED:
+                        //Не устанавливается с помощью GUI
+                        value = listParPrevValues [(int)par + 1];
+                        break;
+                    case INDEX_GROUP_SIGNALS_PARAMETER.CURINTERVAL_PERIODMAIN:
+                    case INDEX_GROUP_SIGNALS_PARAMETER.CURINTERVAL_PERIODLOCAL:
+                    // не требуется
+                        break;
+                    default:
+                        break;
+                }
+
+                if (string.IsNullOrEmpty (value) == false)
+                    listRes.Add (value);
+                else
+                    ASUTP.Logging.Logg().Exception(new InvalidDataException ("'value' is null or empty")
+                        , $"GROUP_SIGNALS_PARS::ValuesToFileINI () - Id={m_strId}, Name={m_strShrName} значение параметра <{par}> не может быть установлено..."
+                        , ASUTP.Logging.INDEX_MESSAGE.NOT_SET)
+                        ;
+            }
+
+            return listRes;
         }
     }
 

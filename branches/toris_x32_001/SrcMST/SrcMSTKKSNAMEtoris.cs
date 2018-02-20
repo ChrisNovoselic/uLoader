@@ -135,21 +135,25 @@ namespace SrcMST
                 // , [1] - перечень сигналов для регистрации сигнала(-ов) (подписка)
                 object[] parsToEvt = new object[] { m_Id, string.Empty };
 
-                foreach (SIGNALMSTKKSNAMEsql sgnl in m_arSignals)
-                    if (sgnl.IsFormula == false)
-                        parsToEvt[1] += sgnl.m_kks_name + @",";
-                    else
-                        ; // формула
+                try {
+                    foreach (SIGNALMSTKKSNAMEsql sgnl in m_arSignals)
+                        if (sgnl.IsFormula == false)
+                            parsToEvt[1] += sgnl.m_kks_name + @",";
+                        else
+                            ; // формула
                 
-                if (((string)parsToEvt[1]).Equals(string.Empty) == false)
-                {// только, если есть сигналы для подписки
-                    // исключить лишнюю запятую в списке
-                    parsToEvt[1] = ((string)parsToEvt[1]).Substring(0, ((string)parsToEvt[1]).Length - 1);
-                    // иницициировать событие - подписки
-                    EvtAdviseItem(parsToEvt);
+                    if (((string)parsToEvt[1]).Equals(string.Empty) == false)
+                    {// только, если есть сигналы для подписки
+                        // исключить лишнюю запятую в списке
+                        parsToEvt[1] = ((string)parsToEvt[1]).Substring(0, ((string)parsToEvt[1]).Length - 1);
+                        // иницициировать событие - подписки
+                        EvtAdviseItem(parsToEvt);
+                    }
+                    else
+                        ;
+                } catch (Exception e) {
+                    Logging.Logg ().Exception (e, $@"GroupSignalsMSTKKSNAMEtoris.AdviseItems () - ...", Logging.INDEX_MESSAGE.NOT_SET);
                 }
-                else
-                    ;
             }
             /// <summary>
             /// Отменить регистрацию сигнала(-ов) (отписаться) в OPC-сервере
@@ -206,44 +210,52 @@ namespace SrcMST
             {
                 get
                 {
-                    DataTable table = base.TableRecieved;
+                    try {
+                        DataTable table = base.TableRecieved;
 
-                    if (Equals(table, null) == false)
-                        //Перебор таблицы с последними значениями сигналов
-                        foreach (DataRow r in m_TablePrevValue.Rows)
-                            if (((DateTime.UtcNow - (DateTime)r [2]).TotalSeconds < SEC_TO_REPEAT_BY_ZERO))
-                                RepeatSignal?.Invoke (this, new RepeatSignalEventArgs ("zero_count", new object ()));
-                            else
-                                ;
-                    else
-                        ;
+                        if (Equals (table, null) == false)
+                            //Перебор таблицы с последними значениями сигналов
+                            foreach (DataRow r in m_TablePrevValue.Rows)
+                                if (((DateTime.UtcNow - (DateTime)r [2]).TotalSeconds < SEC_TO_REPEAT_BY_ZERO))
+                                    RepeatSignal?.Invoke (this, new RepeatSignalEventArgs ("zero_count", new object ()));
+                                else
+                                    ;
+                        else
+                            ;
+                    } catch (Exception e) {
+                        Logging.Logg ().Exception (e, $@"GroupSignalsMSTKKSNAMEtoris.TableRecieved::get - ...", Logging.INDEX_MESSAGE.NOT_SET);
+                    }
 
                     return base.TableRecieved;
                 }
 
                 set
                 {
-                    //Требуется добавить идентификаторы 'id_main'
-                    if ((!(value == null))
-                        && (!(value.Columns.IndexOf(@"ID") < 0)))
-                    {
-                        DataTable tblVal = value.Copy();
-                        tblVal.Columns.Add(@"KKSNAME_MST", typeof(string));
-                        //tblVal.Columns.Add(@"ID_MST", typeof(int));
-
-                        foreach (DataRow r in tblVal.Rows)
+                    try {
+                        //Требуется добавить идентификаторы 'id_main'
+                        if ((Equals(value, null) == false)
+                            && (!(value.Columns.IndexOf(@"ID") < 0)))
                         {
-                            r[@"KKSNAME_MST"] = r[@"ID"];
-                            //r[@"ID_MST"] = getIdMST((string)r[@"KKSNAME_MST"]);
+                            DataTable tblVal = value.Copy();
+                            tblVal.Columns.Add(@"KKSNAME_MST", typeof(string));
+                            //tblVal.Columns.Add(@"ID_MST", typeof(int));
 
-                            r[@"ID"] = getIdMain((string)r[@"KKSNAME_MST"]);
+                            foreach (DataRow r in tblVal.Rows)
+                            {
+                                r[@"KKSNAME_MST"] = r[@"ID"];
+                                //r[@"ID_MST"] = getIdMST((string)r[@"KKSNAME_MST"]);
+
+                                r[@"ID"] = getIdMain((string)r[@"KKSNAME_MST"]);
+                            }
+
+                            base.TableRecieved = tblVal;
                         }
-
-                        base.TableRecieved = tblVal;
-                    }
-                    else
-                    {
-                        base.TableRecieved = value;
+                        else
+                        {
+                            base.TableRecieved = value;
+                        }
+                    } catch (Exception e) {
+                        Logging.Logg ().Exception (e, $@"GroupSignalsMSTKKSNAMEtoris.TableRecieved::set - ...", Logging.INDEX_MESSAGE.NOT_SET);
                     }
                 }
             }
@@ -273,41 +285,43 @@ namespace SrcMST
                 }
                 else
                 {
-                    lock (this)
-                    {
+                    //lock (this) {
                         try
                         {
-                            foreach (DataRow r in m_TablePrevValue.Rows)
-                            {
-                                if (r [0].ToString ().Trim () == kksname) {
-                                    r [1] = value;
-                                    if (status == -1991)
-                                        r [2] = Convert.ToDateTime (r [2]).AddSeconds (SEC_TO_REPEAT_BY_ZERO);
-                                    else
-                                        r [2] = dtVal;
-                                } else
-                                    ;
+                            if (Equals(m_TablePrevValue, null) == false) {
+                                //Logging.Logg ().Debug ($@"::ItemSetValue () - строк было <{m_TablePrevValue.Rows.Count}>...", Logging.INDEX_MESSAGE.NOT_SET);
 
-                                if ((((DateTime)r [2]).Equals (DateTime.MinValue) == false)
-                                    && ((DateTime.UtcNow  - (DateTime)r [2]).TotalSeconds < (SEC_TO_REPEAT_BY_ZERO + SEC_TO_REPEAT_BY_ZERO_OFFSET)))
-                                //если метка времени последнего значения меньше текущего времени со смещением в период обновления
-                                    RepeatSignal?.Invoke (this, new RepeatSignalEventArgs (r [0].ToString (), r [1]));
-                                else
-                                    ;
-                            }
+                                foreach (DataRow r in m_TablePrevValue.Rows)
+                                {
+                                    if (r [0].ToString ().Trim () == kksname) {
+                                        r [1] = value;
+                                        if (status == -1991)
+                                            r [2] = Convert.ToDateTime (r [2]).AddSeconds (SEC_TO_REPEAT_BY_ZERO);
+                                        else
+                                            r [2] = dtVal;
+                                    } else
+                                        ;
+
+                                    if ((((DateTime)r [2]).Equals (DateTime.MinValue) == false)
+                                        && ((DateTime.UtcNow  - (DateTime)r [2]).TotalSeconds < (SEC_TO_REPEAT_BY_ZERO + SEC_TO_REPEAT_BY_ZERO_OFFSET)))
+                                    //если метка времени последнего значения меньше текущего времени со смещением в период обновления
+                                        RepeatSignal?.Invoke (this, new RepeatSignalEventArgs (r [0].ToString (), r [1]));
+                                    else
+                                        ;
+                                }
+                            } else
+                                //Logging.Logg ().Error ($@"::ItemSetValue () - предыдущая таблица пуста...", Logging.INDEX_MESSAGE.NOT_SET)
+                                ;
                         }
                         catch (Exception e)
                         {
                             Logging.Logg().Exception(e, "SrcMSTKKSNAMEtoris.GroupSignalsMSTKKSNAMEtoris.ItemNewValue - ...", Logging.INDEX_MESSAGE.NOT_SET);
                         }
-
-                        //Debug.Print("Добавление строки " + kksname + ", " + value.ToString() + ", " + dtVal.ToString());
-
-                    }
+                    //}
 
                     lock (m_lockData)
                     {
-                        //Logging.Logg().Action("StateCheckResponse:m_tableTorIs.Rows.Add()", Logging.INDEX_MESSAGE.NOT_SET);
+                        //Logging.Logg().Debug($@"::ItemSetValue () - добавить строку: kks-code <{kksname}>, метка <{dtVal}> значение <{value}> ...", Logging.INDEX_MESSAGE.NOT_SET);
                         m_tableTorIs.Rows.Add(new object[] { kksname, value, dtVal });
                     }
 
@@ -351,7 +365,6 @@ namespace SrcMST
                             //??? Обязательно ли...
                             //Logging.Logg().Action("StateCheckResponse:m_tableTorIs.AcceptChanges()", Logging.INDEX_MESSAGE.NOT_SET);
                             m_tableTorIs.AcceptChanges();
-
                         }
                         else
                             ;
@@ -416,6 +429,8 @@ namespace SrcMST
 
         protected override HHandlerDbULoaderDatetimeSrc.GroupSignals createGroupSignals(int id, object[] objs)
         {
+            Logging.Logg ().Debug ($@"::createGroupSignals (id={id}, args.Length={objs.Length}) - ...", Logging.INDEX_MESSAGE.NOT_SET);
+
             GroupSignalsMSTKKSNAMEtoris grpRes = new GroupSignalsMSTKKSNAMEtoris(this, id, objs);
 
             grpRes.EvtAdviseItem += new DelegateObjectFunc(groupSignals_OnEvtAdviseItem);
@@ -466,13 +481,13 @@ namespace SrcMST
                         break;
                 }
 
-                Logging.Logg().Action(string.Format(@"SrcMST.SrcMSTKKSNAMEToris::Start() - [ID={0}:{1}, key={2}], результат ={3}..."
+                m_torIsData.ItemNewValue += new _ITorISDataEvents_ItemNewValueEventHandler(torIsData_ItemNewValue);
+                //m_torIsData.ChangeAttributeValue += new _ITorISDataEvents_ChangeAttributeValueEventHandler(torIsData_ChangeAttributeValue);
+                m_torIsData.ChangeStatus += new _ITorISDataEvents_ChangeStatusEventHandler(torIsData_ChangeStatus);
+
+                Logging.Logg ().Action (string.Format (@"SrcMST.SrcMSTKKSNAMEToris::Start() - [ID={0}:{1}, key={2}], результат ={3}..."
                         , _iPlugin._Id, _iPlugin.KeySingleton, IdGroupSignalsCurrent, iResConnect)
                     , Logging.INDEX_MESSAGE.NOT_SET);
-
-                m_torIsData.ItemNewValue += new _ITorISDataEvents_ItemNewValueEventHandler(torIsData_ItemNewValue);
-                m_torIsData.ChangeAttributeValue += new _ITorISDataEvents_ChangeAttributeValueEventHandler(torIsData_ChangeAttributeValue);
-                m_torIsData.ChangeStatus += new _ITorISDataEvents_ChangeStatusEventHandler(torIsData_ChangeStatus);
             }
             catch (Exception e)
             {
@@ -486,7 +501,11 @@ namespace SrcMST
 
             lock (lockAdvisedItems)
             {
-                ((GroupSignalsMSTKKSNAMEtoris)m_dictGroupSignals[key]).AdviseItems();
+                try {
+                    ((GroupSignalsMSTKKSNAMEtoris)m_dictGroupSignals [key]).AdviseItems ();
+                } catch (Exception e) {
+                    Logging.Logg ().Exception (e, $@"::Start (key={key}) - [ID={_iPlugin._Id}:{_iPlugin.KeySingleton}, key={IdGroupSignalsCurrent}] ...", Logging.INDEX_MESSAGE.NOT_SET);
+                }
             }
         }
 
@@ -494,8 +513,9 @@ namespace SrcMST
         {
             try
             {
-                m_torIsData.ItemNewValue -= torIsData_ItemNewValue;
-                m_torIsData.ChangeStatus -= torIsData_ChangeStatus;
+                m_torIsData.ItemNewValue -= new _ITorISDataEvents_ItemNewValueEventHandler (torIsData_ItemNewValue);
+                //m_torIsData.ChangeAttributeValue -= new _ITorISDataEvents_ChangeAttributeValueEventHandler (torIsData_ChangeAttributeValue);
+                m_torIsData.ChangeStatus -= new _ITorISDataEvents_ChangeStatusEventHandler (torIsData_ChangeStatus);
 
                 m_torIsData.Disconnect();
 
@@ -580,56 +600,62 @@ namespace SrcMST
             else
                 ;
 
-            foreach (string kks_name in kks_names)
-            {
-                if (m_dictSignalsAdvised.ContainsKey(kks_name) == true)
-                    return;
-                else
-                    ;
+            Logging.Logg ().Action ($@"::groupSignals_OnEvtAdviseItem () - начало подписки  {strIds}, сигналов <{kks_names.Length}>...", Logging.INDEX_MESSAGE.NOT_SET);
 
-                err = m_torIsData.AdviseItems(kks_name);
+            foreach (string kks_name in kks_names) {
+                try {
+                    if (m_dictSignalsAdvised.ContainsKey(kks_name) == true)
+                        return;
+                    else
+                        ;
 
-                if (!(err == 0))
-                {
-                    switch ((ERROR)err)
+                    err = m_torIsData.AdviseItems(kks_name);
+
+                    if (!(err == 0))
                     {
-                        case ERROR.ETORIS_NOTCONFIG:
-                        case ERROR.ETORIS_INVALIDITEM:
-                        case ERROR.ETORIS_INVALIDATTR:
-                        case ERROR.ETORIS_INVALIDTYPE:
-                        case ERROR.ETORIS_INVALIDHANDLE:
-                        case ERROR.ETORIS_NOTREGISTER:
-                        case ERROR.ETORIS_ALREADYADVISED:
-                        case ERROR.ETORIS_INVALIDITEMTYPE:
-                        case ERROR.ETORIS_SHUTDOWN:
-                            strErr = ((ERROR)err).ToString ();
-                            break;
-                        default:
-                            strErr = "Неизвестная ошибка " + strErr.ToString();
-                            break;
+                        switch ((ERROR)err)
+                        {
+                            case ERROR.ETORIS_NOTCONFIG:
+                            case ERROR.ETORIS_INVALIDITEM:
+                            case ERROR.ETORIS_INVALIDATTR:
+                            case ERROR.ETORIS_INVALIDTYPE:
+                            case ERROR.ETORIS_INVALIDHANDLE:
+                            case ERROR.ETORIS_NOTREGISTER:
+                            case ERROR.ETORIS_ALREADYADVISED:
+                            case ERROR.ETORIS_INVALIDITEMTYPE:
+                            case ERROR.ETORIS_SHUTDOWN:
+                                strErr = ((ERROR)err).ToString ();
+                                break;
+                            default:
+                                strErr = "Неизвестная ошибка " + strErr.ToString();
+                                break;
+                        }
+
+                        Logging.Logg().Error(@"Ошибка подписки на сигнал" + strIds + kks_name + " - " + strErr, Logging.INDEX_MESSAGE.NOT_SET);
+                        continue;
                     }
+                    else
+                        ;
 
-                    Logging.Logg().Error(@"Ошибка подписки на сигнал" + strIds + kks_name + " - " + strErr, Logging.INDEX_MESSAGE.NOT_SET);
-                    continue;
+                    m_dictSignalsAdvised.Add(kks_name, idGrpSgnls);
+
+                    Logging.Logg ().Action (@"Подписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);
+
+                    err = m_torIsData.ReadItem(kks_name, ref type, out value, out timestamp, out quality, out status);
+                    if (! (err == 0)) {
+                        Logging.Logg().Error(@"Ошибка вызова ReadItem для" + strIds + kks_name + " - " + err.ToString(), Logging.INDEX_MESSAGE.NOT_SET);
+                        continue;
+                    }
+                    else
+                        ;
+
+                    torIsData_ItemSetValue (kks_name, type, value, timestamp, quality, status);
+                } catch (Exception e) {
+                    Logging.Logg ().Exception (e, $@"[{strIds}, kks-code={kks_name}]", Logging.INDEX_MESSAGE.NOT_SET);
                 }
-                else
-                    ;
+            } // for
 
-                m_dictSignalsAdvised.Add(kks_name, idGrpSgnls);
-
-                //Logging.Logg ().Action (@"Подписка на сигнал" + strIds + kks_name, Logging.INDEX_MESSAGE.NOT_SET);
-
-                err = m_torIsData.ReadItem(kks_name, ref type, out value, out timestamp, out quality, out status);
-                if (! (err == 0))
-                {
-                    Logging.Logg().Error(@"Ошибка вызова ReadItem для" + strIds + kks_name + " - " + err.ToString(), Logging.INDEX_MESSAGE.NOT_SET);
-                    continue;
-                }
-                else
-                    ;
-
-                torIsData_ItemSetValue (kks_name, type, value, timestamp, quality, status);
-            }
+            Logging.Logg ().Action ($@"::groupSignals_OnEvtAdviseItem () - подписка завершена {strIds}, сигналов <{kks_names.Length}>...", Logging.INDEX_MESSAGE.NOT_SET);
         }
 
         private int getIdGroupSignals(string kksname)
@@ -714,20 +740,12 @@ namespace SrcMST
             string strErr = string.Empty;
             int idGrpSgnls = -1;
 
+            //Logging.Logg ().Debug ($@"::torIsData_ItemSetValue (kks-code={kksname}, type={type}, timestamp={timestamp}, quality={quality}, status={status}) - ..."
+            //    , Logging.INDEX_MESSAGE.NOT_SET);
+
             if (type != 3)
             {
                 strErr = "SrcMSTKKSNAMEtoris::torIsData_ItemSetValue () - некорректный тип для: " + kksname + @", тип=" + type.ToString() + @" ...";
-                Logging.Logg().Error(strErr, Logging.INDEX_MESSAGE.NOT_SET);
-
-                return;
-            }
-            else
-                ;
-
-            idGrpSgnls = getIdGroupSignals(kksname);
-            if (idGrpSgnls < 0)
-            {
-                strErr = "SrcMSTKKSNAMEtoris::torIsData_ItemSetValue () - неиспользуемый сигнал: " + kksname + @" ...";
                 Logging.Logg().Error(strErr, Logging.INDEX_MESSAGE.NOT_SET);
 
                 return;
@@ -755,6 +773,18 @@ namespace SrcMST
 
                 return;
             }
+
+            idGrpSgnls = getIdGroupSignals (kksname);
+            if (idGrpSgnls < 0) {
+                strErr = "SrcMSTKKSNAMEtoris::torIsData_ItemSetValue () - неиспользуемый сигнал: " + kksname + @" ...";
+                Logging.Logg ().Error (strErr, Logging.INDEX_MESSAGE.NOT_SET);
+
+                return;
+            } else
+                ;
+
+            Logging.Logg ().Debug ($@"::torIsData_ItemSetValue (kks-code={kksname}, type={type}, timestamp={timestamp}, quality={quality}, status={status}) - ..."
+                , Logging.INDEX_MESSAGE.NOT_SET);
 
             (m_dictGroupSignals[idGrpSgnls] as GroupSignalsMSTKKSNAMEtoris).ItemSetValue(kksname, value, timestamp, quality, status);
         }

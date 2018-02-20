@@ -945,10 +945,10 @@ namespace uLoader
 
                 parNames = $"{KEY_TREE_SGNLS [(int)INDEX_KEY_SIGNAL.GROUP_SIGNALS]}{indxGrpSgnls}";
 
-                //listParPrevValues = GetSecValueOfKey ($"{SEC_SRC_TYPES [(int)type]}{s_chSecDelimeters [(int)INDEX_DELIMETER.SEC_PART_TARGET]}{strIdGroup}", parNames)
-                //    .Split (s_chSecDelimeters [(int)INDEX_DELIMETER.PAIR_VAL])
-                //    .ToList<string> ();
-                listParCurValues = parValues.ValuesToFileINI ();
+                listParPrevValues = GetSecValueOfKey ($"{SEC_SRC_TYPES [(int)type]}{s_chSecDelimeters [(int)INDEX_DELIMETER.SEC_PART_TARGET]}{strIdGroup}", parNames)
+                    .Split (s_chSecDelimeters [(int)INDEX_DELIMETER.PAIR_VAL])
+                    .ToList<string> ();
+                listParCurValues = parValues.ValuesToFileINI (listParPrevValues);
 
                 UpdateParameter (type
                     , strIdGroup
