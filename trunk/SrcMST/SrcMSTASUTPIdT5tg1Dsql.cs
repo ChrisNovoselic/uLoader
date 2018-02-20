@@ -145,11 +145,11 @@ namespace SrcMST
                         + @" AND [ID] IN ({3})"
                     + @" GROUP BY [ID]"
                         + @", DATEADD({4}, (DATEDIFF({4}, CAST('{0}' as datetime), [last_changed_at]) / 60) * 60, CAST('{0}' as datetime))"
-                        , DateTimeEndFormat
-                        , (_parent as SrcMSTASUTPIdT5tg1Dsql).NameTableSource
-                        , WhereDatetime
-                        , strIds
-                        , (_parent as SrcMSTASUTPIdT5tg1Dsql).NameDatePart
+                        , DateTimeEndFormat // {0}
+                        , (_parent as SrcMSTASUTPIdT5tg1Dsql).NameTableSource // {1}
+                        , WhereDatetime // {2}
+                        , strIds // {3}
+                        , (_parent as SrcMSTASUTPIdT5tg1Dsql).NameDatePart // {4}
                     );
             }
         }

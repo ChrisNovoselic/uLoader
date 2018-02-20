@@ -909,7 +909,12 @@ namespace uLoaderCommon
             {
                 get
                 {
-                    Debug.WriteLine ($@"::IsCompleted.get Start={DateTimeStart}, Customize={IntervalCustomize} _begin={_datetimeBegin}, Diff.Seconds={((_datetimeBegin + PeriodMain) - (DateTimeStart + IntervalCustomize)).TotalSeconds}");
+                    string debMes = $@"::IsCompleted.get Start={DateTimeStart}, Customize={IntervalCustomize} _begin={_datetimeBegin}, Diff.Seconds={((_datetimeBegin + PeriodMain) - (DateTimeStart + IntervalCustomize)).TotalSeconds}";
+
+                    if (DateTimeStart.Equals (DateTime.MinValue) == true)
+                        throw new Exception (debMes);
+                    else
+                        Logging.Logg ().Debug (debMes, Logging.INDEX_MESSAGE.NOT_SET);
 
                     return
                     //??? учитывать ли '_uchet' (_datetimeBegin или DateTimeBegin)

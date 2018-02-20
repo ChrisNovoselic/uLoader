@@ -217,8 +217,13 @@
     <None Include="FileINI\setup_biysktmora.ini" />
     <None Include="FileINI\setup_ktstusql.ini" />
     <None Include="FileINI\setup_statistic.ini" />
-    <None Include="FileINI\setup_toris_bitec.ini" />
-    <None Include="FileINI\setup_toris_bitec_xml.ini" />
+    <None Include="FileINI\setup_toris_bitec.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="FileINI\setup_toris_bitec_xml.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
+    </None>
     <None Include="FileINI\setup_toris_btec.ini" />
     <None Include="FileINI\setup_toris_btec_xml.ini" />
     <None Include="FileINI\setup_toris_tec2.ini" />
