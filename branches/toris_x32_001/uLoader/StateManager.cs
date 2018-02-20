@@ -170,7 +170,7 @@ namespace uLoader
         /// </summary>
         public struct ID //: Object
         {
-            public INDEX_SRC m_typeOwner;
+            public FormMain.INDEX_SRC m_typeOwner;
             /// <summary>
             /// Идентификатор владельца контролируемого объекта
             /// </summary>
@@ -186,7 +186,7 @@ namespace uLoader
             public ID(object[] ids)
             {
                 //if (ids[0].GetType().IsEnum == true)
-                    m_typeOwner = (FormMain.INDEX_SRC.)ids[0];
+                    m_typeOwner = (FormMain.INDEX_SRC)ids[0];
                 //else
                 //    throw new InvalidEnumArgumentException(@"HHandlerQueue.ID::ctor () - ...");
                 m_idOwner = (int)ids[1];
@@ -428,7 +428,7 @@ namespace uLoader
         /// <summary>
         /// Класс для хранения статистической информации об объектах контроля
         /// </summary>
-        private class DictInfoCrashed : Dictionary<KeyValuePair <INDEX_SRC, int>, DictOManagementInfoCrashed>
+        private class DictInfoCrashed : Dictionary<KeyValuePair <FormMain.INDEX_SRC, int>, DictOManagementInfoCrashed>
         {
             /// <summary>
             /// Сохранить состояние объекта контроля
@@ -442,7 +442,7 @@ namespace uLoader
             /// <param name="state">Состояние объекта контроля</param>
             public void MarkedItem(ID id, STATE state)
             {
-                KeyValuePair<INDEX_SRC, int> key = GetKey(id);
+                KeyValuePair<FormMain.INDEX_SRC, int> key = GetKey(id);
 
                 if (ContainsKey(key) == true)
                     ; // группа источников уже добавлена
@@ -478,14 +478,14 @@ namespace uLoader
             //        ;
             //}
 
-            public static KeyValuePair<INDEX_SRC, int> GetKey(ID id)
+            public static KeyValuePair<FormMain.INDEX_SRC, int> GetKey(ID id)
             {
                 return GetKey(id.m_typeOwner, id.m_idOwner);
             }
 
-            public static KeyValuePair<INDEX_SRC, int> GetKey(FormMain.INDEX_SRC. indx, int id)
+            public static KeyValuePair<FormMain.INDEX_SRC, int> GetKey(FormMain.INDEX_SRC indx, int id)
             {
-                return new KeyValuePair<INDEX_SRC, int>(indx, id);
+                return new KeyValuePair<FormMain.INDEX_SRC, int>(indx, id);
             }
         }
 
@@ -791,7 +791,7 @@ namespace uLoader
         /// </summary>
         /// <param name="type">Тип группы источников</param>
         /// <param name="idOwner">Идентификатор (индекс) группы источников</param>
-        private void pushCommandReloadGroupSources(FormMain.INDEX_SRC. type, int idOwner, bool bAbort)
+        private void pushCommandReloadGroupSources(FormMain.INDEX_SRC type, int idOwner, bool bAbort)
         {
             GroupSources grpSrc = null;
             ID id;
@@ -913,7 +913,7 @@ namespace uLoader
                         ;
                 }
 
-                foreach (KeyValuePair<KeyValuePair<INDEX_SRC, int>, DictOManagementInfoCrashed> pair in m_dictInfoCrashed) {
+                foreach (KeyValuePair<KeyValuePair<FormMain.INDEX_SRC, int>, DictOManagementInfoCrashed> pair in m_dictInfoCrashed) {
 #if _SEPARATE_APPDOMAIN
                     if (pair.Value.IsForceReload == true) {
                         id = new ID(new object[] { pair.Key.Key, pair.Key.Value, -1 });
